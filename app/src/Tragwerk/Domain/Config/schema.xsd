@@ -48,15 +48,14 @@
     <!-- ============================================================ -->
     <xs:complexType name="ApplicationsType">
         <xs:sequence>
-            <xs:element name="application" type="ApplicationType"
-                        minOccurs="1" maxOccurs="unbounded"/>
+            <xs:element name="application" type="ApplicationType" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
 
     <xs:complexType name="ApplicationType">
         <xs:annotation>
             <xs:documentation>
-                A single application within the project, e.g. a PHP web app.
+                A single application within the project, e.g., a PHP web app.
             </xs:documentation>
         </xs:annotation>
         <xs:all>
@@ -95,8 +94,7 @@
     <!-- ============================================================ -->
     <xs:complexType name="WebType">
         <xs:sequence>
-            <xs:element name="location" type="LocationType"
-                        minOccurs="1" maxOccurs="unbounded"/>
+            <xs:element name="location" type="LocationType" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
 
@@ -131,7 +129,7 @@
                             <xs:enumeration value="build">
                                 <xs:annotation>
                                     <xs:documentation>
-                                        Runs during image build. Network access available,
+                                        Runs during image build. Network access is available,
                                         write access to the application directory.
                                     </xs:documentation>
                                 </xs:annotation>
@@ -230,7 +228,6 @@
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="endpoint" type="EndpointType" use="required"/>
     </xs:complexType>
 
     <!-- ============================================================ -->
@@ -317,7 +314,6 @@
 
     <xs:simpleType name="ApplicationRuntimeType">
         <xs:restriction base="xs:string">
-            <xs:enumeration value="php:8.1"/>
             <xs:enumeration value="php:8.2"/>
             <xs:enumeration value="php:8.3"/>
             <xs:enumeration value="php:8.4"/>
@@ -328,9 +324,12 @@
     <xs:simpleType name="ServiceRuntimeType">
         <xs:restriction base="xs:string">
             <!-- Databases -->
-            <xs:enumeration value="mariadb:10"/>
-            <xs:enumeration value="mariadb:11"/>
+            <xs:enumeration value="mariadb:10.6"/>
+            <xs:enumeration value="mariadb:10.11"/>
+            <xs:enumeration value="mariadb:11.4"/>
+            <xs:enumeration value="mariadb:11.8"/>
             <xs:enumeration value="mysql:8"/>
+            <xs:enumeration value="postgresql:14"/>
             <xs:enumeration value="postgresql:15"/>
             <xs:enumeration value="postgresql:16"/>
             <xs:enumeration value="postgresql:17"/>
@@ -339,28 +338,8 @@
             <xs:enumeration value="redis:6"/>
             <xs:enumeration value="redis:7"/>
             <xs:enumeration value="redis:8"/>
-            <xs:enumeration value="valkey:7"/>
             <xs:enumeration value="valkey:8"/>
-            <!-- Search -->
-            <xs:enumeration value="opensearch:2"/>
-            <xs:enumeration value="meilisearch:1"/>
+            <xs:enumeration value="valkey:9"/>
         </xs:restriction>
     </xs:simpleType>
-
-    <xs:simpleType name="EndpointType">
-        <xs:annotation>
-            <xs:documentation>
-                Service endpoint that defines the connection protocol.
-            </xs:documentation>
-        </xs:annotation>
-        <xs:restriction base="xs:string">
-            <xs:enumeration value="mysql"/>
-            <xs:enumeration value="postgresql"/>
-            <xs:enumeration value="redis"/>
-            <xs:enumeration value="valkey"/>
-            <xs:enumeration value="opensearch"/>
-            <xs:enumeration value="meilisearch"/>
-        </xs:restriction>
-    </xs:simpleType>
-
 </xs:schema>
