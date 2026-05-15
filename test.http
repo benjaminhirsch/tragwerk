@@ -1,5 +1,0 @@
-POST http://localhost/api/move
-Content-Type: application/json
-
-{"x": 1, "y": 5}
-###

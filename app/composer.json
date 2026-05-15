@@ -93,6 +93,7 @@
         "symfony/mailer": "^8.0",
         "symfony/process": "^7.4",
         "symfony/translation": "^8.0",
+        "symfony/yaml": "^8.0",
         "willdurand/negotiation": "^3.1"
     },
     "require-dev": {
