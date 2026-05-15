@@ -1,0 +1,35 @@
+parameters:
+    paths:
+        - bin
+        - config
+        - src
+        - test
+    level: 10
+    treatPhpDocTypesAsCertain: false
+    checkUninitializedProperties: true
+    rememberPossiblyImpureFunctionValues: false
+    checkBenevolentUnionTypes: true
+    checkTooWideReturnTypesInProtectedAndPublicMethods: true
+    reportAnyTypeWideningInVarTag: true
+    ignoreErrors:
+        -
+            identifier: ternary.shortNotAllowed
+        -
+            identifier: possiblyImpure.methodCall
+        -
+            identifier: offsetAccess.nonOffsetAccessible
+        -
+            identifier: possiblyImpure.functionCall
+        -
+            identifier: possiblyImpure.new
+        -
+
+            identifier: staticMethod.resultUnused
+            path: test/
+
+
+includes:
+    - vendor/phpstan/phpstan-deprecation-rules/rules.neon
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+    - vendor/phpstan/phpstan-phpunit/extension.neon
+    - vendor/phpstan/phpstan-phpunit/rules.neon

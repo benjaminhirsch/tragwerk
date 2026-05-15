@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><?= $this->e($title ?? 'Tragwerk') ?></title>
+    <script src="/js/htmx.min.js"></script>
+    <link rel="stylesheet" href="/css/main.css">
+    <?= $this->section('stylesheets') ?>
+</head>
+<body>
+<div class="default-app">
+    <main class="default-main">
+        <?= $this->section('content') ?>
+    </main>
+</div>
+<?= $this->section('javascript') ?>
+</body>
+</html>

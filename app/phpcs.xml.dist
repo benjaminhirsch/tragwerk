@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/squizlabs/php_codesniffer/phpcs.xsd">
+
+    <arg name="basepath" value="."/>
+    <arg name="cache" value=".phpcs-cache"/>
+    <arg name="colors"/>
+    <arg name="extensions" value="php"/>
+    <arg name="parallel" value="80"/>
+
+    <!-- Show progress -->
+    <arg value="p"/>
+
+    <!-- Paths to check -->
+    <file>config</file>
+    <file>src</file>
+    <file>bin</file>
+    <file>test</file>
+
+    <!-- inherit rules -->
+    <rule ref="PSR12"/>
+    <rule ref="Doctrine"/>
+
+    <rule ref="SlevomatCodingStandard.Classes.SuperfluousInterfaceNaming">
+        <severity>0</severity>
+    </rule>
+
+    <rule ref="Generic.Files.LineLength">
+        <exclude-pattern>config/autoload/authentication.global.php</exclude-pattern>
+    </rule>
+
+    <rule ref="Squiz.Classes.ClassFileName.NoMatch">
+        <exclude-pattern>src/ConfigProvider.*.php</exclude-pattern>
+        <exclude-pattern>*/Migrations/*</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR12.Files.FileHeader.IncorrectOrder">
+        <exclude-pattern>config/pipeline.php</exclude-pattern>
+        <exclude-pattern>src/MezzioInstaller/Resources/config/routes-*.php</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR2.Classes.PropertyDeclaration">
+        <exclude-pattern>src/Tragwerk/Domain/Entity/User.php</exclude-pattern>
+    </rule>
+</ruleset>

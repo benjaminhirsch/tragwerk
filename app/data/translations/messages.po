@@ -1,0 +1,242 @@
+msgid "mail.userInvited.subject"
+msgstr ""
+
+msgid "User"
+msgstr ""
+
+msgid "enum.entityType.CHARACTER"
+msgstr ""
+
+msgid "Briton"
+msgstr ""
+
+msgid "Saracen"
+msgstr ""
+
+msgid "Avalonian"
+msgstr ""
+
+msgid "Highlander"
+msgstr ""
+
+msgid "Inconnu"
+msgstr ""
+
+msgid "Half Ogre"
+msgstr ""
+
+msgid "Celt"
+msgstr ""
+
+msgid "Lurikeen"
+msgstr ""
+
+msgid "Firbolg"
+msgstr ""
+
+msgid "Elf"
+msgstr ""
+
+msgid "Sylvan"
+msgstr ""
+
+msgid "Shar"
+msgstr ""
+
+msgid "Norseman"
+msgstr ""
+
+msgid "Troll"
+msgstr ""
+
+msgid "Valkyn"
+msgstr ""
+
+msgid "Frostalf"
+msgstr ""
+
+msgid "Kobold"
+msgstr ""
+
+msgid "Dwarf"
+msgstr ""
+
+msgid "Albion"
+msgstr ""
+
+msgid "Midgard"
+msgstr ""
+
+msgid "Hibernia"
+msgstr ""
+
+msgid "Armsman"
+msgstr ""
+
+msgid "Mercenary"
+msgstr ""
+
+msgid "Paladin"
+msgstr ""
+
+msgid "Reaver"
+msgstr ""
+
+msgid "Cabalist"
+msgstr ""
+
+msgid "Sorcerer"
+msgstr ""
+
+msgid "Theurgist"
+msgstr ""
+
+msgid "Wizard"
+msgstr ""
+
+msgid "Cleric"
+msgstr ""
+
+msgid "Friar"
+msgstr ""
+
+msgid "Infiltrator"
+msgstr ""
+
+msgid "Minstrel"
+msgstr ""
+
+msgid "Scout"
+msgstr ""
+
+msgid "Nercomancer"
+msgstr ""
+
+msgid "Berserker"
+msgstr ""
+
+msgid "Savage"
+msgstr ""
+
+msgid "Skald"
+msgstr ""
+
+msgid "Thane"
+msgstr ""
+
+msgid "Warrior"
+msgstr ""
+
+msgid "Hunter"
+msgstr ""
+
+msgid "Shadowblade"
+msgstr ""
+
+msgid "Bonedancer"
+msgstr ""
+
+msgid "Runemaster"
+msgstr ""
+
+msgid "Spiritmast"
+msgstr ""
+
+msgid "Healer"
+msgstr ""
+
+msgid "Shaman"
+msgstr ""
+
+msgid "Valkyrie"
+msgstr ""
+
+msgid "Warlock"
+msgstr ""
+
+msgid "Animist"
+msgstr ""
+
+msgid "Valewalker"
+msgstr ""
+
+msgid "Blademaster"
+msgstr ""
+
+msgid "Campion"
+msgstr ""
+
+msgid "Hero"
+msgstr ""
+
+msgid "Eldrich"
+msgstr ""
+
+msgid "Enchanter"
+msgstr ""
+
+msgid "Mentalist"
+msgstr ""
+
+msgid "Bard"
+msgstr ""
+
+msgid "Druid"
+msgstr ""
+
+msgid "Warden"
+msgstr ""
+
+msgid "Nightshade"
+msgstr ""
+
+msgid "Ranger"
+msgstr ""
+
+msgid "Vampiir"
+msgstr ""
+
+msgid "Bainshee"
+msgstr ""
+
+msgid "Create character"
+msgstr ""
+
+msgid "Select character"
+msgstr ""
+
+msgid "Level"
+msgstr ""
+
+msgid "Logout"
+msgstr ""
+
+msgid "Login"
+msgstr ""
+
+msgid "Register"
+msgstr ""
+
+msgid "E-Mail"
+msgstr ""
+
+msgid "Firstname"
+msgstr ""
+
+msgid "Lastname"
+msgstr ""
+
+msgid "Password"
+msgstr ""
+
+msgid "Password repeat"
+msgstr ""
+
+msgid "Realm"
+msgstr ""
+
+msgid "Race"
+msgstr ""
+
+msgid "Role"
+msgstr ""
