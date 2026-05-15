@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="schema.xsd">
+         xsi:noNamespaceSchemaLocation="schema.xsd?v1">
     <applications>
         <application name="My Test Project" type="php:8.5" root="/">
             <web>
-                <location path="/" root="public" passthru="/index.php"/>
+                <location path="/" root="public" index="index.php" passthru="/index.php"/>
             </web>
             <hooks>
                 <hook type="build"><![CDATA[
@@ -20,8 +20,8 @@
                 <mount name="storage" source="local" path="storage" clone-from-parent="true"/>
             </mounts>
             <relationships>
-                <relationship name="database" target="db" endpoint="postgresql"/>
-                <relationship name="cache" target="redis" endpoint="redis"/>
+                <relationship name="database" target="db"/>
+                <relationship name="cache" target="redis"/>
             </relationships>
         </application>
     </applications>
@@ -30,6 +30,6 @@
         <service name="redis" type="redis:8"/>
     </services>
     <routes>
-        <route pattern="https://{default}" type="upstream" upstream="app:http" />
+        <route pattern="https://{default}" type="upstream" upstream="app:http"  />
     </routes>
 </project>

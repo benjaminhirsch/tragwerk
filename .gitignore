@@ -86,3 +86,4 @@ http-client.private.env.json
 .idea/**/copilot.data.migration.*.xml
 dungeon-wasm/target
 app/public/wasm
+.claude
