@@ -1,0 +1,12 @@
+{% extends '@layout/mail.twig' %}
+
+{% set meta = {title: t('mail.userInvited.subject')} %}
+
+{% block content %}
+
+    {{ t('mail.greeting {name}', {name: user}) }}<br />
+    <br />
+
+    {{ t('mail.userInvited.body') }}<br />
+
+{% endblock %}

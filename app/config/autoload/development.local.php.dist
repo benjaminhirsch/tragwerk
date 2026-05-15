@@ -1,0 +1,66 @@
+<?php
+
+declare(strict_types=1);
+
+// phpcs:disable PSR12.Files.FileHeader.IncorrectOrder
+
+/**
+ * Development-only configuration.
+ *
+ * Put settings you want enabled when under development mode in this file, and
+ * check it into your repository.
+ *
+ * Developers on your team will then automatically enable them by calling on
+ * `composer development-enable`.
+ */
+
+use Mezzio\Container;
+use Mezzio\Middleware\ErrorResponseGenerator;
+use Symfony\Component\Mailer\Transport as MailTransport;
+use Tragwerk\Factory\ErrorHandler\Whoops\PrettyPageHandlerDelegatorFactory;
+
+return [
+    'dependencies' => [
+        'factories' => [
+            ErrorResponseGenerator::class
+                => Container\WhoopsErrorResponseGeneratorFactory::class,
+            'Mezzio\Whoops' => Container\WhoopsFactory::class,
+            'Mezzio\WhoopsPageHandler'
+                => Container\WhoopsPageHandlerFactory::class,
+        ],
+        'delegators' => [
+            'Mezzio\WhoopsPageHandler' => [
+                PrettyPageHandlerDelegatorFactory::class,
+            ],
+        ],
+    ],
+    'database' => [
+        'default' => [
+            'database' => 'app',
+            'host' => 'db',
+            'port' => 5432,
+            'username' => 'app',
+            'password' => 'app',
+        ],
+    ],
+    'templates' => ['debug' => true, 'auto_reload' => true],
+    'whoops'       => [
+        'json_exceptions' => [
+            'display'    => true,
+            'show_trace' => true,
+            'ajax_only'  => true,
+        ],
+    ],
+    'mail' => [
+        'transport' => MailTransport\Smtp\EsmtpTransport::class,
+        'transports' => [
+            MailTransport\Smtp\EsmtpTransport::class => [
+                'localDomain' => 'localhost',
+                'host' => 'mailpit',
+                'port' => 1025,
+                'username' => null,
+                'password' => null,
+            ],
+        ],
+    ],
+];

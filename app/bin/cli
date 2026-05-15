@@ -1,0 +1,89 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use Doctrine\Migrations\Tools\Console\Command as DoctrineMigrationsCommand;
+use Tragwerk\Application\Helper\ThrowableHelper;
+use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Command\LazyCommand;
+use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Output\OutputInterface;
+use \Tragwerk\Application\Cli\Command;
+
+chdir(dirname(__DIR__));
+require 'vendor/autoload.php';
+
+$container = require 'config/container.php';
+assert($container instanceof ContainerInterface);
+
+$logger = $container->get(LoggerInterface::class);
+assert($logger instanceof LoggerInterface);
+
+$application = new Application();
+$application->setAutoExit(false);
+$application->setCatchExceptions(false);
+$application->setCatchErrors(false);
+
+
+/** @var class-string<\Symfony\Component\Console\Command\Command>[] $commands */
+$commands = [
+        Command\TranslationExtractCommand::class,
+        Command\CreateUserCommand::class,
+        Command\PrepareMessageQueue::class,
+        Command\Worker::class,
+
+        DoctrineMigrationsCommand\CurrentCommand::class,
+        DoctrineMigrationsCommand\DiffCommand::class,
+        DoctrineMigrationsCommand\DumpSchemaCommand::class,
+        DoctrineMigrationsCommand\ExecuteCommand::class,
+        DoctrineMigrationsCommand\GenerateCommand::class,
+        DoctrineMigrationsCommand\LatestCommand::class,
+        DoctrineMigrationsCommand\ListCommand::class,
+        DoctrineMigrationsCommand\MigrateCommand::class,
+        DoctrineMigrationsCommand\RollupCommand::class,
+        DoctrineMigrationsCommand\StatusCommand::class,
+        DoctrineMigrationsCommand\SyncMetadataCommand::class,
+        DoctrineMigrationsCommand\UpToDateCommand::class,
+        DoctrineMigrationsCommand\VersionCommand::class,
+];
+
+foreach ($commands as $command) {
+    $reflectionAttribute = new ReflectionClass($command)->getAttributes(AsCommand::class)[0] ?? null;
+    $attribute = $reflectionAttribute?->newInstance();
+
+    if ($attribute === null) {
+        $application->addCommand($container->get($command));
+
+        continue;
+    }
+
+    assert($attribute instanceof AsCommand);
+
+    $application->addCommand(new LazyCommand(
+            $attribute->name,
+            [],
+            $attribute->description ?? '',
+            false,
+            static fn () => $container->get($command),
+    ));
+}
+
+try {
+    $exitCode = $application->run();
+
+    exit($exitCode);
+} catch (Throwable $e) {
+    $output = new ConsoleOutput()->getErrorOutput();
+    $output->setVerbosity(OutputInterface::VERBOSITY_DEBUG);
+    $application->renderThrowable($e, $output);
+
+    $logger->error($e->getMessage(), [
+            'exception' => ThrowableHelper::toArray($e),
+    ]);
+
+    exit(1);
+}

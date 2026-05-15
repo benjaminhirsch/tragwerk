@@ -1,0 +1,38 @@
+<?php $this->layout('layout::default', ['title' => 'Register · Tragwerk']); ?>
+
+<form action="<?= $this->url('register') ?>" method="post">
+    <?= $this->fetch('partial::input/csrf') ?>
+    <?= $this->fetch('partial::input/text', [
+        'id'         => 'firstname',
+        'label'      => $this->t('Firstname'),
+        'required'   => true,
+        'validation' => $validationBag ?? null,
+    ]) ?>
+    <?= $this->fetch('partial::input/text', [
+        'id'         => 'lastname',
+        'label'      => $this->t('Lastname'),
+        'required'   => true,
+        'validation' => $validationBag ?? null,
+    ]) ?>
+    <?= $this->fetch('partial::input/email', [
+        'id'         => 'email',
+        'label'      => $this->t('E-Mail'),
+        'required'   => true,
+        'validation' => $validationBag ?? null,
+    ]) ?>
+    <?= $this->fetch('partial::input/password', [
+        'id'         => 'password1',
+        'label'      => $this->t('Password'),
+        'required'   => true,
+        'validation' => $validationBag ?? null,
+    ]) ?>
+    <?= $this->fetch('partial::input/password', [
+        'id'         => 'password2',
+        'label'      => $this->t('Password repeat'),
+        'required'   => true,
+        'validation' => $validationBag ?? null,
+    ]) ?>
+    <div class="form-actions">
+        <?= $this->fetch('partial::input/button', ['label' => $this->t('Register')]) ?>
+    </div>
+</form>

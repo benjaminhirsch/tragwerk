@@ -1,0 +1,9 @@
+path:
+  - bin
+  - config
+  - src/Tragwerk
+extensions:
+  - php
+  - php.dist
+warning: true
+cache-dir: /tmp/phplint

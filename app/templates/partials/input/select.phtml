@@ -1,0 +1,50 @@
+<?php
+
+assert(isset($id));
+
+$name = $name ?? $id;
+
+/** @var \Tragwerk\Application\Validation\ValidationBag|null $validation */
+if (($validation ?? null) !== null):
+    $defaultValue = $validation->getValueByName($name);
+endif;
+?>
+<div class="form-group">
+    <?php if (($label ?? null) !== null): ?>
+        <label for="<?= $this->e($id) ?>">
+            <?= $this->e($label) ?>
+            <?php if ($required ?? false): ?><span class="required-marker">*</span><?php endif; ?>
+        </label>
+    <?php endif; ?>
+
+    <select name="<?= $this->e($name) ?>" id="<?= $this->e($id) ?>"
+            <?php if (($hxget ?? null) !== null): ?>hx-get="<?= $this->e($hxget) ?>"<?php endif ?>
+            <?php if (($hxtarget ?? null) !== null): ?>hx-target="<?= $this->e($hxtarget) ?>"<?php endif ?>
+            <?php if (($hxswap ?? null) !== null): ?>hx-swap="<?= $this->e($hxswap) ?>"<?php endif ?>
+            <?php if (($hxselect ?? null) !== null): ?>hx-select="<?= $this->e($hxselect) ?>"<?php endif ?>
+            <?php if (($hxinclude ?? null) !== null): ?>hx-include="<?= $this->e($hxinclude) ?>"<?php endif ?>
+    >
+        <?php if (($disableEmptyOption ?? false) === false): ?>
+            <option value="<?= $defaultOptionValue ?? '' ?>"
+                    <?php if (($defaultOptionValue ?? '') === ($defaultValue ?? '')): ?>selected<?php endif; ?>
+                    <?php if ($defaultOptionDisabled ?? false): ?>disabled<?php endif; ?>
+            ><?= $defaultOptionLabel ?? '' ?></option>
+        <?php endif; ?>
+
+        <?php foreach ($options ?? [] as $optionValue => $optionLabel): ?>
+            <option value="<?= $this->e($optionValue) ?>"
+                    <?php if (is_iterable($defaultValue ?? null) && in_array($optionValue, $defaultValue ?? [], true)): ?>
+                        selected
+                    <?php else: ?>
+                        <?php if ($optionValue === ($defaultValue ?? null)): ?>selected<?php endif; ?>
+                    <?php endif; ?>
+            ><?= $this->e($optionLabel) ?></option>
+        <?php endforeach; ?>
+    </select>
+
+    <?php if (($validation?->getErrorByName($name) ?? null) !== null): ?>
+        <div class="invalid-feedback">
+            <?= $this->e($this->t($validation->getErrorByName($name))) ?>
+        </div>
+    <?php endif; ?>
+</div>

@@ -1,0 +1,16 @@
+<?php
+declare(strict_types=1);
+
+use Tragwerk\Domain\Enum\Translatable;
+
+assert(isset($options) && is_array($options));
+$options = array_combine(
+    array_map(static fn(BackedEnum|Translatable $e) => $e->value, $options),
+    array_map(static fn(BackedEnum|Translatable $e) => $e->translatableName(), $options),
+)
+?>
+
+<?php $defaultValue = $defaultValue?->value ?? null ?>
+
+<?= $this->fetch('partial::input/select', get_defined_vars()) ?>
+

@@ -1,0 +1,25 @@
+version: "3"
+
+server:
+  command: "php bin/server"
+
+http:
+  address: 0.0.0.0:${PORT:-80}
+  max_request_size: ${RR_MAX_REQUEST_SIZE:-64}
+  middleware:
+    - static
+  pool:
+    debug: true
+    supervisor:
+      exec_ttl: 300s
+      max_worker_memory: ${RR_MAX_WORKER_MEMORY:-128}
+  static:
+    dir: "./public/"
+    calculate_etag: false
+    weak: false
+    response:
+      X-Content-Type-Options: nosniff
+
+logs:
+  mode: development
+  level: debug

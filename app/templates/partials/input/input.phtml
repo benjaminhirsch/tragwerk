@@ -1,0 +1,33 @@
+<?php
+
+assert(isset($id));
+assert(isset($type) && is_string($type));
+
+$name = $name ?? $id;
+
+/** @var \Tragwerk\Application\Validation\ValidationBag|null $validation */
+if (($validation ?? null) !== null):
+    $defaultValue = $validation->getValueByName($name);
+endif;
+?>
+<div class="form-group">
+    <?php if (($label ?? null) !== null): ?>
+        <label for="<?= $this->e($id) ?>">
+            <?= $this->e($label) ?>
+            <?php if ($required ?? false): ?><span class="required-marker">*</span><?php endif; ?>
+        </label>
+    <?php endif; ?>
+
+    <input class="pixel-input"
+           type="<?= $this->e($type) ?>"
+           name="<?= $this->e($name) ?>"
+           id="<?= $this->e($id) ?>"
+           <?= ($required ?? false) === true ? 'required' : '' ?>
+           value="<?= $this->e($defaultValue ?? null) ?>">
+
+    <?php if (($validation?->getErrorByName($name) ?? null) !== null): ?>
+        <div class="invalid-feedback">
+            <?= $this->e($this->t($validation->getErrorByName($name))) ?>
+        </div>
+    <?php endif; ?>
+</div>

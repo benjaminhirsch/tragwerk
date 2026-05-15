@@ -1,0 +1,13 @@
+<?php $this->layout('layout::default', ['title' => 'Login · Tragwerk']) ?>
+
+<form action="<?= $this->url('login') ?>" method="post">
+    <?= $this->fetch('partial::input/csrf') ?>
+    <?= $this->fetch('partial::input/email', ['id' => 'email', 'label' => $this->t('E-Mail')]) ?>
+    <?= $this->fetch('partial::input/password', ['id' => 'password', 'label' => $this->t('Password')]) ?>
+    <div class="form-actions">
+        <?= $this->fetch('partial::input/button', ['label' => $this->t('Login')]) ?>
+    </div>
+</form>
+
+<a href="<?= $this->url('register') ?>"><?= $this->t('Create account') ?></a>
+

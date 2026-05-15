@@ -1,0 +1,19 @@
+<?php $this->layout('layout::default', ['title' => ($status ?? 500) . ' — ' . ($reason ?? 'Error')]) ?>
+
+<div class="error-hero">
+    <span class="error-code-big"><?= $this->e($status ?? 500) ?></span>
+    <div class="error-title"><?= $this->e(strtoupper($reason ?? 'AN ERROR OCCURRED')) ?></div>
+    <div class="error-pixel-art">
+        x . x . x . x . x . x<br>
+        . x . x . x . x . x .<br>
+        x . x . x . x . x . x
+    </div>
+    <div class="error-desc">
+        <?php if (($status ?? null) === 404): ?>
+            The path you seek does not exist,<br>or has been swallowed by ancient magic.
+        <?php else: ?>
+            Something went wrong.<br>The realm is unsettled.
+        <?php endif; ?>
+    </div>
+    <a href="/" class="btn btn-primary" style="font-size:8px;padding:10px 18px;">▶ RETURN TO SAFETY</a>
+</div>
