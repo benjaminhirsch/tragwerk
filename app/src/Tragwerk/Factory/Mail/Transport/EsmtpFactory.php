@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tragwerk\Factory\Mail\Transport;
 
-use Tragwerk\Factory\Exception\MissingConfiguration;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
+use Tragwerk\Factory\Exception\MissingConfiguration;
 
 use function assert;
 use function is_array;

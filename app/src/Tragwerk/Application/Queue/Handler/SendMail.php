@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tragwerk\Application\Queue\Handler;
 
+use Psr\Log\LoggerInterface;
 use Tragwerk\Application\Mail\Mailer;
 use Tragwerk\Application\Queue\Message;
-use Psr\Log\LoggerInterface;
 
 final class SendMail
 {

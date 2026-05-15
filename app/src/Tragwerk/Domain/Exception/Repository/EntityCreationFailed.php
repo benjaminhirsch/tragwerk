@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tragwerk\Domain\Exception\Repository;
 
-use Tragwerk\Domain\ValueObject\EntityIdentifier;
 use RuntimeException;
 use Throwable;
+use Tragwerk\Domain\ValueObject\EntityIdentifier;
 
 use function sprintf;
 

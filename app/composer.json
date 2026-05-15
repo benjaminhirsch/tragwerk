@@ -48,8 +48,10 @@
     },
     "require": {
         "php": "~8.5.0",
+        "ext-dom": "*",
         "ext-gettext": "*",
         "ext-intl": "*",
+        "ext-libxml": "*",
         "ext-session": "*",
         "composer/package-versions-deprecated": "^1.11.99.5",
         "cuyz/valinor": "^2.4",

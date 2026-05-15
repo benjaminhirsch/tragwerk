@@ -35,6 +35,7 @@ $commands = [
         Command\CreateUserCommand::class,
         Command\PrepareMessageQueue::class,
         Command\Worker::class,
+        Command\ConfigLoader::class,
 
         DoctrineMigrationsCommand\CurrentCommand::class,
         DoctrineMigrationsCommand\DiffCommand::class,

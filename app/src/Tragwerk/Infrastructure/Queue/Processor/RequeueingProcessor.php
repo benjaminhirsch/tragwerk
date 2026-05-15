@@ -11,8 +11,8 @@ use Interop\Queue\Exception\InvalidDestinationException;
 use Interop\Queue\Exception\InvalidMessageException;
 use Interop\Queue\Message;
 use Interop\Queue\Processor;
-use Tragwerk\Application\Queue\Queue;
 use Throwable;
+use Tragwerk\Application\Queue\Queue;
 
 final readonly class RequeueingProcessor implements Processor
 {
