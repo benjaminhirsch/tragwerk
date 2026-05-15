@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="schema.xsd">
+    <applications>
+        <application name="My Test Project" type="php:8.5" root="/">
+            <web>
+                <location path="/" root="public" passthru="/index.php"/>
+            </web>
+            <hooks>
+                <hook type="build"><![CDATA[
+                  composer install --no-dev --optimize-autoloader
+                ]]></hook>
+
+                <hook type="deploy"><![CDATA[
+                  bin/cli migrations:status
+                  bin/cli migrations:migrate --no-interaction --all-or-nothing
+                ]]></hook>
+            </hooks>
+            <mounts>
+                <mount name="storage" source="local" path="storage" clone-from-parent="true"/>
+            </mounts>
+            <relationships>
+                <relationship name="database" target="db" endpoint="postgresql"/>
+                <relationship name="cache" target="redis" endpoint="redis"/>
+            </relationships>
+        </application>
+    </applications>
+    <services>
+        <service name="db" type="postgresql:18" disk="2048"/>
+        <service name="redis" type="redis:8"/>
+    </services>
+    <routes>
+        <route pattern="https://{default}" type="upstream" upstream="app:http" />
+    </routes>
+</project>

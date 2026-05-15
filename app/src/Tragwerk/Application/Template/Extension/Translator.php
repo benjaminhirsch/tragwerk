@@ -6,9 +6,9 @@ namespace Tragwerk\Application\Template\Extension;
 
 use League\Plates\Engine;
 use League\Plates\Extension\ExtensionInterface;
+use Override;
 use Tragwerk\Application\Translator\Translator as BaseTranslator;
 use Tragwerk\Domain\Enum\Translatable;
-use Override;
 
 final class Translator implements ExtensionInterface
 {

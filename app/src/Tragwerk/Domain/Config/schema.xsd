@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified">
+
+    <!-- ============================================================ -->
+    <!-- Root Element                                                 -->
+    <!-- ============================================================ -->
+    <xs:element name="project">
+        <xs:annotation>
+            <xs:documentation>
+                Root configuration for a hosted project. Defines applications,
+                backing services, and routing rules.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:all>
+                <xs:element name="applications" type="ApplicationsType"/>
+                <xs:element name="services"     type="ServicesType"     minOccurs="0"/>
+                <xs:element name="routes"       type="RoutesType"/>
+            </xs:all>
+        </xs:complexType>
+
+        <!-- All uniqueness constraints live at the root for clarity. -->
+        <xs:unique name="uniqueApplicationName">
+            <xs:selector xpath="applications/application"/>
+            <xs:field xpath="@name"/>
+        </xs:unique>
+        <xs:unique name="uniqueServiceName">
+            <xs:selector xpath="services/service"/>
+            <xs:field xpath="@name"/>
+        </xs:unique>
+        <xs:unique name="uniqueMountName">
+            <xs:selector xpath="applications/application/mounts/mount"/>
+            <xs:field xpath="@name"/>
+        </xs:unique>
+        <xs:unique name="uniqueRelationshipName">
+            <xs:selector xpath="applications/application/relationships/relationship"/>
+            <xs:field xpath="@name"/>
+        </xs:unique>
+        <xs:unique name="uniqueHookType">
+            <xs:selector xpath="applications/application/hooks/hook"/>
+            <xs:field xpath="@type"/>
+        </xs:unique>
+    </xs:element>
+
+    <!-- ============================================================ -->
+    <!-- Applications                                                 -->
+    <!-- ============================================================ -->
+    <xs:complexType name="ApplicationsType">
+        <xs:sequence>
+            <xs:element name="application" type="ApplicationType"
+                        minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="ApplicationType">
+        <xs:annotation>
+            <xs:documentation>
+                A single application within the project, e.g. a PHP web app.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:all>
+            <xs:element name="web"           type="WebType"/>
+            <xs:element name="hooks"         type="HooksType"          minOccurs="0"/>
+            <xs:element name="mounts"        type="MountsType"         minOccurs="0"/>
+            <xs:element name="relationships" type="RelationshipsType"  minOccurs="0"/>
+        </xs:all>
+        <xs:attribute name="name" type="IdentifierType" use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    Human-readable name of the application. Must be unique within
+                    the project.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="type" type="ApplicationRuntimeType" use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    Runtime image, e.g. "php:8.3" or "php:8.4".
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="root" type="xs:string" default="/">
+            <xs:annotation>
+                <xs:documentation>
+                    Path within the repository that contains this application's
+                    source code. Defaults to the repo root.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <!-- ============================================================ -->
+    <!-- Web                                                          -->
+    <!-- ============================================================ -->
+    <xs:complexType name="WebType">
+        <xs:sequence>
+            <xs:element name="location" type="LocationType"
+                        minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="LocationType">
+        <xs:attribute name="path"     type="xs:string" use="required"/>
+        <xs:attribute name="root"     type="xs:string" use="required"/>
+        <xs:attribute name="index"    type="xs:string" default="index.php"/>
+        <xs:attribute name="passthru" type="xs:string"/>
+    </xs:complexType>
+
+    <!-- ============================================================ -->
+    <!-- Hooks                                                        -->
+    <!-- ============================================================ -->
+    <xs:complexType name="HooksType">
+        <xs:sequence>
+            <xs:element name="hook" type="HookType" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="HookType">
+        <xs:annotation>
+            <xs:documentation>
+                Shell script executed at a specific point in the deployment
+                lifecycle. Use CDATA for multi-line scripts.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="type" use="required">
+                    <xs:simpleType>
+                        <xs:restriction base="xs:string">
+                            <xs:enumeration value="build">
+                                <xs:annotation>
+                                    <xs:documentation>
+                                        Runs during image build. Network access available,
+                                        write access to the application directory.
+                                    </xs:documentation>
+                                </xs:annotation>
+                            </xs:enumeration>
+                            <xs:enumeration value="deploy">
+                                <xs:annotation>
+                                    <xs:documentation>
+                                        Runs after the container starts but before traffic
+                                        is routed. Application directory is read-only,
+                                        mounts are writable.
+                                    </xs:documentation>
+                                </xs:annotation>
+                            </xs:enumeration>
+                            <xs:enumeration value="post_deploy">
+                                <xs:annotation>
+                                    <xs:documentation>
+                                        Runs after traffic is being served. Useful for
+                                        cache warming or non-blocking tasks.
+                                    </xs:documentation>
+                                </xs:annotation>
+                            </xs:enumeration>
+                        </xs:restriction>
+                    </xs:simpleType>
+                </xs:attribute>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <!-- ============================================================ -->
+    <!-- Mounts                                                       -->
+    <!-- ============================================================ -->
+    <xs:complexType name="MountsType">
+        <xs:sequence>
+            <xs:element name="mount" type="MountType" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="MountType">
+        <xs:attribute name="name" type="IdentifierType" use="required"/>
+        <xs:attribute name="source" use="required">
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:enumeration value="local">
+                        <xs:annotation>
+                            <xs:documentation>Local disk volume on the host.</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="service">
+                        <xs:annotation>
+                            <xs:documentation>Shared object storage service.</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="path" type="xs:string" use="required"/>
+        <xs:attribute name="clone-from-parent" type="xs:boolean" default="false">
+            <xs:annotation>
+                <xs:documentation>
+                    When creating a new branch environment, copy the contents of
+                    this mount from the parent environment.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <!-- ============================================================ -->
+    <!-- Relationships                                                -->
+    <!-- ============================================================ -->
+    <xs:complexType name="RelationshipsType">
+        <xs:sequence>
+            <xs:element name="relationship" type="RelationshipType" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="RelationshipType">
+        <xs:annotation>
+            <xs:documentation>
+                Wires this application to a backing service. The service's
+                connection details will be injected as environment variables.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="name" type="IdentifierType" use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    Logical name of the relationship, used to derive the env var
+                    name (e.g. "database" → DATABASE_URL).
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="target" type="IdentifierType" use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    Name of the service to connect to. Must match a service
+                    defined under &lt;services&gt;.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="endpoint" type="EndpointType" use="required"/>
+    </xs:complexType>
+
+    <!-- ============================================================ -->
+    <!-- Services                                                     -->
+    <!-- ============================================================ -->
+    <xs:complexType name="ServicesType">
+        <xs:sequence>
+            <xs:element name="service" type="ServiceType" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="ServiceType">
+        <xs:attribute name="name" type="IdentifierType" use="required"/>
+        <xs:attribute name="type" type="ServiceRuntimeType" use="required"/>
+        <xs:attribute name="disk" type="xs:positiveInteger" default="512">
+            <xs:annotation>
+                <xs:documentation>
+                    Allocated disk size in MB. Only applies to stateful services.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <!-- ============================================================ -->
+    <!-- Routes                                                       -->
+    <!-- ============================================================ -->
+    <xs:complexType name="RoutesType">
+        <xs:sequence>
+            <xs:element name="route" type="RouteType" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="RouteType">
+        <xs:attribute name="pattern" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    URL pattern. The placeholder {default} is replaced at runtime
+                    with the environment's hostname.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="type" use="required">
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:enumeration value="upstream"/>
+                    <xs:enumeration value="redirect"/>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="upstream" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>
+                    Target in the form "application:endpoint", e.g. "app:http".
+                    Required when type="upstream".
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="to" type="xs:anyURI">
+            <xs:annotation>
+                <xs:documentation>
+                    Target URL for redirects. Required when type="redirect".
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <!-- ============================================================ -->
+    <!-- Reusable Simple Types                                        -->
+    <!-- ============================================================ -->
+    <xs:simpleType name="IdentifierType">
+        <xs:annotation>
+            <xs:documentation>
+                A symbolic identifier: letters, digits, spaces, hyphens, underscores.
+                Used for names that may appear in container names, env vars,
+                and DNS labels.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[a-zA-Z][a-zA-Z0-9 _-]*"/>
+            <xs:minLength value="1"/>
+            <xs:maxLength value="64"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="ApplicationRuntimeType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="php:8.1"/>
+            <xs:enumeration value="php:8.2"/>
+            <xs:enumeration value="php:8.3"/>
+            <xs:enumeration value="php:8.4"/>
+            <xs:enumeration value="php:8.5"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="ServiceRuntimeType">
+        <xs:restriction base="xs:string">
+            <!-- Databases -->
+            <xs:enumeration value="mariadb:10"/>
+            <xs:enumeration value="mariadb:11"/>
+            <xs:enumeration value="mysql:8"/>
+            <xs:enumeration value="postgresql:15"/>
+            <xs:enumeration value="postgresql:16"/>
+            <xs:enumeration value="postgresql:17"/>
+            <xs:enumeration value="postgresql:18"/>
+            <!-- Caches / Queues -->
+            <xs:enumeration value="redis:6"/>
+            <xs:enumeration value="redis:7"/>
+            <xs:enumeration value="redis:8"/>
+            <xs:enumeration value="valkey:7"/>
+            <xs:enumeration value="valkey:8"/>
+            <!-- Search -->
+            <xs:enumeration value="opensearch:2"/>
+            <xs:enumeration value="meilisearch:1"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="EndpointType">
+        <xs:annotation>
+            <xs:documentation>
+                Service endpoint that defines the connection protocol.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="mysql"/>
+            <xs:enumeration value="postgresql"/>
+            <xs:enumeration value="redis"/>
+            <xs:enumeration value="valkey"/>
+            <xs:enumeration value="opensearch"/>
+            <xs:enumeration value="meilisearch"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+</xs:schema>
