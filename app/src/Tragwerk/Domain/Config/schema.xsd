@@ -20,7 +20,6 @@
             </xs:all>
         </xs:complexType>
 
-        <!-- All uniqueness constraints live at the root for clarity. -->
         <xs:unique name="uniqueApplicationName">
             <xs:selector xpath="applications/application"/>
             <xs:field xpath="@name"/>
@@ -29,18 +28,6 @@
             <xs:selector xpath="services/service"/>
             <xs:field xpath="@name"/>
         </xs:unique>
-        <xs:unique name="uniqueMountName">
-            <xs:selector xpath="applications/application/mounts/mount"/>
-            <xs:field xpath="@name"/>
-        </xs:unique>
-        <xs:unique name="uniqueRelationshipName">
-            <xs:selector xpath="applications/application/relationships/relationship"/>
-            <xs:field xpath="@name"/>
-        </xs:unique>
-        <xs:unique name="uniqueHookType">
-            <xs:selector xpath="applications/application/hooks/hook"/>
-            <xs:field xpath="@type"/>
-        </xs:unique>
     </xs:element>
 
     <!-- ============================================================ -->
@@ -48,7 +35,20 @@
     <!-- ============================================================ -->
     <xs:complexType name="ApplicationsType">
         <xs:sequence>
-            <xs:element name="application" type="ApplicationType" maxOccurs="unbounded"/>
+            <xs:element name="application" type="ApplicationType" maxOccurs="unbounded">
+                <xs:unique name="uniqueMountName">
+                    <xs:selector xpath="mounts/mount"/>
+                    <xs:field xpath="@name"/>
+                </xs:unique>
+                <xs:unique name="uniqueRelationshipName">
+                    <xs:selector xpath="relationships/relationship"/>
+                    <xs:field xpath="@name"/>
+                </xs:unique>
+                <xs:unique name="uniqueHookType">
+                    <xs:selector xpath="hooks/hook"/>
+                    <xs:field xpath="@type"/>
+                </xs:unique>
+            </xs:element>
         </xs:sequence>
     </xs:complexType>
 
