@@ -13,7 +13,6 @@ use Tragwerk\Domain\Model\RouteConfig;
 use Tragwerk\Domain\Model\ServiceConfig;
 
 use function array_key_exists;
-use function count;
 use function explode;
 use function ltrim;
 use function preg_replace;
@@ -179,8 +178,7 @@ final readonly class DockerComposeGenerator
     /** @return list<RouteConfig> */
     private function routesForApp(ApplicationConfig $app, ProjectConfig $config): array
     {
-        $slug      = $this->slugify($app->name);
-        $isSoleApp = count($config->applications) === 1;
+        $slug = $this->slugify($app->name);
 
         /** @var array<string, RouteConfig> $redirectsByDomain */
         $redirectsByDomain = [];
@@ -192,6 +190,8 @@ final readonly class DockerComposeGenerator
             $redirectsByDomain[$this->extractHost($route->pattern)] = $route;
         }
 
+        $firstApp = $config->applications[0] ?? $app;
+
         $appRoutes = [];
         foreach ($config->routes as $route) {
             if ($route->type !== RouteType::UPSTREAM) {
@@ -200,7 +200,10 @@ final readonly class DockerComposeGenerator
 
             $parts        = explode(':', $route->upstream ?? '', 2);
             $upstreamName = $parts[0];
-            $matches      = $upstreamName === $app->name || $upstreamName === $slug || $isSoleApp;
+
+            $matchedByName = $upstreamName === $app->name || $upstreamName === $slug;
+            $noAppMatches  = ! $this->anyAppMatches($upstreamName, $config);
+            $matches       = $matchedByName || ($noAppMatches && $app === $firstApp);
 
             if (! $matches) {
                 continue;
@@ -217,6 +220,17 @@ final readonly class DockerComposeGenerator
         }
 
         return $appRoutes;
+    }
+
+    private function anyAppMatches(string $upstreamName, ProjectConfig $config): bool
+    {
+        foreach ($config->applications as $candidate) {
+            if ($upstreamName === $candidate->name || $upstreamName === $this->slugify($candidate->name)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function extractHost(string $pattern): string

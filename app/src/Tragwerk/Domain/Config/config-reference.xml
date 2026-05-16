@@ -24,12 +24,31 @@
                 <relationship name="cache" target="redis"/>
             </relationships>
         </application>
+        <application name="Foobar" type="php:8.2" root="/">
+            <web>
+                <location path="/" root="public" index="index.php" passthru="/index.php"/>
+            </web>
+            <hooks>
+                <hook type="build"><![CDATA[
+                  composer install --no-dev --optimize-autoloader
+                ]]></hook>
+            </hooks>
+            <mounts>
+                <mount name="storage" source="local" path="storage" clone-from-parent="true"/>
+            </mounts>
+            <relationships>
+                <relationship name="database" target="db"/>
+            </relationships>
+        </application>
     </applications>
     <services>
         <service name="db" type="postgresql:18" disk="2048"/>
         <service name="redis" type="redis:8"/>
     </services>
     <routes>
-        <route pattern="https://{default}" type="upstream" upstream="app:http"  />
+        <route pattern="https://{default}" type="upstream" upstream="My Test Project:http"/>
+        <route pattern="http://{default}" type="redirect" to="https://{default}"/>
+        <route pattern="https://foobar.{default}" type="upstream" upstream="Foobar:http"/>
+        <route pattern="http://foobar.{default}" type="redirect" to="https://foobar.{default}"/>
     </routes>
 </project>

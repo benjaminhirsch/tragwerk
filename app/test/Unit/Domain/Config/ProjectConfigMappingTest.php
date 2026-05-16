@@ -74,15 +74,24 @@ final class ProjectConfigMappingTest extends TestCase
 
         $config = $this->mapper->map(ProjectConfig::class, $source);
 
-        self::assertCount(1, $config->applications);
+        self::assertCount(2, $config->applications);
+
         self::assertSame('My Test Project', $config->applications[0]->name);
         self::assertSame(ApplicationRuntime::PHP85, $config->applications[0]->type);
         self::assertCount(1, $config->applications[0]->web->locations);
         self::assertCount(2, $config->applications[0]->hooks);
         self::assertCount(1, $config->applications[0]->mounts);
         self::assertCount(2, $config->applications[0]->relationships);
+
+        self::assertSame('Foobar', $config->applications[1]->name);
+        self::assertSame(ApplicationRuntime::PHP82, $config->applications[1]->type);
+        self::assertCount(1, $config->applications[1]->web->locations);
+        self::assertCount(1, $config->applications[1]->hooks);
+        self::assertCount(1, $config->applications[1]->mounts);
+        self::assertCount(1, $config->applications[1]->relationships);
+
         self::assertCount(2, $config->services);
-        self::assertCount(1, $config->routes);
+        self::assertCount(4, $config->routes);
     }
 
     public static function applicationRuntimeProvider(): Generator
