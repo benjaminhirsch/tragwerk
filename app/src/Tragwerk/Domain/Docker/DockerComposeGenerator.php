@@ -43,7 +43,7 @@ final readonly class DockerComposeGenerator
 
         foreach ($config->applications as $app) {
             $appSlug    = $this->slugify($app->name);
-            $appVolumes = ['.:/app'];
+            $appVolumes = [];
 
             foreach ($app->mounts as $mount) {
                 if ($mount->source !== MountSource::LOCAL) {
@@ -74,10 +74,13 @@ final readonly class DockerComposeGenerator
 
             /** @var array<string, mixed> $svcConfig */
             $svcConfig = [
-                'image'       => $this->imageResolver->forApplication($app->type),
-                'volumes'     => $appVolumes,
+                'build'       => ['context' => '.', 'dockerfile' => 'Dockerfile.' . $appSlug],
                 'environment' => $environment,
             ];
+
+            if ($appVolumes !== []) {
+                $svcConfig['volumes'] = $appVolumes;
+            }
 
             if ($labels !== []) {
                 $svcConfig['labels'] = $labels;

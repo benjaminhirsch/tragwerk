@@ -16,8 +16,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
+use Tragwerk\Domain\Docker\DockerfileGenerator;
 use Tragwerk\Domain\Model\ProjectConfig;
 
+use function chmod;
 use function file_exists;
 use function file_put_contents;
 use function libxml_clear_errors;
@@ -34,6 +36,7 @@ final class GenerateDockerConfig extends Command
     public function __construct(
         private readonly XmlToArrayConverter $converter,
         private readonly DockerComposeGenerator $composeGenerator,
+        private readonly DockerfileGenerator $dockerfileGenerator,
     ) {
         parent::__construct();
     }
@@ -104,6 +107,34 @@ final class GenerateDockerConfig extends Command
         }
 
         $output->writeln('Generated ' . $outDir . '/docker-compose.yml');
+
+        foreach ($config->applications as $app) {
+            $dockerfile = $this->dockerfileGenerator->generate($app);
+
+            $dockerfilePath = $outDir . '/' . $dockerfile->dockerfileName;
+            if (file_put_contents($dockerfilePath, $dockerfile->dockerfileContent) === false) {
+                $output->writeln('Failed to write ' . $dockerfile->dockerfileName);
+
+                return self::FAILURE;
+            }
+
+            $output->writeln('Generated ' . $outDir . '/' . $dockerfile->dockerfileName);
+
+            if ($dockerfile->entrypointName === null || $dockerfile->entrypointContent === null) {
+                continue;
+            }
+
+            $entrypointPath = $outDir . '/' . $dockerfile->entrypointName;
+
+            if (file_put_contents($entrypointPath, $dockerfile->entrypointContent) === false) {
+                $output->writeln('Failed to write ' . $dockerfile->entrypointName);
+
+                return self::FAILURE;
+            }
+
+            chmod($entrypointPath, 0755);
+            $output->writeln('Generated ' . $outDir . '/' . $dockerfile->entrypointName);
+        }
 
         return self::SUCCESS;
     }

@@ -27,7 +27,7 @@ final class ProjectConfigMappingTest extends TestCase
     protected function setUp(): void
     {
         $this->converter = new XmlToArrayConverter();
-        $this->mapper    = (new MapperBuilder())
+        $this->mapper    = new MapperBuilder()
             ->allowSuperfluousKeys()
             ->allowScalarValueCasting()
             ->mapper();
