@@ -1,0 +1,16 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tragwerk\Domain\Docker;
+
+final readonly class DockerfileOutput
+{
+    public function __construct(
+        public string $dockerfileName,
+        public string $dockerfileContent,
+        public string|null $entrypointName,
+        public string|null $entrypointContent,
+    ) {
+    }
+}

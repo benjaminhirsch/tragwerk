@@ -289,6 +289,39 @@ final class DockerComposeGeneratorTest extends TestCase
         self::assertStringContainsString('postgresql://', $env['DATABASE_URL']);
     }
 
+    #[Test]
+    public function appServiceUsesBuildKeyWithDockerfileName(): void
+    {
+        $config  = self::project([self::app('my-app')], [self::upstream('https://{default}', 'my-app:http')]);
+        $compose = $this->generator->generate($config);
+        $svc     = $this->service($compose, 'my-app');
+
+        self::assertArrayHasKey('build', $svc);
+        /** @var array<string, string> $build */
+        $build = $svc['build'];
+        self::assertSame('.', $build['context']);
+        self::assertSame('Dockerfile.my-app', $build['dockerfile']);
+    }
+
+    #[Test]
+    public function appServiceHasNoImageKey(): void
+    {
+        $config = self::project([self::app('app')], [self::upstream('https://{default}', 'app:http')]);
+        $svc    = $this->service($this->generator->generate($config), 'app');
+
+        self::assertArrayNotHasKey('image', $svc);
+    }
+
+    #[Test]
+    public function appServiceHasNoSourceMount(): void
+    {
+        $config  = self::project([self::app('app')], [self::upstream('https://{default}', 'app:http')]);
+        $compose = $this->generator->generate($config);
+        $svc     = $this->service($compose, 'app');
+
+        self::assertArrayNotHasKey('volumes', $svc);
+    }
+
     public static function slugifyProvider(): Generator
     {
         yield 'spaces to dashes'       => ['My Test Project', 'my-test-project'];
