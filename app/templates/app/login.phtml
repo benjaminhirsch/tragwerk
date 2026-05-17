@@ -1,13 +1,19 @@
 <?php $this->layout('layout::default', ['title' => 'Login · Tragwerk']) ?>
 
+<h4 class="card-title mb-1"><?= $this->t('Sign in') ?></h4>
+<p class="text-body-secondary small mb-4"><?= $this->t('Enter your credentials to continue') ?></p>
+
 <form action="<?= $this->url('login') ?>" method="post">
     <?= $this->fetch('partial::input/csrf') ?>
     <?= $this->fetch('partial::input/email', ['id' => 'email', 'label' => $this->t('E-Mail')]) ?>
     <?= $this->fetch('partial::input/password', ['id' => 'password', 'label' => $this->t('Password')]) ?>
-    <div class="form-actions">
-        <?= $this->fetch('partial::input/button', ['label' => $this->t('Login')]) ?>
+    <div class="form-actions d-grid">
+        <?= $this->fetch('partial::input/button', ['label' => $this->t('Sign in'), 'classes' => 'btn btn-primary']) ?>
     </div>
 </form>
 
-<a href="<?= $this->url('register') ?>"><?= $this->t('Create account') ?></a>
-
+<hr class="my-3">
+<p class="text-center text-body-secondary small mb-0">
+    <?= $this->t("Don't have an account?") ?>
+    <a href="<?= $this->url('register') ?>"><?= $this->t('Create one') ?></a>
+</p>

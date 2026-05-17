@@ -11,18 +11,20 @@ final class Version20260505184024 extends AbstractMigration
 {
     public function up(Schema $schema): void
     {
-        $this->addSql('create table stories (
-                id uuid constraint stories_pk primary key,
-                story_type text not null, 
-                points int default null,
-                requester_id uuid constraint on_users_pk references users(id),
+        $this->addSql('create table servers (
+                id uuid constraint servers_pk primary key,
+                name text not null, 
+                host text not null,
+                project_id uuid constraint servers_project_pk references projects(id),
                 created_at timestamp(6) not null,
-                updated_at timestamp(6) not null
+                created_by uuid not null constraint servers_created_by_fk references users(id),
+                updated_at timestamp(6) not null,
+                updated_by uuid not null constraint servers_updated_by_fk references users(id)
          )');
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('drop table stories');
+        $this->addSql('drop table servers');
     }
 }

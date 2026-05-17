@@ -10,18 +10,27 @@ if (($validation ?? null) !== null):
     $defaultValue = $validation->getValueByName($name);
 endif;
 ?>
-<div class="form-group">
+<div class="mb-3">
     <?php if (($label ?? null) !== null): ?>
-        <label for="<?= $this->e($id) ?>">
+        <label class="form-label" for="<?= $this->e($id) ?>">
             <?= $this->e($label) ?>
             <?php if ($required ?? false): ?><span class="required-marker">*</span><?php endif; ?>
         </label>
     <?php endif; ?>
 
-    <input class="pixel-input"
+    <input class="form-control"
            type="<?= $this->e($type) ?>"
            name="<?= $this->e($name) ?>"
            id="<?= $this->e($id) ?>"
+           <?php if($autofocus ?? false): ?>autofocus<?php endif; ?>
+           <?php if($disabled ?? false): ?>disabled<?php endif; ?>
+           <?php if($readonly ?? false): ?>readonly<?php endif; ?>
+           <?php if($placeholder ?? false): ?>placeholder="<?= $this->e($placeholder) ?>"<?php endif; ?>
+           <?php if($autocomplete ?? false): ?>autocomplete="<?= $this->e($autocomplete) ?>"<?php endif; ?>
+           <?php if($pattern ?? false): ?>pattern="<?= $this->e($pattern) ?>"<?php endif; ?>
+           <?php if($min ?? false): ?>min="<?= $this->e($min) ?>"<?php endif; ?>
+           <?php if($max ?? false): ?>max="<?= $this->e($max) ?>"<?php endif; ?>
+           <?php if($step ?? false): ?>step="<?= $this->e($step) ?>"<?php endif; ?>
            <?= ($required ?? false) === true ? 'required' : '' ?>
            value="<?= $this->e($defaultValue ?? null) ?>">
 

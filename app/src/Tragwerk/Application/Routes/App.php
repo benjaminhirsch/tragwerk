@@ -47,6 +47,9 @@ final readonly class App
         $routes->get(
             '/',
             $this->middlewareFactory->prepare([
+                new Middleware\Conditional\Authenticated($this->middlewareFactory->prepare([
+                    Middleware\Redirect\ToServerIndex::class,
+                ])),
                 Handler\HomeHandler::class,
             ]),
             'home',

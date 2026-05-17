@@ -135,7 +135,6 @@ final class UserRepositoryTest extends IntegrationTestCase
             $email,
             'Max',
             'Mustermann',
-            null,
             PasswordHash::create($password),
             $now,
             $now,

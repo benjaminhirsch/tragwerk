@@ -36,13 +36,10 @@ final readonly class UserRegistration implements DtoInterface
         }
 
         if (! $this->passwordHasMiniumLength()) {
-            throw Validation::make(
-                'password1',
-                sprintf(
-                    _('Password does not met the required minimum length of %d characters'),
-                    self::PASSWORD_MINIMUM_LENGTH,
-                ),
-            );
+            throw 'Password does not met the required minimum length of %d characters'
+                    |> _(...)
+                    |> (static fn ($x) => sprintf($x, self::PASSWORD_MINIMUM_LENGTH))
+                    |> (static fn ($x) => Validation::make('password1', $x));
         }
     }
 
@@ -65,7 +62,6 @@ final readonly class UserRegistration implements DtoInterface
             $this->email,
             $this->firstname,
             $this->lastname,
-            null,
             PasswordHash::create($this->password1),
             $now,
             $now,

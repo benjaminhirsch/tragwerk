@@ -23,7 +23,7 @@ final class Authentication implements MiddlewareInterface, ExtensionInterface
     public function register(Engine $engine): void
     {
         $engine->registerFunction('isAuthenticated', [$this, 'isAuthenticated']);
-        $engine->registerFunction('getAuthenticationSession', [$this, 'getAuthenticationSession']);
+        $engine->registerFunction('user', [$this, 'getAuthenticationSession']);
     }
 
     /** @psalm-mutation-free */

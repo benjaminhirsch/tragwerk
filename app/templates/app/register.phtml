@@ -1,19 +1,28 @@
 <?php $this->layout('layout::default', ['title' => 'Register · Tragwerk']); ?>
 
+<h4 class="card-title mb-1"><?= $this->t('Create account') ?></h4>
+<p class="text-body-secondary small mb-4"><?= $this->t('Get started with Tragwerk') ?></p>
+
 <form action="<?= $this->url('register') ?>" method="post">
     <?= $this->fetch('partial::input/csrf') ?>
-    <?= $this->fetch('partial::input/text', [
-        'id'         => 'firstname',
-        'label'      => $this->t('Firstname'),
-        'required'   => true,
-        'validation' => $validationBag ?? null,
-    ]) ?>
-    <?= $this->fetch('partial::input/text', [
-        'id'         => 'lastname',
-        'label'      => $this->t('Lastname'),
-        'required'   => true,
-        'validation' => $validationBag ?? null,
-    ]) ?>
+    <div class="row g-2">
+        <div class="col-6">
+            <?= $this->fetch('partial::input/text', [
+                'id'         => 'firstname',
+                'label'      => $this->t('Firstname'),
+                'required'   => true,
+                'validation' => $validationBag ?? null,
+            ]) ?>
+        </div>
+        <div class="col-6">
+            <?= $this->fetch('partial::input/text', [
+                'id'         => 'lastname',
+                'label'      => $this->t('Lastname'),
+                'required'   => true,
+                'validation' => $validationBag ?? null,
+            ]) ?>
+        </div>
+    </div>
     <?= $this->fetch('partial::input/email', [
         'id'         => 'email',
         'label'      => $this->t('E-Mail'),
@@ -32,7 +41,13 @@
         'required'   => true,
         'validation' => $validationBag ?? null,
     ]) ?>
-    <div class="form-actions">
-        <?= $this->fetch('partial::input/button', ['label' => $this->t('Register')]) ?>
+    <div class="form-actions d-grid">
+        <?= $this->fetch('partial::input/button', ['label' => $this->t('Create account'), 'classes' => 'btn btn-primary']) ?>
     </div>
 </form>
+
+<hr class="my-3">
+<p class="text-center text-body-secondary small mb-0">
+    <?= $this->t('Already have an account?') ?>
+    <a href="<?= $this->url('login') ?>"><?= $this->t('Sign in') ?></a>
+</p>

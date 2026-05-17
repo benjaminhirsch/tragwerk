@@ -1,0 +1,14 @@
+<?php $this->layout('layout::default', [
+        'title' => 'Tragwerk'
+]) ?>
+
+<h1><?= _('Servers') ?></h1>
+
+<div class="section-container">
+    <?= $this->fetch('partial::link',  [
+        'label' => _('Create Server'),
+        'icon' => 'bi bi-plus-circle',
+        'classes' => 'btn btn-primary',
+        'href' => $this->url('server.create'),
+    ]) ?>
+</div>
