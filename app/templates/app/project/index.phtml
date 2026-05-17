@@ -1,0 +1,14 @@
+<?php $this->layout('layout::default', [
+        'title' => _('Projects')
+]) ?>
+
+<h1><?= _('Projects') ?></h1>
+
+<div class="tw-card">
+    <?= $this->fetch('partial::link', [
+        'label'   => _('Create Project'),
+        'icon'    => 'bi bi-plus-circle',
+        'classes' => 'btn btn-primary',
+        'href'    => $this->url('project.create'),
+    ]) ?>
+</div>

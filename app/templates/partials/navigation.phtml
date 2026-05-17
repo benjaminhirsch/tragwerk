@@ -6,6 +6,12 @@ $links = [
                 'href' => $this->url('server'),
                 'classes' => 'nav-link bi bi-server',
         ],
+        [
+                'include' => 'partial::link',
+                'label' => _('Projects'),
+                'href' => $this->url('project'),
+                'classes' => 'nav-link bi bi-folder2-open',
+        ],
 ];
 ?>
 <ul class="nav flex-column">

@@ -1,0 +1,29 @@
+<?php $this->layout('layout::default', ['title' => _('Create project')]) ?>
+
+<h1><?= _('Create project') ?></h1>
+
+<?php $this->start('card-content') ?>
+    <form action="<?= $this->url('project.create') ?>" method="post">
+        <?= $this->fetch('partial::input/csrf') ?>
+
+        <?= $this->fetch('partial::input/text', [
+            'id'         => 'name',
+            'label'      => _('Project name'),
+            'autofocus'  => 'autofocus',
+            'validation' => $validationBag ?? null,
+        ]) ?>
+
+        <div class="form-group">
+            <label class="form-label"><?= _('Invite team members (optional)') ?></label>
+            <?= $this->fetch('partial::project/email-fields', [
+                'emails'     => $validationBag?->getArrayValueByName('emailsToInvite') ?: [''],
+                'validation' => $validationBag ?? null,
+            ]) ?>
+        </div>
+
+        <?= $this->fetch('partial::input/button', [
+            'label' => _('Create project'),
+        ]) ?>
+
+    </form>
+<?php $this->stop() ?>

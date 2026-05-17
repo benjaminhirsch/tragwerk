@@ -11,8 +11,10 @@ final readonly class EntityHelper
     public static function getDbTableName(EntityType $entityType): string
     {
         return match ($entityType) {
-            EntityType::USER => 'users',
-            EntityType::SERVER => 'servers',
+            EntityType::USER               => 'users',
+            EntityType::SERVER             => 'servers',
+            EntityType::PROJECT            => 'projects',
+            EntityType::PROJECT_INVITATION => 'project_invitations',
         };
     }
 }

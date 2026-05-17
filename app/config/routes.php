@@ -17,4 +17,5 @@ return static function (Application $app, MiddlewareFactory $factory, ContainerI
 
     new Routes\App($middlewareFactory)->registerRoutes($routeCollector);
     new Routes\Server($middlewareFactory)->registerRoutes($routeCollector);
+    new Routes\Project($middlewareFactory)->registerRoutes($routeCollector);
 };

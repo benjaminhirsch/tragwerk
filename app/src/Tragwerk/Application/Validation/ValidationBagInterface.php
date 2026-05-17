@@ -11,4 +11,7 @@ interface ValidationBagInterface
     public function getErrorByName(string $name): string|null;
 
     public function getValueByName(string $name): int|string;
+
+    /** @return string[] */
+    public function getArrayValueByName(string $name): array;
 }

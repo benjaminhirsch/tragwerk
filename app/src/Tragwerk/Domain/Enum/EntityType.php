@@ -11,16 +11,20 @@ use function _;
 
 enum EntityType: string implements Translatable
 {
-    case USER   = 'USER';
-    case SERVER = 'SERVER';
+    case USER               = 'USER';
+    case SERVER             = 'SERVER';
+    case PROJECT            = 'PROJECT';
+    case PROJECT_INVITATION = 'PROJECT_INVITATION';
 
     /** @phpstan-pure  */
     #[Override]
     public function translatableName(): string
     {
         return match ($this) {
-            self::USER => _('User'),
-            self::SERVER => _('Server'),
+            self::USER               => _('User'),
+            self::SERVER             => _('Server'),
+            self::PROJECT            => _('Project'),
+            self::PROJECT_INVITATION => _('Project Invitation'),
         };
     }
 
@@ -32,8 +36,10 @@ enum EntityType: string implements Translatable
     public function getEntityClassName(): string
     {
         return match ($this) {
-            self::USER => Entity\User::class,
-            self::SERVER => Entity\Server::class,
+            self::USER               => Entity\User::class,
+            self::SERVER             => Entity\Server::class,
+            self::PROJECT            => Entity\Project::class,
+            self::PROJECT_INVITATION => Entity\ProjectInvitation::class,
         };
     }
 }
