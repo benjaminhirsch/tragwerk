@@ -1,20 +1,80 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title><?= $this->e($title ?? 'Tragwerk') ?></title>
+    <script>(function(){var t=localStorage.getItem('tw-theme')||'dark';document.documentElement.setAttribute('data-bs-theme',t);})();</script>
     <script src="/js/htmx.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="/css/main.css">
     <?= $this->section('stylesheets') ?>
 </head>
 <body>
-<div class="default-app">
-    <main class="default-main">
+<?php if ($this->isAuthenticated()): ?>
+<aside class="tw-sidebar">
+    <div class="tw-sidebar-brand">
+        <?= $this->insert('partial::logo') ?>
+    </div>
+    <nav class="tw-sidebar-nav">
+        <?= $this->insert('partial::navigation') ?>
+    </nav>
+    <div class="tw-sidebar-footer">
+        <button class="tw-theme-toggle" onclick="twToggleTheme()" title="Toggle theme">
+            <i class="bi bi-sun-fill tw-icon-light"></i>
+            <i class="bi bi-moon-fill tw-icon-dark"></i>
+        </button>
+        <?= $this->fetch('partial::input/button', [
+            'label'      => _('Logout'),
+            'formAction' => $this->url('logout'),
+            'form'       => 'tw-logout',
+            'classes'    => 'tw-logout-btn',
+        ]) ?>
+        <form method="post" id="tw-logout"><?= $this->fetch('partial::input/csrf') ?></form>
+    </div>
+</aside>
+<div class="tw-content">
+    <header class="tw-topbar">
+        <span class="tw-topbar-title"><?= $this->e($title ?? '') ?></span>
+    </header>
+    <main class="tw-main">
         <?= $this->section('content') ?>
+        <?php if($this->section('card-content')): ?>
+        <div class="tw-card">
+            <?= $this->section('card-content') ?>
+        </div>
+        <?php endif ?>
     </main>
 </div>
+<?php else: ?>
+<button class="tw-theme-toggle tw-theme-toggle-fixed" onclick="twToggleTheme()" title="Toggle theme">
+    <i class="bi bi-sun-fill tw-icon-light"></i>
+    <i class="bi bi-moon-fill tw-icon-dark"></i>
+</button>
+<div class="tw-auth d-flex align-items-center justify-content-center min-vh-100">
+    <div class="tw-auth-card">
+        <div class="tw-auth-brand text-center mb-4">
+            <?= $this->insert('partial::logo') ?>
+        </div>
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <?= $this->section('content') ?>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 <?= $this->section('javascript') ?>
+<script>
+function twToggleTheme() {
+    let html = document.documentElement;
+    let next = html.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-bs-theme', next);
+    localStorage.setItem('tw-theme', next);
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 </body>
 </html>

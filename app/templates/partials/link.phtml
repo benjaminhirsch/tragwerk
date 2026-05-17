@@ -1,0 +1,6 @@
+<a href="<?= $this->e($href) ?>" class="<?= isset($classes) ? $this->e($classes) : '' ?>">
+    <?php if (($icon ?? null) !== null):?>
+        <i class="<?= $this->e($icon) ?>"></i>
+    <?php endif; ?>
+    <?= $this->e($label) ?>
+</a>

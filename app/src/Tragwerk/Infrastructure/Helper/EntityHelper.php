@@ -12,6 +12,7 @@ final readonly class EntityHelper
     {
         return match ($entityType) {
             EntityType::USER => 'users',
+            EntityType::SERVER => 'servers',
         };
     }
 }

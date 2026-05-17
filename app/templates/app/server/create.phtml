@@ -1,0 +1,23 @@
+<?php $this->layout('layout::default', [
+        'title' => 'Tragwerk'
+]) ?>
+
+<h1><?= _('Create server') ?></h1>
+
+<?php $this->start('card-content') ?>
+    <form action="<?= $this->url('server.create') ?>" method="post">
+        <?= $this->fetch('partial::input/csrf') ?>
+        <?= $this->fetch('partial::input/text', [
+                'id' => 'name',
+                'label' => _('Server name'),
+                'autofocus' => 'autofocus',
+                'validation' => $validationBag ?? null
+        ]) ?>
+        <?= $this->fetch('partial::input/text', [
+                'id' => 'host',
+                'label' => _('IP address / Hostname'),
+                'validation' => $validationBag ?? null
+        ]) ?>
+        <?= $this->fetch('partial::input/button') ?>
+    </form>
+<?php $this->stop() ?>

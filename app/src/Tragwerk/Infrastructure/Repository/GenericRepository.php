@@ -10,8 +10,6 @@ use CuyZ\Valinor\Normalizer\Format;
 use CuyZ\Valinor\NormalizerBuilder;
 use Doctrine\DBAL;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\Types\Type;
 use JsonException;
 use Tragwerk\Application\Helper\CaseConverter;
 use Tragwerk\Domain\Entity\Entity;
@@ -63,8 +61,7 @@ abstract class GenericRepository
         }
     }
 
-    /** @param array<int<0,max>, string|ParameterType|Type>|array<string, string|ParameterType|Type> $types */
-    public function create(Entity $entity, array $types = []): void
+    public function create(Entity $entity): void
     {
         try {
             $data = $this->normalizerBuilder->normalizer(Format::array())->normalize($entity);
@@ -73,7 +70,6 @@ abstract class GenericRepository
                 EntityHelper::getDbTableName($entity->id::getEntityType()),
                 // @phpstan-ignore argument.type
                 CaseConverter::camelToSnakeCase($data),
-                $types,
             );
         } catch (DBAL\Exception $e) {
             throw EntityCreationFailed::create($entity::class, $entity->id, $e);

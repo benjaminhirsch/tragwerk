@@ -1,0 +1,13 @@
+<?php
+$links = [
+        [
+                'include' => 'partial::link',
+                'label' => _('Servers'),
+                'href' => $this->url('server'),
+                'classes' => 'nav-link bi bi-server',
+        ],
+];
+?>
+<ul class="nav flex-column">
+    <?php foreach ($links as $l) printf('%s', $this->fetch($l['include'], $l));  ?>
+</ul>

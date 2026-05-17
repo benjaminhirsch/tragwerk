@@ -57,7 +57,6 @@ final class CreateUserCommand extends Command
                 $email,
                 $firstname,
                 $lastname,
-                $displayname,
                 PasswordHash::create($password),
                 $now,
                 $now,

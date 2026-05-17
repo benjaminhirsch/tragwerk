@@ -76,7 +76,6 @@ final class LoginHandlerTest extends AppIntegrationTestCase
             self::EMAIL,
             'Login',
             'Tester',
-            null,
             PasswordHash::create(self::PASSWORD),
             $now,
             $now,

@@ -244,6 +244,7 @@ final readonly class ConfigProvider
             'dependencies' => [
                 'aliases' => [
                     Domain\Repository\UserRepository::class => Infrastructure\Repository\UserRepository::class,
+                    Domain\Repository\ServerRepository::class => Infrastructure\Repository\ServerRepository::class,
                 ],
             ],
         ];
@@ -297,6 +298,7 @@ final readonly class ConfigProvider
                     EventListener\User\UserRegisteredListener::class,
                     EventListener\User\SendRegistrationMail::class,
                 ],
+                Event\ServerCreated::class => [EventListener\Server\CreateServer::class],
             ],
         ];
     }

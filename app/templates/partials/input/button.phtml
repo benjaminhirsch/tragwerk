@@ -1,4 +1,3 @@
-<?php assert(isset($label) && is_string($label)); ?>
 <button class="<?= isset($classes) ? $this->e($classes) : 'btn btn-primary' ?>"
         type="<?= $type ?? 'submit' ?>"
         <?php if (($id ?? null) !== null):?>id="<?= $this->e($id) ?>"<?php endif; ?>
@@ -9,4 +8,9 @@
         <?php if (($formMethod ?? null) !== null):?>formmethod="<?= $this->e($formMethod) ?>"<?php endif; ?>
         <?php if (($value ?? null) !== null):?>value="<?= $this->e($value) ?>"<?php endif; ?>
         <?php if (($disabled ?? false) !== false):?>disabled<?php endif; ?>
-><?= $this->e($label) ?></button>
+>
+    <?php if (($icon ?? null) !== null):?>
+        <i class="<?= $this->e($icon) ?>"></i>
+    <?php endif; ?>
+    <?= $this->e($label ?? _('Save')) ?>
+</button>

@@ -18,7 +18,6 @@ final class Version20260405200049 extends AbstractMigration
             email text not null,
             firstname text not null,
             lastname text not null,
-            displayname text default null,
             password text not null,            
             created_at timestamp(6) not null,
             updated_at timestamp(6) not null
