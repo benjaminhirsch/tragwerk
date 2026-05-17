@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Tragwerk\Application\Dto;
+namespace Tragwerk\Application\Dto\Project;
 
 use CuyZ\Valinor\Mapper\Http\FromBody;
+use Tragwerk\Application\Dto\DtoInterface;
 use Tragwerk\Application\Exception\ValidationError;
 use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\ValueObject\PasswordHash;
@@ -15,7 +16,7 @@ use function _;
 use function sprintf;
 use function strlen;
 
-final readonly class UserRegistration implements DtoInterface
+final readonly class InviteRegistration implements DtoInterface
 {
     private const int PASSWORD_MINIMUM_LENGTH = 8;
 
@@ -25,41 +26,29 @@ final readonly class UserRegistration implements DtoInterface
         #[FromBody]
         public string $lastname,
         #[FromBody]
-        public string $email,
-        #[FromBody]
         public string $password1,
         #[FromBody]
         public string $password2,
     ) {
-        if (! $this->passwordsAreIdentical()) {
+        if ($this->password1 !== $this->password2) {
             throw ValidationError::make('password1', _('Passwords are not identical'));
         }
 
-        if (! $this->passwordHasMiniumLength()) {
-            throw 'Password does not met the required minimum length of %d characters'
-                    |> _(...)
-                    |> (static fn ($x) => sprintf($x, self::PASSWORD_MINIMUM_LENGTH))
-                    |> (static fn ($x) => ValidationError::make('password1', $x));
+        if (strlen($this->password1) < self::PASSWORD_MINIMUM_LENGTH) {
+            throw ValidationError::make(
+                'password1',
+                sprintf(_('Password must be at least %d characters'), self::PASSWORD_MINIMUM_LENGTH),
+            );
         }
     }
 
-    private function passwordsAreIdentical(): bool
-    {
-        return $this->password1 === $this->password2;
-    }
-
-    private function passwordHasMiniumLength(): bool
-    {
-        return strlen($this->password1) >= 8;
-    }
-
-    public function createUser(): User
+    public function createUser(string $email): User
     {
         $now = TimestampImmutable::now();
 
         return new User(
             UserIdentifier::create(),
-            $this->email,
+            $email,
             $this->firstname,
             $this->lastname,
             PasswordHash::create($this->password1),

@@ -6,7 +6,7 @@ namespace Tragwerk\Application\Dto\Server;
 
 use CuyZ\Valinor\Mapper\Http\FromBody;
 use Tragwerk\Application\Dto\DtoInterface;
-use Tragwerk\Application\Exception\Validation;
+use Tragwerk\Application\Exception\ValidationError;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
@@ -24,11 +24,11 @@ final readonly class ServerCreation implements DtoInterface
         public string $host,
     ) {
         if (trim($this->name)  === '') {
-            throw Validation::make('name', _('Field can\'t be empty'));
+            throw ValidationError::make('name', _('Field can\'t be empty'));
         }
 
         if (trim($this->host)  === '') {
-            throw Validation::make('host', _('Field can\'t be empty'));
+            throw ValidationError::make('host', _('Field can\'t be empty'));
         }
     }
 

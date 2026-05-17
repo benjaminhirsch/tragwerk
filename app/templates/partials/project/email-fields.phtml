@@ -1,0 +1,44 @@
+<?php
+/** @var string[] $emails */
+/** @var \Tragwerk\Application\Validation\ValidationBag|null $validation */
+$emails = $emails ?? [''];
+?>
+<div id="tw-email-list" class="d-flex flex-column gap-2 mb-4">
+    <?php foreach ($emails as $i => $email): ?>
+    <div class="tw-email-row d-flex gap-2 align-items-start">
+        <div class="flex-grow-1">
+            <?= $this->fetch('partial::input/text', [
+                    'id' => 'emailsToInvite_' . $i,
+                    'defaultValue' => $email,
+                    'placeholder' => 'name@example.com',
+                    'name' => 'emailsToInvite[' . $i . ']',
+                    'validation' => $validation ?? null,
+            ]) ?>
+        </div>
+        <?php if (count($emails) > 1): ?>
+        <?= $this->fetch('partial::input/button', [
+                'classes' => 'btn btn-outline-secondary flex-shrink-0',
+                'icon' => 'bi bi-x-lg',
+                'hxPost' => $this->url('project.emails'),
+                'hxTarget' => '#tw-email-list',
+                'hxSwap' => 'outerHTML',
+                'hxInclude' => 'closest form',
+                'hxVals' => '{"action": "remove", "removeIndex": "' . $i . '"}',
+                'label' => '',
+                'type' => 'button',
+        ]) ?>
+        <?php endif; ?>
+    </div>
+    <?php endforeach; ?>
+    <?= $this->fetch('partial::input/button', [
+            'classes' => 'btn btn-outline-secondary align-self-start d-inline-block',
+            'icon' => 'bi bi-plus-lg',
+            'hxPost' => $this->url('project.emails'),
+            'hxTarget' => '#tw-email-list',
+            'hxSwap' => 'outerHTML',
+            'hxInclude' => 'closest form',
+            'hxVals' => '{"action": "add"}',
+            'label' => _('Add another email'),
+            'type' => 'button',
+    ]) ?>
+</div>

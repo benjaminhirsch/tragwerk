@@ -245,6 +245,9 @@ final readonly class ConfigProvider
                 'aliases' => [
                     Domain\Repository\UserRepository::class => Infrastructure\Repository\UserRepository::class,
                     Domain\Repository\ServerRepository::class => Infrastructure\Repository\ServerRepository::class,
+                    Domain\Repository\ProjectRepository::class => Infrastructure\Repository\ProjectRepository::class,
+                    Domain\Repository\ProjectInvitationRepository::class =>
+                        Infrastructure\Repository\ProjectInvitationRepository::class,
                 ],
             ],
         ];
@@ -299,6 +302,9 @@ final readonly class ConfigProvider
                     EventListener\User\SendRegistrationMail::class,
                 ],
                 Event\ServerCreated::class => [EventListener\Server\CreateServer::class],
+                Event\ProjectCreated::class => [EventListener\Project\CreateProject::class],
+                Event\ProjectInvitationCreated::class =>
+                    [EventListener\Project\SendProjectInvitation::class],
             ],
         ];
     }

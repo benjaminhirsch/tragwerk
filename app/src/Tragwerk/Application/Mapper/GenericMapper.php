@@ -7,7 +7,8 @@ namespace Tragwerk\Application\Mapper;
 use CuyZ\Valinor\Mapper\MappingError;
 use CuyZ\Valinor\Mapper\TreeMapper;
 use Psr\Http\Message\ServerRequestInterface;
-use Tragwerk\Application\Exception\Validation;
+use Tragwerk\Application\Exception\ValidationCollection;
+use Tragwerk\Application\Exception\ValidationError;
 use Tragwerk\Application\Validation\ValidationBag;
 
 use function array_map;
@@ -33,15 +34,24 @@ final readonly class GenericMapper
             ));
 
             $expectedObject = $this->mapper->map($targetClass, $request);
-        } catch (MappingError | Validation $e) {
-            if ($e instanceof MappingError) {
-                foreach ($e->messages() as $message) {
-                    $validationMessages[$message->name()] = $message->body();
-                }
-            }
+        } catch (MappingError $e) {
+            foreach ($e->messages() as $message) {
+                $originalMessage = $message->originalMessage();
 
-            if ($e instanceof Validation) {
-                $validationMessages[$e->validationField] = $e->validationMessage;
+                if ($originalMessage instanceof ValidationCollection) {
+                    foreach ($originalMessage->validations as $validation) {
+                        $validationMessages[$validation->name] = $validation->body();
+                    }
+
+                    continue;
+                }
+
+                $name = $message->name();
+                if ($originalMessage instanceof ValidationError) {
+                    $name = $originalMessage->name;
+                }
+
+                $validationMessages[$name] = $message->body();
             }
         }
 
