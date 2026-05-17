@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Tragwerk\Application\Handler\Project;
 
-use Laminas\Diactoros\Response\HtmlResponse;
-use Mezzio\Template\TemplateRendererInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Tragwerk\Application\Response\ResponseRenderer;
 
 use function array_splice;
 use function array_values;
@@ -19,7 +18,7 @@ use function is_string;
 final readonly class EmailFieldsHandler implements RequestHandlerInterface
 {
     public function __construct(
-        private TemplateRendererInterface $templateRenderer,
+        private ResponseRenderer $renderer,
     ) {
     }
 
@@ -45,8 +44,6 @@ final readonly class EmailFieldsHandler implements RequestHandlerInterface
             $emails = [''];
         }
 
-        $html = $this->templateRenderer->render('partial::project/email-fields', ['emails' => $emails]);
-
-        return new HtmlResponse($html);
+        return $this->renderer->render($request, 'partial::project/email-fields', ['emails' => $emails]);
     }
 }
