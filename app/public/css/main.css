@@ -530,7 +530,47 @@ h6 {
     display: block;
 }
 
-table tr td a {
+/* ── Tables ─────────────────────────────────────────────── */
+
+.table {
+    --bs-table-bg:              transparent;
+    --bs-table-striped-bg:      rgba(165, 180, 252, 0.09);
+    --bs-table-hover-bg:        rgba(165, 180, 252, 0.16);
+    --bs-table-border-color:    rgba(165, 180, 252, 0.14);
+    font-size: 0.875rem;
+}
+
+.table thead th {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--bs-secondary-color);
+    background: rgba(165, 180, 252, 0.10);
+    border-bottom: 2px solid rgba(165, 180, 252, 0.25);
+}
+
+.table tbody tr td {
+    border-color: rgba(165, 180, 252, 0.10);
+    vertical-align: middle;
+}
+
+[data-bs-theme="light"] .table {
+    --bs-table-striped-bg:      rgba(99, 102, 241, 0.07);
+    --bs-table-hover-bg:        rgba(99, 102, 241, 0.13);
+    --bs-table-border-color:    rgba(99, 102, 241, 0.12);
+}
+
+[data-bs-theme="light"] .table thead th {
+    background: rgba(99, 102, 241, 0.07);
+    border-bottom-color: rgba(99, 102, 241, 0.20);
+}
+
+[data-bs-theme="light"] .table tbody tr td {
+    border-color: rgba(99, 102, 241, 0.10);
+}
+
+.table tr td a {
     text-decoration: none;
     font-weight: 600;
 }
