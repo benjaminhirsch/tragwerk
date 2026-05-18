@@ -116,6 +116,7 @@ final readonly class ConfigProvider
                     Template\Extension\Translator::class,
                     Template\Extension\Locale::class,
                     Template\Extension\Csrf::class,
+                    Template\Extension\ProjectContext::class,
                 ],
             ],
             'dependencies' => [
@@ -299,12 +300,14 @@ final readonly class ConfigProvider
             'events'       => [
                 Event\UserRegistered::class => [
                     EventListener\User\UserRegisteredListener::class,
+                    EventListener\User\CreateDefaultProject::class,
                     EventListener\User\SendRegistrationMail::class,
                 ],
                 Event\ServerCreated::class => [EventListener\Server\CreateServer::class],
                 Event\ProjectCreated::class => [EventListener\Project\CreateProject::class],
                 Event\ProjectInvitationCreated::class =>
                     [EventListener\Project\SendProjectInvitation::class],
+                Event\UserSwitchedProject::class => [EventListener\User\PersistLastActiveProject::class],
             ],
         ];
     }

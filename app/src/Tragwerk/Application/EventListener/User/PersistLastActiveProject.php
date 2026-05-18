@@ -7,15 +7,15 @@ namespace Tragwerk\Application\EventListener\User;
 use Tragwerk\Domain\Event;
 use Tragwerk\Domain\Repository\UserRepository;
 
-final readonly class UserRegisteredListener
+final readonly class PersistLastActiveProject
 {
     public function __construct(
         private UserRepository $userRepository,
     ) {
     }
 
-    public function __invoke(Event\UserRegistered $event): void
+    public function __invoke(Event\UserSwitchedProject $event): void
     {
-        $this->userRepository->create($event->user);
+        $this->userRepository->setLastActiveProject($event->userId, $event->projectId);
     }
 }

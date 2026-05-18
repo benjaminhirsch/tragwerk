@@ -18,7 +18,7 @@ endif;
         </label>
     <?php endif; ?>
 
-    <input class="form-control"
+    <input class="<?= isset($classes) ? $this->e($classes) : 'form-control' ?>"
            type="<?= $this->e($type) ?>"
            name="<?= $this->e($name) ?>"
            id="<?= $this->e($id) ?>"
