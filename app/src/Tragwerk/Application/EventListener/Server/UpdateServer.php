@@ -22,8 +22,8 @@ final readonly class UpdateServer
         $server = $this->serverRepository->getById($event->serverId);
         assert($server instanceof Server);
 
-        $server->name      = $event->serverUpdate->name;
-        $server->host      = $event->serverUpdate->host;
+        $server->name      = $event->server->name;
+        $server->host      = $event->server->host;
         $server->updatedAt = TimestampImmutable::now();
         $server->updatedBy = $event->updatedBy;
 

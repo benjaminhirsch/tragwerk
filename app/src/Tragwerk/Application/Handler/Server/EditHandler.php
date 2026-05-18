@@ -14,7 +14,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Throwable;
-use Tragwerk\Application\Dto\Server\ServerUpdate;
+use Tragwerk\Application\Dto\Server\Server as ServerDto;
 use Tragwerk\Application\Mapper\GenericMapper;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Application\Validation\ValidationBag;
@@ -52,11 +52,11 @@ final readonly class EditHandler implements RequestHandlerInterface
         $validationBag = null;
 
         if ($request->getMethod() === RequestMethodInterface::METHOD_POST) {
-            $validationBag = $this->mapper->mapAndValidate($request, ServerUpdate::class);
+            $validationBag = $this->mapper->mapAndValidate($request, ServerDto::class);
 
             if (! $validationBag->hasErrors()) {
                 $update = $validationBag->getDto();
-                assert($update instanceof ServerUpdate);
+                assert($update instanceof ServerDto);
 
                 if ($this->serverRepository->existsByHost($update->host, $server->id)) {
                     $validationBag = $validationBag->withError('host', _('IP address already exists'));

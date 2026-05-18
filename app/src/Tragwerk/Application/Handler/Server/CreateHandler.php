@@ -12,7 +12,7 @@ use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Tragwerk\Application\Dto\Server;
+use Tragwerk\Application\Dto\Server\Server as ServerDto;
 use Tragwerk\Application\Mapper\GenericMapper;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Entity\Project;
@@ -38,9 +38,9 @@ final readonly class CreateHandler implements RequestHandlerInterface
     {
         $validationBag = null;
         if ($request->getMethod() === RequestMethodInterface::METHOD_POST) {
-            $validationBag = $this->mapper->mapAndValidate($request, Server\ServerCreation::class);
+            $validationBag = $this->mapper->mapAndValidate($request, ServerDto::class);
 
-            $user = $request->getAttribute(UserINterface::class);
+            $user = $request->getAttribute(UserInterface::class);
             assert($user instanceof UserInterface);
 
             $activeProject = $request->getAttribute('active_project');
@@ -48,7 +48,7 @@ final readonly class CreateHandler implements RequestHandlerInterface
 
             if (! $validationBag->hasErrors()) {
                 $registration = $validationBag->getDto();
-                assert($registration instanceof Server\ServerCreation);
+                assert($registration instanceof ServerDto);
 
                 if (! $this->serverRepository->existsByHost($registration->host)) {
                     $this->eventDispatcher->dispatch(new ServerCreated(
