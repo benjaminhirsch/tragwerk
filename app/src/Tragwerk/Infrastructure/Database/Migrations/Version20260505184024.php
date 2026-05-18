@@ -14,7 +14,7 @@ final class Version20260505184024 extends AbstractMigration
         $this->addSql('create table servers (
                 id uuid constraint servers_pk primary key,
                 name text not null, 
-                host text not null,
+                host inet not null,
                 project_id uuid constraint servers_project_pk references projects(id),
                 created_at timestamp(6) not null,
                 created_by uuid not null constraint servers_created_by_fk references users(id),

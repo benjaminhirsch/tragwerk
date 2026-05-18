@@ -92,4 +92,9 @@ final readonly class ValidationBag implements ValidationBagInterface
     {
         return $this->dto;
     }
+
+    public function withError(string $field, string $message): self
+    {
+        return new self($this->passedValues, $this->dto, [...$this->messages, $field => $message]);
+    }
 }

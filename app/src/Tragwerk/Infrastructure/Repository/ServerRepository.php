@@ -12,6 +12,8 @@ use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Enum\EntityType;
 use Tragwerk\Domain\Exception\Repository\EntityHydrationFailed;
 use Tragwerk\Domain\Repository\ServerRepository as ServerRepositoryInterface;
+use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Infrastructure\Helper\EntityHelper;
 
 use function implode;
@@ -19,12 +21,34 @@ use function implode;
 final class ServerRepository extends GenericRepository implements ServerRepositoryInterface
 {
     #[Override]
+    public function existsByHost(string $host, ServerIdentifier|null $excludeId = null): bool
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb->select('1')
+            ->from(EntityHelper::getDbTableName(EntityType::SERVER))
+            ->where($qb->expr()->eq('host', ':host'))
+            ->setParameter('host', $host)
+            ->setMaxResults(1);
+
+        if ($excludeId !== null) {
+            $qb->andWhere($qb->expr()->neq('id', ':exclude_id'))
+                ->setParameter('exclude_id', $excludeId->toString());
+        }
+
+        try {
+            return $qb->executeQuery()->fetchOne() !== false;
+        } catch (Exception) {
+            return false;
+        }
+    }
+
+    #[Override]
     public function getAll(
         array|null $ids = null,
         array|null $names = null,
+        ProjectIdentifier|null $projectId = null,
     ): Generator {
         $qb = $this->connection->createQueryBuilder();
-
         $qb->select('*')->from(EntityHelper::getDbTableName(EntityType::SERVER));
 
         if ($ids !== null) {
@@ -37,9 +61,14 @@ final class ServerRepository extends GenericRepository implements ServerReposito
             $qb->setParameter('emails', implode(',', $names));
         }
 
+        if ($projectId !== null) {
+            $qb->andWhere($qb->expr()->eq('project_id', ':project_id'));
+            $qb->setParameter('project_id', $projectId->toString());
+        }
+
         try {
-            foreach ($qb->executeQuery()->iterateAssociative() as $character) {
-                yield $this->map($character, Server::class);
+            foreach ($qb->addOrderBy('created_at', 'DESC')->executeQuery()->iterateAssociative() as $row) {
+                yield $this->map($row, Server::class);
             }
         } catch (MappingError | Exception $e) {
             throw EntityHydrationFailed::create(Server::class, $e);

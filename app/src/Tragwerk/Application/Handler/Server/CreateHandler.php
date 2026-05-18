@@ -15,9 +15,12 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Tragwerk\Application\Dto\Server;
 use Tragwerk\Application\Mapper\GenericMapper;
 use Tragwerk\Application\Response\ResponseRenderer;
+use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Event\ServerCreated;
+use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
+use function _;
 use function assert;
 
 final readonly class CreateHandler implements RequestHandlerInterface
@@ -27,6 +30,7 @@ final readonly class CreateHandler implements RequestHandlerInterface
         private GenericMapper $mapper,
         private EventDispatcherInterface $eventDispatcher,
         private UrlHelper $urlHelper,
+        private ServerRepository $serverRepository,
     ) {
     }
 
@@ -39,15 +43,24 @@ final readonly class CreateHandler implements RequestHandlerInterface
             $user = $request->getAttribute(UserINterface::class);
             assert($user instanceof UserInterface);
 
+            $activeProject = $request->getAttribute('active_project');
+            assert($activeProject instanceof Project);
+
             if (! $validationBag->hasErrors()) {
                 $registration = $validationBag->getDto();
                 assert($registration instanceof Server\ServerCreation);
-                $this->eventDispatcher->dispatch(new ServerCreated(
-                    $registration,
-                    UserIdentifier::fromString($user->getIdentity()),
-                ));
 
-                return new RedirectResponse($this->urlHelper->generate('server'));
+                if (! $this->serverRepository->existsByHost($registration->host)) {
+                    $this->eventDispatcher->dispatch(new ServerCreated(
+                        $registration,
+                        UserIdentifier::fromString($user->getIdentity()),
+                        $activeProject->id,
+                    ));
+
+                    return new RedirectResponse($this->urlHelper->generate('server'));
+                }
+
+                $validationBag = $validationBag->withError('host', _('IP address is already in use'));
             }
         }
 

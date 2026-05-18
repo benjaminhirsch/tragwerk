@@ -15,7 +15,7 @@
         ]) ?>
         <?= $this->fetch('partial::input/text', [
                 'id' => 'host',
-                'label' => _('IP address / Hostname'),
+                'label' => _('IP address (IPv4 or IPv6)'),
                 'validation' => $validationBag ?? null
         ]) ?>
         <?= $this->fetch('partial::input/button') ?>

@@ -15,6 +15,9 @@ final readonly class CreateServer
 
     public function __invoke(Event\ServerCreated $event): void
     {
-        $this->serverRepository->create($event->serverCreation->createServer($event->createdBy));
+        $this->serverRepository->create($event->serverCreation->createServer(
+            $event->createdBy,
+            $event->projectId,
+        ));
     }
 }

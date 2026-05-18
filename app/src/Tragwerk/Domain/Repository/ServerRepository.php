@@ -12,6 +12,7 @@ use Tragwerk\Domain\Exception\Repository\EntityDeletionFailed;
 use Tragwerk\Domain\Exception\Repository\EntityHydrationFailed;
 use Tragwerk\Domain\Exception\Repository\EntityNotFound;
 use Tragwerk\Domain\Exception\Repository\EntityUpdateFailed;
+use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
 
 interface ServerRepository
@@ -34,6 +35,8 @@ interface ServerRepository
     /** @throws EntityDeletionFailed */
     public function delete(ServerIdentifier $id): void;
 
+    public function existsByHost(string $host, ServerIdentifier|null $excludeId = null): bool;
+
     /**
      * @param ServerIdentifier[]|null $ids
      * @param string[]|null           $names
@@ -41,5 +44,6 @@ interface ServerRepository
     public function getAll(
         array|null $ids = null,
         array|null $names = null,
+        ProjectIdentifier|null $projectId = null,
     ): Generator;
 }

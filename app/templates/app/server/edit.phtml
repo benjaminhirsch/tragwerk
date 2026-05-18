@@ -1,0 +1,47 @@
+<?php $this->layout('layout::default', ['title' => _('Edit server')]) ?>
+
+<h1><?= _('Edit server') ?></h1>
+
+<?php $this->start('card-content') ?>
+    <form action="<?= $this->url('server.edit', ['id' => $server->id->toString()]) ?>" method="post">
+        <?= $this->fetch('partial::input/csrf') ?>
+
+        <?= $this->fetch('partial::input/text', [
+            'id'         => 'name',
+            'label'      => _('Server name'),
+            'autofocus'  => 'autofocus',
+            'validation' => $validationBag,
+        ]) ?>
+
+        <?= $this->fetch('partial::input/text', [
+            'id'         => 'host',
+            'label'      => _('IP address (IPv4 or IPv6)'),
+            'validation' => $validationBag,
+        ]) ?>
+
+        <div class="d-flex justify-content-between gap-2">
+            <?= $this->fetch('partial::input/button', [
+                'label' => _('Save server'),
+            ]) ?>
+            <?= $this->fetch('partial::input/button', [
+                'label'        => _('Delete server'),
+                'classes'      => 'btn btn-outline-danger',
+                'icon'         => 'bi bi-trash3',
+                'type'         => 'button',
+                'dataBsToggle' => 'modal',
+                'dataBsTarget' => '#tw-delete-server-modal',
+            ]) ?>
+        </div>
+
+    </form>
+<?php $this->stop() ?>
+
+<?= $this->fetch('partial::modal', [
+    'id'            => 'tw-delete-server-modal',
+    'header'        => _('Delete server'),
+    'body'          => sprintf(_('Are you sure you want to delete the server %s? This action cannot be undone.'), '<strong>' . $this->e($server->name) . '</strong>'),
+    'actionUrl'     => $this->url('server.delete', ['id' => $server->id->toString()]),
+    'actionLabel'   => _('Delete server'),
+    'actionClasses' => 'btn btn-danger',
+    'actionIcon'    => 'bi bi-trash3',
+]) ?>
