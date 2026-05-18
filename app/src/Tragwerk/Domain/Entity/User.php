@@ -24,4 +24,9 @@ final class User implements Entity
         public ProjectIdentifier|null $lastActiveProjectId = null,
     ) {
     }
+
+    public function fullName(): string
+    {
+        return $this->firstname . ' ' . $this->lastname;
+    }
 }

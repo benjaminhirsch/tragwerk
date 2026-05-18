@@ -7,11 +7,14 @@ namespace Tragwerk\Infrastructure\Repository;
 use CuyZ\Valinor\Mapper\MappingError;
 use DateTimeImmutable;
 use Doctrine\DBAL\Exception;
+use Doctrine\DBAL\Types\Types;
 use Generator;
 use Override;
 use Tragwerk\Domain\Entity\Project;
+use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\Enum\EntityType;
 use Tragwerk\Domain\Exception\Repository\EntityCreationFailed;
+use Tragwerk\Domain\Exception\Repository\EntityDeletionFailed;
 use Tragwerk\Domain\Exception\Repository\EntityHydrationFailed;
 use Tragwerk\Domain\Repository\ProjectRepository as ProjectRepositoryInterface;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
@@ -22,10 +25,13 @@ use function implode;
 
 final class ProjectRepository extends GenericRepository implements ProjectRepositoryInterface
 {
+    private const string PROJECT_USERS_TABLE = 'project_users';
+
     #[Override]
     public function getAll(
         array|null $ids = null,
         array|null $names = null,
+        array|null $ownerIds = null,
     ): Generator {
         $qb = $this->connection->createQueryBuilder();
 
@@ -33,7 +39,7 @@ final class ProjectRepository extends GenericRepository implements ProjectReposi
 
         if ($ids !== null) {
             $qb->andWhere($qb->expr()->in('id', ':ids'));
-            $qb->setParameter('ids', $ids);
+            $qb->setParameter('ids', $ids, Types::SIMPLE_ARRAY);
         }
 
         if ($names !== null) {
@@ -41,8 +47,13 @@ final class ProjectRepository extends GenericRepository implements ProjectReposi
             $qb->setParameter('names', implode(',', $names));
         }
 
+        if ($ownerIds !== null) {
+            $qb->andWhere($qb->expr()->in('owner_id', ':owner_ids'));
+            $qb->setParameter('owner_ids', $ownerIds, Types::SIMPLE_ARRAY);
+        }
+
         try {
-            foreach ($qb->executeQuery()->iterateAssociative() as $row) {
+            foreach ($qb->addOrderBy('created_at', 'DESC')->executeQuery()->iterateAssociative() as $row) {
                 yield $this->map($row, Project::class);
             }
         } catch (MappingError | Exception $e) {
@@ -85,6 +96,40 @@ final class ProjectRepository extends GenericRepository implements ProjectReposi
             }
         } catch (Exception $e) {
             throw EntityCreationFailed::create(UserIdentifier::class, $projectId, $e);
+        }
+    }
+
+    #[Override]
+    public function getUsersByProjectId(ProjectIdentifier $projectId): Generator
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb->select('u.*')
+            ->from(EntityHelper::getDbTableName(EntityType::USER), 'u')
+            ->innerJoin('u', self::PROJECT_USERS_TABLE, 'pu', 'pu.user_id = u.id')
+            ->where($qb->expr()->eq('pu.project_id', ':project_id'))
+            ->orderBy('u.lastname', 'ASC')
+            ->addOrderBy('u.firstname', 'ASC')
+            ->setParameter('project_id', $projectId->toString());
+
+        try {
+            foreach ($qb->executeQuery()->iterateAssociative() as $row) {
+                yield $this->map($row, User::class);
+            }
+        } catch (MappingError | Exception $e) {
+            throw EntityHydrationFailed::create(User::class, $e);
+        }
+    }
+
+    #[Override]
+    public function removeUser(ProjectIdentifier $projectId, UserIdentifier $userId): void
+    {
+        try {
+            $this->connection->delete(self::PROJECT_USERS_TABLE, [
+                'project_id' => $projectId->toString(),
+                'user_id'    => $userId->toString(),
+            ]);
+        } catch (Exception $e) {
+            throw EntityDeletionFailed::create($userId, $e);
         }
     }
 }
