@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tragwerk\Application\Dto;
 
 use CuyZ\Valinor\Mapper\Http\FromBody;
+use Tragwerk\Application\Exception\ValidationCollection;
 use Tragwerk\Application\Exception\ValidationError;
 use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\ValueObject\PasswordHash;
@@ -31,15 +32,19 @@ final readonly class UserRegistration implements DtoInterface
         #[FromBody]
         public string $password2,
     ) {
+        $errors = [];
         if (! $this->passwordsAreIdentical()) {
-            throw ValidationError::make('password1', _('Passwords are not identical'));
+            $errors[] = ValidationError::make('password2', _('Passwords are not identical'));
         }
 
         if (! $this->passwordHasMiniumLength()) {
-            throw 'Password does not met the required minimum length of %d characters'
-                    |> _(...)
+            $errors[] = _('Password does not met the required minimum length of %d characters')
                     |> (static fn ($x) => sprintf($x, self::PASSWORD_MINIMUM_LENGTH))
                     |> (static fn ($x) => ValidationError::make('password1', $x));
+        }
+
+        if ($errors !== []) {
+            throw ValidationCollection::fromValidations(...$errors);
         }
     }
 

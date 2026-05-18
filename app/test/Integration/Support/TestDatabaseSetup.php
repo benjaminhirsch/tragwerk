@@ -30,6 +30,7 @@ final class TestDatabaseSetup
         self::$initialized = true;
 
         self::createDatabaseIfAbsent();
+        self::resetSchema();
         self::runMigrations();
     }
 
@@ -60,6 +61,14 @@ final class TestDatabaseSetup
         }
 
         $admin->close();
+    }
+
+    private static function resetSchema(): void
+    {
+        $connection = DriverManager::getConnection(self::connectionParams());
+        $connection->executeStatement('DROP SCHEMA public CASCADE');
+        $connection->executeStatement('CREATE SCHEMA public');
+        $connection->close();
     }
 
     private static function runMigrations(): void

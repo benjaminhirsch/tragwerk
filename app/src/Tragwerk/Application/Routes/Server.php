@@ -36,5 +36,21 @@ final readonly class Server
                 ],
                 'server.create',
             );
+
+        $routes->post(
+            '/servers/{id}/delete',
+            $this->middlewareFactory->prepare([Handler\Server\DeleteHandler::class]),
+            'server.delete',
+        );
+
+        $routes->route(
+            '/servers/{id}/edit',
+            $this->middlewareFactory->prepare([Handler\Server\EditHandler::class]),
+            [
+                RequestMethodInterface::METHOD_GET,
+                RequestMethodInterface::METHOD_POST,
+            ],
+            'server.edit',
+        );
     }
 }

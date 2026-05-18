@@ -6,6 +6,7 @@ namespace Tragwerk\Application\Dto\Project;
 
 use CuyZ\Valinor\Mapper\Http\FromBody;
 use Tragwerk\Application\Dto\DtoInterface;
+use Tragwerk\Application\Exception\ValidationCollection;
 use Tragwerk\Application\Exception\ValidationError;
 use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\ValueObject\PasswordHash;
@@ -30,15 +31,19 @@ final readonly class InviteRegistration implements DtoInterface
         #[FromBody]
         public string $password2,
     ) {
+        $errors = [];
         if ($this->password1 !== $this->password2) {
-            throw ValidationError::make('password1', _('Passwords are not identical'));
+            $errors[] = ValidationError::make('password1', _('Passwords are not identical'));
         }
 
         if (strlen($this->password1) < self::PASSWORD_MINIMUM_LENGTH) {
-            throw ValidationError::make(
-                'password1',
-                sprintf(_('Password must be at least %d characters'), self::PASSWORD_MINIMUM_LENGTH),
-            );
+            $errors[] = _('Password must be at least %d characters')
+                    |> (static fn ($x) => sprintf($x, self::PASSWORD_MINIMUM_LENGTH))
+                    |> (static fn ($x) => ValidationError::make('password1', $x));
+        }
+
+        if ($errors !== []) {
+            throw ValidationCollection::fromValidations(...$errors);
         }
     }
 
