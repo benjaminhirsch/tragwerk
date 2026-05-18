@@ -6,6 +6,7 @@ namespace TragwerkTest\Integration\Support;
 
 use Mezzio\Application;
 use Mezzio\Container\ErrorResponseGeneratorFactory;
+use Mezzio\Helper\UrlHelper;
 use Mezzio\Middleware\ErrorResponseGenerator;
 use Mezzio\MiddlewareFactory;
 use Nyholm\Psr7\Factory\Psr17Factory;
@@ -85,6 +86,15 @@ abstract class AppIntegrationTestCase extends IntegrationTestCase
         }
 
         return $this->app->handle($request);
+    }
+
+    /** @param array<string, string> $params */
+    protected function url(string $routeName, array $params = []): string
+    {
+        $helper = $this->container->get(UrlHelper::class);
+        assert($helper instanceof UrlHelper);
+
+        return $helper->generate($routeName !== '' ? $routeName : null, $params);
     }
 
     protected function getSessionCookie(ResponseInterface $response): string
