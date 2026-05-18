@@ -17,7 +17,10 @@ use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\Enum\EntityType;
 use Tragwerk\Domain\Exception\Repository\EntityHydrationFailed;
 use Tragwerk\Domain\Exception\Repository\EntityNotFound;
+use Tragwerk\Domain\Exception\Repository\EntityUpdateFailed;
 use Tragwerk\Domain\Repository\UserRepository as UserRepositoryInterface;
+use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Domain\ValueObject\UserIdentifier;
 
 use function assert;
 use function implode;
@@ -93,6 +96,37 @@ final class UserRepository extends GenericRepository implements UserRepositoryIn
             }
         } catch (MappingError | Exception | JsonException $e) {
             throw EntityHydrationFailed::create(User::class, $e);
+        }
+    }
+
+    public function getLastActiveProjectId(UserIdentifier $userId): ProjectIdentifier|null
+    {
+        try {
+            $value = $this->connection->fetchOne(
+                'SELECT last_active_project_id FROM users WHERE id = :id',
+                ['id' => $userId->toString()],
+            );
+
+            if (! is_string($value) || ! ProjectIdentifier::isValid($value)) {
+                return null;
+            }
+
+            return ProjectIdentifier::fromString($value);
+        } catch (Exception) {
+            return null;
+        }
+    }
+
+    public function setLastActiveProject(UserIdentifier $userId, ProjectIdentifier $projectId): void
+    {
+        try {
+            $this->connection->update(
+                'users',
+                ['last_active_project_id' => $projectId->toString()],
+                ['id' => $userId->toString()],
+            );
+        } catch (Exception $e) {
+            throw EntityUpdateFailed::create($userId, $e);
         }
     }
 

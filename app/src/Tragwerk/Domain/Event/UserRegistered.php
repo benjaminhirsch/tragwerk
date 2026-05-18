@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tragwerk\Domain\Event;
 
-use Tragwerk\Application\Dto\UserRegistration;
+use Tragwerk\Domain\Entity\User;
 
 final readonly class UserRegistered
 {
     public function __construct(
-        public UserRegistration $registration,
+        public User $user,
     ) {
     }
 }

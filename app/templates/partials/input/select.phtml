@@ -17,12 +17,26 @@ endif;
         </label>
     <?php endif; ?>
 
-    <select name="<?= $this->e($name) ?>" id="<?= $this->e($id) ?>"
-            <?php if (($hxget ?? null) !== null): ?>hx-get="<?= $this->e($hxget) ?>"<?php endif ?>
-            <?php if (($hxtarget ?? null) !== null): ?>hx-target="<?= $this->e($hxtarget) ?>"<?php endif ?>
-            <?php if (($hxswap ?? null) !== null): ?>hx-swap="<?= $this->e($hxswap) ?>"<?php endif ?>
-            <?php if (($hxselect ?? null) !== null): ?>hx-select="<?= $this->e($hxselect) ?>"<?php endif ?>
-            <?php if (($hxinclude ?? null) !== null): ?>hx-include="<?= $this->e($hxinclude) ?>"<?php endif ?>
+    <select class="form-select"  name="<?= $this->e($name) ?>" id="<?= $this->e($id) ?>"
+            <?php if (($hxGet ?? null) !== null):?>hx-get="<?= $this->e($hxGet) ?>"<?php endif; ?>
+            <?php if (($hxPost ?? null) !== null):?>hx-post="<?= $this->e($hxPost) ?>"<?php endif; ?>
+            <?php if (($hxSwap ?? null) !== null):?>hx-swap="<?= $this->e($hxSwap) ?>"<?php endif; ?>
+            <?php if (($hxTarget ?? null) !== null):?>hx-target="<?= $this->e($hxTarget) ?>"<?php endif; ?>
+            <?php if (($hxTrigger ?? null) !== null):?>hx-trigger="<?= $this->e($hxTrigger) ?>"<?php endif; ?>
+            <?php if (($hxPushUrl ?? null) !== null):?>hx-push-url="<?= $this->e($hxPushUrl) ?>"<?php endif; ?>
+            <?php if (($hxPush ?? null) !== null):?>hx-push="<?= $this->e($hxPush) ?>"<?php endif; ?>
+            <?php if (($hxVals ?? null) !== null):?>hx-vals="<?= $this->e($hxVals) ?>"<?php endif; ?>
+            <?php if (($hxIndicator ?? null) !== null):?>hx-indicator="<?= $this->e($hxIndicator) ?>"<?php endif; ?>
+            <?php if (($hxSelect ?? null) !== null):?>hx-select="<?= $this->e($hxSelect) ?>"<?php endif; ?>
+            <?php if (($hxInlude ?? null) !== null):?>hx-include="<?= $this->e($hxInclude) ?>"<?php endif; ?>
+            <?php if (($id ?? null) !== null):?>id="<?= $this->e($id) ?>"<?php endif; ?>
+            <?php if (($name ?? null) !== null):?>name="<?= $this->e($name) ?>"<?php endif; ?>
+            <?php if (($title ?? null) !== null):?>title="<?= $this->e($title) ?>"<?php endif; ?>
+            <?php if (($form ?? null) !== null):?>form="<?= $this->e($form) ?>"<?php endif; ?>
+            <?php if (($formAction ?? null) !== null):?>formaction="<?= $this->e($formAction) ?>"<?php endif; ?>
+            <?php if (($formMethod ?? null) !== null):?>formmethod="<?= $this->e($formMethod) ?>"<?php endif; ?>
+            <?php if (($value ?? null) !== null):?>value="<?= $this->e($value) ?>"<?php endif; ?>
+            <?php if (($disabled ?? false) !== false):?>disabled<?php endif; ?>
     >
         <?php if (($disableEmptyOption ?? false) === false): ?>
             <option value="<?= $defaultOptionValue ?? '' ?>"

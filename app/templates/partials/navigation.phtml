@@ -13,7 +13,30 @@ $links = [
                 'classes' => 'nav-link bi bi-folder2-open',
         ],
 ];
+$projects      = $this->userProjects();
+$activeProject = $this->activeProject();
 ?>
+<?php if (count($projects) > 1): ?>
+<div class="tw-project-switcher px-2 pb-3">
+    <form id="tw-project-switch-form">
+        <input type="hidden" name="csrf_token" value="<?= $this->getCsrfToken() ?>">
+        <?= $this->fetch('partial::input/select', [
+            'id' => 'projectId',
+            'classes' => 'form-select form-select-sm',
+            'hxPost' => $this->url('project.switch'),
+            'hxTrigger' => 'change',
+            'hxInclude' => 'closest form',
+            'hxSwap' => 'none',
+            'disableEmptyOption' => true,
+            'options' => array_combine(
+                    array_map(fn($p) => $p->id->toString(), $projects),
+                    array_map(fn($p) => $p->name, $projects)
+            ),
+            'defaultValue' => $activeProject?->id->toString(),
+        ]) ?>
+    </form>
+</div>
+<?php endif; ?>
 <ul class="nav flex-column">
     <?php foreach ($links as $l) printf('%s', $this->fetch($l['include'], $l));  ?>
 </ul>

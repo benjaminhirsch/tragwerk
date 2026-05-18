@@ -86,6 +86,8 @@ return static function (
     $app->pipe(Template\Extension\Csrf::class);
     $app->pipe(Template\Extension\Authentication::class);
     $app->pipe(Template\Extension\Locale::class);
+    $app->pipe(Middleware\ActiveProjectMiddleware::class);
+    $app->pipe(Template\Extension\ProjectContext::class);
 
     $app->pipe(new Middleware\Conditional\Method(
         ['POST'],

@@ -51,6 +51,26 @@ final class ProjectRepository extends GenericRepository implements ProjectReposi
     }
 
     #[Override]
+    public function getByUserId(UserIdentifier $userId): Generator
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb->select('p.*')
+            ->from(EntityHelper::getDbTableName(EntityType::PROJECT), 'p')
+            ->innerJoin('p', 'project_users', 'pu', 'pu.project_id = p.id')
+            ->where($qb->expr()->eq('pu.user_id', ':user_id'))
+            ->orderBy('p.name', 'ASC')
+            ->setParameter('user_id', $userId->toString());
+
+        try {
+            foreach ($qb->executeQuery()->iterateAssociative() as $row) {
+                yield $this->map($row, Project::class);
+            }
+        } catch (MappingError | Exception $e) {
+            throw EntityHydrationFailed::create(Project::class, $e);
+        }
+    }
+
+    #[Override]
     public function assignUsers(ProjectIdentifier $projectId, array $userIds): void
     {
         $assignedAt = (new DateTimeImmutable())->format('Y-m-d H:i:s.u');

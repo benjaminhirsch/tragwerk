@@ -38,6 +38,12 @@ final readonly class Project
                 'project.create',
             );
 
+        $routes->post(
+            '/projects/switch',
+            $this->middlewareFactory->prepare([Handler\Project\SwitchHandler::class]),
+            'project.switch',
+        );
+
         $routes->route(
             '/projects/emails',
             $this->middlewareFactory->prepare([Handler\Project\EmailFieldsHandler::class]),

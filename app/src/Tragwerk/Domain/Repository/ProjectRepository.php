@@ -50,4 +50,7 @@ interface ProjectRepository
      * @throws EntityCreationFailed
      */
     public function assignUsers(ProjectIdentifier $projectId, array $userIds): void;
+
+    /** @return Generator<Project> */
+    public function getByUserId(UserIdentifier $userId): Generator;
 }

@@ -22,11 +22,11 @@ final readonly class SendRegistrationMail
     public function __invoke(Event\UserRegistered $event): void
     {
         $this->producer->sendMessage(new Message\SendMail(
-            to: $event->registration->email,
+            to: $event->user->email,
             subject: $this->translator->translate('mail.userInvited.subject'),
             html: $this->templateRenderer->render('mail::userRegistered', [
                 'invite' => 'foo',
-                'user' => $event->registration->firstname,
+                'user' => $event->user->firstname,
             ]),
         ), priority: 6);
     }
