@@ -1,4 +1,6 @@
 <?php
+$currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
+
 $links = [
         [
                 'include' => 'partial::link',
@@ -13,6 +15,14 @@ $links = [
                 'classes' => 'nav-link bi bi-folder2-open',
         ],
 ];
+
+foreach ($links as &$l) {
+    $linkPath = parse_url($l['href'], PHP_URL_PATH) ?? $l['href'];
+    if (str_starts_with($currentPath, $linkPath)) {
+        $l['classes'] .= ' active';
+    }
+}
+unset($l);
 $projects      = $this->userProjects();
 $activeProject = $this->activeProject();
 ?>
