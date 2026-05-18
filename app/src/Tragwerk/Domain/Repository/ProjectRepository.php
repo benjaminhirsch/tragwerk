@@ -7,6 +7,7 @@ namespace Tragwerk\Domain\Repository;
 use Generator;
 use Tragwerk\Domain\Entity\Entity;
 use Tragwerk\Domain\Entity\Project;
+use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\Exception\Repository\EntityCreationFailed;
 use Tragwerk\Domain\Exception\Repository\EntityDeletionFailed;
 use Tragwerk\Domain\Exception\Repository\EntityHydrationFailed;
@@ -32,17 +33,19 @@ interface ProjectRepository
     /** @throws EntityUpdateFailed */
     public function update(Project $entity): void;
 
-    /** @throws EntityDeletionFailed */
-    public function delete(ProjectIdentifier $id): void;
-
     /**
      * @param ProjectIdentifier[]|null $ids
      * @param string[]|null            $names
+     * @param UserIdentifier[]|null    $ownerIds
      */
     public function getAll(
         array|null $ids = null,
         array|null $names = null,
+        array|null $ownerIds = null,
     ): Generator;
+
+    /** @throws EntityDeletionFailed */
+    public function delete(ProjectIdentifier $id): void;
 
     /**
      * @param UserIdentifier[] $userIds
@@ -53,4 +56,10 @@ interface ProjectRepository
 
     /** @return Generator<Project> */
     public function getByUserId(UserIdentifier $userId): Generator;
+
+    /** @return Generator<User> */
+    public function getUsersByProjectId(ProjectIdentifier $projectId): Generator;
+
+    /** @throws EntityDeletionFailed */
+    public function removeUser(ProjectIdentifier $projectId, UserIdentifier $userId): void;
 }

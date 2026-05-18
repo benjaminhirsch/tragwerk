@@ -11,4 +11,24 @@
         'classes' => 'btn btn-primary',
         'href'    => $this->url('project.create'),
     ]) ?>
+
+    <hr />
+
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th><?= _('Name') ?></th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($projects as $project): ?>
+            <tr>
+                <td><?= $this->fetch('partial::link', [
+                        'href' => $this->url('project.edit', ['id' => $project->id]),
+                        'label' => $project->name,
+                    ]) ?></td>
+            </tr>
+        <?php endforeach ?>
+        </tbody>
+    </table>
 </div>

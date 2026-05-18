@@ -304,7 +304,8 @@ final readonly class ConfigProvider
                     EventListener\User\SendRegistrationMail::class,
                 ],
                 Event\ServerCreated::class => [EventListener\Server\CreateServer::class],
-                Event\ProjectCreated::class => [EventListener\Project\CreateProject::class],
+                Event\ProjectCreated::class  => [EventListener\Project\CreateProject::class],
+                Event\ProjectUpdated::class => [EventListener\Project\UpdateProject::class],
                 Event\ProjectInvitationCreated::class =>
                     [EventListener\Project\SendProjectInvitation::class],
                 Event\UserSwitchedProject::class => [EventListener\User\PersistLastActiveProject::class],

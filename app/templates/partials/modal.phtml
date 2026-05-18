@@ -1,0 +1,46 @@
+<?php
+/** @var string $id */
+/** @var string $header */
+/** @var string $body */
+/** @var string $actionUrl */
+/** @var string $actionLabel */
+/** @var string|null $actionClasses */
+/** @var string|null $actionIcon*/
+/** @var string $body */
+/** @var string|null $size  e.g. 'modal-sm', 'modal-lg', 'modal-xl' */
+$id     = $id ?? 'tw-modal';
+$size   = $size ?? null;
+$header = $header ?? '';
+$body   = $body ?? '';
+?>
+<div class="modal fade" id="<?= $this->e($id) ?>" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered<?= $size !== null ? ' ' . $this->e($size) : '' ?>">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><?= $header ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <?= $body ?>
+            </div>
+            <div class="modal-footer">
+                <?= $this->fetch('partial::input/button', [
+                        'label'        => _('Cancel'),
+                        'classes'      => 'btn btn-secondary',
+                        'type'         => 'button',
+                        'dataBsToggle' => 'modal',
+                ]) ?>
+                <?php if (($actionUrl ?? null) !== null && ($actionLabel ?? null) !== null): ?>
+                    <form action="<?= $actionUrl ?>" method="post">
+                        <?= $this->fetch('partial::input/csrf') ?>
+                        <?= $this->fetch('partial::input/button', [
+                                'label'   => $actionLabel,
+                                'classes' => $actionClasses ?? null,
+                                'icon'    => $actionIcon ?? null,
+                        ]) ?>
+                    </form>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</div>

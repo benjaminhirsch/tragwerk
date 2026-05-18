@@ -39,6 +39,29 @@ final readonly class Project
             );
 
         $routes->post(
+            '/projects/{id}/delete',
+            $this->middlewareFactory->prepare([Handler\Project\DeleteHandler::class]),
+            'project.delete',
+        );
+
+        $routes
+            ->route(
+                '/projects/{id}/edit',
+                $this->middlewareFactory->prepare([Handler\Project\EditHandler::class]),
+                [
+                    RequestMethodInterface::METHOD_GET,
+                    RequestMethodInterface::METHOD_POST,
+                ],
+                'project.edit',
+            );
+
+        $routes->post(
+            '/projects/{id}/members/remove',
+            $this->middlewareFactory->prepare([Handler\Project\RemoveMemberHandler::class]),
+            'project.members.remove',
+        );
+
+        $routes->post(
             '/projects/switch',
             $this->middlewareFactory->prepare([Handler\Project\SwitchHandler::class]),
             'project.switch',
