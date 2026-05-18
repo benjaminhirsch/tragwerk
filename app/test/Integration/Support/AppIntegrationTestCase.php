@@ -65,12 +65,16 @@ abstract class AppIntegrationTestCase extends IntegrationTestCase
         $routes($this->app, $middlewareFactory, $this->container);
     }
 
-    /** @param array<string, string> $body */
+    /**
+     * @param array<string, string> $body
+     * @param array<string, string> $headers
+     */
     protected function dispatch(
         string $method,
         string $path,
         array $body = [],
         string $cookie = '',
+        array $headers = [],
     ): ResponseInterface {
         $factory = new Psr17Factory();
         $request = $factory->createServerRequest($method, $path);
@@ -83,6 +87,10 @@ abstract class AppIntegrationTestCase extends IntegrationTestCase
 
         if ($cookie !== '') {
             $request = $request->withHeader('Cookie', $cookie);
+        }
+
+        foreach ($headers as $name => $value) {
+            $request = $request->withHeader($name, $value);
         }
 
         return $this->app->handle($request);
