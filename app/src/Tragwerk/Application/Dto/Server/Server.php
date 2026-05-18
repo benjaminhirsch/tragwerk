@@ -8,6 +8,11 @@ use CuyZ\Valinor\Mapper\Http\FromBody;
 use Tragwerk\Application\Dto\DtoInterface;
 use Tragwerk\Application\Exception\ValidationCollection;
 use Tragwerk\Application\Exception\ValidationError;
+use Tragwerk\Domain\Entity\Server as ServerEntity;
+use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Domain\ValueObject\ServerIdentifier;
+use Tragwerk\Domain\ValueObject\TimestampImmutable;
+use Tragwerk\Domain\ValueObject\UserIdentifier;
 
 use function _;
 use function filter_var;
@@ -17,7 +22,7 @@ use const FILTER_FLAG_IPV4;
 use const FILTER_FLAG_IPV6;
 use const FILTER_VALIDATE_IP;
 
-final readonly class ServerUpdate implements DtoInterface
+final readonly class Server implements DtoInterface
 {
     public function __construct(
         #[FromBody]
@@ -46,5 +51,21 @@ final readonly class ServerUpdate implements DtoInterface
         if ($errors !== []) {
             throw ValidationCollection::fromValidations(...$errors);
         }
+    }
+
+    public function createServer(UserIdentifier $createdBy, ProjectIdentifier $projectId): ServerEntity
+    {
+        $now = TimestampImmutable::now();
+
+        return new ServerEntity(
+            ServerIdentifier::create(),
+            $this->name,
+            $this->host,
+            $projectId,
+            $now,
+            $createdBy,
+            $now,
+            $createdBy,
+        );
     }
 }
