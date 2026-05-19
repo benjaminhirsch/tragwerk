@@ -1,6 +1,4 @@
-<?php $this->layout('layout::default', [
-        'title' => 'Tragwerk'
-]) ?>
+<?php $this->layout('layout::default', ['title' => _('Create server')]) ?>
 
 <h1><?= _('Create server') ?></h1>
 
@@ -18,6 +16,13 @@
                 'label' => _('IP address (IPv4 or IPv6)'),
                 'validation' => $validationBag ?? null
         ]) ?>
-        <?= $this->fetch('partial::input/button') ?>
+        <?= $this->fetch('partial::input/button', [
+                'label' => _('Save'),
+        ]) ?>
+        <?= $this->fetch('partial::link', [
+                'label' => _('Cancel'),
+                'href' => $this->url('server'),
+                'classes' => 'btn btn-secondary',
+        ]) ?>
     </form>
 <?php $this->stop() ?>

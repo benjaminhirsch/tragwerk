@@ -22,7 +22,13 @@
         </div>
 
         <?= $this->fetch('partial::input/button', [
-            'label' => _('Create project'),
+            'label' => _('Save'),
+        ]) ?>
+
+        <?= $this->fetch('partial::link', [
+                'label' => _('Cancel'),
+                'href' => $this->url('project'),
+                'classes' => 'btn btn-secondary',
         ]) ?>
 
     </form>
