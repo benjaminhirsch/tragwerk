@@ -12,6 +12,7 @@ use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Enum\EntityType;
 use Tragwerk\Domain\Exception\Repository\EntityHydrationFailed;
 use Tragwerk\Domain\Repository\ServerRepository as ServerRepositoryInterface;
+use Tragwerk\Domain\ValueObject\CredentialIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Infrastructure\Helper\EntityHelper;
@@ -34,6 +35,23 @@ final class ServerRepository extends GenericRepository implements ServerReposito
             $qb->andWhere($qb->expr()->neq('id', ':exclude_id'))
                 ->setParameter('exclude_id', $excludeId->toString());
         }
+
+        try {
+            return $qb->executeQuery()->fetchOne() !== false;
+        } catch (Exception) {
+            return false;
+        }
+    }
+
+    #[Override]
+    public function isCredentialAssigned(CredentialIdentifier $id): bool
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb->select('1')
+            ->from(EntityHelper::getDbTableName(EntityType::SERVER))
+            ->where($qb->expr()->eq('credential_id', ':id'))
+            ->setParameter('id', $id->toString())
+            ->setMaxResults(1);
 
         try {
             return $qb->executeQuery()->fetchOne() !== false;

@@ -1,0 +1,31 @@
+<?php
+
+assert(isset($id, $label));
+
+$name = $name ?? $id;
+
+/** @var \Tragwerk\Application\Validation\ValidationBag|null $validation */
+if (($validation ?? null) !== null):
+    $defaultValue = $validation->getValueByName($name);
+endif;
+?>
+
+<div class="mb-3">
+    <label for="<?= $this->e($id) ?>" class="form-label"><?= $this->e($label) ?></label>
+    <?php if(($required ?? false) !== false): ?>
+        <span class="text-danger">*</span>
+    <?php endif; ?>
+    <textarea
+        class="form-control"
+        id="<?= $this->e($id) ?>"
+        name="<?= $this->e($name) ?>"
+        <?= ($required ?? false) ? 'required' : '' ?>
+        <?= ($readonly ?? false) ? 'readonly' : '' ?>
+        <?= ($disabled ?? false) ? 'disabled' : '' ?>
+    ><?= $this->e($defaultValue ?? null) ?></textarea>
+    <?php if (($validation?->getErrorByName($name) ?? null) !== null): ?>
+        <div class="invalid-feedback">
+            <?= $this->e($this->t($validation->getErrorByName($name))) ?>
+        </div>
+    <?php endif; ?>
+</div>

@@ -6,17 +6,16 @@ namespace Tragwerk\Domain\Entity;
 
 use Tragwerk\Domain\ValueObject\CredentialIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
-use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
-final class Server implements Entity
+final class Credential implements Entity
 {
     public function __construct(
-        public ServerIdentifier $id,
+        public CredentialIdentifier $id,
         public string $name,
-        public string $host,
-        public CredentialIdentifier|null $credentialId,
+        public string $username,
+        public string|null $privateKey,
         public ProjectIdentifier $projectId,
         public TimestampImmutable $createdAt,
         public UserIdentifier $createdBy,

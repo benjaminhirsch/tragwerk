@@ -15,6 +15,7 @@ final readonly class EntityHelper
             EntityType::SERVER             => 'servers',
             EntityType::PROJECT            => 'projects',
             EntityType::PROJECT_INVITATION => 'project_invitations',
+            EntityType::CREDENTIAL         => 'credentials',
         };
     }
 }

@@ -10,6 +10,12 @@ $links = [
         ],
         [
                 'include' => 'partial::link',
+                'label' => _('Credentials'),
+                'href' => $this->url('credential'),
+                'classes' => 'nav-link bi bi-key',
+        ],
+        [
+                'include' => 'partial::link',
                 'label' => _('Projects'),
                 'href' => $this->url('project'),
                 'classes' => 'nav-link bi bi-folder2-open',

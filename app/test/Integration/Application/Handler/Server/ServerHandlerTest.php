@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace TragwerkTest\Integration\Application\Handler\Server;
 
 use PHPUnit\Framework\Attributes\Test;
+use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\User;
+use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\Repository\UserRepository;
+use Tragwerk\Domain\ValueObject\CredentialIdentifier;
 use Tragwerk\Domain\ValueObject\PasswordHash;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
@@ -304,6 +307,66 @@ final class ServerHandlerTest extends AppIntegrationTestCase
         self::assertInstanceOf(Server::class, $server);
     }
 
+    #[Test]
+    public function editPostWithValidCredentialAssignsCredentialToServer(): void
+    {
+        $server     = $this->seedServer('My Server', '192.168.1.1');
+        $credential = $this->seedCredential('Deploy Key', 'deploy');
+
+        $this->dispatch(
+            'POST',
+            $this->url('server.edit', ['id' => $server->id->toString()]),
+            ['name' => 'My Server', 'host' => '192.168.1.1', 'credentialId' => $credential->id->toString()],
+            $this->sessionCookie,
+        );
+
+        $repository = $this->container->get(ServerRepository::class);
+        assert($repository instanceof ServerRepository);
+
+        $updated = $repository->getById($server->id);
+        assert($updated instanceof Server);
+        self::assertNotNull($updated->credentialId);
+        self::assertSame($credential->id->toString(), $updated->credentialId->toString());
+    }
+
+    #[Test]
+    public function editPostWithCredentialFromOtherProjectReRendersForm(): void
+    {
+        $server            = $this->seedServer('My Server', '192.168.1.1');
+        $otherProject      = $this->seedOtherProject();
+        $foreignCredential = $this->seedCredentialForProject('Foreign Key', 'root', $otherProject->id);
+
+        $response = $this->dispatch(
+            'POST',
+            $this->url('server.edit', ['id' => $server->id->toString()]),
+            ['name' => 'My Server', 'host' => '192.168.1.1', 'credentialId' => $foreignCredential->id->toString()],
+            $this->sessionCookie,
+        );
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function editPostWithEmptyCredentialIdRemovesAssignment(): void
+    {
+        $credential = $this->seedCredential('Deploy Key', 'deploy');
+        $server     = $this->seedServerWithCredential('My Server', '192.168.1.1', $credential->id);
+
+        $this->dispatch(
+            'POST',
+            $this->url('server.edit', ['id' => $server->id->toString()]),
+            ['name' => 'My Server', 'host' => '192.168.1.1', 'credentialId' => ''],
+            $this->sessionCookie,
+        );
+
+        $repository = $this->container->get(ServerRepository::class);
+        assert($repository instanceof ServerRepository);
+
+        $updated = $repository->getById($server->id);
+        assert($updated instanceof Server);
+        self::assertNull($updated->credentialId);
+    }
+
     private function seedUser(): User
     {
         $now  = TimestampImmutable::now();
@@ -377,6 +440,7 @@ final class ServerHandlerTest extends AppIntegrationTestCase
             ServerIdentifier::create(),
             $name,
             $host,
+            null,
             $projectId,
             $now,
             $this->user->id,
@@ -389,6 +453,58 @@ final class ServerHandlerTest extends AppIntegrationTestCase
         $repository->create($server);
 
         return $server;
+    }
+
+    private function seedServerWithCredential(string $name, string $host, CredentialIdentifier $credentialId): Server
+    {
+        $now    = TimestampImmutable::now();
+        $server = new Server(
+            ServerIdentifier::create(),
+            $name,
+            $host,
+            $credentialId,
+            $this->project->id,
+            $now,
+            $this->user->id,
+            $now,
+            $this->user->id,
+        );
+
+        $repository = $this->container->get(ServerRepository::class);
+        assert($repository instanceof ServerRepository);
+        $repository->create($server);
+
+        return $server;
+    }
+
+    private function seedCredential(string $name, string $username): Credential
+    {
+        return $this->seedCredentialForProject($name, $username, $this->project->id);
+    }
+
+    private function seedCredentialForProject(
+        string $name,
+        string $username,
+        ProjectIdentifier $projectId,
+    ): Credential {
+        $now        = TimestampImmutable::now();
+        $credential = new Credential(
+            CredentialIdentifier::create(),
+            $name,
+            $username,
+            null,
+            $projectId,
+            $now,
+            $this->user->id,
+            $now,
+            $this->user->id,
+        );
+
+        $repository = $this->container->get(CredentialRepository::class);
+        assert($repository instanceof CredentialRepository);
+        $repository->create($credential);
+
+        return $credential;
     }
 
     private function loginAndGetCookie(): string

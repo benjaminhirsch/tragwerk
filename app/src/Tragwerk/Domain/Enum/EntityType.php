@@ -15,6 +15,7 @@ enum EntityType: string implements Translatable
     case SERVER             = 'SERVER';
     case PROJECT            = 'PROJECT';
     case PROJECT_INVITATION = 'PROJECT_INVITATION';
+    case CREDENTIAL         = 'CREDENTIAL';
 
     /** @phpstan-pure  */
     #[Override]
@@ -25,6 +26,7 @@ enum EntityType: string implements Translatable
             self::SERVER             => _('Server'),
             self::PROJECT            => _('Project'),
             self::PROJECT_INVITATION => _('Project Invitation'),
+            self::CREDENTIAL => _('Credential'),
         };
     }
 
@@ -40,6 +42,7 @@ enum EntityType: string implements Translatable
             self::SERVER             => Entity\Server::class,
             self::PROJECT            => Entity\Project::class,
             self::PROJECT_INVITATION => Entity\ProjectInvitation::class,
+            self::CREDENTIAL => Entity\Credential::class,
         };
     }
 }
