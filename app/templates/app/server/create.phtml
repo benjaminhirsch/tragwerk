@@ -16,6 +16,19 @@
                 'label' => _('IP address (IPv4 or IPv6)'),
                 'validation' => $validationBag ?? null
         ]) ?>
+        <?php
+            $credentialOptions = [];
+            foreach ($credentials as $cred) {
+                $credentialOptions[$cred->id->toString()] = $cred->name;
+            }
+        ?>
+        <?= $this->fetch('partial::input/select', [
+            'id'                 => 'credentialId',
+            'label'              => _('Credential'),
+            'validation'         => $validationBag ?? null,
+            'options'            => $credentialOptions,
+            'defaultOptionLabel' => _('— no credential —'),
+        ]) ?>
         <?= $this->fetch('partial::input/button', [
                 'label' => _('Save'),
         ]) ?>

@@ -19,6 +19,20 @@
             'validation' => $validationBag,
         ]) ?>
 
+        <?php
+            $credentialOptions = [];
+            foreach ($credentials as $cred) {
+                $credentialOptions[$cred->id->toString()] = $cred->name;
+            }
+        ?>
+        <?= $this->fetch('partial::input/select', [
+            'id'                 => 'credentialId',
+            'label'              => _('Credential'),
+            'validation'         => $validationBag,
+            'options'            => $credentialOptions,
+            'defaultOptionLabel' => _('— no credential —'),
+        ]) ?>
+
         <div class="d-flex gap-2">
             <?= $this->fetch('partial::input/button', [
                 'label' => _('Save'),

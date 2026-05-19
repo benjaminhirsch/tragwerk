@@ -9,6 +9,7 @@ use Tragwerk\Application\Dto\DtoInterface;
 use Tragwerk\Application\Exception\ValidationCollection;
 use Tragwerk\Application\Exception\ValidationError;
 use Tragwerk\Domain\Entity\Server as ServerEntity;
+use Tragwerk\Domain\ValueObject\CredentialIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
@@ -29,6 +30,8 @@ final readonly class Server implements DtoInterface
         public string $name,
         #[FromBody]
         public string $host,
+        #[FromBody]
+        public string|null $credentialId = null,
     ) {
         $errors            = [];
         $emptyFieldMessage = _('Field can\'t be empty');
@@ -55,12 +58,16 @@ final readonly class Server implements DtoInterface
 
     public function createServer(UserIdentifier $createdBy, ProjectIdentifier $projectId): ServerEntity
     {
-        $now = TimestampImmutable::now();
+        $now          = TimestampImmutable::now();
+        $credentialId = $this->credentialId !== null && CredentialIdentifier::isValid($this->credentialId)
+            ? CredentialIdentifier::fromString($this->credentialId)
+            : null;
 
         return new ServerEntity(
             ServerIdentifier::create(),
             $this->name,
             $this->host,
+            $credentialId,
             $projectId,
             $now,
             $createdBy,

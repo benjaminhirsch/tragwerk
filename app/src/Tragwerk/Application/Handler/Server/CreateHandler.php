@@ -12,12 +12,16 @@ use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Throwable;
 use Tragwerk\Application\Dto\Server\Server as ServerDto;
 use Tragwerk\Application\Mapper\GenericMapper;
 use Tragwerk\Application\Response\ResponseRenderer;
+use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Event\ServerCreated;
+use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
+use Tragwerk\Domain\ValueObject\CredentialIdentifier;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
 use function _;
@@ -31,26 +35,49 @@ final readonly class CreateHandler implements RequestHandlerInterface
         private EventDispatcherInterface $eventDispatcher,
         private UrlHelper $urlHelper,
         private ServerRepository $serverRepository,
+        private CredentialRepository $credentialRepository,
     ) {
     }
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        $activeProject = $request->getAttribute('active_project');
+        assert($activeProject instanceof Project);
+
         $validationBag = null;
+
         if ($request->getMethod() === RequestMethodInterface::METHOD_POST) {
             $validationBag = $this->mapper->mapAndValidate($request, ServerDto::class);
 
             $user = $request->getAttribute(UserInterface::class);
             assert($user instanceof UserInterface);
 
-            $activeProject = $request->getAttribute('active_project');
-            assert($activeProject instanceof Project);
-
             if (! $validationBag->hasErrors()) {
                 $registration = $validationBag->getDto();
                 assert($registration instanceof ServerDto);
 
-                if (! $this->serverRepository->existsByHost($registration->host)) {
+                if ($this->serverRepository->existsByHost($registration->host)) {
+                    $validationBag = $validationBag->withError('host', _('IP address is already in use'));
+                } elseif ($registration->credentialId !== null && $registration->credentialId !== '') {
+                    if (! CredentialIdentifier::isValid($registration->credentialId)) {
+                        $validationBag = $validationBag->withError('credentialId', _('Invalid credential'));
+                    } else {
+                        try {
+                            $credential = $this->credentialRepository->getById(
+                                CredentialIdentifier::fromString($registration->credentialId),
+                            );
+                            assert($credential instanceof Credential);
+
+                            if ($credential->projectId->toString() !== $activeProject->id->toString()) {
+                                $validationBag = $validationBag->withError('credentialId', _('Credential not found'));
+                            }
+                        } catch (Throwable) {
+                            $validationBag = $validationBag->withError('credentialId', _('Credential not found'));
+                        }
+                    }
+                }
+
+                if (! $validationBag->hasErrors()) {
                     $this->eventDispatcher->dispatch(new ServerCreated(
                         $registration,
                         UserIdentifier::fromString($user->getIdentity()),
@@ -59,11 +86,14 @@ final readonly class CreateHandler implements RequestHandlerInterface
 
                     return new RedirectResponse($this->urlHelper->generate('server'));
                 }
-
-                $validationBag = $validationBag->withError('host', _('IP address is already in use'));
             }
         }
 
-        return $this->renderer->render($request, 'page::server/create', ['validationBag' => $validationBag]);
+        $credentials = $this->credentialRepository->getAll(projectId: $activeProject->id);
+
+        return $this->renderer->render($request, 'page::server/create', [
+            'validationBag' => $validationBag,
+            'credentials'   => $credentials,
+        ]);
     }
 }

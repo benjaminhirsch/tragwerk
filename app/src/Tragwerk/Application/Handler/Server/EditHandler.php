@@ -18,10 +18,13 @@ use Tragwerk\Application\Dto\Server\Server as ServerDto;
 use Tragwerk\Application\Mapper\GenericMapper;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Application\Validation\ValidationBag;
+use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Event\ServerUpdated;
+use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
+use Tragwerk\Domain\ValueObject\CredentialIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
@@ -37,6 +40,7 @@ final readonly class EditHandler implements RequestHandlerInterface
         private EventDispatcherInterface $eventDispatcher,
         private UrlHelper $urlHelper,
         private ServerRepository $serverRepository,
+        private CredentialRepository $credentialRepository,
     ) {
     }
 
@@ -49,6 +53,9 @@ final readonly class EditHandler implements RequestHandlerInterface
             return new RedirectResponse($this->urlHelper->generate('server'));
         }
 
+        $activeProject = $request->getAttribute('active_project');
+        assert($activeProject instanceof Project);
+
         $validationBag = null;
 
         if ($request->getMethod() === RequestMethodInterface::METHOD_POST) {
@@ -60,33 +67,54 @@ final readonly class EditHandler implements RequestHandlerInterface
 
                 if ($this->serverRepository->existsByHost($update->host, $server->id)) {
                     $validationBag = $validationBag->withError('host', _('IP address already exists'));
+                } elseif ($update->credentialId !== null && $update->credentialId !== '') {
+                    if (! CredentialIdentifier::isValid($update->credentialId)) {
+                        $validationBag = $validationBag->withError('credentialId', _('Invalid credential'));
+                    } else {
+                        try {
+                            $credential = $this->credentialRepository->getById(
+                                CredentialIdentifier::fromString($update->credentialId),
+                            );
+                            assert($credential instanceof Credential);
 
-                    return $this->renderer->render($request, 'page::server/edit', [
-                        'server'        => $server,
-                        'validationBag' => $validationBag,
-                    ]);
+                            if ($credential->projectId->toString() !== $activeProject->id->toString()) {
+                                $validationBag = $validationBag->withError('credentialId', _('Credential not found'));
+                            }
+                        } catch (Throwable) {
+                            $validationBag = $validationBag->withError('credentialId', _('Credential not found'));
+                        }
+                    }
                 }
 
-                $user = $request->getAttribute(UserInterface::class);
-                assert($user instanceof UserInterface);
+                if (! $validationBag->hasErrors()) {
+                    $user = $request->getAttribute(UserInterface::class);
+                    assert($user instanceof UserInterface);
 
-                $this->eventDispatcher->dispatch(new ServerUpdated(
-                    $server->id,
-                    $update,
-                    UserIdentifier::fromString($user->getIdentity()),
-                ));
+                    $this->eventDispatcher->dispatch(new ServerUpdated(
+                        $server->id,
+                        $update,
+                        UserIdentifier::fromString($user->getIdentity()),
+                    ));
 
-                return new RedirectResponse($this->urlHelper->generate('server'));
+                    return new RedirectResponse($this->urlHelper->generate('server'));
+                }
             }
         }
 
         if ($validationBag === null) {
-            $validationBag = new ValidationBag(['name' => $server->name, 'host' => $server->host], null, []);
+            $validationBag = new ValidationBag([
+                'name'         => $server->name,
+                'host'         => $server->host,
+                'credentialId' => $server->credentialId?->toString() ?? '',
+            ], null, []);
         }
+
+        $credentials = $this->credentialRepository->getAll(projectId: $activeProject->id);
 
         return $this->renderer->render($request, 'page::server/edit', [
             'server'        => $server,
             'validationBag' => $validationBag,
+            'credentials'   => $credentials,
         ]);
     }
 

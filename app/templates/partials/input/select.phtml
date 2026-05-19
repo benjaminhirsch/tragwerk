@@ -9,9 +9,9 @@ if (($validation ?? null) !== null):
     $defaultValue = $validation->getValueByName($name);
 endif;
 ?>
-<div class="form-group">
+<div class="mb-3">
     <?php if (($label ?? null) !== null): ?>
-        <label for="<?= $this->e($id) ?>">
+        <label class="form-label" for="<?= $this->e($id) ?>">
             <?= $this->e($label) ?>
             <?php if ($required ?? false): ?><span class="required-marker">*</span><?php endif; ?>
         </label>

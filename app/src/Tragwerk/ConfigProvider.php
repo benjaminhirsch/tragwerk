@@ -249,6 +249,8 @@ final readonly class ConfigProvider
                     Domain\Repository\ProjectRepository::class => Infrastructure\Repository\ProjectRepository::class,
                     Domain\Repository\ProjectInvitationRepository::class =>
                         Infrastructure\Repository\ProjectInvitationRepository::class,
+                    Domain\Repository\CredentialRepository::class =>
+                        Infrastructure\Repository\CredentialRepository::class,
                 ],
             ],
         ];
@@ -303,8 +305,10 @@ final readonly class ConfigProvider
                     EventListener\User\CreateDefaultProject::class,
                     EventListener\User\SendRegistrationMail::class,
                 ],
-                Event\ServerCreated::class  => [EventListener\Server\CreateServer::class],
-                Event\ServerUpdated::class => [EventListener\Server\UpdateServer::class],
+                Event\CredentialCreated::class => [EventListener\Credential\CreateCredential::class],
+                Event\CredentialUpdated::class => [EventListener\Credential\UpdateCredential::class],
+                Event\ServerCreated::class     => [EventListener\Server\CreateServer::class],
+                Event\ServerUpdated::class     => [EventListener\Server\UpdateServer::class],
                 Event\ProjectCreated::class  => [EventListener\Project\CreateProject::class],
                 Event\ProjectUpdated::class => [EventListener\Project\UpdateProject::class],
                 Event\ProjectInvitationCreated::class =>

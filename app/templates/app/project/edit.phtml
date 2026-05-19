@@ -56,7 +56,7 @@
 <?= $this->fetch('partial::modal', [
     'id'     => 'tw-delete-project-modal',
     'header' => _('Delete project'),
-    'body'   => sprintf(_('Are you sure you want to delete the project %s? This action cannot be undone.'), '<strong>' . $this->e($project->name) . '</strong>'),
+    'body'   => sprintf(_('Are you sure you want to delete the project %s? This action cannot be undone. Deletig a project will delete all associated resources too!'), '<strong>' . $this->e($project->name) . '</strong>'),
     'actionUrl' => $this->url('project.delete', ['id' => $project->id->toString()]),
     'actionLabel' => _('Delete project'),
     'actionClasses' => 'btn btn-danger',
