@@ -226,7 +226,7 @@
 /* ── Sidebar brand ──────────────────────────────────────── */
 
 .tw-sidebar-brand {
-    padding: 1.25rem 1rem;
+    padding: 1.12rem 1rem;
     border-bottom: 1px solid var(--tw-sidebar-border);
     flex-shrink: 0;
 }
