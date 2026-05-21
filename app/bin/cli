@@ -37,6 +37,7 @@ $commands = [
         Command\Worker::class,
         Command\ConfigLoader::class,
         Command\GenerateDockerConfig::class,
+        Command\SetupServerCommand::class,
 
         DoctrineMigrationsCommand\CurrentCommand::class,
         DoctrineMigrationsCommand\DiffCommand::class,

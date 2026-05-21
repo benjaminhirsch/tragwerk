@@ -251,6 +251,8 @@ final readonly class ConfigProvider
                         Infrastructure\Repository\ProjectInvitationRepository::class,
                     Domain\Repository\CredentialRepository::class =>
                         Infrastructure\Repository\CredentialRepository::class,
+                    Domain\Repository\SetupJobRepository::class =>
+                        Infrastructure\Repository\SetupJobRepository::class,
                 ],
             ],
         ];
@@ -307,8 +309,12 @@ final readonly class ConfigProvider
                 ],
                 Event\CredentialCreated::class => [EventListener\Credential\CreateCredential::class],
                 Event\CredentialUpdated::class => [EventListener\Credential\UpdateCredential::class],
-                Event\ServerCreated::class     => [EventListener\Server\CreateServer::class],
-                Event\ServerUpdated::class     => [EventListener\Server\UpdateServer::class],
+                Event\ServerCreated::class      => [EventListener\Server\CreateServer::class],
+                Event\ServerUpdated::class      => [EventListener\Server\UpdateServer::class],
+                Event\SetupJobScheduled::class  => [
+                    EventListener\SetupJob\PersistSetupJob::class,
+                    EventListener\SetupJob\ScheduleSetupJob::class,
+                ],
                 Event\ProjectCreated::class  => [EventListener\Project\CreateProject::class],
                 Event\ProjectUpdated::class => [EventListener\Project\UpdateProject::class],
                 Event\ProjectInvitationCreated::class =>
