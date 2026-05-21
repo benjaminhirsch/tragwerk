@@ -77,7 +77,7 @@ final readonly class EditHandler implements RequestHandlerInterface
                 'name'       => $credential->name,
                 'username'   => $credential->username,
                 'privateKey' => $credential->privateKey ?? '',
-            ], null, []);
+            ]);
         }
 
         $queryParams = $request->getQueryParams();

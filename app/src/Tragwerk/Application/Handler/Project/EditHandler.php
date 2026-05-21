@@ -75,7 +75,7 @@ final readonly class EditHandler implements RequestHandlerInterface
         }
 
         if ($validationBag === null) {
-            $validationBag = new ValidationBag(['name' => $project->name], null, []);
+            $validationBag = new ValidationBag(['name' => $project->name]);
         }
 
         $allMembers    = iterator_to_array($this->projectRepository->getUsersByProjectId($project->id), false);

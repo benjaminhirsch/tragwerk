@@ -26,9 +26,9 @@ final readonly class ValidationBag implements ValidationBagInterface
     /** @param array<array-key, mixed> $passedValues */
     public function __construct(
         private array $passedValues,
-        private object|null $dto,
+        private object|null $dto = null,
         /** @var array<array-key, string>|array{} */
-        private array $messages,
+        private array $messages = [],
     ) {
     }
 
