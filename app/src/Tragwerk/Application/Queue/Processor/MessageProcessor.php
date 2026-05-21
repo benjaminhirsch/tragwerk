@@ -27,6 +27,7 @@ final readonly class MessageProcessor implements Processor
     public function __construct(
         private readonly TreeMapper $mapper,
         // Handlers
+        private readonly Handler\RunSetupJob $runSetupJob,
         private readonly Handler\SendMail $sendMail,
     ) {
     }
@@ -47,7 +48,8 @@ final readonly class MessageProcessor implements Processor
         }
 
         match ($parsedMessage::class) {
-            Message\SendMail::class => $this->sendMail->handle($parsedMessage),
+            Message\RunSetupJob::class => $this->runSetupJob->handle($parsedMessage),
+            Message\SendMail::class    => $this->sendMail->handle($parsedMessage),
             default => throw new InvalidArgumentException('Unknown message class: ' . $parsedMessage::class),
         };
 

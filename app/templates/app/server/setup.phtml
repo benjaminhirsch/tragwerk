@@ -1,0 +1,18 @@
+<?php
+/** @var \Tragwerk\Domain\Entity\Server $server */
+/** @var \Tragwerk\Domain\Entity\SetupJob $job */
+$this->layout('layout::default', ['title' => _('Server Setup')])
+?>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0"><?= sprintf(_('Setup: %s'), $this->e($server->name)) ?></h1>
+    <?= $this->fetch('partial::link', [
+        'label'   => _('Back to server'),
+        'href'    => $this->url('server.edit', ['id' => $server->id->toString()]),
+        'classes' => 'btn btn-secondary btn-sm',
+    ]) ?>
+</div>
+
+<div class="tw-card">
+    <?= $this->fetch('page::server/_log_widget', ['server' => $server, 'job' => $job]) ?>
+</div>

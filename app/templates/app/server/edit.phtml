@@ -1,6 +1,16 @@
 <?php $this->layout('layout::default', ['title' => _('Edit server')]) ?>
 
-<h1><?= _('Edit server') ?></h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0"><?= _('Edit server') ?></h1>
+    <form action="<?= $this->url('server.setup.start', ['id' => $server->id->toString()]) ?>" method="post">
+        <?= $this->fetch('partial::input/csrf') ?>
+        <?= $this->fetch('partial::input/button', [
+            'label'   => _('Setup server'),
+            'icon'    => 'bi bi-terminal',
+            'classes' => 'btn btn-outline-primary',
+        ]) ?>
+    </form>
+</div>
 
 <?php $this->start('card-content') ?>
     <form action="<?= $this->url('server.edit', ['id' => $server->id->toString()]) ?>" method="post">

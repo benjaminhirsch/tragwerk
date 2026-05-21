@@ -52,5 +52,23 @@ final readonly class Server
             ],
             'server.edit',
         );
+
+        $routes->post(
+            '/servers/{id}/setup',
+            $this->middlewareFactory->prepare([Handler\Server\SetupHandler::class]),
+            'server.setup.start',
+        );
+
+        $routes->get(
+            '/servers/{id}/setup/{jobId}',
+            $this->middlewareFactory->prepare([Handler\Server\SetupPageHandler::class]),
+            'server.setup',
+        );
+
+        $routes->get(
+            '/servers/{id}/setup/{jobId}/log',
+            $this->middlewareFactory->prepare([Handler\Server\SetupLogHandler::class]),
+            'server.setup.log',
+        );
     }
 }
