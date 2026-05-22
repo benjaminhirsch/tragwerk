@@ -16,3 +16,5 @@ $this->layout('layout::default', ['title' => _('Server Setup')])
 <div class="tw-card">
     <?= $this->fetch('page::server/_log_widget', ['server' => $server, 'job' => $job]) ?>
 </div>
+
+<script src="/js/setup-log.js"></script>
