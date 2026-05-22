@@ -153,7 +153,8 @@ final readonly class ConfigProvider
                     Context::class => DbalContext::class,
                 ],
                 'factories' => [
-                    DbalContext::class => Factory\Queue\Dbal\ContextFactory::class,
+                    DbalContext::class                       => Factory\Queue\Dbal\ContextFactory::class,
+                    Application\Cli\Command\Worker::class   => Factory\Cli\WorkerFactory::class,
                 ],
             ],
         ];

@@ -39,6 +39,7 @@ final class Worker extends Command
         private readonly Connection $connection,
         private readonly LoggerInterface $logger,
         private readonly MessageProcessor $messageProcessor,
+        private readonly int $maxAttempts = 5,
     ) {
         parent::__construct();
     }
@@ -61,13 +62,13 @@ final class Worker extends Command
         $queueName = Queue::tryFrom($rawQueueName);
         if ($queueName === null) {
             $output->writeln(sprintf('<error>Queue `%s` does not exist!</error>', $rawQueueName));
-            $output->writeln(sprintf('<info>Valid queues are:</info> %s', implode(
-                ', ',
-                array_map(
-                    static fn (Queue $queue) => $queue->value,
-                    Queue::cases(),
-                ),
-            )));
+            array_map(
+                static fn(Queue $queue) => $queue->value,
+                Queue::cases(),
+            )
+                |> (fn($x) => implode(', ', $x,))
+                |> (fn($x) => sprintf('<info>Valid queues are:</info> %s', $x))
+                |> $output(...);
 
             return Command::FAILURE;
         }
@@ -94,7 +95,7 @@ final class Worker extends Command
         $processor = $this->messageProcessor;
         $processor = new ErrorLoggingProcessor($this->logger, $processor);
         $processor = new TransactionalProcessor($this->connection, $this->logger, $processor);
-        $processor = new RequeueingProcessor($processor);
+        $processor = new RequeueingProcessor($this->queueContext, $queueName->value, $this->maxAttempts, $processor);
         $consumer->bind($queue, $processor);
 
         $consumer->consume();
