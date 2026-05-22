@@ -139,9 +139,9 @@ final class SetupServerCommand extends Command
                 return Command::FAILURE;
             }
 
-            $dockerInstalled = $this->checkDocker($ssh, $job);
+            $dockerVersion = $this->checkDocker($ssh, $job);
 
-            if (! $dockerInstalled) {
+            if ($dockerVersion === null) {
                 $this->append($job, "\nInstalling Docker...\n");
                 $this->append($job, "Running: curl -fsSL https://get.docker.com | sh\n\n");
 
@@ -186,7 +186,8 @@ final class SetupServerCommand extends Command
                     return Command::FAILURE;
                 }
 
-                if (! $this->checkDocker($ssh, $job)) {
+                $dockerVersion = $this->checkDocker($ssh, $job);
+                if ($dockerVersion === null) {
                     $this->fail(
                         $job,
                         "\nDocker binary not found after installation."
@@ -204,7 +205,9 @@ final class SetupServerCommand extends Command
                 return Command::FAILURE;
             }
 
-            $this->checkDockerCompose($ssh, $server->host, $credential->username, $key, $job);
+            $dockerComposeVersion = $this->checkDockerCompose($ssh, $server->host, $credential->username, $key, $job);
+
+            $this->serverRepository->updateVersions($server->id, $dockerVersion, $dockerComposeVersion);
 
             $this->setupJobRepository->updateStatus($job->id, SetupJobStatus::Completed);
 
@@ -274,31 +277,38 @@ final class SetupServerCommand extends Command
         return $ssh;
     }
 
-    private function checkDocker(SSH2 $ssh, SetupJob $job): bool
+    private function checkDocker(SSH2 $ssh, SetupJob $job): string|null
     {
         $this->append($job, "Checking Docker...\n");
         $result = $ssh->exec('docker --version 2>&1');
 
         if (is_string($result) && str_contains($result, 'Docker version')) {
-            $this->append($job, sprintf("  %s\n", $result));
+            $version = trim($result);
+            $this->append($job, sprintf("  %s\n", $version));
 
-            return true;
+            return $version;
         }
 
         $this->append($job, "  Docker not installed.\n");
 
-        return false;
+        return null;
     }
 
-    private function checkDockerCompose(SSH2 $ssh, string $host, string $username, PrivateKey $key, SetupJob $job): void
-    {
+    private function checkDockerCompose(
+        SSH2 $ssh,
+        string $host,
+        string $username,
+        PrivateKey $key,
+        SetupJob $job,
+    ): string|null {
         $this->append($job, "\nChecking Docker Compose...\n");
         $result = $ssh->exec('docker compose version 2>&1');
 
         if (is_string($result) && str_contains($result, 'Docker Compose')) {
-            $this->append($job, sprintf("  %s\n", $result));
+            $version = trim($result);
+            $this->append($job, sprintf("  %s\n", $version));
 
-            return;
+            return $version;
         }
 
         $this->append($job, "  Docker Compose plugin not found, installing...\n");
@@ -326,15 +336,20 @@ final class SetupServerCommand extends Command
 
         $ssh = $this->reconnect($host, $username, $key, $job);
         if ($ssh === null) {
-            return;
+            return null;
         }
 
         $result = $ssh->exec('docker compose version 2>&1');
         if (is_string($result) && str_contains($result, 'Docker Compose')) {
-            $this->append($job, sprintf("  %s\n", $result));
-        } else {
-            $this->append($job, "  Docker Compose plugin could not be installed.\n");
+            $version = trim($result);
+            $this->append($job, sprintf("  %s\n", $version));
+
+            return $version;
         }
+
+        $this->append($job, "  Docker Compose plugin could not be installed.\n");
+
+        return null;
     }
 
     private function reconnect(string $host, string $username, PrivateKey $key, SetupJob $job): SSH2|null

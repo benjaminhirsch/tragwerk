@@ -11,6 +11,7 @@ use Override;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Enum\EntityType;
 use Tragwerk\Domain\Exception\Repository\EntityHydrationFailed;
+use Tragwerk\Domain\Exception\Repository\EntityUpdateFailed;
 use Tragwerk\Domain\Repository\ServerRepository as ServerRepositoryInterface;
 use Tragwerk\Domain\ValueObject\CredentialIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
@@ -90,6 +91,28 @@ final class ServerRepository extends GenericRepository implements ServerReposito
             }
         } catch (MappingError | Exception $e) {
             throw EntityHydrationFailed::create(Server::class, $e);
+        }
+    }
+
+    #[Override]
+    public function updateVersions(
+        ServerIdentifier $id,
+        string|null $dockerVersion,
+        string|null $dockerComposeVersion,
+    ): void {
+        $qb = $this->connection->createQueryBuilder();
+        $qb->update(EntityHelper::getDbTableName(EntityType::SERVER))
+            ->set('docker_version', ':docker_version')
+            ->set('docker_compose_version', ':docker_compose_version')
+            ->where($qb->expr()->eq('id', ':id'))
+            ->setParameter('docker_version', $dockerVersion)
+            ->setParameter('docker_compose_version', $dockerComposeVersion)
+            ->setParameter('id', $id->toString());
+
+        try {
+            $qb->executeStatement();
+        } catch (Exception $e) {
+            throw EntityUpdateFailed::create($id, $e);
         }
     }
 }

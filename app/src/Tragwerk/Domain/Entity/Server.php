@@ -22,6 +22,8 @@ final class Server implements Entity
         public UserIdentifier $createdBy,
         public TimestampImmutable $updatedAt,
         public UserIdentifier $updatedBy,
+        public string|null $dockerVersion = null,
+        public string|null $dockerComposeVersion = null,
     ) {
     }
 }

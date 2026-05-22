@@ -38,6 +38,13 @@ interface ServerRepository
 
     public function existsByHost(string $host, ServerIdentifier|null $excludeId = null): bool;
 
+    /** @throws EntityUpdateFailed */
+    public function updateVersions(
+        ServerIdentifier $id,
+        string|null $dockerVersion,
+        string|null $dockerComposeVersion,
+    ): void;
+
     public function isCredentialAssigned(CredentialIdentifier $id): bool;
 
     /**
