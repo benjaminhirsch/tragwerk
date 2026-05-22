@@ -21,11 +21,17 @@ use Tragwerk\Application\Validation\ValidationBag;
 use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Server;
+use Tragwerk\Domain\Entity\SetupJob;
+use Tragwerk\Domain\Enum\SetupJobStatus;
 use Tragwerk\Domain\Event\ServerUpdated;
+use Tragwerk\Domain\Event\SetupJobScheduled;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
+use Tragwerk\Domain\Repository\SetupJobRepository;
 use Tragwerk\Domain\ValueObject\CredentialIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
+use Tragwerk\Domain\ValueObject\SetupJobIdentifier;
+use Tragwerk\Domain\ValueObject\TimestampImmutable;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
 use function _;
@@ -41,6 +47,7 @@ final readonly class EditHandler implements RequestHandlerInterface
         private UrlHelper $urlHelper,
         private ServerRepository $serverRepository,
         private CredentialRepository $credentialRepository,
+        private SetupJobRepository $setupJobRepository,
     ) {
     }
 
@@ -95,6 +102,40 @@ final readonly class EditHandler implements RequestHandlerInterface
                         $update,
                         UserIdentifier::fromString($user->getIdentity()),
                     ));
+
+                    if ($update->credentialId !== null && $update->credentialId !== '') {
+                        $existing = $this->setupJobRepository->getLatestForServer($server->id);
+
+                        $activeStatus = $existing instanceof SetupJob
+                            && ($existing->status === SetupJobStatus::Pending
+                                || $existing->status === SetupJobStatus::Running);
+
+                        if ($activeStatus) {
+                            return new RedirectResponse($this->urlHelper->generate('server.setup', [
+                                'id'    => $server->id->toString(),
+                                'jobId' => $existing->id->toString(),
+                            ]));
+                        }
+
+                        if (! $existing instanceof SetupJob || $existing->status === SetupJobStatus::Failed) {
+                            $now = TimestampImmutable::now();
+                            $job = new SetupJob(
+                                SetupJobIdentifier::create(),
+                                $server->id,
+                                SetupJobStatus::Pending,
+                                '',
+                                $now,
+                                $now,
+                            );
+
+                            $this->eventDispatcher->dispatch(new SetupJobScheduled($job));
+
+                            return new RedirectResponse($this->urlHelper->generate('server.setup', [
+                                'id'    => $server->id->toString(),
+                                'jobId' => $job->id->toString(),
+                            ]));
+                        }
+                    }
 
                     return new RedirectResponse($this->urlHelper->generate('server'));
                 }

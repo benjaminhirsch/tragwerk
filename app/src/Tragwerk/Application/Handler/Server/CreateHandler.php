@@ -18,10 +18,16 @@ use Tragwerk\Application\Mapper\GenericMapper;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Project;
+use Tragwerk\Domain\Entity\SetupJob;
+use Tragwerk\Domain\Enum\SetupJobStatus;
 use Tragwerk\Domain\Event\ServerCreated;
+use Tragwerk\Domain\Event\SetupJobScheduled;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\ValueObject\CredentialIdentifier;
+use Tragwerk\Domain\ValueObject\ServerIdentifier;
+use Tragwerk\Domain\ValueObject\SetupJobIdentifier;
+use Tragwerk\Domain\ValueObject\TimestampImmutable;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
 use function _;
@@ -53,18 +59,18 @@ final readonly class CreateHandler implements RequestHandlerInterface
             assert($user instanceof UserInterface);
 
             if (! $validationBag->hasErrors()) {
-                $registration = $validationBag->getDto();
-                assert($registration instanceof ServerDto);
+                $server = $validationBag->getDto();
+                assert($server instanceof ServerDto);
 
-                if ($this->serverRepository->existsByHost($registration->host)) {
+                if ($this->serverRepository->existsByHost($server->host)) {
                     $validationBag = $validationBag->withError('host', _('IP address is already in use'));
-                } elseif ($registration->credentialId !== null && $registration->credentialId !== '') {
-                    if (! CredentialIdentifier::isValid($registration->credentialId)) {
+                } elseif ($server->credentialId !== null && $server->credentialId !== '') {
+                    if (! CredentialIdentifier::isValid($server->credentialId)) {
                         $validationBag = $validationBag->withError('credentialId', _('Invalid credential'));
                     } else {
                         try {
                             $credential = $this->credentialRepository->getById(
-                                CredentialIdentifier::fromString($registration->credentialId),
+                                CredentialIdentifier::fromString($server->credentialId),
                             );
                             assert($credential instanceof Credential);
 
@@ -78,11 +84,33 @@ final readonly class CreateHandler implements RequestHandlerInterface
                 }
 
                 if (! $validationBag->hasErrors()) {
+                    $serverId = ServerIdentifier::create();
+
                     $this->eventDispatcher->dispatch(new ServerCreated(
-                        $registration,
+                        $server,
                         UserIdentifier::fromString($user->getIdentity()),
                         $activeProject->id,
+                        $serverId,
                     ));
+
+                    if ($server->credentialId !== null && $server->credentialId !== '') {
+                        $now = TimestampImmutable::now();
+                        $job = new SetupJob(
+                            SetupJobIdentifier::create(),
+                            $serverId,
+                            SetupJobStatus::Pending,
+                            '',
+                            $now,
+                            $now,
+                        );
+
+                        $this->eventDispatcher->dispatch(new SetupJobScheduled($job));
+
+                        return new RedirectResponse($this->urlHelper->generate('server.setup', [
+                            'id'    => $serverId->toString(),
+                            'jobId' => $job->id->toString(),
+                        ]));
+                    }
 
                     return new RedirectResponse($this->urlHelper->generate('server'));
                 }

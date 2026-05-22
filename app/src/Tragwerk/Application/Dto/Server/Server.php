@@ -56,15 +56,18 @@ final readonly class Server implements DtoInterface
         }
     }
 
-    public function createServer(UserIdentifier $createdBy, ProjectIdentifier $projectId): ServerEntity
-    {
+    public function createServer(
+        UserIdentifier $createdBy,
+        ProjectIdentifier $projectId,
+        ServerIdentifier $id,
+    ): ServerEntity {
         $now          = TimestampImmutable::now();
         $credentialId = $this->credentialId !== null && CredentialIdentifier::isValid($this->credentialId)
             ? CredentialIdentifier::fromString($this->credentialId)
             : null;
 
         return new ServerEntity(
-            ServerIdentifier::create(),
+            $id,
             $this->name,
             $this->host,
             $credentialId,
