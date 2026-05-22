@@ -11,8 +11,8 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Throwable;
-use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Server;
+use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
 
@@ -46,8 +46,8 @@ final readonly class DeleteHandler implements RequestHandlerInterface
             return null;
         }
 
-        $activeProject = $request->getAttribute('active_project');
-        if (! $activeProject instanceof Project) {
+        $activeTeam = $request->getAttribute('active_team');
+        if (! $activeTeam instanceof Team) {
             return null;
         }
 
@@ -55,7 +55,7 @@ final readonly class DeleteHandler implements RequestHandlerInterface
             $server = $this->serverRepository->getById(ServerIdentifier::fromString($routeId));
             assert($server instanceof Server);
 
-            if ($server->projectId->toString() !== $activeProject->id->toString()) {
+            if ($server->teamId->toString() !== $activeTeam->id->toString()) {
                 return null;
             }
 

@@ -17,7 +17,7 @@ final readonly class CreateServer
     {
         $this->serverRepository->create($event->server->createServer(
             $event->createdBy,
-            $event->projectId,
+            $event->teamId,
             $event->serverId,
         ));
     }

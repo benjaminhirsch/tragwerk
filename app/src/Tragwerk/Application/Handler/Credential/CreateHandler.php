@@ -15,7 +15,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Tragwerk\Application\Dto\Credential\Credential as CredentialDto;
 use Tragwerk\Application\Mapper\GenericMapper;
 use Tragwerk\Application\Response\ResponseRenderer;
-use Tragwerk\Domain\Entity\Project;
+use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Event\CredentialCreated;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
@@ -41,8 +41,8 @@ final readonly class CreateHandler implements RequestHandlerInterface
             $user = $request->getAttribute(UserInterface::class);
             assert($user instanceof UserInterface);
 
-            $activeProject = $request->getAttribute('active_project');
-            assert($activeProject instanceof Project);
+            $activeTeam = $request->getAttribute('active_team');
+            assert($activeTeam instanceof Team);
 
             if (! $validationBag->hasErrors()) {
                 $dto = $validationBag->getDto();
@@ -51,7 +51,7 @@ final readonly class CreateHandler implements RequestHandlerInterface
                 $this->eventDispatcher->dispatch(new CredentialCreated(
                     $dto,
                     UserIdentifier::fromString($user->getIdentity()),
-                    $activeProject->id,
+                    $activeTeam->id,
                 ));
 
                 return new RedirectResponse($this->urlHelper->generate('credential'));

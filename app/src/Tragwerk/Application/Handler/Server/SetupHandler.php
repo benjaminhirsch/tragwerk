@@ -12,9 +12,9 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Throwable;
-use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\SetupJob;
+use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Enum\SetupJobStatus;
 use Tragwerk\Domain\Event\SetupJobScheduled;
 use Tragwerk\Domain\Repository\ServerRepository;
@@ -44,8 +44,8 @@ final readonly class SetupHandler implements RequestHandlerInterface
             return new RedirectResponse($this->urlHelper->generate('server'));
         }
 
-        $activeProject = $request->getAttribute('active_project');
-        if (! $activeProject instanceof Project) {
+        $activeTeam = $request->getAttribute('active_team');
+        if (! $activeTeam instanceof Team) {
             return new RedirectResponse($this->urlHelper->generate('server'));
         }
 
@@ -56,7 +56,7 @@ final readonly class SetupHandler implements RequestHandlerInterface
             return new RedirectResponse($this->urlHelper->generate('server'));
         }
 
-        if ($server->projectId->toString() !== $activeProject->id->toString()) {
+        if ($server->teamId->toString() !== $activeTeam->id->toString()) {
             return new RedirectResponse($this->urlHelper->generate('server'));
         }
 

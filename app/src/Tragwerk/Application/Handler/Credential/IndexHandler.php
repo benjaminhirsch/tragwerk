@@ -9,7 +9,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Tragwerk\Application\Response\ResponseRenderer;
-use Tragwerk\Domain\Entity\Project;
+use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Repository\CredentialRepository;
 
 final readonly class IndexHandler implements RequestHandlerInterface
@@ -22,10 +22,10 @@ final readonly class IndexHandler implements RequestHandlerInterface
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $activeProject = $request->getAttribute('active_project');
+        $activeTeam = $request->getAttribute('active_team');
 
-        $credentials = $activeProject instanceof Project
-            ? $this->credentialRepository->getAll(projectId: $activeProject->id)
+        $credentials = $activeTeam instanceof Team
+            ? $this->credentialRepository->getAll(teamId: $activeTeam->id)
             : (static function (): Generator {
                 yield from [];
             })();

@@ -116,7 +116,7 @@ final readonly class ConfigProvider
                     Template\Extension\Translator::class,
                     Template\Extension\Locale::class,
                     Template\Extension\Csrf::class,
-                    Template\Extension\ProjectContext::class,
+                    Template\Extension\TeamContext::class,
                 ],
             ],
             'dependencies' => [
@@ -248,9 +248,9 @@ final readonly class ConfigProvider
                 'aliases' => [
                     Domain\Repository\UserRepository::class => Infrastructure\Repository\UserRepository::class,
                     Domain\Repository\ServerRepository::class => Infrastructure\Repository\ServerRepository::class,
-                    Domain\Repository\ProjectRepository::class => Infrastructure\Repository\ProjectRepository::class,
-                    Domain\Repository\ProjectInvitationRepository::class =>
-                        Infrastructure\Repository\ProjectInvitationRepository::class,
+                    Domain\Repository\TeamRepository::class => Infrastructure\Repository\TeamRepository::class,
+                    Domain\Repository\TeamInvitationRepository::class =>
+                        Infrastructure\Repository\TeamInvitationRepository::class,
                     Domain\Repository\CredentialRepository::class =>
                         Infrastructure\Repository\CredentialRepository::class,
                     Domain\Repository\SetupJobRepository::class =>
@@ -306,7 +306,7 @@ final readonly class ConfigProvider
             'events'       => [
                 Event\UserRegistered::class => [
                     EventListener\User\UserRegisteredListener::class,
-                    EventListener\User\CreateDefaultProject::class,
+                    EventListener\User\CreateDefaultTeam::class,
                     EventListener\User\SendRegistrationMail::class,
                 ],
                 Event\CredentialCreated::class => [EventListener\Credential\CreateCredential::class],
@@ -317,11 +317,11 @@ final readonly class ConfigProvider
                     EventListener\SetupJob\PersistSetupJob::class,
                     EventListener\SetupJob\ScheduleSetupJob::class,
                 ],
-                Event\ProjectCreated::class  => [EventListener\Project\CreateProject::class],
-                Event\ProjectUpdated::class => [EventListener\Project\UpdateProject::class],
-                Event\ProjectInvitationCreated::class =>
-                    [EventListener\Project\SendProjectInvitation::class],
-                Event\UserSwitchedProject::class => [EventListener\User\PersistLastActiveProject::class],
+                Event\TeamCreated::class  => [EventListener\Team\CreateTeam::class],
+                Event\TeamUpdated::class => [EventListener\Team\UpdateTeam::class],
+                Event\TeamInvitationCreated::class =>
+                    [EventListener\Team\SendTeamInvitation::class],
+                Event\UserSwitchedTeam::class => [EventListener\User\PersistLastActiveTeam::class],
             ],
         ];
     }

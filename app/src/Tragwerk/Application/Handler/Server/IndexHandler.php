@@ -8,8 +8,8 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Tragwerk\Application\Response\ResponseRenderer;
-use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Server;
+use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\Repository\SetupJobRepository;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
@@ -25,11 +25,11 @@ final readonly class IndexHandler implements RequestHandlerInterface
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $activeProject = $request->getAttribute('active_project');
+        $activeTeam = $request->getAttribute('active_team');
 
         /** @var array<int, Server> $servers */
-        $servers = $activeProject instanceof Project
-            ? [...$this->serverRepository->getAll(projectId: $activeProject->id)]
+        $servers = $activeTeam instanceof Team
+            ? [...$this->serverRepository->getAll(teamId: $activeTeam->id)]
             : [];
 
         /** @var array<int, ServerIdentifier> $serverIds */

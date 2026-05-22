@@ -12,7 +12,7 @@ use Tragwerk\Application\Exception\ValidationCollection;
 use Tragwerk\Application\Exception\ValidationError;
 use Tragwerk\Domain\Entity\Credential as CredentialEntity;
 use Tragwerk\Domain\ValueObject\CredentialIdentifier;
-use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
@@ -45,7 +45,7 @@ final readonly class Credential implements DtoInterface
         if ($key === '') {
             $errors[] = ValidationError::make('privateKey', _('An SSH private key is required'));
         } elseif (! self::isValidSshPrivateKey($key)) {
-            $errors[] = ValidationError::make('privateKey', _('Invalid SSH private key. Must be a PEM-encoded private key.'));//phpcs:ignore
+            $errors[] = ValidationError::make('privateKey', _('Invalid SSH private key. Must be a PEM-encoded private key.')); //phpcs:ignore
         }
 
         if ($errors !== []) {
@@ -64,7 +64,7 @@ final readonly class Credential implements DtoInterface
         }
     }
 
-    public function createCredential(UserIdentifier $createdBy, ProjectIdentifier $projectId): CredentialEntity
+    public function createCredential(UserIdentifier $createdBy, TeamIdentifier $teamId): CredentialEntity
     {
         $now = TimestampImmutable::now();
 
@@ -73,7 +73,7 @@ final readonly class Credential implements DtoInterface
             $this->name,
             $this->username,
             $this->privateKey === '' ? null : $this->privateKey,
-            $projectId,
+            $teamId,
             $now,
             $createdBy,
             $now,

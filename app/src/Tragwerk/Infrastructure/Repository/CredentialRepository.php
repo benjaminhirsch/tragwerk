@@ -12,7 +12,7 @@ use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Enum\EntityType;
 use Tragwerk\Domain\Exception\Repository\EntityHydrationFailed;
 use Tragwerk\Domain\Repository\CredentialRepository as CredentialRepositoryInterface;
-use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Infrastructure\Helper\EntityHelper;
 
 final class CredentialRepository extends GenericRepository implements CredentialRepositoryInterface
@@ -20,7 +20,7 @@ final class CredentialRepository extends GenericRepository implements Credential
     #[Override]
     public function getAll(
         array|null $ids = null,
-        ProjectIdentifier|null $projectId = null,
+        TeamIdentifier|null $teamId = null,
     ): Generator {
         $qb = $this->connection->createQueryBuilder();
         $qb->select('*')->from(EntityHelper::getDbTableName(EntityType::CREDENTIAL));
@@ -30,9 +30,9 @@ final class CredentialRepository extends GenericRepository implements Credential
             $qb->setParameter('ids', $ids);
         }
 
-        if ($projectId !== null) {
-            $qb->andWhere($qb->expr()->eq('project_id', ':project_id'));
-            $qb->setParameter('project_id', $projectId->toString());
+        if ($teamId !== null) {
+            $qb->andWhere($qb->expr()->eq('team_id', ':team_id'));
+            $qb->setParameter('team_id', $teamId->toString());
         }
 
         try {

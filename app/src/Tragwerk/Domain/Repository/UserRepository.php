@@ -11,7 +11,7 @@ use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\Exception\Repository\EntityCreationFailed;
 use Tragwerk\Domain\Exception\Repository\EntityHydrationFailed;
 use Tragwerk\Domain\Exception\Repository\EntityNotFound;
-use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
 interface UserRepository extends UserRepositoryInterface
@@ -47,7 +47,7 @@ interface UserRepository extends UserRepositoryInterface
     /** @return Generator<User> */
     public function searchByEmail(string $email): Generator;
 
-    public function getLastActiveProjectId(UserIdentifier $userId): ProjectIdentifier|null;
+    public function getLastActiveTeamId(UserIdentifier $userId): TeamIdentifier|null;
 
-    public function setLastActiveProject(UserIdentifier $userId, ProjectIdentifier $projectId): void;
+    public function setLastActiveTeam(UserIdentifier $userId, TeamIdentifier $teamId): void;
 }

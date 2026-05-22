@@ -19,9 +19,9 @@ use Tragwerk\Application\Mapper\GenericMapper;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Application\Validation\ValidationBag;
 use Tragwerk\Domain\Entity\Credential;
-use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\SetupJob;
+use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Enum\SetupJobStatus;
 use Tragwerk\Domain\Event\ServerUpdated;
 use Tragwerk\Domain\Event\SetupJobScheduled;
@@ -60,8 +60,8 @@ final readonly class EditHandler implements RequestHandlerInterface
             return new RedirectResponse($this->urlHelper->generate('server'));
         }
 
-        $activeProject = $request->getAttribute('active_project');
-        assert($activeProject instanceof Project);
+        $activeTeam = $request->getAttribute('active_team');
+        assert($activeTeam instanceof Team);
 
         $validationBag = null;
 
@@ -84,7 +84,7 @@ final readonly class EditHandler implements RequestHandlerInterface
                             );
                             assert($credential instanceof Credential);
 
-                            if ($credential->projectId->toString() !== $activeProject->id->toString()) {
+                            if ($credential->teamId->toString() !== $activeTeam->id->toString()) {
                                 $validationBag = $validationBag->withError('credentialId', _('Credential not found'));
                             }
                         } catch (Throwable) {
@@ -151,7 +151,7 @@ final readonly class EditHandler implements RequestHandlerInterface
             ], null, []);
         }
 
-        $credentials = $this->credentialRepository->getAll(projectId: $activeProject->id);
+        $credentials = $this->credentialRepository->getAll(teamId: $activeTeam->id);
 
         return $this->renderer->render($request, 'page::server/edit', [
             'server'        => $server,
@@ -167,8 +167,8 @@ final readonly class EditHandler implements RequestHandlerInterface
             return null;
         }
 
-        $activeProject = $request->getAttribute('active_project');
-        if (! $activeProject instanceof Project) {
+        $activeTeam = $request->getAttribute('active_team');
+        if (! $activeTeam instanceof Team) {
             return null;
         }
 
@@ -176,7 +176,7 @@ final readonly class EditHandler implements RequestHandlerInterface
             $server = $this->serverRepository->getById(ServerIdentifier::fromString($routeId));
             assert($server instanceof Server);
 
-            if ($server->projectId->toString() !== $activeProject->id->toString()) {
+            if ($server->teamId->toString() !== $activeTeam->id->toString()) {
                 return null;
             }
 

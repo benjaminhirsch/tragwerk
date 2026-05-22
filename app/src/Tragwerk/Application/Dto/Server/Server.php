@@ -10,8 +10,8 @@ use Tragwerk\Application\Exception\ValidationCollection;
 use Tragwerk\Application\Exception\ValidationError;
 use Tragwerk\Domain\Entity\Server as ServerEntity;
 use Tragwerk\Domain\ValueObject\CredentialIdentifier;
-use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
+use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
@@ -64,7 +64,7 @@ final readonly class Server implements DtoInterface
 
     public function createServer(
         UserIdentifier $createdBy,
-        ProjectIdentifier $projectId,
+        TeamIdentifier $teamId,
         ServerIdentifier $id,
     ): ServerEntity {
         $now          = TimestampImmutable::now();
@@ -77,7 +77,7 @@ final readonly class Server implements DtoInterface
             $this->name,
             $this->host,
             $credentialId,
-            $projectId,
+            $teamId,
             $now,
             $createdBy,
             $now,

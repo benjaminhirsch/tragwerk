@@ -13,7 +13,7 @@ use Tragwerk\Domain\Exception\Repository\EntityHydrationFailed;
 use Tragwerk\Domain\Exception\Repository\EntityNotFound;
 use Tragwerk\Domain\Exception\Repository\EntityUpdateFailed;
 use Tragwerk\Domain\ValueObject\CredentialIdentifier;
-use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Domain\ValueObject\TeamIdentifier;
 
 interface CredentialRepository
 {
@@ -38,6 +38,6 @@ interface CredentialRepository
     /** @param CredentialIdentifier[]|null $ids */
     public function getAll(
         array|null $ids = null,
-        ProjectIdentifier|null $projectId = null,
+        TeamIdentifier|null $teamId = null,
     ): Generator;
 }
