@@ -180,9 +180,10 @@ final readonly class ConfigProvider
         return [
             'dependencies' => [
                 'factories' => [
-                    Connection::class => Factory\Database\Doctrine\ConnectionFactory::class,
-                    Configuration::class => Factory\Database\Doctrine\ConfigurationFactory::class,
+                    Connection::class        => Factory\Database\Doctrine\ConnectionFactory::class,
+                    Configuration::class     => Factory\Database\Doctrine\ConfigurationFactory::class,
                     DependencyFactory::class => Factory\Database\Doctrine\DependencyFactoryFactory::class,
+                    LockFactory::class       => Factory\Lock\LockFactoryFactory::class,
                 ],
             ],
         ];
