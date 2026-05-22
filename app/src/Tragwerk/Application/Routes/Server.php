@@ -70,5 +70,17 @@ final readonly class Server
             $this->middlewareFactory->prepare([Handler\Server\SetupLogHandler::class]),
             'server.setup.log',
         );
+
+        $routes->get(
+            '/servers/{id}/tabs/{tab}',
+            $this->middlewareFactory->prepare([Handler\Server\TabHandler::class]),
+            'server.show.tab',
+        );
+
+        $routes->get(
+            '/servers/{id}',
+            $this->middlewareFactory->prepare([Handler\Server\ShowHandler::class]),
+            'server.show',
+        );
     }
 }

@@ -1,0 +1,23 @@
+<?php
+/** @var \Tragwerk\Domain\Entity\User[] $members */
+?>
+<?php if ($members === []): ?>
+    <p class="text-body-secondary mb-0"><?= _('No members in this team.') ?></p>
+<?php else: ?>
+    <table class="table table-borderless mb-0">
+        <thead>
+            <tr>
+                <th><?= _('Name') ?></th>
+                <th><?= _('Email') ?></th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($members as $member): ?>
+                <tr>
+                    <td><?= $this->e($member->fullName()) ?></td>
+                    <td><?= $this->e($member->email) ?></td>
+                </tr>
+            <?php endforeach ?>
+        </tbody>
+    </table>
+<?php endif ?>

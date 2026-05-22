@@ -68,7 +68,7 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
     }
 
     #[Test]
-    public function createPostWithValidDataRedirectsToCredentialList(): void
+    public function createPostWithValidDataRedirectsToCredentialShow(): void
     {
         $response = $this->dispatch(
             'POST',
@@ -78,7 +78,10 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
         );
 
         self::assertSame(302, $response->getStatusCode());
-        self::assertSame($this->url('credential'), $response->getHeaderLine('Location'));
+        self::assertMatchesRegularExpression(
+            '#^/credentials/[0-9a-f-]{36}$#',
+            $response->getHeaderLine('Location'),
+        );
     }
 
     #[Test]
@@ -225,7 +228,7 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
     }
 
     #[Test]
-    public function editPostWithValidDataRedirectsToCredentialList(): void
+    public function editPostWithValidDataRedirectsToCredentialShow(): void
     {
         $credential = $this->seedCredential('Old Name', 'admin');
         $response   = $this->dispatch(
@@ -236,7 +239,10 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
         );
 
         self::assertSame(302, $response->getStatusCode());
-        self::assertSame($this->url('credential'), $response->getHeaderLine('Location'));
+        self::assertSame(
+            $this->url('credential.show', ['id' => $credential->id->toString()]),
+            $response->getHeaderLine('Location'),
+        );
     }
 
     #[Test]
@@ -371,6 +377,46 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
 
         $still = $repository->getById($credential->id);
         self::assertInstanceOf(Credential::class, $still);
+    }
+
+    #[Test]
+    public function showGetRendersDetailPage(): void
+    {
+        $credential = $this->seedCredential('My Credential', 'admin');
+        $response   = $this->dispatch(
+            'GET',
+            $this->url('credential.show', ['id' => $credential->id->toString()]),
+            cookie: $this->sessionCookie,
+        );
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function showGetWithUnknownCredentialIdRedirectsToCredentialList(): void
+    {
+        $response = $this->dispatch(
+            'GET',
+            $this->url('credential.show', ['id' => CredentialIdentifier::create()->toString()]),
+            cookie: $this->sessionCookie,
+        );
+
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame($this->url('credential'), $response->getHeaderLine('Location'));
+    }
+
+    #[Test]
+    public function showGetWithCredentialFromOtherTeamRedirectsToCredentialList(): void
+    {
+        $otherCredential = $this->seedCredentialForTeam('Foreign Cred', 'user', $this->seedOtherTeam()->id);
+        $response        = $this->dispatch(
+            'GET',
+            $this->url('credential.show', ['id' => $otherCredential->id->toString()]),
+            cookie: $this->sessionCookie,
+        );
+
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame($this->url('credential'), $response->getHeaderLine('Location'));
     }
 
     private function seedUser(): User

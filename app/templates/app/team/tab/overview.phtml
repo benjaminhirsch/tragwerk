@@ -1,0 +1,15 @@
+<?php
+/** @var \Tragwerk\Domain\Entity\Team $team */
+?>
+<table class="table table-borderless mb-0">
+    <tbody>
+        <tr>
+            <th class="w-25 text-body-secondary fw-normal"><?= _('Name') ?></th>
+            <td><?= $this->e($team->name) ?></td>
+        </tr>
+        <tr>
+            <th class="text-body-secondary fw-normal"><?= _('Created') ?></th>
+            <td><?= $this->e($team->createdAt->format('Y-m-d H:i')) ?></td>
+        </tr>
+    </tbody>
+</table>

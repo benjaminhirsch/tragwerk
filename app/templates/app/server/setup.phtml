@@ -8,7 +8,7 @@ $this->layout('layout::default', ['title' => _('Server Setup')])
     <h1 class="mb-0"><?= sprintf(_('Setup: %s'), $this->e($server->name)) ?></h1>
     <?= $this->fetch('partial::link', [
         'label'   => _('Back to server'),
-        'href'    => $this->url('server.edit', ['id' => $server->id->toString()]),
+        'href'    => $this->url('server.show', ['id' => $server->id->toString()]) . '#setup',
         'classes' => 'btn btn-secondary btn-sm',
     ]) ?>
 </div>

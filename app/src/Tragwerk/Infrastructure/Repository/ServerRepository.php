@@ -66,6 +66,7 @@ final class ServerRepository extends GenericRepository implements ServerReposito
         array|null $ids = null,
         array|null $names = null,
         TeamIdentifier|null $teamId = null,
+        CredentialIdentifier|null $credentialId = null,
     ): Generator {
         $qb = $this->connection->createQueryBuilder();
         $qb->select('*')->from(EntityHelper::getDbTableName(EntityType::SERVER));
@@ -83,6 +84,11 @@ final class ServerRepository extends GenericRepository implements ServerReposito
         if ($teamId !== null) {
             $qb->andWhere($qb->expr()->eq('team_id', ':team_id'));
             $qb->setParameter('team_id', $teamId->toString());
+        }
+
+        if ($credentialId !== null) {
+            $qb->andWhere($qb->expr()->eq('credential_id', ':credential_id'));
+            $qb->setParameter('credential_id', $credentialId->toString());
         }
 
         try {

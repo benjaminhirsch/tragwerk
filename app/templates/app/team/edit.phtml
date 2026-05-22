@@ -1,0 +1,64 @@
+<?php $this->layout('layout::default', ['title' => _('Edit team')]) ?>
+
+<h1><?= _('Edit team') ?></h1>
+
+<?php $this->start('card-content') ?>
+    <form action="<?= $this->url('team.edit', ['id' => $team->id->toString()]) ?>" method="post">
+        <?= $this->fetch('partial::input/csrf') ?>
+
+        <?= $this->fetch('partial::input/text', [
+            'id'         => 'name',
+            'label'      => _('Team name'),
+            'autofocus'  => 'autofocus',
+            'validation' => $validationBag,
+        ]) ?>
+
+        <div class="form-group">
+            <label class="form-label"><?= _('Team members') ?></label>
+            <?= $this->fetch('partial::team/member-list', [
+                'members'       => $members,
+                'teamId'        => $team->id->toString(),
+                'ownerId'       => $team->ownerId->toString(),
+                'usersToRemove' => $validationBag->getArrayValueByName('usersToRemove'),
+            ]) ?>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label"><?= _('Invite more members (optional)') ?></label>
+            <?= $this->fetch('partial::team/email-fields', [
+                'emails'     => $validationBag->getArrayValueByName('emailsToInvite') ?: [''],
+                'validation' => $validationBag,
+            ]) ?>
+        </div>
+
+        <div class="d-flex gap-2">
+            <?= $this->fetch('partial::input/button', [
+                'label' => _('Save'),
+            ]) ?>
+            <?= $this->fetch('partial::link', [
+                    'label' => _('Cancel'),
+                    'href' => $this->url('server'),
+                    'classes' => 'btn btn-secondary',
+            ]) ?>
+            <?= $this->fetch('partial::input/button', [
+                'classes'      => 'btn btn-outline-danger',
+                'icon'         => 'bi bi-trash3',
+                'type'         => 'button',
+                'dataBsToggle' => 'modal',
+                'dataBsTarget' => '#tw-delete-team-modal',
+            ]) ?>
+        </div>
+
+    </form>
+<?php $this->stop() ?>
+
+
+<?= $this->fetch('partial::modal', [
+    'id'     => 'tw-delete-team-modal',
+    'header' => _('Delete team'),
+    'body'   => sprintf(_('Are you sure you want to delete the team %s? This action cannot be undone. Deleting a team will delete all associated resources too!'), '<strong>' . $this->e($team->name) . '</strong>'),
+    'actionUrl' => $this->url('team.delete', ['id' => $team->id->toString()]),
+    'actionLabel' => _('Delete team'),
+    'actionClasses' => 'btn btn-danger',
+    'actionIcon' => 'bi bi-trash3',
+]) ?>

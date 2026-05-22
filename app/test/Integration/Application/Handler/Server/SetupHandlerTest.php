@@ -54,7 +54,8 @@ final class SetupHandlerTest extends AppIntegrationTestCase
 
         $location = $response->getHeaderLine('Location');
         self::assertSame(302, $response->getStatusCode());
-        self::assertStringContainsString('/servers/' . $server->id->toString() . '/setup/', $location);
+        self::assertStringContainsString('/servers/' . $server->id->toString(), $location);
+        self::assertStringContainsString('#setup', $location);
     }
 
     #[Test]
@@ -77,10 +78,10 @@ final class SetupHandlerTest extends AppIntegrationTestCase
     }
 
     #[Test]
-    public function setupPostWithPendingJobRedirectsToExistingJob(): void
+    public function setupPostWithPendingJobRedirectsToServerShow(): void
     {
-        $server      = $this->seedServer('My Server', '10.0.0.1');
-        $existingJob = $this->seedSetupJob($server, SetupJobStatus::Pending);
+        $server = $this->seedServer('My Server', '10.0.0.1');
+        $this->seedSetupJob($server, SetupJobStatus::Pending);
 
         $response = $this->dispatch(
             'POST',
@@ -89,7 +90,8 @@ final class SetupHandlerTest extends AppIntegrationTestCase
         );
 
         self::assertSame(302, $response->getStatusCode());
-        self::assertStringContainsString($existingJob->id->toString(), $response->getHeaderLine('Location'));
+        self::assertStringContainsString('/servers/' . $server->id->toString(), $response->getHeaderLine('Location'));
+        self::assertStringContainsString('#setup', $response->getHeaderLine('Location'));
 
         $repository = $this->container->get(SetupJobRepository::class);
         assert($repository instanceof SetupJobRepository);
@@ -103,10 +105,10 @@ final class SetupHandlerTest extends AppIntegrationTestCase
     }
 
     #[Test]
-    public function setupPostWithRunningJobRedirectsToExistingJob(): void
+    public function setupPostWithRunningJobRedirectsToServerShow(): void
     {
-        $server      = $this->seedServer('My Server', '10.0.0.1');
-        $existingJob = $this->seedSetupJob($server, SetupJobStatus::Running);
+        $server = $this->seedServer('My Server', '10.0.0.1');
+        $this->seedSetupJob($server, SetupJobStatus::Running);
 
         $response = $this->dispatch(
             'POST',
@@ -115,7 +117,8 @@ final class SetupHandlerTest extends AppIntegrationTestCase
         );
 
         self::assertSame(302, $response->getStatusCode());
-        self::assertStringContainsString($existingJob->id->toString(), $response->getHeaderLine('Location'));
+        self::assertStringContainsString('/servers/' . $server->id->toString(), $response->getHeaderLine('Location'));
+        self::assertStringContainsString('#setup', $response->getHeaderLine('Location'));
     }
 
     #[Test]
