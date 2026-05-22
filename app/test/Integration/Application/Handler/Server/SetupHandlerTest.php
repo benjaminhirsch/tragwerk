@@ -437,6 +437,7 @@ final class SetupHandlerTest extends AppIntegrationTestCase
             $this->user->id,
             $now,
             $this->user->id,
+            22,
         );
 
         $repository = $this->container->get(ServerRepository::class);

@@ -146,6 +146,7 @@ final readonly class EditHandler implements RequestHandlerInterface
             $validationBag = new ValidationBag([
                 'name'         => $server->name,
                 'host'         => $server->host,
+                'port'         => $server->port,
                 'credentialId' => $server->credentialId?->toString() ?? '',
             ], null, []);
         }

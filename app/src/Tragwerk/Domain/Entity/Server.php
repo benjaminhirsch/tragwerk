@@ -22,6 +22,7 @@ final class Server implements Entity
         public UserIdentifier $createdBy,
         public TimestampImmutable $updatedAt,
         public UserIdentifier $updatedBy,
+        public int $port = 22,
         public string|null $dockerVersion = null,
         public string|null $dockerComposeVersion = null,
     ) {

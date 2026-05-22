@@ -25,6 +25,7 @@ final readonly class UpdateServer
 
         $server->name         = $event->server->name;
         $server->host         = $event->server->host;
+        $server->port         = $event->server->port;
         $server->credentialId = $event->server->credentialId !== null && $event->server->credentialId !== ''
             ? CredentialIdentifier::fromString($event->server->credentialId)
             : null;
