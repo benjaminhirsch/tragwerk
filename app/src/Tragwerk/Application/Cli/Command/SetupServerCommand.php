@@ -110,7 +110,7 @@ final class SetupServerCommand extends Command
                 return Command::FAILURE;
             }
 
-            $ssh = new SSH2($server->host);
+            $ssh = new SSH2($server->host, 22, 30);
 
             try {
                 $key = PublicKeyLoader::loadPrivateKey($credential->privateKey);
@@ -354,7 +354,7 @@ final class SetupServerCommand extends Command
 
     private function reconnect(string $host, string $username, PrivateKey $key, SetupJob $job): SSH2|null
     {
-        $ssh = new SSH2($host);
+        $ssh = new SSH2($host, 22, 30);
         if (! $ssh->login($username, $key)) {
             $this->fail($job, "Reconnect failed after install.\n");
 
