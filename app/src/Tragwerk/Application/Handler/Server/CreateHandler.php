@@ -17,8 +17,8 @@ use Tragwerk\Application\Dto\Server\Server as ServerDto;
 use Tragwerk\Application\Mapper\GenericMapper;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Entity\Credential;
-use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\SetupJob;
+use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Enum\SetupJobStatus;
 use Tragwerk\Domain\Event\ServerCreated;
 use Tragwerk\Domain\Event\SetupJobScheduled;
@@ -47,8 +47,8 @@ final readonly class CreateHandler implements RequestHandlerInterface
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $activeProject = $request->getAttribute('active_project');
-        assert($activeProject instanceof Project);
+        $activeTeam = $request->getAttribute('active_team');
+        assert($activeTeam instanceof Team);
 
         $validationBag = null;
 
@@ -74,7 +74,7 @@ final readonly class CreateHandler implements RequestHandlerInterface
                             );
                             assert($credential instanceof Credential);
 
-                            if ($credential->projectId->toString() !== $activeProject->id->toString()) {
+                            if ($credential->teamId->toString() !== $activeTeam->id->toString()) {
                                 $validationBag = $validationBag->withError('credentialId', _('Credential not found'));
                             }
                         } catch (Throwable) {
@@ -89,7 +89,7 @@ final readonly class CreateHandler implements RequestHandlerInterface
                     $this->eventDispatcher->dispatch(new ServerCreated(
                         $server,
                         UserIdentifier::fromString($user->getIdentity()),
-                        $activeProject->id,
+                        $activeTeam->id,
                         $serverId,
                     ));
 
@@ -117,7 +117,7 @@ final readonly class CreateHandler implements RequestHandlerInterface
             }
         }
 
-        $credentials = $this->credentialRepository->getAll(projectId: $activeProject->id);
+        $credentials = $this->credentialRepository->getAll(teamId: $activeTeam->id);
 
         return $this->renderer->render($request, 'page::server/create', [
             'validationBag' => $validationBag,

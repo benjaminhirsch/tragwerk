@@ -14,8 +14,8 @@ use Tragwerk\Domain\Exception\Repository\EntityHydrationFailed;
 use Tragwerk\Domain\Exception\Repository\EntityUpdateFailed;
 use Tragwerk\Domain\Repository\ServerRepository as ServerRepositoryInterface;
 use Tragwerk\Domain\ValueObject\CredentialIdentifier;
-use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
+use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Infrastructure\Helper\EntityHelper;
 
 use function implode;
@@ -65,7 +65,7 @@ final class ServerRepository extends GenericRepository implements ServerReposito
     public function getAll(
         array|null $ids = null,
         array|null $names = null,
-        ProjectIdentifier|null $projectId = null,
+        TeamIdentifier|null $teamId = null,
     ): Generator {
         $qb = $this->connection->createQueryBuilder();
         $qb->select('*')->from(EntityHelper::getDbTableName(EntityType::SERVER));
@@ -80,9 +80,9 @@ final class ServerRepository extends GenericRepository implements ServerReposito
             $qb->setParameter('emails', implode(',', $names));
         }
 
-        if ($projectId !== null) {
-            $qb->andWhere($qb->expr()->eq('project_id', ':project_id'));
-            $qb->setParameter('project_id', $projectId->toString());
+        if ($teamId !== null) {
+            $qb->andWhere($qb->expr()->eq('team_id', ':team_id'));
+            $qb->setParameter('team_id', $teamId->toString());
         }
 
         try {

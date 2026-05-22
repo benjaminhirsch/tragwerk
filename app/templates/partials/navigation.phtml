@@ -16,8 +16,8 @@ $links = [
         ],
         [
                 'include' => 'partial::link',
-                'label' => _('Projects'),
-                'href' => $this->url('project'),
+                'label' => _('Teams'),
+                'href' => $this->url('team'),
                 'classes' => 'nav-link bi bi-folder2-open',
         ],
 ];
@@ -29,26 +29,26 @@ foreach ($links as &$l) {
     }
 }
 unset($l);
-$projects      = $this->userProjects();
-$activeProject = $this->activeProject();
+$teams      = $this->userTeams();
+$activeTeam = $this->activeTeam();
 ?>
-<?php if (count($projects) > 1): ?>
+<?php if (count($teams) > 1): ?>
 <div class="tw-project-switcher px-2 pb-3">
-    <form id="tw-project-switch-form">
+    <form id="tw-team-switch-form">
         <input type="hidden" name="csrf_token" value="<?= $this->getCsrfToken() ?>">
         <?= $this->fetch('partial::input/select', [
-            'id' => 'projectId',
+            'id' => 'teamId',
             'classes' => 'form-select form-select-sm',
-            'hxPost' => $this->url('project.switch'),
+            'hxPost' => $this->url('team.switch'),
             'hxTrigger' => 'change',
             'hxInclude' => 'closest form',
             'hxSwap' => 'none',
             'disableEmptyOption' => true,
             'options' => array_combine(
-                    array_map(fn($p) => $p->id->toString(), $projects),
-                    array_map(fn($p) => $p->name, $projects)
+                    array_map(fn($p) => $p->id->toString(), $teams),
+                    array_map(fn($p) => $p->name, $teams)
             ),
-            'defaultValue' => $activeProject?->id->toString(),
+            'defaultValue' => $activeTeam?->id->toString(),
         ]) ?>
     </form>
 </div>

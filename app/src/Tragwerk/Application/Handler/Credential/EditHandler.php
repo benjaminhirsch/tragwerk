@@ -19,7 +19,7 @@ use Tragwerk\Application\Mapper\GenericMapper;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Application\Validation\ValidationBag;
 use Tragwerk\Domain\Entity\Credential;
-use Tragwerk\Domain\Entity\Project;
+use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Event\CredentialUpdated;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
@@ -97,8 +97,8 @@ final readonly class EditHandler implements RequestHandlerInterface
             return null;
         }
 
-        $activeProject = $request->getAttribute('active_project');
-        if (! $activeProject instanceof Project) {
+        $activeTeam = $request->getAttribute('active_team');
+        if (! $activeTeam instanceof Team) {
             return null;
         }
 
@@ -106,7 +106,7 @@ final readonly class EditHandler implements RequestHandlerInterface
             $credential = $this->credentialRepository->getById(CredentialIdentifier::fromString($routeId));
             assert($credential instanceof Credential);
 
-            if ($credential->projectId->toString() !== $activeProject->id->toString()) {
+            if ($credential->teamId->toString() !== $activeTeam->id->toString()) {
                 return null;
             }
 

@@ -6,17 +6,17 @@ namespace TragwerkTest\Integration\Application\Handler\Server;
 
 use PHPUnit\Framework\Attributes\Test;
 use Tragwerk\Domain\Entity\Credential;
-use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Server;
+use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\Repository\CredentialRepository;
-use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
+use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\Repository\UserRepository;
 use Tragwerk\Domain\ValueObject\CredentialIdentifier;
 use Tragwerk\Domain\ValueObject\PasswordHash;
-use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
+use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 use TragwerkTest\Integration\Support\AppIntegrationTestCase;
@@ -29,7 +29,7 @@ final class ServerHandlerTest extends AppIntegrationTestCase
     private const string PASSWORD = 'secure-password-123';
 
     private User $user;
-    private Project $project;
+    private Team $team;
     private string $sessionCookie;
 
     protected function setUp(): void
@@ -37,7 +37,7 @@ final class ServerHandlerTest extends AppIntegrationTestCase
         parent::setUp();
 
         $this->user          = $this->seedUser();
-        $this->project       = $this->seedProject();
+        $this->team          = $this->seedTeam();
         $this->sessionCookie = $this->loginAndGetCookie();
     }
 
@@ -93,7 +93,7 @@ final class ServerHandlerTest extends AppIntegrationTestCase
         $repository = $this->container->get(ServerRepository::class);
         assert($repository instanceof ServerRepository);
 
-        $servers = [...$repository->getAll(projectId: $this->project->id)];
+        $servers = [...$repository->getAll(teamId: $this->team->id)];
         self::assertCount(1, $servers);
         self::assertInstanceOf(Server::class, $servers[0]);
         self::assertSame('My Server', $servers[0]->name);
@@ -232,9 +232,9 @@ final class ServerHandlerTest extends AppIntegrationTestCase
     }
 
     #[Test]
-    public function editGetWithServerFromOtherProjectRedirectsToServerList(): void
+    public function editGetWithServerFromOtherTeamRedirectsToServerList(): void
     {
-        $otherServer = $this->seedServerForProject('Foreign Server', '10.10.10.10', $this->seedOtherProject()->id);
+        $otherServer = $this->seedServerForTeam('Foreign Server', '10.10.10.10', $this->seedOtherTeam()->id);
         $response    = $this->dispatch(
             'GET',
             $this->url('server.edit', ['id' => $otherServer->id->toString()]),
@@ -272,7 +272,7 @@ final class ServerHandlerTest extends AppIntegrationTestCase
         $repository = $this->container->get(ServerRepository::class);
         assert($repository instanceof ServerRepository);
 
-        $remaining = [...$repository->getAll(projectId: $this->project->id)];
+        $remaining = [...$repository->getAll(teamId: $this->team->id)];
         self::assertCount(0, $remaining);
     }
 
@@ -290,9 +290,9 @@ final class ServerHandlerTest extends AppIntegrationTestCase
     }
 
     #[Test]
-    public function deletePostWithServerFromOtherProjectDoesNotDelete(): void
+    public function deletePostWithServerFromOtherTeamDoesNotDelete(): void
     {
-        $otherServer = $this->seedServerForProject('Foreign Server', '10.10.10.10', $this->seedOtherProject()->id);
+        $otherServer = $this->seedServerForTeam('Foreign Server', '10.10.10.10', $this->seedOtherTeam()->id);
 
         $this->dispatch(
             'POST',
@@ -330,11 +330,11 @@ final class ServerHandlerTest extends AppIntegrationTestCase
     }
 
     #[Test]
-    public function editPostWithCredentialFromOtherProjectReRendersForm(): void
+    public function editPostWithCredentialFromOtherTeamReRendersForm(): void
     {
         $server            = $this->seedServer('My Server', '192.168.1.1');
-        $otherProject      = $this->seedOtherProject();
-        $foreignCredential = $this->seedCredentialForProject('Foreign Key', 'root', $otherProject->id);
+        $otherTeam         = $this->seedOtherTeam();
+        $foreignCredential = $this->seedCredentialForTeam('Foreign Key', 'root', $otherTeam->id);
 
         $response = $this->dispatch(
             'POST',
@@ -393,7 +393,7 @@ final class ServerHandlerTest extends AppIntegrationTestCase
         $repository = $this->container->get(ServerRepository::class);
         assert($repository instanceof ServerRepository);
 
-        $servers = [...$repository->getAll(projectId: $this->project->id)];
+        $servers = [...$repository->getAll(teamId: $this->team->id)];
         self::assertCount(1, $servers);
         self::assertInstanceOf(Server::class, $servers[0]);
         self::assertSame(2222, $servers[0]->port);
@@ -419,12 +419,12 @@ final class ServerHandlerTest extends AppIntegrationTestCase
         return $user;
     }
 
-    private function seedProject(): Project
+    private function seedTeam(): Team
     {
-        $now     = TimestampImmutable::now();
-        $project = new Project(
-            ProjectIdentifier::create(),
-            'Test Project',
+        $now  = TimestampImmutable::now();
+        $team = new Team(
+            TeamIdentifier::create(),
+            'Test Team',
             $this->user->id,
             $now,
             $this->user->id,
@@ -432,20 +432,20 @@ final class ServerHandlerTest extends AppIntegrationTestCase
             $this->user->id,
         );
 
-        $repository = $this->container->get(ProjectRepository::class);
-        assert($repository instanceof ProjectRepository);
-        $repository->create($project);
-        $repository->assignUsers($project->id, [$this->user->id]);
+        $repository = $this->container->get(TeamRepository::class);
+        assert($repository instanceof TeamRepository);
+        $repository->create($team);
+        $repository->assignUsers($team->id, [$this->user->id]);
 
-        return $project;
+        return $team;
     }
 
-    private function seedOtherProject(): Project
+    private function seedOtherTeam(): Team
     {
-        $now     = TimestampImmutable::now();
-        $project = new Project(
-            ProjectIdentifier::create(),
-            'Other Project',
+        $now  = TimestampImmutable::now();
+        $team = new Team(
+            TeamIdentifier::create(),
+            'Other Team',
             $this->user->id,
             $now,
             $this->user->id,
@@ -453,19 +453,19 @@ final class ServerHandlerTest extends AppIntegrationTestCase
             $this->user->id,
         );
 
-        $repository = $this->container->get(ProjectRepository::class);
-        assert($repository instanceof ProjectRepository);
-        $repository->create($project);
+        $repository = $this->container->get(TeamRepository::class);
+        assert($repository instanceof TeamRepository);
+        $repository->create($team);
 
-        return $project;
+        return $team;
     }
 
     private function seedServer(string $name, string $host): Server
     {
-        return $this->seedServerForProject($name, $host, $this->project->id);
+        return $this->seedServerForTeam($name, $host, $this->team->id);
     }
 
-    private function seedServerForProject(string $name, string $host, ProjectIdentifier $projectId): Server
+    private function seedServerForTeam(string $name, string $host, TeamIdentifier $teamId): Server
     {
         $now    = TimestampImmutable::now();
         $server = new Server(
@@ -473,7 +473,7 @@ final class ServerHandlerTest extends AppIntegrationTestCase
             $name,
             $host,
             null,
-            $projectId,
+            $teamId,
             $now,
             $this->user->id,
             $now,
@@ -496,7 +496,7 @@ final class ServerHandlerTest extends AppIntegrationTestCase
             $name,
             $host,
             $credentialId,
-            $this->project->id,
+            $this->team->id,
             $now,
             $this->user->id,
             $now,
@@ -513,13 +513,13 @@ final class ServerHandlerTest extends AppIntegrationTestCase
 
     private function seedCredential(string $name, string $username): Credential
     {
-        return $this->seedCredentialForProject($name, $username, $this->project->id);
+        return $this->seedCredentialForTeam($name, $username, $this->team->id);
     }
 
-    private function seedCredentialForProject(
+    private function seedCredentialForTeam(
         string $name,
         string $username,
-        ProjectIdentifier $projectId,
+        TeamIdentifier $teamId,
     ): Credential {
         $now        = TimestampImmutable::now();
         $credential = new Credential(
@@ -527,7 +527,7 @@ final class ServerHandlerTest extends AppIntegrationTestCase
             $name,
             $username,
             null,
-            $projectId,
+            $teamId,
             $now,
             $this->user->id,
             $now,

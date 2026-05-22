@@ -19,7 +19,7 @@ use Tragwerk\Domain\Exception\Repository\EntityHydrationFailed;
 use Tragwerk\Domain\Exception\Repository\EntityNotFound;
 use Tragwerk\Domain\Exception\Repository\EntityUpdateFailed;
 use Tragwerk\Domain\Repository\UserRepository as UserRepositoryInterface;
-use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
 use function assert;
@@ -99,30 +99,30 @@ final class UserRepository extends GenericRepository implements UserRepositoryIn
         }
     }
 
-    public function getLastActiveProjectId(UserIdentifier $userId): ProjectIdentifier|null
+    public function getLastActiveTeamId(UserIdentifier $userId): TeamIdentifier|null
     {
         try {
             $value = $this->connection->fetchOne(
-                'SELECT last_active_project_id FROM users WHERE id = :id',
+                'SELECT last_active_team_id FROM users WHERE id = :id',
                 ['id' => $userId->toString()],
             );
 
-            if (! is_string($value) || ! ProjectIdentifier::isValid($value)) {
+            if (! is_string($value) || ! TeamIdentifier::isValid($value)) {
                 return null;
             }
 
-            return ProjectIdentifier::fromString($value);
+            return TeamIdentifier::fromString($value);
         } catch (Exception) {
             return null;
         }
     }
 
-    public function setLastActiveProject(UserIdentifier $userId, ProjectIdentifier $projectId): void
+    public function setLastActiveTeam(UserIdentifier $userId, TeamIdentifier $teamId): void
     {
         try {
             $this->connection->update(
                 'users',
-                ['last_active_project_id' => $projectId->toString()],
+                ['last_active_team_id' => $teamId->toString()],
                 ['id' => $userId->toString()],
             );
         } catch (Exception $e) {
