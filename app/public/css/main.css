@@ -506,6 +506,13 @@ h6 {
         0 0 0 1px rgba(99, 102, 241, 0.05);
 }
 
+/* ── .tw-card-tabs (card that attaches flush to nav-tabs) ── */
+
+.tw-card-tabs {
+    border-top-left-radius: 0;
+    border-top: none;
+}
+
 /* ── Forms ──────────────────────────────────────────────── */
 
 .form-label {

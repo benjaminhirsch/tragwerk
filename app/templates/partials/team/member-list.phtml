@@ -1,0 +1,42 @@
+<?php
+/** @var \Tragwerk\Domain\Entity\User[] $members */
+/** @var string[] $usersToRemove */
+/** @var string $teamId */
+/** @var string $ownerId */
+$members       = $members ?? [];
+$usersToRemove = $usersToRemove ?? [];
+$teamId        = $teamId ?? '';
+$ownerId       = $ownerId ?? '';
+?>
+<div id="tw-member-list" class="d-flex flex-column gap-2 mb-4">
+    <?php foreach ($usersToRemove as $removedId): ?>
+    <input type="hidden" name="usersToRemove[]" value="<?= $this->e($removedId) ?>">
+    <?php endforeach; ?>
+
+    <?php foreach ($members as $member): ?>
+    <div class="tw-member-row d-flex gap-2 align-items-center">
+        <div class="flex-grow-1">
+            <span class="form-control-plaintext">
+                <?= $this->e($member->fullName()) ?>
+                <span class="text-muted small">&lt;<?= $this->e($member->email) ?>&gt;</span>
+                <?php if ($member->id->toString() === $ownerId): ?>
+                    <span class="badge text-bg-primary ms-1"><?= _('Owner') ?></span>
+                <?php endif; ?>
+            </span>
+        </div>
+        <?php if ($member->id->toString() !== $ownerId): ?>
+        <?= $this->fetch('partial::input/button', [
+            'classes'   => 'btn btn-outline-danger flex-shrink-0',
+            'icon'      => 'bi bi-x-lg',
+            'hxPost'    => $this->url('team.members.remove', ['id' => $teamId]),
+            'hxTarget'  => '#tw-member-list',
+            'hxSwap'    => 'outerHTML',
+            'hxInclude' => 'closest form',
+            'hxVals'    => '{"userId": "' . $this->e($member->id->toString()) . '"}',
+            'label'     => '',
+            'type'      => 'button',
+        ]) ?>
+        <?php endif; ?>
+    </div>
+    <?php endforeach; ?>
+</div>

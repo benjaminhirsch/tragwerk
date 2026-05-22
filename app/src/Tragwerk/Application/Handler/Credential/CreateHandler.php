@@ -17,6 +17,7 @@ use Tragwerk\Application\Mapper\GenericMapper;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Event\CredentialCreated;
+use Tragwerk\Domain\ValueObject\CredentialIdentifier;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
 use function assert;
@@ -48,13 +49,18 @@ final readonly class CreateHandler implements RequestHandlerInterface
                 $dto = $validationBag->getDto();
                 assert($dto instanceof CredentialDto);
 
+                $credentialId = CredentialIdentifier::create();
+
                 $this->eventDispatcher->dispatch(new CredentialCreated(
                     $dto,
                     UserIdentifier::fromString($user->getIdentity()),
                     $activeTeam->id,
+                    $credentialId,
                 ));
 
-                return new RedirectResponse($this->urlHelper->generate('credential'));
+                $url = $this->urlHelper->generate('credential.show', ['id' => $credentialId->toString()]);
+
+                return new RedirectResponse($url);
             }
         }
 

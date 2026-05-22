@@ -59,6 +59,46 @@ final class ServerHandlerTest extends AppIntegrationTestCase
     }
 
     #[Test]
+    public function showGetRendersDetailPage(): void
+    {
+        $server   = $this->seedServer('My Server', '192.168.1.1');
+        $response = $this->dispatch(
+            'GET',
+            $this->url('server.show', ['id' => $server->id->toString()]),
+            cookie: $this->sessionCookie,
+        );
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function showGetWithUnknownServerIdRedirectsToServerList(): void
+    {
+        $response = $this->dispatch(
+            'GET',
+            $this->url('server.show', ['id' => ServerIdentifier::create()->toString()]),
+            cookie: $this->sessionCookie,
+        );
+
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame($this->url('server'), $response->getHeaderLine('Location'));
+    }
+
+    #[Test]
+    public function showGetWithServerFromOtherTeamRedirectsToServerList(): void
+    {
+        $otherServer = $this->seedServerForTeam('Foreign Server', '10.10.10.10', $this->seedOtherTeam()->id);
+        $response    = $this->dispatch(
+            'GET',
+            $this->url('server.show', ['id' => $otherServer->id->toString()]),
+            cookie: $this->sessionCookie,
+        );
+
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame($this->url('server'), $response->getHeaderLine('Location'));
+    }
+
+    #[Test]
     public function createGetRendersForm(): void
     {
         $response = $this->dispatch('GET', $this->url('server.create'), cookie: $this->sessionCookie);

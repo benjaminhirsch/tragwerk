@@ -64,12 +64,15 @@ final readonly class Credential implements DtoInterface
         }
     }
 
-    public function createCredential(UserIdentifier $createdBy, TeamIdentifier $teamId): CredentialEntity
-    {
+    public function createCredential(
+        UserIdentifier $createdBy,
+        TeamIdentifier $teamId,
+        CredentialIdentifier $id,
+    ): CredentialEntity {
         $now = TimestampImmutable::now();
 
         return new CredentialEntity(
-            CredentialIdentifier::create(),
+            $id,
             $this->name,
             $this->username,
             $this->privateKey === '' ? null : $this->privateKey,

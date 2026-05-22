@@ -55,5 +55,6 @@ interface ServerRepository
         array|null $ids = null,
         array|null $names = null,
         TeamIdentifier|null $teamId = null,
+        CredentialIdentifier|null $credentialId = null,
     ): Generator;
 }

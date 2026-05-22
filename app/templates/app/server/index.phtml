@@ -30,7 +30,7 @@
         foreach ($servers as $server): ?>
             <tr>
                 <td><?= $this->fetch('partial::link', [
-                        'href'  => $this->url('server.edit', ['id' => $server->id]),
+                        'href'  => $this->url('server.show', ['id' => $server->id]),
                         'label' => $server->name,
                     ]) ?></td>
                 <td><?= $this->e($server->host) ?></td>

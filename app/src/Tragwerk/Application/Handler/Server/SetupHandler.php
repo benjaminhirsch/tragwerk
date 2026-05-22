@@ -65,10 +65,9 @@ final readonly class SetupHandler implements RequestHandlerInterface
             $existing instanceof SetupJob
             && ($existing->status === SetupJobStatus::Pending || $existing->status === SetupJobStatus::Running)
         ) {
-            return new RedirectResponse($this->urlHelper->generate('server.setup', [
-                'id'    => $server->id->toString(),
-                'jobId' => $existing->id->toString(),
-            ]));
+            return new RedirectResponse(
+                $this->urlHelper->generate('server.show', ['id' => $server->id->toString()]) . '#setup',
+            );
         }
 
         $now = TimestampImmutable::now();
@@ -83,9 +82,8 @@ final readonly class SetupHandler implements RequestHandlerInterface
 
         $this->eventDispatcher->dispatch(new SetupJobScheduled($job));
 
-        return new RedirectResponse($this->urlHelper->generate('server.setup', [
-            'id'    => $server->id->toString(),
-            'jobId' => $job->id->toString(),
-        ]));
+        return new RedirectResponse(
+            $this->urlHelper->generate('server.show', ['id' => $server->id->toString()]) . '#setup',
+        );
     }
 }

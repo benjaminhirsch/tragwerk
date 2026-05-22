@@ -68,7 +68,9 @@ final readonly class EditHandler implements RequestHandlerInterface
                     UserIdentifier::fromString($user->getIdentity()),
                 ));
 
-                return new RedirectResponse($this->urlHelper->generate('credential'));
+                $url = $this->urlHelper->generate('credential.show', ['id' => $credential->id->toString()]);
+
+                return new RedirectResponse($url);
             }
         }
 

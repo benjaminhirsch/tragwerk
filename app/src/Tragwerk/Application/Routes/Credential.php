@@ -51,5 +51,17 @@ final readonly class Credential
             ],
             'credential.edit',
         );
+
+        $routes->get(
+            '/credentials/{id}/tabs/{tab}',
+            $this->middlewareFactory->prepare([Handler\Credential\TabHandler::class]),
+            'credential.show.tab',
+        );
+
+        $routes->get(
+            '/credentials/{id}',
+            $this->middlewareFactory->prepare([Handler\Credential\ShowHandler::class]),
+            'credential.show',
+        );
     }
 }

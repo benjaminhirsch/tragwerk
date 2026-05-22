@@ -18,6 +18,7 @@ final readonly class CreateCredential
         $this->credentialRepository->create($event->credential->createCredential(
             $event->createdBy,
             $event->teamId,
+            $event->credentialId,
         ));
     }
 }
