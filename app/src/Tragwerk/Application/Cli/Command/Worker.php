@@ -62,13 +62,10 @@ final class Worker extends Command
         $queueName = Queue::tryFrom($rawQueueName);
         if ($queueName === null) {
             $output->writeln(sprintf('<error>Queue `%s` does not exist!</error>', $rawQueueName));
-            array_map(
-                static fn(Queue $queue) => $queue->value,
-                Queue::cases(),
-            )
-                |> (fn($x) => implode(', ', $x,))
-                |> (fn($x) => sprintf('<info>Valid queues are:</info> %s', $x))
-                |> $output(...);
+            $output->writeln(sprintf(
+                '<info>Valid queues are:</info> %s',
+                implode(', ', array_map(static fn (Queue $queue) => $queue->value, Queue::cases())),
+            ));
 
             return Command::FAILURE;
         }

@@ -16,6 +16,14 @@
                 'label' => _('IP address (IPv4 or IPv6)'),
                 'validation' => $validationBag ?? null
         ]) ?>
+        <?= $this->fetch('partial::input/input', [
+                'id'         => 'port',
+                'type'       => 'number',
+                'label'      => _('SSH port'),
+                'min'        => '1',
+                'max'        => '65535',
+                'validation' => $validationBag ?? null,
+        ]) ?>
         <?php
             $credentialOptions = [];
             foreach ($credentials as $cred) {

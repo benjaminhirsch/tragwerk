@@ -110,7 +110,7 @@ final class SetupServerCommand extends Command
                 return Command::FAILURE;
             }
 
-            $ssh = new SSH2($server->host, 22, 30);
+            $ssh = new SSH2($server->host, $server->port, 30);
 
             try {
                 $key = PublicKeyLoader::loadPrivateKey($credential->privateKey);
@@ -134,7 +134,7 @@ final class SetupServerCommand extends Command
                 return Command::FAILURE;
             }
 
-            $ssh = $this->ensureCurl($ssh, $server->host, $credential->username, $key, $job);
+            $ssh = $this->ensureCurl($ssh, $server->host, $server->port, $credential->username, $key, $job);
             if ($ssh === null) {
                 return Command::FAILURE;
             }
@@ -152,7 +152,7 @@ final class SetupServerCommand extends Command
                     . '\' > /dev/null 2>&1 &',
                 );
 
-                $ssh = $this->reconnect($server->host, $credential->username, $key, $job);
+                $ssh = $this->reconnect($server->host, $server->port, $credential->username, $key, $job);
                 if ($ssh === null) {
                     return Command::FAILURE;
                 }
@@ -164,7 +164,7 @@ final class SetupServerCommand extends Command
                 for ($attempt = 0; $attempt < 60; $attempt++) {
                     $ssh->exec('sleep 3');
 
-                    $ssh = $this->reconnect($server->host, $credential->username, $key, $job);
+                    $ssh = $this->reconnect($server->host, $server->port, $credential->username, $key, $job);
                     if ($ssh === null) {
                         return Command::FAILURE;
                     }
@@ -181,7 +181,7 @@ final class SetupServerCommand extends Command
                     }
                 }
 
-                $ssh = $this->reconnect($server->host, $credential->username, $key, $job);
+                $ssh = $this->reconnect($server->host, $server->port, $credential->username, $key, $job);
                 if ($ssh === null) {
                     return Command::FAILURE;
                 }
@@ -200,12 +200,19 @@ final class SetupServerCommand extends Command
                 $this->append($job, "\nDocker installation complete.\n");
             }
 
-            $ssh = $this->reconnect($server->host, $credential->username, $key, $job);
+            $ssh = $this->reconnect($server->host, $server->port, $credential->username, $key, $job);
             if ($ssh === null) {
                 return Command::FAILURE;
             }
 
-            $dockerComposeVersion = $this->checkDockerCompose($ssh, $server->host, $credential->username, $key, $job);
+            $dockerComposeVersion = $this->checkDockerCompose(
+                $ssh,
+                $server->host,
+                $server->port,
+                $credential->username,
+                $key,
+                $job,
+            );
 
             $this->serverRepository->updateVersions($server->id, $dockerVersion, $dockerComposeVersion);
 
@@ -241,8 +248,14 @@ final class SetupServerCommand extends Command
         return true;
     }
 
-    private function ensureCurl(SSH2 $ssh, string $host, string $username, PrivateKey $key, SetupJob $job): SSH2|null
-    {
+    private function ensureCurl(
+        SSH2 $ssh,
+        string $host,
+        int $port,
+        string $username,
+        PrivateKey $key,
+        SetupJob $job,
+    ): SSH2|null {
         $this->append($job, "Checking if curl is installed...\n");
         $result = $ssh->exec('command -v curl 2>/dev/null');
         if (is_string($result) && trim($result) !== '') {
@@ -262,7 +275,7 @@ final class SetupServerCommand extends Command
             $this->append($job, $chunk);
         });
 
-        $ssh = $this->reconnect($host, $username, $key, $job);
+        $ssh = $this->reconnect($host, $port, $username, $key, $job);
         if ($ssh === null) {
             return null;
         }
@@ -297,6 +310,7 @@ final class SetupServerCommand extends Command
     private function checkDockerCompose(
         SSH2 $ssh,
         string $host,
+        int $port,
         string $username,
         PrivateKey $key,
         SetupJob $job,
@@ -334,7 +348,7 @@ final class SetupServerCommand extends Command
             $this->append($job, $chunk);
         });
 
-        $ssh = $this->reconnect($host, $username, $key, $job);
+        $ssh = $this->reconnect($host, $port, $username, $key, $job);
         if ($ssh === null) {
             return null;
         }
@@ -352,9 +366,9 @@ final class SetupServerCommand extends Command
         return null;
     }
 
-    private function reconnect(string $host, string $username, PrivateKey $key, SetupJob $job): SSH2|null
+    private function reconnect(string $host, int $port, string $username, PrivateKey $key, SetupJob $job): SSH2|null
     {
-        $ssh = new SSH2($host, 22, 30);
+        $ssh = new SSH2($host, $port, 30);
         if (! $ssh->login($username, $key)) {
             $this->fail($job, "Reconnect failed after install.\n");
 

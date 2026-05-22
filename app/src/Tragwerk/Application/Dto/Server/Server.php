@@ -31,6 +31,8 @@ final readonly class Server implements DtoInterface
         #[FromBody]
         public string $host,
         #[FromBody]
+        public int $port = 22,
+        #[FromBody]
         public string|null $credentialId = null,
     ) {
         $errors            = [];
@@ -49,6 +51,10 @@ final readonly class Server implements DtoInterface
             && filter_var($this->host, FILTER_VALIDATE_IP, ['flags' => FILTER_FLAG_IPV4 | FILTER_FLAG_IPV6]) === false
         ) {
             $errors[] = ValidationError::make('host', _('Invalid IP address'));
+        }
+
+        if ($this->port < 1 || $this->port > 65535) {
+            $errors[] = ValidationError::make('port', _('Port must be between 1 and 65535'));
         }
 
         if ($errors !== []) {
@@ -76,6 +82,7 @@ final readonly class Server implements DtoInterface
             $createdBy,
             $now,
             $createdBy,
+            $this->port,
         );
     }
 }

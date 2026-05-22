@@ -72,7 +72,7 @@ final class ServerHandlerTest extends AppIntegrationTestCase
         $response = $this->dispatch(
             'POST',
             $this->url('server.create'),
-            ['name' => 'My Server', 'host' => '192.168.1.1'],
+            ['name' => 'My Server', 'host' => '192.168.1.1', 'port' => '22'],
             $this->sessionCookie,
         );
 
@@ -86,7 +86,7 @@ final class ServerHandlerTest extends AppIntegrationTestCase
         $this->dispatch(
             'POST',
             $this->url('server.create'),
-            ['name' => 'My Server', 'host' => '192.168.1.1'],
+            ['name' => 'My Server', 'host' => '192.168.1.1', 'port' => '22'],
             $this->sessionCookie,
         );
 
@@ -161,7 +161,7 @@ final class ServerHandlerTest extends AppIntegrationTestCase
         $response = $this->dispatch(
             'POST',
             $this->url('server.edit', ['id' => $server->id->toString()]),
-            ['name' => 'New Name', 'host' => '192.168.1.1'],
+            ['name' => 'New Name', 'host' => '192.168.1.1', 'port' => '22'],
             $this->sessionCookie,
         );
 
@@ -176,7 +176,7 @@ final class ServerHandlerTest extends AppIntegrationTestCase
         $this->dispatch(
             'POST',
             $this->url('server.edit', ['id' => $server->id->toString()]),
-            ['name' => 'Updated Name', 'host' => '10.0.0.50'],
+            ['name' => 'Updated Name', 'host' => '10.0.0.50', 'port' => '22'],
             $this->sessionCookie,
         );
 
@@ -197,7 +197,7 @@ final class ServerHandlerTest extends AppIntegrationTestCase
         $response = $this->dispatch(
             'POST',
             $this->url('server.edit', ['id' => $serverB->id->toString()]),
-            ['name' => 'Server B', 'host' => '192.168.1.1'],
+            ['name' => 'Server B', 'host' => '192.168.1.1', 'port' => '22'],
             $this->sessionCookie,
         );
 
@@ -211,7 +211,7 @@ final class ServerHandlerTest extends AppIntegrationTestCase
         $response = $this->dispatch(
             'POST',
             $this->url('server.edit', ['id' => $server->id->toString()]),
-            ['name' => 'Renamed', 'host' => '192.168.1.1'],
+            ['name' => 'Renamed', 'host' => '192.168.1.1', 'port' => '22'],
             $this->sessionCookie,
         );
 
@@ -316,7 +316,7 @@ final class ServerHandlerTest extends AppIntegrationTestCase
         $this->dispatch(
             'POST',
             $this->url('server.edit', ['id' => $server->id->toString()]),
-            ['name' => 'My Server', 'host' => '192.168.1.1', 'credentialId' => $credential->id->toString()],
+            ['name' => 'My Server', 'host' => '192.168.1.1', 'port' => '22', 'credentialId' => $credential->id->toString()], // phpcs:ignore
             $this->sessionCookie,
         );
 
@@ -339,7 +339,7 @@ final class ServerHandlerTest extends AppIntegrationTestCase
         $response = $this->dispatch(
             'POST',
             $this->url('server.edit', ['id' => $server->id->toString()]),
-            ['name' => 'My Server', 'host' => '192.168.1.1', 'credentialId' => $foreignCredential->id->toString()],
+            ['name' => 'My Server', 'host' => '192.168.1.1', 'port' => '22', 'credentialId' => $foreignCredential->id->toString()], // phpcs:ignore
             $this->sessionCookie,
         );
 
@@ -355,7 +355,7 @@ final class ServerHandlerTest extends AppIntegrationTestCase
         $this->dispatch(
             'POST',
             $this->url('server.edit', ['id' => $server->id->toString()]),
-            ['name' => 'My Server', 'host' => '192.168.1.1', 'credentialId' => ''],
+            ['name' => 'My Server', 'host' => '192.168.1.1', 'port' => '22', 'credentialId' => ''],
             $this->sessionCookie,
         );
 
@@ -365,6 +365,38 @@ final class ServerHandlerTest extends AppIntegrationTestCase
         $updated = $repository->getById($server->id);
         assert($updated instanceof Server);
         self::assertNull($updated->credentialId);
+    }
+
+    #[Test]
+    public function createPostWithInvalidPortReRendersForm(): void
+    {
+        $response = $this->dispatch(
+            'POST',
+            $this->url('server.create'),
+            ['name' => 'My Server', 'host' => '192.168.1.1', 'port' => '99999'],
+            $this->sessionCookie,
+        );
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function createPostPersistsPort(): void
+    {
+        $this->dispatch(
+            'POST',
+            $this->url('server.create'),
+            ['name' => 'My Server', 'host' => '192.168.1.1', 'port' => '2222'],
+            $this->sessionCookie,
+        );
+
+        $repository = $this->container->get(ServerRepository::class);
+        assert($repository instanceof ServerRepository);
+
+        $servers = [...$repository->getAll(projectId: $this->project->id)];
+        self::assertCount(1, $servers);
+        self::assertInstanceOf(Server::class, $servers[0]);
+        self::assertSame(2222, $servers[0]->port);
     }
 
     private function seedUser(): User
@@ -446,6 +478,7 @@ final class ServerHandlerTest extends AppIntegrationTestCase
             $this->user->id,
             $now,
             $this->user->id,
+            22,
         );
 
         $repository = $this->container->get(ServerRepository::class);
@@ -468,6 +501,7 @@ final class ServerHandlerTest extends AppIntegrationTestCase
             $this->user->id,
             $now,
             $this->user->id,
+            22,
         );
 
         $repository = $this->container->get(ServerRepository::class);
