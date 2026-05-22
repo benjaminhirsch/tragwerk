@@ -6,6 +6,7 @@ namespace Tragwerk\Domain\Repository;
 
 use Tragwerk\Domain\Entity\Entity;
 use Tragwerk\Domain\Entity\SetupJob;
+use Tragwerk\Domain\Enum\SetupJobStatus;
 use Tragwerk\Domain\Exception\Repository\EntityCreationFailed;
 use Tragwerk\Domain\Exception\Repository\EntityHydrationFailed;
 use Tragwerk\Domain\Exception\Repository\EntityNotFound;
@@ -34,7 +35,7 @@ interface SetupJobRepository
     public function create(SetupJob $entity): void;
 
     /** @throws EntityUpdateFailed */
-    public function update(SetupJob $entity): void;
+    public function updateStatus(SetupJobIdentifier $id, SetupJobStatus $status): void;
 
     /** @throws EntityUpdateFailed */
     public function appendOutput(SetupJobIdentifier $id, string $text): void;

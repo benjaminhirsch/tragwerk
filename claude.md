@@ -8,6 +8,8 @@ Auf dem Zielsystem (dem VPS) läuft alles über Docker — vollautomatisiert.
 Die gesamte Docker- bzw. Docker-Compose-Konfiguration wird anhand der XML-Datei generiert.
 Als Application-Server in Docker kommt FrankenPHP zum Einsatz. Zusätzlich kommt Traefik als
 Reverse-Proxy dazu, da es möglich sein muss, mehrere Anwendungen auf demselben VPS zu betreiben.
+Offiziell unterstützen wir nur als Zielsystem auf dem VPS ausschließlich das was Docker selbst 
+siehe: https://docs.docker.com/engine/install/ unterstützt.
 
 Tech-Stack:
 - PHP 8.5

@@ -44,6 +44,15 @@ return [
         ],
     ],
     'templates' => ['debug' => true, 'auto_reload' => true],
+    'loggers'   => [
+        'app' => [
+            'level'        => 'debug',
+            'infoConsole'  => true,
+            'errorConsole' => true,
+            'infoFile'     => null,
+            'errorFile'    => 'data/logging/app.log',
+        ],
+    ],
     'whoops'       => [
         'json_exceptions' => [
             'display'    => true,

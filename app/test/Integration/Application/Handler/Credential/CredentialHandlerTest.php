@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TragwerkTest\Integration\Application\Handler\Credential;
 
+use phpseclib3\Crypt\EC;
 use PHPUnit\Framework\Attributes\Test;
 use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Project;
@@ -22,11 +23,6 @@ use Tragwerk\Domain\ValueObject\UserIdentifier;
 use TragwerkTest\Integration\Support\AppIntegrationTestCase;
 
 use function assert;
-use function base64_encode;
-use function explode;
-use function pack;
-use function str_repeat;
-use function strlen;
 
 final class CredentialHandlerTest extends AppIntegrationTestCase
 {
@@ -77,7 +73,7 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
         $response = $this->dispatch(
             'POST',
             $this->url('credential.create'),
-            ['name' => 'Deploy Key', 'username' => 'deploy', 'privateKey' => self::makeSshPublicKey('ssh-ed25519')],
+            ['name' => 'Deploy Key', 'username' => 'deploy', 'privateKey' => self::makeSshPrivateKey()],
             $this->sessionCookie,
         );
 
@@ -91,7 +87,7 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
         $this->dispatch(
             'POST',
             $this->url('credential.create'),
-            ['name' => 'Deploy Key', 'username' => 'deploy', 'privateKey' => self::makeSshPublicKey('ssh-ed25519')],
+            ['name' => 'Deploy Key', 'username' => 'deploy', 'privateKey' => self::makeSshPrivateKey()],
             $this->sessionCookie,
         );
 
@@ -111,7 +107,7 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
         $response = $this->dispatch(
             'POST',
             $this->url('credential.create'),
-            ['name' => '', 'username' => 'deploy', 'privateKey' => self::makeSshPublicKey('ssh-ed25519')],
+            ['name' => '', 'username' => 'deploy', 'privateKey' => self::makeSshPrivateKey()],
             $this->sessionCookie,
         );
 
@@ -124,7 +120,7 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
         $response = $this->dispatch(
             'POST',
             $this->url('credential.create'),
-            ['name' => 'Deploy Key', 'username' => '', 'privateKey' => self::makeSshPublicKey('ssh-ed25519')],
+            ['name' => 'Deploy Key', 'username' => '', 'privateKey' => self::makeSshPrivateKey()],
             $this->sessionCookie,
         );
 
@@ -150,39 +146,11 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
         $response = $this->dispatch(
             'POST',
             $this->url('credential.create'),
-            ['name' => 'Deploy Key', 'username' => 'deploy', 'privateKey' => self::makeSshPublicKey('ssh-ed25519')],
+            ['name' => 'Deploy Key', 'username' => 'deploy', 'privateKey' => self::makeSshPrivateKey()],
             $this->sessionCookie,
         );
 
         self::assertSame(302, $response->getStatusCode());
-    }
-
-    #[Test]
-    public function createPostWithValidEd25519KeyRedirectsToCredentialList(): void
-    {
-        $response = $this->dispatch(
-            'POST',
-            $this->url('credential.create'),
-            ['name' => 'Deploy Key', 'username' => 'deploy', 'privateKey' => self::makeSshPublicKey('ssh-ed25519')],
-            $this->sessionCookie,
-        );
-
-        self::assertSame(302, $response->getStatusCode());
-        self::assertSame($this->url('credential'), $response->getHeaderLine('Location'));
-    }
-
-    #[Test]
-    public function createPostWithValidRsaKeyRedirectsToCredentialList(): void
-    {
-        $response = $this->dispatch(
-            'POST',
-            $this->url('credential.create'),
-            ['name' => 'Deploy Key', 'username' => 'deploy', 'privateKey' => self::makeSshPublicKey('ssh-rsa')],
-            $this->sessionCookie,
-        );
-
-        self::assertSame(302, $response->getStatusCode());
-        self::assertSame($this->url('credential'), $response->getHeaderLine('Location'));
     }
 
     #[Test]
@@ -199,12 +167,12 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
     }
 
     #[Test]
-    public function createPostWithUnknownAlgorithmReRendersForm(): void
+    public function createPostWithPublicKeyFormatReRendersForm(): void
     {
         $response = $this->dispatch(
             'POST',
             $this->url('credential.create'),
-            ['name' => 'Deploy Key', 'username' => 'deploy', 'privateKey' => self::makeSshPublicKey('ssh-fake')],
+            ['name' => 'Deploy Key', 'username' => 'deploy', 'privateKey' => 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5 test@example.com'], //phpcs:ignore
             $this->sessionCookie,
         );
 
@@ -212,24 +180,7 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
     }
 
     #[Test]
-    public function createPostWithMismatchedAlgorithmAndBlobReRendersForm(): void
-    {
-        $rsaBlob  = self::makeSshPublicKey('ssh-rsa');
-        $blobPart = explode(' ', $rsaBlob)[1];
-        $tampered = 'ssh-ed25519 ' . $blobPart;
-
-        $response = $this->dispatch(
-            'POST',
-            $this->url('credential.create'),
-            ['name' => 'Deploy Key', 'username' => 'deploy', 'privateKey' => $tampered],
-            $this->sessionCookie,
-        );
-
-        self::assertSame(200, $response->getStatusCode());
-    }
-
-    #[Test]
-    public function editPostWithInvalidPublicKeyReRendersForm(): void
+    public function editPostWithInvalidPrivateKeyReRendersForm(): void
     {
         $credential = $this->seedCredential('My Credential', 'admin');
         $response   = $this->dispatch(
@@ -280,7 +231,7 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
         $response   = $this->dispatch(
             'POST',
             $this->url('credential.edit', ['id' => $credential->id->toString()]),
-            ['name' => 'New Name', 'username' => 'root', 'privateKey' => self::makeSshPublicKey('ssh-ed25519')],
+            ['name' => 'New Name', 'username' => 'root', 'privateKey' => self::makeSshPrivateKey()],
             $this->sessionCookie,
         );
 
@@ -295,7 +246,7 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
         $this->dispatch(
             'POST',
             $this->url('credential.edit', ['id' => $credential->id->toString()]),
-            ['name' => 'Updated Name', 'username' => 'root', 'privateKey' => self::makeSshPublicKey('ssh-ed25519')],
+            ['name' => 'Updated Name', 'username' => 'root', 'privateKey' => self::makeSshPrivateKey()],
             $this->sessionCookie,
         );
 
@@ -510,12 +461,9 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
         return $credential;
     }
 
-    private static function makeSshPublicKey(string $algorithm): string
+    private static function makeSshPrivateKey(): string
     {
-        $typeLen = pack('N', strlen($algorithm));
-        $blob    = $typeLen . $algorithm . str_repeat("\x00", 32);
-
-        return $algorithm . ' ' . base64_encode($blob) . ' test@example.com';
+        return EC::createKey('Ed25519')->toString('OpenSSH');
     }
 
     private function seedServerWithCredential(CredentialIdentifier $credentialId): Server

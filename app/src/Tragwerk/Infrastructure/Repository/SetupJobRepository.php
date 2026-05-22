@@ -78,6 +78,23 @@ final class SetupJobRepository extends GenericRepository implements SetupJobRepo
     }
 
     #[Override]
+    public function updateStatus(SetupJobIdentifier $id, SetupJobStatus $status): void
+    {
+        try {
+            $affected = $this->connection->executeStatement(
+                'UPDATE setup_jobs SET status = :status, updated_at = :now WHERE id = :id',
+                ['status' => $status->value, 'now' => (string) TimestampImmutable::now(), 'id' => $id->toString()],
+            );
+
+            if ($affected === 0) {
+                throw EntityNotFound::fromIdentifier($id);
+            }
+        } catch (Exception $e) {
+            throw EntityUpdateFailed::create($id, $e);
+        }
+    }
+
+    #[Override]
     public function appendOutput(SetupJobIdentifier $id, string $text): void
     {
         try {

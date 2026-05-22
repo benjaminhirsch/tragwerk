@@ -25,10 +25,10 @@ use function is_subclass_of;
 final readonly class MessageProcessor implements Processor
 {
     public function __construct(
-        private readonly TreeMapper $mapper,
+        private TreeMapper $mapper,
         // Handlers
-        private readonly Handler\RunSetupJob $runSetupJob,
-        private readonly Handler\SendMail $sendMail,
+        private Handler\RunSetupJob $runSetupJob,
+        private Handler\SendMail $sendMail,
     ) {
     }
 
