@@ -18,6 +18,8 @@
             <th><?= _('Name') ?></th>
             <th><?= _('IP address') ?></th>
             <th><?= _('Credentials assigned') ?></th>
+            <th><?= _('Docker') ?></th>
+            <th><?= _('Docker Compose') ?></th>
             <th><?= _('Ready to deploy') ?></th>
         </tr>
         </thead>
@@ -39,6 +41,8 @@
                         <i class="bi bi-x-circle text-secondary"></i>
                     <?php endif ?>
                 </td>
+                <td><?= $server->dockerVersion !== null ? $this->e($server->dockerVersion) : '<span class="text-secondary">—</span>' ?></td>
+                <td><?= $server->dockerComposeVersion !== null ? $this->e($server->dockerComposeVersion) : '<span class="text-secondary">—</span>' ?></td>
                 <td>
                     <?php if (in_array($server->id->toString(), $completedIds, true)): ?>
                         <i class="bi bi-check-circle-fill text-success"></i>
