@@ -15,7 +15,18 @@ use Symfony\Component\Console\Application as ConsoleApplication;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\NullOutput;
 
+use function assert;
+use function fclose;
+use function file_exists;
+use function flock;
+use function fopen;
 use function getenv;
+use function posix_getppid;
+use function sys_get_temp_dir;
+use function touch;
+
+use const LOCK_EX;
+use const LOCK_UN;
 
 final class TestDatabaseSetup
 {
@@ -27,11 +38,29 @@ final class TestDatabaseSetup
             return;
         }
 
-        self::$initialized = true;
+        // All workers spawned by the same paratest/phpunit process share the same
+        // parent PID, so this marker file is unique per test run but shared across
+        // parallel workers of that run.
+        $markerFile = sys_get_temp_dir() . '/tragwerk_test_setup.' . posix_getppid() . '.done';
+        $lockFile   = sys_get_temp_dir() . '/tragwerk_test_setup.lock';
 
-        self::createDatabaseIfAbsent();
-        self::resetSchema();
-        self::runMigrations();
+        $fh = fopen($lockFile, 'c');
+        assert($fh !== false);
+        flock($fh, LOCK_EX);
+
+        try {
+            if (! file_exists($markerFile)) {
+                self::createDatabaseIfAbsent();
+                self::resetSchema();
+                self::runMigrations();
+                touch($markerFile);
+            }
+        } finally {
+            flock($fh, LOCK_UN);
+            fclose($fh);
+        }
+
+        self::$initialized = true;
     }
 
     /** @return array{driver: 'pdo_pgsql', host: string, port: int, dbname: string, user: string, password: string} */
