@@ -13,28 +13,27 @@ test-unit:
 test-integration:
 	docker compose run --rm --env XDEBUG_MODE=off app composer run test -- --testsuite integration
 
-## test: Run all tests
+## test: Run all tests in parallel
 .PHONY: test
 test:
 	docker compose run --rm --env XDEBUG_MODE=off app composer run test
 
-COVERAGE_DIR := app/public/coverage
-PHPUNIT_COVERAGE := php -d pcov.enabled=1 vendor/bin/phpunit --colors=always --coverage-html /app/public/coverage
+PARATEST_COVERAGE := php -d pcov.enabled=1 vendor/bin/paratest --processes auto --passthru-php="-d pcov.enabled=1" --colors=always --coverage-html /app/public/coverage
 
 ## coverage: Run all tests with HTML coverage report → app/coverage/index.html
 .PHONY: coverage
 coverage:
-	docker compose run --rm --env XDEBUG_MODE=off app $(PHPUNIT_COVERAGE)
+	docker compose run --rm --env XDEBUG_MODE=off app $(PARATEST_COVERAGE)
 
 ## coverage-unit: Run unit tests with HTML coverage report
 .PHONY: coverage-unit
 coverage-unit:
-	docker compose run --rm --env XDEBUG_MODE=off app $(PHPUNIT_COVERAGE) --testsuite unit
+	docker compose run --rm --env XDEBUG_MODE=off app $(PARATEST_COVERAGE) --testsuite unit
 
 ## coverage-integration: Run integration tests with HTML coverage report
 .PHONY: coverage-integration
 coverage-integration:
-	docker compose run --rm --env XDEBUG_MODE=off app $(PHPUNIT_COVERAGE) --testsuite integration
+	docker compose run --rm --env XDEBUG_MODE=off app $(PARATEST_COVERAGE) --testsuite integration
 
 ## check: Run all checks
 .PHONY: check
