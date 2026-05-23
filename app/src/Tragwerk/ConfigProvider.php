@@ -255,6 +255,8 @@ final readonly class ConfigProvider
                         Infrastructure\Repository\CredentialRepository::class,
                     Domain\Repository\SetupJobRepository::class =>
                         Infrastructure\Repository\SetupJobRepository::class,
+                    Domain\Repository\QueueMessageRepository::class =>
+                        Infrastructure\Repository\QueueMessageRepository::class,
                 ],
             ],
         ];
