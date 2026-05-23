@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.9\n"
+"X-Generator: Poedit 3.4.2\n"
 
 msgid "mail.userInvited.subject"
 msgstr ""
@@ -253,3 +253,48 @@ msgstr ""
 
 msgid "Role"
 msgstr ""
+
+msgid "Queue"
+msgstr "Warteschlange"
+
+msgid "Queue Messages"
+msgstr "Warteschlangen-Nachrichten"
+
+msgid "Type"
+msgstr "Typ"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Redelivered"
+msgstr "Erneut zugestellt"
+
+msgid "Published"
+msgstr "Veröffentlicht"
+
+msgid "Actions"
+msgstr "Aktionen"
+
+msgid "Failed"
+msgstr "Fehlgeschlagen"
+
+msgid "Processing"
+msgstr "In Bearbeitung"
+
+msgid "Pending"
+msgstr "Ausstehend"
+
+msgid "Requeue"
+msgstr "Erneut einreihen"
+
+msgid "No messages in queue"
+msgstr "Keine Nachrichten in der Warteschlange"
+
+msgid "Payload"
+msgstr "Payload"
+
+msgid "Delivery ID"
+msgstr "Delivery-ID"
+
+msgid "Yes"
+msgstr "Ja"

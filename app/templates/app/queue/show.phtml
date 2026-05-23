@@ -1,0 +1,97 @@
+<?php
+/** @var \Tragwerk\Domain\Entity\QueueMessage $message */
+$this->layout('layout::default', ['title' => $message->getMessageType()]);
+?>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <nav aria-label="breadcrumb" class="mb-1">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <?= $this->fetch('partial::link', ['href' => $this->url('queue'), 'label' => _('Queue Messages')]) ?>
+                </li>
+                <li class="breadcrumb-item active"><?= $this->e($message->getMessageType()) ?></li>
+            </ol>
+        </nav>
+        <h1 class="mb-0"><code><?= $this->e($message->getMessageType()) ?></code></h1>
+    </div>
+    <?php if ($message->isFailed()): ?>
+        <div class="d-flex gap-2">
+            <form method="post" action="<?= $this->url('queue.requeue', ['id' => $message->id]) ?>">
+                <?= $this->fetch('partial::input/csrf') ?>
+                <?= $this->fetch('partial::input/button', [
+                    'label'   => _('Requeue'),
+                    'classes' => 'btn btn-warning btn-sm',
+                    'icon'    => 'bi bi-arrow-clockwise',
+                ]) ?>
+            </form>
+            <?= $this->fetch('partial::input/button', [
+                'label'        => _('Delete'),
+                'classes'      => 'btn btn-outline-danger btn-sm',
+                'icon'         => 'bi bi-trash3',
+                'type'         => 'button',
+                'dataBsToggle' => 'modal',
+                'dataBsTarget' => '#tw-delete-queue-modal',
+            ]) ?>
+        </div>
+    <?php endif ?>
+</div>
+
+<ul class="nav nav-tabs" id="queueMessageDetailTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <?= $this->fetch('partial::input/button', [
+            'classes'      => 'nav-link active',
+            'type'         => 'button',
+            'role'         => 'tab',
+            'id'           => 'tab-overview-btn',
+            'dataBsToggle' => 'tab',
+            'dataBsTarget' => '#tab-overview',
+            'icon'         => 'bi bi-info-circle me-1',
+            'label'        => _('Overview'),
+        ]) ?>
+    </li>
+    <li class="nav-item" role="presentation">
+        <?= $this->fetch('partial::input/button', [
+            'classes'      => 'nav-link',
+            'type'         => 'button',
+            'role'         => 'tab',
+            'id'           => 'tab-payload-btn',
+            'dataBsToggle' => 'tab',
+            'dataBsTarget' => '#tab-payload',
+            'hxGet'        => $this->url('queue.show.tab', ['id' => $message->id, 'tab' => 'payload']),
+            'hxTarget'     => '#tab-payload',
+            'hxSwap'       => 'innerHTML',
+            'hxTrigger'    => 'shown.bs.tab once',
+            'icon'         => 'bi bi-braces me-1',
+            'label'        => _('Payload'),
+        ]) ?>
+    </li>
+</ul>
+
+<div class="tab-content tw-card tw-card-tabs">
+    <div class="tab-pane fade show active" id="tab-overview" role="tabpanel"
+         hx-get="<?= $this->url('queue.show.tab', ['id' => $message->id, 'tab' => 'overview']) ?>"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+    </div>
+    <div class="tab-pane fade" id="tab-payload" role="tabpanel"></div>
+</div>
+
+<?php $this->start('javascript') ?>
+<script src="/js/detail-tabs.js"></script>
+<?php $this->stop() ?>
+
+<?php if ($message->isFailed()): ?>
+    <?= $this->fetch('partial::modal', [
+        'id'            => 'tw-delete-queue-modal',
+        'header'        => _('Delete queue message'),
+        'body'          => sprintf(
+            _('Are you sure you want to delete the message %s? This action cannot be undone.'),
+            '<strong>' . $this->e($message->getMessageType()) . '</strong>',
+        ),
+        'actionUrl'     => $this->url('queue.delete', ['id' => $message->id]),
+        'actionLabel'   => _('Delete'),
+        'actionClasses' => 'btn btn-danger',
+        'actionIcon'    => 'bi bi-trash3',
+    ]) ?>
+<?php endif ?>

@@ -6,7 +6,7 @@ $links = [
                 'include' => 'partial::link',
                 'label' => _('Servers'),
                 'href' => $this->url('server'),
-                'classes' => 'nav-link bi bi-server',
+                'classes' => 'nav-link bi bi-hdd-stack',
         ],
         [
                 'include' => 'partial::link',
@@ -19,6 +19,12 @@ $links = [
                 'label' => _('Teams'),
                 'href' => $this->url('team'),
                 'classes' => 'nav-link bi bi-people',
+        ],
+        [
+                'include' => 'partial::link',
+                'label' => _('Queue'),
+                'href' => $this->url('queue'),
+                'classes' => 'nav-link bi bi-list-task',
         ],
 ];
 
