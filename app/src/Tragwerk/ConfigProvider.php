@@ -257,6 +257,8 @@ final readonly class ConfigProvider
                         Infrastructure\Repository\SetupJobRepository::class,
                     Domain\Repository\QueueMessageRepository::class =>
                         Infrastructure\Repository\QueueMessageRepository::class,
+                    Domain\Repository\ProjectRepository::class =>
+                        Infrastructure\Repository\ProjectRepository::class,
                 ],
             ],
         ];
@@ -311,16 +313,23 @@ final readonly class ConfigProvider
                     EventListener\User\CreateDefaultTeam::class,
                     EventListener\User\SendRegistrationMail::class,
                 ],
-                Event\CredentialCreated::class => [EventListener\Credential\CreateCredential::class],
-                Event\CredentialUpdated::class => [EventListener\Credential\UpdateCredential::class],
+                Event\CredentialCreated::class  => [EventListener\Credential\CreateCredential::class],
+                Event\CredentialUpdated::class  => [EventListener\Credential\UpdateCredential::class],
+                Event\CredentialDeleted::class  => [EventListener\Credential\DeleteCredential::class],
                 Event\ServerCreated::class      => [EventListener\Server\CreateServer::class],
                 Event\ServerUpdated::class      => [EventListener\Server\UpdateServer::class],
+                Event\ServerDeleted::class      => [EventListener\Server\DeleteServer::class],
                 Event\SetupJobScheduled::class  => [
                     EventListener\SetupJob\PersistSetupJob::class,
                     EventListener\SetupJob\ScheduleSetupJob::class,
                 ],
-                Event\TeamCreated::class  => [EventListener\Team\CreateTeam::class],
-                Event\TeamUpdated::class => [EventListener\Team\UpdateTeam::class],
+                Event\TeamCreated::class         => [EventListener\Team\CreateTeam::class],
+                Event\TeamUpdated::class         => [EventListener\Team\UpdateTeam::class],
+                Event\TeamDeleted::class         => [EventListener\Team\DeleteTeam::class],
+                Event\ProjectCreated::class      => [EventListener\Project\CreateProject::class],
+                Event\ProjectUpdated::class      => [EventListener\Project\UpdateProject::class],
+                Event\ProjectDeleted::class      => [EventListener\Project\DeleteProject::class],
+                Event\QueueMessageDeleted::class => [EventListener\Queue\DeleteQueueMessage::class],
                 Event\TeamInvitationCreated::class =>
                     [EventListener\Team\SendTeamInvitation::class],
                 Event\UserSwitchedTeam::class => [EventListener\User\PersistLastActiveTeam::class],

@@ -7,11 +7,12 @@ namespace Tragwerk\Application\Handler\Team;
 use Laminas\Diactoros\Response\RedirectResponse;
 use Mezzio\Helper\UrlHelper;
 use Override;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Tragwerk\Domain\Entity\Team;
-use Tragwerk\Domain\Repository\TeamRepository;
+use Tragwerk\Domain\Event\TeamDeleted;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 
 use function assert;
@@ -21,7 +22,7 @@ use function is_string;
 final readonly class DeleteHandler implements RequestHandlerInterface
 {
     public function __construct(
-        private TeamRepository $teamRepository,
+        private EventDispatcherInterface $eventDispatcher,
         private UrlHelper $urlHelper,
     ) {
     }
@@ -32,7 +33,7 @@ final readonly class DeleteHandler implements RequestHandlerInterface
         $team = $this->resolveTeam($request);
 
         if ($team instanceof Team) {
-            $this->teamRepository->delete($team->id);
+            $this->eventDispatcher->dispatch(new TeamDeleted($team->id));
         }
 
         return new RedirectResponse($this->urlHelper->generate('team'));

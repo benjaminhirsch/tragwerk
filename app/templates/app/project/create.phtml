@@ -1,0 +1,43 @@
+<?php $this->layout('layout::default', ['title' => _('Create project')]) ?>
+
+<h1><?= _('Create project') ?></h1>
+
+<?php $this->start('card-content') ?>
+    <form action="<?= $this->url('project.create') ?>" method="post">
+        <?= $this->fetch('partial::input/csrf') ?>
+
+        <?= $this->fetch('partial::input/text', [
+            'id'         => 'name',
+            'label'      => _('Project name'),
+            'autofocus'  => 'autofocus',
+            'validation' => $validationBag ?? null,
+        ]) ?>
+
+        <?php
+            $serverOptions = [];
+            foreach ($servers as $server) {
+                $serverOptions[$server->id->toString()] = $server->name;
+            }
+        ?>
+        <?= $this->fetch('partial::input/select', [
+            'id'                 => 'serverId',
+            'label'              => _('Server'),
+            'validation'         => $validationBag ?? null,
+            'options'            => $serverOptions,
+            'defaultOptionLabel' => _('— select a server —'),
+        ]) ?>
+
+        <div class="d-flex gap-2">
+            <?= $this->fetch('partial::input/button', [
+                'label' => _('Save'),
+            ]) ?>
+
+            <?= $this->fetch('partial::link', [
+                'label'   => _('Cancel'),
+                'href'    => $this->url('project'),
+                'classes' => 'btn btn-secondary',
+            ]) ?>
+        </div>
+
+    </form>
+<?php $this->stop() ?>
