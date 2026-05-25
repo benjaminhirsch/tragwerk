@@ -1,0 +1,27 @@
+<?php
+/** @var \Tragwerk\Domain\Entity\Project $project */
+?>
+<table class="table table-borderless mb-0">
+    <tbody>
+        <tr>
+            <th class="w-25 text-body-secondary fw-normal"><?= _('Name') ?></th>
+            <td><?= $this->e($project->name) ?></td>
+        </tr>
+        <tr>
+            <th class="text-body-secondary fw-normal"><?= _('Server') ?></th>
+            <td><?= $this->e($project->serverId->toString()) ?></td>
+        </tr>
+        <tr>
+            <th class="text-body-secondary fw-normal"><?= _('Team') ?></th>
+            <td><?= $this->e($project->teamId->toString()) ?></td>
+        </tr>
+        <tr>
+            <th class="text-body-secondary fw-normal"><?= _('Created') ?></th>
+            <td><?= $this->e($project->createdAt->format('Y-m-d H:i')) ?></td>
+        </tr>
+        <tr>
+            <th class="text-body-secondary fw-normal"><?= _('Updated') ?></th>
+            <td><?= $this->e($project->updatedAt->format('Y-m-d H:i')) ?></td>
+        </tr>
+    </tbody>
+</table>

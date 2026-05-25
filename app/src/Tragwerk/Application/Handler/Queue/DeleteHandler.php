@@ -7,18 +7,18 @@ namespace Tragwerk\Application\Handler\Queue;
 use Laminas\Diactoros\Response\RedirectResponse;
 use Mezzio\Helper\UrlHelper;
 use Override;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Throwable;
-use Tragwerk\Domain\Repository\QueueMessageRepository;
+use Tragwerk\Domain\Event\QueueMessageDeleted;
 
 use function is_string;
 
 final readonly class DeleteHandler implements RequestHandlerInterface
 {
     public function __construct(
-        private QueueMessageRepository $queueMessageRepository,
+        private EventDispatcherInterface $eventDispatcher,
         private UrlHelper $urlHelper,
     ) {
     }
@@ -29,10 +29,7 @@ final readonly class DeleteHandler implements RequestHandlerInterface
         $id = $request->getAttribute('id');
 
         if (is_string($id)) {
-            try {
-                $this->queueMessageRepository->delete($id);
-            } catch (Throwable) {
-            }
+            $this->eventDispatcher->dispatch(new QueueMessageDeleted($id));
         }
 
         return new RedirectResponse($this->urlHelper->generate('queue'));

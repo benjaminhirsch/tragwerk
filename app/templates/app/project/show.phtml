@@ -1,0 +1,53 @@
+<?php
+/** @var \Tragwerk\Domain\Entity\Project $project */
+$this->layout('layout::default', ['title' => $project->name]);
+?>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <nav aria-label="breadcrumb" class="mb-1">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <?= $this->fetch('partial::link', ['href' => $this->url('project'), 'label' => _('Projects')]) ?>
+                </li>
+                <li class="breadcrumb-item active"><?= $this->e($project->name) ?></li>
+            </ol>
+        </nav>
+        <h1 class="mb-0"><?= $this->e($project->name) ?></h1>
+    </div>
+    <div class="d-flex gap-2">
+        <?= $this->fetch('partial::link', [
+            'label'   => _('Edit'),
+            'href'    => $this->url('project.edit', ['id' => $project->id->toString()]),
+            'icon'    => 'bi bi-pencil',
+            'classes' => 'btn btn-outline-secondary btn-sm',
+        ]) ?>
+    </div>
+</div>
+
+<ul class="nav nav-tabs" id="projectDetailTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <?= $this->fetch('partial::input/button', [
+            'classes'      => 'nav-link active',
+            'type'         => 'button',
+            'role'         => 'tab',
+            'id'           => 'tab-overview-btn',
+            'dataBsToggle' => 'tab',
+            'dataBsTarget' => '#tab-overview',
+            'icon'         => 'bi bi-info-circle me-1',
+            'label'        => _('Overview'),
+        ]) ?>
+    </li>
+</ul>
+
+<div class="tab-content tw-card tw-card-tabs">
+    <div class="tab-pane fade show active" id="tab-overview" role="tabpanel"
+         hx-get="<?= $this->url('project.show.tab', ['id' => $project->id->toString(), 'tab' => 'overview']) ?>"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+    </div>
+</div>
+
+<?php $this->start('javascript') ?>
+<script src="/js/detail-tabs.js"></script>
+<?php $this->stop() ?>

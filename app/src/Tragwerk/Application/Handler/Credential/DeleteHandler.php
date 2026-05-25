@@ -7,12 +7,14 @@ namespace Tragwerk\Application\Handler\Credential;
 use Laminas\Diactoros\Response\RedirectResponse;
 use Mezzio\Helper\UrlHelper;
 use Override;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Throwable;
 use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Team;
+use Tragwerk\Domain\Event\CredentialDeleted;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\ValueObject\CredentialIdentifier;
@@ -25,6 +27,7 @@ final readonly class DeleteHandler implements RequestHandlerInterface
     public function __construct(
         private CredentialRepository $credentialRepository,
         private ServerRepository $serverRepository,
+        private EventDispatcherInterface $eventDispatcher,
         private UrlHelper $urlHelper,
     ) {
     }
@@ -41,7 +44,7 @@ final readonly class DeleteHandler implements RequestHandlerInterface
                 return new RedirectResponse($editUrl . '?assigned=1');
             }
 
-            $this->credentialRepository->delete($credential->id);
+            $this->eventDispatcher->dispatch(new CredentialDeleted($credential->id));
         }
 
         return new RedirectResponse($this->urlHelper->generate('credential'));

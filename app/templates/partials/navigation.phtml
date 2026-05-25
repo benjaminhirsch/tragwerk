@@ -22,6 +22,12 @@ $links = [
         ],
         [
                 'include' => 'partial::link',
+                'label' => _('Projects'),
+                'href' => $this->url('project'),
+                'classes' => 'nav-link bi bi-folder',
+        ],
+        [
+                'include' => 'partial::link',
                 'label' => _('Queue'),
                 'href' => $this->url('queue'),
                 'classes' => 'nav-link bi bi-list-task',

@@ -17,6 +17,7 @@ final readonly class EntityHelper
             EntityType::TEAM_INVITATION => 'team_invitations',
             EntityType::CREDENTIAL      => 'credentials',
             EntityType::SETUP_JOB       => 'setup_jobs',
+            EntityType::PROJECT       => 'projects',
         };
     }
 }
