@@ -27,6 +27,7 @@ use Tragwerk\Domain\ValueObject\UserIdentifier;
 use function array_filter;
 use function array_values;
 use function assert;
+use function count;
 use function in_array;
 use function is_array;
 use function is_string;
@@ -78,6 +79,7 @@ final readonly class EditHandler implements RequestHandlerInterface
             $validationBag = new ValidationBag(['name' => $team->name]);
         }
 
+        $raw           = $request->getAttribute('user_teams');
         $allMembers    = iterator_to_array($this->teamRepository->getUsersByTeamId($team->id), false);
         $pendingRemove = $validationBag->getArrayValueByName('usersToRemove');
         $members       = $pendingRemove !== []
@@ -91,6 +93,7 @@ final readonly class EditHandler implements RequestHandlerInterface
             'team'          => $team,
             'validationBag' => $validationBag,
             'members'       => $members,
+            'canDelete'     => is_array($raw) && count($raw) > 1,
         ]);
     }
 

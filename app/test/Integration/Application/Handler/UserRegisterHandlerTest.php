@@ -83,4 +83,43 @@ final class UserRegisterHandlerTest extends AppIntegrationTestCase
 
         self::assertSame(200, $response->getStatusCode());
     }
+
+    #[Test]
+    public function postWithAlreadyRegisteredEmailReRendersForm(): void
+    {
+        $payload = [
+            'firstname' => 'Max',
+            'lastname'  => 'Mustermann',
+            'email'     => 'max@example.com',
+            'password1' => 'secure-password-123',
+            'password2' => 'secure-password-123',
+        ];
+
+        $this->dispatch('POST', '/register', $payload);
+
+        $response = $this->dispatch('POST', '/register', $payload);
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function postWithAlreadyRegisteredEmailDoesNotCreateDuplicateUser(): void
+    {
+        $payload = [
+            'firstname' => 'Max',
+            'lastname'  => 'Mustermann',
+            'email'     => 'max@example.com',
+            'password1' => 'secure-password-123',
+            'password2' => 'secure-password-123',
+        ];
+
+        $this->dispatch('POST', '/register', $payload);
+        $this->dispatch('POST', '/register', $payload);
+
+        $repository = $this->container->get(UserRepository::class);
+        assert($repository instanceof UserRepository);
+        $users = [...$repository->getAll(emails: ['max@example.com'])];
+
+        self::assertCount(1, $users);
+    }
 }

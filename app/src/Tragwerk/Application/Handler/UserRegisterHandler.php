@@ -16,7 +16,10 @@ use Tragwerk\Application\Dto\UserRegistration;
 use Tragwerk\Application\Mapper\GenericMapper;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Event\UserRegistered;
+use Tragwerk\Domain\Exception\Repository\EntityNotFound;
+use Tragwerk\Domain\Repository\UserRepository;
 
+use function _;
 use function assert;
 
 final readonly class UserRegisterHandler implements RequestHandlerInterface
@@ -26,6 +29,7 @@ final readonly class UserRegisterHandler implements RequestHandlerInterface
         private GenericMapper $userRegistrationMapper,
         private EventDispatcherInterface $eventDispatcher,
         private UrlHelper $urlHelper,
+        private UserRepository $userRepository,
     ) {
     }
 
@@ -39,12 +43,30 @@ final readonly class UserRegisterHandler implements RequestHandlerInterface
             if (! $validationBag->hasErrors()) {
                 $registration = $validationBag->getDto();
                 assert($registration instanceof UserRegistration);
-                $this->eventDispatcher->dispatch(new UserRegistered($registration->createUser()));
 
-                return new RedirectResponse($this->urlHelper->generate('login'));
+                if ($this->emailAlreadyTaken($registration->email)) {
+                    $validationBag = $validationBag->withError('email', _('This email address is already registered'));
+                }
+
+                if (! $validationBag->hasErrors()) {
+                    $this->eventDispatcher->dispatch(new UserRegistered($registration->createUser()));
+
+                    return new RedirectResponse($this->urlHelper->generate('login'));
+                }
             }
         }
 
         return $this->renderer->render($request, 'page::register', ['validationBag' => $validationBag]);
+    }
+
+    private function emailAlreadyTaken(string $email): bool
+    {
+        try {
+            $this->userRepository->getByEmail($email);
+
+            return true;
+        } catch (EntityNotFound) {
+            return false;
+        }
     }
 }

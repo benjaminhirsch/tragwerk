@@ -190,6 +190,24 @@ final class TeamHandlerTest extends AppIntegrationTestCase
     #[Test]
     public function deletePostRemovesTeamFromDatabase(): void
     {
+        $this->seedTeam();
+        $teamToDelete = $this->seedTeam();
+        $this->dispatch(
+            'POST',
+            $this->url('team.delete', ['id' => $teamToDelete->id->toString()]),
+            cookie: $this->sessionCookie,
+        );
+
+        $repository = $this->container->get(TeamRepository::class);
+        assert($repository instanceof TeamRepository);
+
+        $remaining = [...$repository->getByUserId($this->user->id)];
+        self::assertCount(1, $remaining);
+    }
+
+    #[Test]
+    public function deletePostWithSingleTeamDoesNotDelete(): void
+    {
         $team = $this->seedTeam();
         $this->dispatch(
             'POST',
@@ -201,7 +219,7 @@ final class TeamHandlerTest extends AppIntegrationTestCase
         assert($repository instanceof TeamRepository);
 
         $remaining = [...$repository->getByUserId($this->user->id)];
-        self::assertCount(0, $remaining);
+        self::assertCount(1, $remaining);
     }
 
     #[Test]
