@@ -40,25 +40,31 @@
                     'href' => $this->url('server'),
                     'classes' => 'btn btn-secondary',
             ]) ?>
-            <?= $this->fetch('partial::input/button', [
-                'classes'      => 'btn btn-outline-danger',
-                'icon'         => 'bi bi-trash3',
-                'type'         => 'button',
-                'dataBsToggle' => 'modal',
-                'dataBsTarget' => '#tw-delete-team-modal',
-            ]) ?>
+            <?php if ($canDelete): ?>
+                <?= $this->fetch('partial::input/button', [
+                    'classes'      => 'btn btn-outline-danger',
+                    'icon'         => 'bi bi-trash3',
+                    'type'         => 'button',
+                    'dataBsToggle' => 'modal',
+                    'dataBsTarget' => '#tw-delete-team-modal',
+                ]) ?>
+            <?php endif ?>
         </div>
 
     </form>
 <?php $this->stop() ?>
 
-
-<?= $this->fetch('partial::modal', [
-    'id'     => 'tw-delete-team-modal',
-    'header' => _('Delete team'),
-    'body'   => sprintf(_('Are you sure you want to delete the team %s? This action cannot be undone. Deleting a team will delete all associated resources too!'), '<strong>' . $this->e($team->name) . '</strong>'),
-    'actionUrl' => $this->url('team.delete', ['id' => $team->id->toString()]),
-    'actionLabel' => _('Delete team'),
-    'actionClasses' => 'btn btn-danger',
-    'actionIcon' => 'bi bi-trash3',
-]) ?>
+<?php if ($canDelete): ?>
+    <?= $this->fetch('partial::modal', [
+        'id'            => 'tw-delete-team-modal',
+        'header'        => _('Delete team'),
+        'body'          => sprintf(
+            _('Are you sure you want to delete the team %s? This action cannot be undone. Deleting a team will delete all associated resources too!'),
+            '<strong>' . $this->e($team->name) . '</strong>',
+        ),
+        'actionUrl'     => $this->url('team.delete', ['id' => $team->id->toString()]),
+        'actionLabel'   => _('Delete team'),
+        'actionClasses' => 'btn btn-danger',
+        'actionIcon'    => 'bi bi-trash3',
+    ]) ?>
+<?php endif ?>

@@ -16,6 +16,7 @@ use Tragwerk\Domain\Event\TeamDeleted;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 
 use function assert;
+use function count;
 use function is_array;
 use function is_string;
 
@@ -30,23 +31,23 @@ final readonly class DeleteHandler implements RequestHandlerInterface
     #[Override]
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $team = $this->resolveTeam($request);
+        $raw  = $request->getAttribute('user_teams');
+        $team = $this->resolveTeam($request, $raw);
 
-        if ($team instanceof Team) {
+        if ($team instanceof Team && is_array($raw) && count($raw) > 1) {
             $this->eventDispatcher->dispatch(new TeamDeleted($team->id));
         }
 
         return new RedirectResponse($this->urlHelper->generate('team'));
     }
 
-    private function resolveTeam(ServerRequestInterface $request): Team|null
+    private function resolveTeam(ServerRequestInterface $request, mixed $raw): Team|null
     {
         $routeId = $request->getAttribute('id');
         if (! is_string($routeId) || ! TeamIdentifier::isValid($routeId)) {
             return null;
         }
 
-        $raw = $request->getAttribute('user_teams');
         if (! is_array($raw)) {
             return null;
         }
