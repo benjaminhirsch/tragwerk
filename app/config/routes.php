@@ -21,4 +21,5 @@ return static function (Application $app, MiddlewareFactory $factory, ContainerI
     new Routes\Queue($middlewareFactory)->registerRoutes($routeCollector);
     new Routes\Server($middlewareFactory)->registerRoutes($routeCollector);
     new Routes\Team($middlewareFactory)->registerRoutes($routeCollector);
+    new Routes\Profile($middlewareFactory)->registerRoutes($routeCollector);
 };

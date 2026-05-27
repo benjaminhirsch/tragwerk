@@ -8,14 +8,19 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Tragwerk\Application\Response\ResponseRenderer;
+use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Repository\ProjectRepository;
+use Tragwerk\Domain\Repository\ServerRepository;
+
+use function assert;
 
 final readonly class IndexHandler implements RequestHandlerInterface
 {
     public function __construct(
         private ResponseRenderer $renderer,
         private ProjectRepository $projectRepository,
+        private ServerRepository $serverRepository,
     ) {
     }
 
@@ -27,6 +32,16 @@ final readonly class IndexHandler implements RequestHandlerInterface
             ? $this->projectRepository->getAll(teamId: $activeTeam->id)
             : $this->projectRepository->getAll();
 
-        return $this->renderer->render($request, 'page::project/index', ['projects' => $projects]);
+        $teamId  = $activeTeam instanceof Team ? $activeTeam->id : null;
+        $servers = [];
+        foreach ($this->serverRepository->getAll(teamId: $teamId) as $server) {
+            assert($server instanceof Server);
+            $servers[$server->id->toString()] = $server;
+        }
+
+        return $this->renderer->render($request, 'page::project/index', [
+            'projects' => $projects,
+            'servers'  => $servers,
+        ]);
     }
 }

@@ -26,7 +26,14 @@
                         'href'  => $this->url('project.show', ['id' => $project->id->toString()]),
                         'label' => $project->name,
                     ]) ?></td>
-                <td><?= $this->e($project->serverId->toString()) ?></td>
+                <td><?php $server = $servers[$project->serverId->toString()] ?? null ?>
+                    <?php if ($server !== null): ?>
+                        <?= $this->fetch('partial::link', [
+                            'href'  => $this->url('server.show', ['id' => $server->id->toString()]),
+                            'label' => $server->name,
+                        ]) ?>
+                    <?php endif ?>
+                </td>
             </tr>
         <?php endforeach ?>
         </tbody>
