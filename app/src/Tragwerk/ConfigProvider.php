@@ -44,10 +44,14 @@ use Tragwerk\Application\Translator\Translator;
 use Tragwerk\Domain\Event;
 use Tragwerk\Domain\Repository\UserRepository;
 use Tragwerk\Factory\Event\DispatcherFactory;
+use Tragwerk\Factory\EventListener\SshKey\UpdateAuthorizedKeysFactory;
+use Tragwerk\Factory\Git\BareRepositoryFactory;
+use Tragwerk\Factory\Handler\Project\TabHandlerFactory;
 use Tragwerk\Factory\Middleware\MiddlewareFactory;
 use Tragwerk\Factory\Valinor\DefaultMapperBuilderFactory;
 use Tragwerk\Factory\Valinor\DefaultNormalizeBuilderFactory;
 use Tragwerk\Factory\Valinor\TreeMapperFactory;
+use Tragwerk\Infrastructure\Git\BareRepository;
 
 use function assert;
 
@@ -79,7 +83,10 @@ final readonly class ConfigProvider
         return [
             'dependencies' => [
                 'factories'          => [
-                    Invoker::class => Factory\Invoker\InvokerFactory::class,
+                    Invoker::class        => Factory\Invoker\InvokerFactory::class,
+                    BareRepository::class => BareRepositoryFactory::class,
+                    Application\Handler\Project\TabHandler::class  => TabHandlerFactory::class,
+                    EventListener\SshKey\UpdateAuthorizedKeys::class => UpdateAuthorizedKeysFactory::class,
                 ],
                 'abstract_factories' => [Factory\Invoker\InvokerAbstractFactory::class],
             ],
@@ -259,6 +266,8 @@ final readonly class ConfigProvider
                         Infrastructure\Repository\QueueMessageRepository::class,
                     Domain\Repository\ProjectRepository::class =>
                         Infrastructure\Repository\ProjectRepository::class,
+                    Domain\Repository\SshKeyRepository::class =>
+                        Infrastructure\Repository\SshKeyRepository::class,
                 ],
             ],
         ];
@@ -326,10 +335,24 @@ final readonly class ConfigProvider
                 Event\TeamCreated::class         => [EventListener\Team\CreateTeam::class],
                 Event\TeamUpdated::class         => [EventListener\Team\UpdateTeam::class],
                 Event\TeamDeleted::class         => [EventListener\Team\DeleteTeam::class],
-                Event\ProjectCreated::class      => [EventListener\Project\CreateProject::class],
+                Event\ProjectCreated::class      => [
+                    EventListener\Project\CreateProject::class,
+                    EventListener\Project\CreateGitRepository::class,
+                ],
                 Event\ProjectUpdated::class      => [EventListener\Project\UpdateProject::class],
-                Event\ProjectDeleted::class      => [EventListener\Project\DeleteProject::class],
+                Event\ProjectDeleted::class      => [
+                    EventListener\Project\DeleteProject::class,
+                    EventListener\Project\DeleteGitRepository::class,
+                ],
                 Event\QueueMessageDeleted::class => [EventListener\Queue\DeleteQueueMessage::class],
+                Event\SshKeyCreated::class       => [
+                    EventListener\SshKey\PersistSshKey::class,
+                    EventListener\SshKey\UpdateAuthorizedKeys::class,
+                ],
+                Event\SshKeyDeleted::class       => [
+                    EventListener\SshKey\DeleteSshKey::class,
+                    EventListener\SshKey\UpdateAuthorizedKeys::class,
+                ],
                 Event\TeamInvitationCreated::class =>
                     [EventListener\Team\SendTeamInvitation::class],
                 Event\UserSwitchedTeam::class => [EventListener\User\PersistLastActiveTeam::class],

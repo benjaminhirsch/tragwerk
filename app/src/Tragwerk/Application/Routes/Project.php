@@ -50,6 +50,12 @@ final readonly class Project
             'project.edit',
         );
 
+        $routes->get(
+            '/projects/{id}/environments',
+            $this->middlewareFactory->prepare([Handler\Project\EnvironmentHandler::class]),
+            'project.environment',
+        );
+
         $routes->post(
             '/projects/{id}/delete',
             $this->middlewareFactory->prepare([Handler\Project\DeleteHandler::class]),

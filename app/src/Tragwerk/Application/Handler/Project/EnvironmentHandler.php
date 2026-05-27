@@ -12,27 +12,20 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Throwable;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Entity\Project;
-use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Repository\ProjectRepository;
-use Tragwerk\Domain\Repository\ServerRepository;
-use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Infrastructure\Git\BareRepository;
 
 use function assert;
 use function is_string;
 
-final readonly class TabHandler implements RequestHandlerInterface
+final readonly class EnvironmentHandler implements RequestHandlerInterface
 {
     public function __construct(
         private ResponseRenderer $renderer,
         private ProjectRepository $projectRepository,
-        private ServerRepository $serverRepository,
-        private TeamRepository $teamRepository,
         private BareRepository $bareRepository,
-        private string $gitSshHost,
-        private string $gitSshRepoBase,
     ) {
     }
 
@@ -45,44 +38,23 @@ final readonly class TabHandler implements RequestHandlerInterface
             return new EmptyResponse(404);
         }
 
-        $tab = $request->getAttribute('tab');
+        $params = $request->getQueryParams();
+        $branch = is_string($params['branch'] ?? null) ? $params['branch'] : null;
 
-        return match ($tab) {
-            'overview'     => $this->renderOverview($request, $project),
-            'environments' => $this->renderEnvironments($request, $project),
-            default        => new EmptyResponse(404),
-        };
-    }
-
-    private function renderOverview(ServerRequestInterface $request, Project $project): ResponseInterface
-    {
-        $server = $this->serverRepository->getById($project->serverId);
-        $team   = $this->teamRepository->getById($project->teamId);
-
-        assert($server instanceof Server);
-        assert($team instanceof Team);
-
-        return $this->renderer->render($request, 'page::project/tab/overview', [
-            'project' => $project,
-            'server'  => $server,
-            'team'    => $team,
-        ]);
-    }
-
-    private function renderEnvironments(ServerRequestInterface $request, Project $project): ResponseInterface
-    {
-        try {
-            $branches = $this->bareRepository->getBranches($project->id->toString());
-        } catch (Throwable) {
-            $branches = [];
+        if ($branch === null || $branch === '') {
+            return new EmptyResponse(400);
         }
 
-        $cloneUrl = 'git@' . $this->gitSshHost . ':' . $this->gitSshRepoBase . '/' . $project->id->toString();
+        try {
+            $commits = $this->bareRepository->getCommits($project->id->toString(), $branch);
+        } catch (Throwable) {
+            $commits = [];
+        }
 
-        return $this->renderer->render($request, 'page::project/tab/environments', [
-            'project'  => $project,
-            'branches' => $branches,
-            'cloneUrl' => $cloneUrl,
+        return $this->renderer->render($request, 'page::project/tab/environment', [
+            'project' => $project,
+            'branch'  => $branch,
+            'commits' => $commits,
         ]);
     }
 

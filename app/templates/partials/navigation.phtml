@@ -32,6 +32,12 @@ $links = [
                 'href' => $this->url('queue'),
                 'classes' => 'nav-link bi bi-list-task',
         ],
+        [
+                'include' => 'partial::link',
+                'label' => _('Profile'),
+                'href' => $this->url('profile'),
+                'classes' => 'nav-link bi bi-person',
+        ],
 ];
 
 foreach ($links as &$l) {

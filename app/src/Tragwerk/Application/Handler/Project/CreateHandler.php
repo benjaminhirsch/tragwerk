@@ -15,13 +15,21 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Tragwerk\Application\Dto\Project\ProjectCreation;
 use Tragwerk\Application\Mapper\GenericMapper;
 use Tragwerk\Application\Response\ResponseRenderer;
+use Tragwerk\Domain\Entity\Project;
+use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Event\ProjectCreated;
+use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Domain\ValueObject\ServerIdentifier;
+use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
+use function _;
+use function array_filter;
 use function assert;
+use function iterator_to_array;
 
 final readonly class CreateHandler implements RequestHandlerInterface
 {
@@ -30,6 +38,7 @@ final readonly class CreateHandler implements RequestHandlerInterface
         private GenericMapper $mapper,
         private EventDispatcherInterface $eventDispatcher,
         private UrlHelper $urlHelper,
+        private ProjectRepository $projectRepository,
         private ServerRepository $serverRepository,
     ) {
     }
@@ -44,12 +53,23 @@ final readonly class CreateHandler implements RequestHandlerInterface
         if ($request->getMethod() === RequestMethodInterface::METHOD_POST) {
             $validationBag = $this->mapper->mapAndValidate($request, ProjectCreation::class);
 
-            $user = $request->getAttribute(UserInterface::class);
-            assert($user instanceof UserInterface);
+            if (! $validationBag->hasErrors()) {
+                $dto = $validationBag->getDto();
+                assert($dto instanceof ProjectCreation);
+
+                $serverId = ServerIdentifier::fromString($dto->serverId);
+                if ($this->projectRepository->isServerInUse($serverId)) {
+                    $message       = _('This server is already assigned to another project');
+                    $validationBag = $validationBag->withError('serverId', $message);
+                }
+            }
 
             if (! $validationBag->hasErrors()) {
                 $dto = $validationBag->getDto();
                 assert($dto instanceof ProjectCreation);
+
+                $user = $request->getAttribute(UserInterface::class);
+                assert($user instanceof UserInterface);
 
                 $projectId = ProjectIdentifier::create();
 
@@ -66,11 +86,30 @@ final readonly class CreateHandler implements RequestHandlerInterface
             }
         }
 
-        $servers = $this->serverRepository->getAll(teamId: $activeTeam->id);
+        $usedServerIds = $this->getUsedServerIds($activeTeam->id);
+        /** @var list<Server> $allServers */
+        $allServers = iterator_to_array($this->serverRepository->getAll(teamId: $activeTeam->id), false);
+        $servers    = array_filter(
+            $allServers,
+            static fn (Server $s): bool => ! isset($usedServerIds[$s->id->toString()]),
+        );
 
         return $this->renderer->render($request, 'page::project/create', [
             'validationBag' => $validationBag,
             'servers'       => $servers,
         ]);
+    }
+
+    /** @return array<string, true> */
+    private function getUsedServerIds(TeamIdentifier $teamId): array
+    {
+        $used = [];
+
+        foreach ($this->projectRepository->getAll(teamId: $teamId) as $project) {
+            assert($project instanceof Project);
+            $used[$project->serverId->toString()] = true;
+        }
+
+        return $used;
     }
 }

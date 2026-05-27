@@ -57,6 +57,18 @@ services:
     volumes:
       - db-data:/var/lib/postgresql
 
+  sshd:
+    <<: *default-service
+    build:
+      context: docker/sshd
+      dockerfile: Dockerfile
+    container_name: tragwerk-sshd
+    ports:
+      - "2222:22"
+    volumes:
+      - ./app/data/repositories:/home/git/repos
+      - ./app/data/ssh:/home/git/ssh_data
+
   mailpit:
     <<: *default-service
     image: axllent/mailpit:latest

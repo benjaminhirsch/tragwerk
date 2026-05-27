@@ -1,0 +1,36 @@
+<?php
+/**
+ * @var \Tragwerk\Domain\Entity\Project  $project
+ * @var string                           $branch
+ * @var \Tragwerk\Infrastructure\Git\Commit[] $commits
+ */
+?>
+<?php if ($commits === []): ?>
+    <div class="text-body-secondary">
+        <i class="bi bi-info-circle me-1"></i>
+        <?= _('No commits on this branch yet.') ?>
+    </div>
+<?php else: ?>
+    <ul class="list-unstyled mb-0">
+        <?php foreach ($commits as $commit): ?>
+            <li class="d-flex gap-3 py-2 border-bottom">
+                <div class="flex-shrink-0 mt-1">
+                    <i class="bi bi-git text-body-secondary"></i>
+                </div>
+                <div class="flex-grow-1 overflow-hidden">
+                    <div class="fw-medium text-truncate"><?= $this->e($commit->subject) ?></div>
+                    <div class="small text-body-secondary">
+                        <?= $this->e($commit->authorName) ?>
+                        &middot;
+                        <span title="<?= $this->e($commit->committedAt->format('Y-m-d H:i:s')) ?>">
+                            <?= $this->e($commit->committedAt->format('Y-m-d H:i')) ?>
+                        </span>
+                    </div>
+                </div>
+                <div class="flex-shrink-0">
+                    <code class="small text-body-secondary"><?= $this->e($commit->shortHash) ?></code>
+                </div>
+            </li>
+        <?php endforeach ?>
+    </ul>
+<?php endif ?>

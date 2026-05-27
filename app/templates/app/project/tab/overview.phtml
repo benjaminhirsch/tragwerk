@@ -1,5 +1,9 @@
 <?php
-/** @var \Tragwerk\Domain\Entity\Project $project */
+/**
+ * @var \Tragwerk\Domain\Entity\Project $project
+ * @var \Tragwerk\Domain\Entity\Server  $server
+ * @var \Tragwerk\Domain\Entity\Team    $team
+ */
 ?>
 <table class="table table-borderless mb-0">
     <tbody>
@@ -9,11 +13,21 @@
         </tr>
         <tr>
             <th class="text-body-secondary fw-normal"><?= _('Server') ?></th>
-            <td><?= $this->e($project->serverId->toString()) ?></td>
+            <td>
+                <?= $this->fetch('partial::link', [
+                    'href'  => $this->url('server.show', ['id' => $server->id->toString()]),
+                    'label' => $server->name,
+                ]) ?>
+            </td>
         </tr>
         <tr>
             <th class="text-body-secondary fw-normal"><?= _('Team') ?></th>
-            <td><?= $this->e($project->teamId->toString()) ?></td>
+            <td>
+                <?= $this->fetch('partial::link', [
+                    'href'  => $this->url('team.show', ['id' => $team->id->toString()]),
+                    'label' => $team->name,
+                ]) ?>
+            </td>
         </tr>
         <tr>
             <th class="text-body-secondary fw-normal"><?= _('Created') ?></th>
