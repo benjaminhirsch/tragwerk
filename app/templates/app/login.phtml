@@ -5,10 +5,20 @@
 
 <form action="<?= $this->url('login') ?>" method="post">
     <?= $this->fetch('partial::input/csrf') ?>
-    <?= $this->fetch('partial::input/email', ['id' => 'email', 'label' => $this->t('E-Mail')]) ?>
-    <?= $this->fetch('partial::input/password', ['id' => 'password', 'label' => $this->t('Password')]) ?>
+    <?= $this->fetch('partial::input/email', [
+            'id' => 'email',
+            'label' => $this->t('E-Mail'),
+            'autofocus' => true,
+    ]) ?>
+    <?= $this->fetch('partial::input/password', [
+            'id' => 'password',
+            'label' => $this->t('Password')
+    ]) ?>
     <div class="form-actions d-grid">
-        <?= $this->fetch('partial::input/button', ['label' => $this->t('Sign in'), 'classes' => 'btn btn-primary']) ?>
+        <?= $this->fetch('partial::input/button', [
+                'label' => $this->t('Sign in'),
+                'classes' => 'btn btn-primary'
+        ]) ?>
     </div>
 </form>
 
