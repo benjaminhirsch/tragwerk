@@ -8,5 +8,6 @@ return [
         'authorized_keys_path' => 'data/ssh/authorized_keys',
         'ssh_host'             => 'tragwerk-git',
         'ssh_repo_base'        => 'repos',
+        'app_internal_url'     => 'http://app',
     ],
 ];

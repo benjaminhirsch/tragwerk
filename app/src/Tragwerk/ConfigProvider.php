@@ -41,8 +41,10 @@ use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Application\Template;
 use Tragwerk\Application\Translator\LaminasTranslator;
 use Tragwerk\Application\Translator\Translator;
+use Tragwerk\Domain\Config\ConfigValidator;
 use Tragwerk\Domain\Event;
 use Tragwerk\Domain\Repository\UserRepository;
+use Tragwerk\Factory\Config\ConfigValidatorFactory;
 use Tragwerk\Factory\Event\DispatcherFactory;
 use Tragwerk\Factory\EventListener\SshKey\UpdateAuthorizedKeysFactory;
 use Tragwerk\Factory\Git\BareRepositoryFactory;
@@ -85,8 +87,9 @@ final readonly class ConfigProvider
                 'factories'          => [
                     Invoker::class        => Factory\Invoker\InvokerFactory::class,
                     BareRepository::class => BareRepositoryFactory::class,
-                    Application\Handler\Project\TabHandler::class  => TabHandlerFactory::class,
-                    EventListener\SshKey\UpdateAuthorizedKeys::class => UpdateAuthorizedKeysFactory::class,
+                    Application\Handler\Project\TabHandler::class    => TabHandlerFactory::class,
+                    EventListener\SshKey\UpdateAuthorizedKeys::class  => UpdateAuthorizedKeysFactory::class,
+                    ConfigValidator::class                            => ConfigValidatorFactory::class,
                 ],
                 'abstract_factories' => [Factory\Invoker\InvokerAbstractFactory::class],
             ],
@@ -268,6 +271,8 @@ final readonly class ConfigProvider
                         Infrastructure\Repository\ProjectRepository::class,
                     Domain\Repository\SshKeyRepository::class =>
                         Infrastructure\Repository\SshKeyRepository::class,
+                    Domain\Repository\BuildLogRepository::class =>
+                        Infrastructure\Repository\BuildLogRepository::class,
                 ],
             ],
         ];
@@ -353,6 +358,7 @@ final readonly class ConfigProvider
                     EventListener\SshKey\DeleteSshKey::class,
                     EventListener\SshKey\UpdateAuthorizedKeys::class,
                 ],
+                Event\BuildLogCreated::class => [EventListener\BuildLog\PersistBuildLog::class],
                 Event\TeamInvitationCreated::class =>
                     [EventListener\Team\SendTeamInvitation::class],
                 Event\UserSwitchedTeam::class => [EventListener\User\PersistLastActiveTeam::class],

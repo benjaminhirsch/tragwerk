@@ -19,6 +19,7 @@ enum EntityType: string implements Translatable
     case SETUP_JOB       = 'SETUP_JOB';
     case PROJECT         = 'PROJECT';
     case SSH_KEY         = 'SSH_KEY';
+    case BUILD_LOG       = 'BUILD_LOG';
 
     /** @phpstan-pure  */
     #[Override]
@@ -33,6 +34,7 @@ enum EntityType: string implements Translatable
             self::SETUP_JOB       => _('Setup Job'),
             self::PROJECT       => _('Project'),
             self::SSH_KEY       => _('SSH Key'),
+            self::BUILD_LOG     => _('Build Log'),
         };
     }
 
@@ -52,6 +54,7 @@ enum EntityType: string implements Translatable
             self::SETUP_JOB       => Entity\SetupJob::class,
             self::PROJECT       => Entity\Project::class,
             self::SSH_KEY       => Entity\SshKey::class,
+            self::BUILD_LOG     => Entity\BuildLog::class,
         };
     }
 }

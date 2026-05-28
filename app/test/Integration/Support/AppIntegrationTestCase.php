@@ -11,21 +11,35 @@ use Mezzio\Middleware\ErrorResponseGenerator;
 use Mezzio\MiddlewareFactory;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\ResponseInterface;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use SplFileInfo;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Tragwerk\Application\Middleware\Csrf\RequireValidCsrfToken;
+use Tragwerk\Infrastructure\Git\BareRepository;
 use Tragwerk\Infrastructure\Queue\Producer as InfraProducer;
 
 use function assert;
 use function is_callable;
+use function is_dir;
+use function mkdir;
 use function preg_match;
+use function rmdir;
+use function sys_get_temp_dir;
+use function uniqid;
+use function unlink;
 
 abstract class AppIntegrationTestCase extends IntegrationTestCase
 {
     protected Application $app;
+    private string $tempRepoDir;
 
     protected function setUp(): void
     {
         parent::setUp(); // builds container, gets connection, starts transaction
+
+        $this->tempRepoDir = sys_get_temp_dir() . '/tragwerk-test-repos-' . uniqid();
+        mkdir($this->tempRepoDir, 0755, true);
 
         // Override services that require external infrastructure
         $this->container->setAllowOverride(true);
@@ -41,6 +55,9 @@ abstract class AppIntegrationTestCase extends IntegrationTestCase
 
         // Suppress queue writes — SendRegistrationMail still runs but becomes a no-op
         $this->container->setService(InfraProducer::class, new NullProducer());
+
+        // Isolate git repositories in a per-test temp directory so they are cleaned up after
+        $this->container->setService(BareRepository::class, new BareRepository($this->tempRepoDir, 'http://app'));
 
         // Replace Whoops error generator with the standard one: Whoops::register() sets
         // global error/exception handlers that PHPUnit detects as leaked handler state.
@@ -63,6 +80,38 @@ abstract class AppIntegrationTestCase extends IntegrationTestCase
         $routes = require $appDir . 'config/routes.php';
         assert(is_callable($routes));
         $routes($this->app, $middlewareFactory, $this->container);
+    }
+
+    protected function tearDown(): void
+    {
+        $this->removeDirectory($this->tempRepoDir);
+
+        parent::tearDown();
+    }
+
+    private function removeDirectory(string $path): void
+    {
+        if (! is_dir($path)) {
+            return;
+        }
+
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST,
+        );
+
+        foreach ($iterator as $file) {
+            assert($file instanceof SplFileInfo);
+            $realPath = $file->getRealPath();
+            assert($realPath !== false);
+            if ($file->isDir()) {
+                rmdir($realPath);
+            } else {
+                unlink($realPath);
+            }
+        }
+
+        rmdir($path);
     }
 
     /**

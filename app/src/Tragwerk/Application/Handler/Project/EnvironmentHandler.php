@@ -13,12 +13,14 @@ use Throwable;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Team;
+use Tragwerk\Domain\Repository\BuildLogRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Infrastructure\Git\BareRepository;
 
 use function assert;
 use function is_string;
+use function iterator_to_array;
 
 final readonly class EnvironmentHandler implements RequestHandlerInterface
 {
@@ -26,6 +28,7 @@ final readonly class EnvironmentHandler implements RequestHandlerInterface
         private ResponseRenderer $renderer,
         private ProjectRepository $projectRepository,
         private BareRepository $bareRepository,
+        private BuildLogRepository $buildLogRepository,
     ) {
     }
 
@@ -51,10 +54,16 @@ final readonly class EnvironmentHandler implements RequestHandlerInterface
             $commits = [];
         }
 
+        $buildLogs = iterator_to_array(
+            $this->buildLogRepository->getLatestByProjectAndBranch($project->id, $branch),
+            false,
+        );
+
         return $this->renderer->render($request, 'page::project/tab/environment', [
-            'project' => $project,
-            'branch'  => $branch,
-            'commits' => $commits,
+            'project'   => $project,
+            'branch'    => $branch,
+            'commits'   => $commits,
+            'buildLogs' => $buildLogs,
         ]);
     }
 
