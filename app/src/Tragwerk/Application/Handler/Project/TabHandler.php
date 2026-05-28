@@ -14,6 +14,7 @@ use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
+use Tragwerk\Domain\Repository\EnvironmentRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
@@ -31,6 +32,7 @@ final readonly class TabHandler implements RequestHandlerInterface
         private ServerRepository $serverRepository,
         private TeamRepository $teamRepository,
         private BareRepository $bareRepository,
+        private EnvironmentRepository $environmentRepository,
         private string $gitSshHost,
         private string $gitSshRepoBase,
     ) {
@@ -77,12 +79,14 @@ final readonly class TabHandler implements RequestHandlerInterface
             $branchParents = [];
         }
 
-        $cloneUrl = 'git@' . $this->gitSshHost . ':' . $this->gitSshRepoBase . '/' . $project->id->toString();
+        $cloneUrl       = 'git@' . $this->gitSshHost . ':' . $this->gitSshRepoBase . '/' . $project->id->toString();
+        $activeBranches = $this->environmentRepository->getActiveBranches($project->id);
 
         return $this->renderer->render($request, 'page::project/tab/environments', [
-            'project'       => $project,
-            'branchParents' => $branchParents,
-            'cloneUrl'      => $cloneUrl,
+            'project'        => $project,
+            'branchParents'  => $branchParents,
+            'cloneUrl'       => $cloneUrl,
+            'activeBranches' => $activeBranches,
         ]);
     }
 

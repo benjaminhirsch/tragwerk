@@ -18,6 +18,7 @@ use function explode;
 use function fclose;
 use function file_put_contents;
 use function implode;
+use function in_array;
 use function intval;
 use function is_dir;
 use function mkdir;
@@ -170,7 +171,14 @@ final readonly class BareRepository
             }
         }
 
+        $rootBranches = ['main', 'master'];
+
         foreach ($branches as $branch) {
+            if (in_array($branch, $rootBranches, true)) {
+                $parents[$branch] = null;
+                continue;
+            }
+
             $bestParent  = null;
             $minDistance = PHP_INT_MAX;
 
@@ -196,7 +204,12 @@ final readonly class BareRepository
                     continue;
                 }
 
-                if ($distance <= 0 || $distance >= $minDistance) {
+                if ($distance < 0 || $distance > $minDistance) {
+                    continue;
+                }
+
+                // On equal distance prefer root branches as parent
+                if ($distance === $minDistance && ! in_array($candidate, $rootBranches, true)) {
                     continue;
                 }
 
