@@ -72,17 +72,17 @@ final readonly class TabHandler implements RequestHandlerInterface
     private function renderEnvironments(ServerRequestInterface $request, Project $project): ResponseInterface
     {
         try {
-            $branches = $this->bareRepository->getBranches($project->id->toString());
+            $branchParents = $this->bareRepository->getBranchParents($project->id->toString());
         } catch (Throwable) {
-            $branches = [];
+            $branchParents = [];
         }
 
         $cloneUrl = 'git@' . $this->gitSshHost . ':' . $this->gitSshRepoBase . '/' . $project->id->toString();
 
         return $this->renderer->render($request, 'page::project/tab/environments', [
-            'project'  => $project,
-            'branches' => $branches,
-            'cloneUrl' => $cloneUrl,
+            'project'       => $project,
+            'branchParents' => $branchParents,
+            'cloneUrl'      => $cloneUrl,
         ]);
     }
 

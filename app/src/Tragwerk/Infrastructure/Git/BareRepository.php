@@ -7,14 +7,18 @@ namespace Tragwerk\Infrastructure\Git;
 use DateTimeImmutable;
 use RuntimeException;
 
+use function array_fill_keys;
 use function array_filter;
+use function array_keys;
 use function array_map;
 use function array_values;
 use function chmod;
+use function count;
 use function explode;
 use function fclose;
 use function file_put_contents;
 use function implode;
+use function intval;
 use function is_dir;
 use function mkdir;
 use function proc_close;
@@ -22,6 +26,8 @@ use function proc_open;
 use function rtrim;
 use function stream_get_contents;
 use function trim;
+
+use const PHP_INT_MAX;
 
 final readonly class BareRepository
 {
@@ -133,6 +139,103 @@ final readonly class BareRepository
         }
 
         return $commits;
+    }
+
+    /**
+     * Returns a map of branch → parent branch (null = root).
+     * The parent is the direct ancestor branch with the shortest distance,
+     * determined via merge-base: candidate is a parent only if its HEAD
+     * equals the merge-base with the given branch (i.e. no divergence on
+     * the candidate side).
+     *
+     * @return array<string, string|null>
+     */
+    public function getBranchParents(string $projectId): array
+    {
+        $branches = $this->getBranches($projectId);
+
+        if (count($branches) <= 1) {
+            return array_fill_keys($branches, null);
+        }
+
+        $path    = $this->getPath($projectId);
+        $tips    = [];
+        $parents = [];
+
+        foreach ($branches as $branch) {
+            try {
+                $tips[$branch] = trim($this->run(['git', '-C', $path, 'rev-parse', $branch]));
+            } catch (RuntimeException) {
+                $tips[$branch] = '';
+            }
+        }
+
+        foreach ($branches as $branch) {
+            $bestParent  = null;
+            $minDistance = PHP_INT_MAX;
+
+            foreach ($branches as $candidate) {
+                if ($candidate === $branch || ($tips[$candidate] ?? '') === '') {
+                    continue;
+                }
+
+                try {
+                    $mergeBase = trim($this->run(['git', '-C', $path, 'merge-base', $branch, $candidate]));
+                } catch (RuntimeException) {
+                    continue;
+                }
+
+                if ($mergeBase !== $tips[$candidate]) {
+                    continue;
+                }
+
+                try {
+                    $range    = $candidate . '..' . $branch;
+                    $distance = intval(trim($this->run(['git', '-C', $path, 'rev-list', '--count', $range])));
+                } catch (RuntimeException) {
+                    continue;
+                }
+
+                if ($distance <= 0 || $distance >= $minDistance) {
+                    continue;
+                }
+
+                $minDistance = $distance;
+                $bestParent  = $candidate;
+            }
+
+            $parents[$branch] = $bestParent;
+        }
+
+        return $this->breakParentCycles($parents);
+    }
+
+    /**
+     * Removes cycles that can occur when branches have been merged back into
+     * each other (both would appear as mutual ancestors).
+     *
+     * @param  array<string, string|null> $parents
+     *
+     * @return array<string, string|null>
+     */
+    private function breakParentCycles(array $parents): array
+    {
+        foreach (array_keys($parents) as $branch) {
+            $visited = [$branch => true];
+            $current = $parents[$branch];
+
+            while ($current !== null) {
+                if (isset($visited[$current])) {
+                    $parents[$branch] = null;
+                    break;
+                }
+
+                $visited[$current] = true;
+                $current           = $parents[$current] ?? null;
+            }
+        }
+
+        return $parents;
     }
 
     public function getFileContent(string $projectId, string $commitSha, string $path): string|null
