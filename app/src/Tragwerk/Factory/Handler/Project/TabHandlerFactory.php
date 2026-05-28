@@ -7,6 +7,7 @@ namespace Tragwerk\Factory\Handler\Project;
 use Psr\Container\ContainerInterface;
 use Tragwerk\Application\Handler\Project\TabHandler;
 use Tragwerk\Application\Response\ResponseRenderer;
+use Tragwerk\Domain\Repository\EnvironmentRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
@@ -28,18 +29,20 @@ final readonly class TabHandlerFactory
         assert(is_string($sshHost));
         assert(is_string($sshRepoBase));
 
-        $renderer = $container->get(ResponseRenderer::class);
-        $projects = $container->get(ProjectRepository::class);
-        $servers  = $container->get(ServerRepository::class);
-        $teams    = $container->get(TeamRepository::class);
-        $bare     = $container->get(BareRepository::class);
+        $renderer     = $container->get(ResponseRenderer::class);
+        $projects     = $container->get(ProjectRepository::class);
+        $servers      = $container->get(ServerRepository::class);
+        $teams        = $container->get(TeamRepository::class);
+        $bare         = $container->get(BareRepository::class);
+        $environments = $container->get(EnvironmentRepository::class);
 
         assert($renderer instanceof ResponseRenderer);
         assert($projects instanceof ProjectRepository);
         assert($servers instanceof ServerRepository);
         assert($teams instanceof TeamRepository);
         assert($bare instanceof BareRepository);
+        assert($environments instanceof EnvironmentRepository);
 
-        return new TabHandler($renderer, $projects, $servers, $teams, $bare, $sshHost, $sshRepoBase);
+        return new TabHandler($renderer, $projects, $servers, $teams, $bare, $environments, $sshHost, $sshRepoBase);
     }
 }

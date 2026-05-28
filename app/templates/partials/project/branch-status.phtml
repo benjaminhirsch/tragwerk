@@ -1,0 +1,37 @@
+<?php
+/**
+ * @var string $branch
+ * @var bool   $isActive
+ * @var bool   $isProtected
+ * @var string $projectId
+ */
+
+$statusId  = 'tw-branch-status-' . md5($branch);
+$toggleUrl = $this->url('project.environment.toggle', ['id' => $projectId]);
+$valsJson  = htmlspecialchars((string) json_encode(['branch' => $branch]), ENT_QUOTES);
+?>
+<div class="tw-branch-status" id="<?= $statusId ?>">
+    <?php if ($isActive): ?>
+        <span class="badge rounded-pill tw-env-active"><?= _('active') ?></span>
+        <?php if (! $isProtected): ?>
+            <button class="btn btn-link btn-sm p-0 ms-1 tw-env-toggle text-body-secondary"
+                    hx-post="<?= $toggleUrl ?>"
+                    hx-vals='<?= $valsJson ?>'
+                    hx-include="#tw-csrf-token"
+                    hx-target="closest .tw-branch-status"
+                    hx-swap="outerHTML">
+                <?= _('Deactivate') ?>
+            </button>
+        <?php endif ?>
+    <?php else: ?>
+        <span class="badge rounded-pill tw-env-inactive"><?= _('inactive') ?></span>
+        <button class="btn btn-link btn-sm p-0 ms-1 tw-env-toggle text-success"
+                hx-post="<?= $toggleUrl ?>"
+                hx-vals='<?= $valsJson ?>'
+                hx-include="#tw-csrf-token"
+                hx-target="closest .tw-branch-status"
+                hx-swap="outerHTML">
+            <?= _('Activate') ?>
+        </button>
+    <?php endif ?>
+</div>

@@ -3,7 +3,16 @@
  * @var \Tragwerk\Domain\Entity\Project $project
  * @var array<string, string|null>      $branchParents  branch → parent branch (null = root)
  * @var string                          $cloneUrl
+ * @var string[]                        $activeBranches
  */
+
+$projectId = $project->id->toString();
+
+$isMain = static fn (string $b): bool => in_array($b, ['main', 'master'], true);
+
+$isActive = static function (string $branch) use ($isMain, $activeBranches): bool {
+    return $isMain($branch) || in_array($branch, $activeBranches, true);
+};
 
 // Build children map from the flat parent map
 $children = [];
@@ -11,27 +20,39 @@ foreach ($branchParents as $branch => $parent) {
     $children[$parent ?? ''][] = $branch;
 }
 
-$projectId = $project->id->toString();
-
 /**
  * Recursively render branches as a nested <ul> tree.
  *
  * @param string[] $nodes
  */
-$renderBranches = function (array $nodes) use (&$renderBranches, $children, $projectId): void {
+$renderBranches = function (array $nodes) use (
+    &$renderBranches,
+    $children,
+    $projectId,
+    $isMain,
+    $isActive,
+): void {
     foreach ($nodes as $branch) {
         $hasChildren = isset($children[$branch]);
         $icon        = $hasChildren ? 'bi-diagram-2' : 'bi-subtract';
         ?>
         <li>
-            <button class="tw-branch-item"
-                    hx-get="<?= $this->url('project.environment', ['id' => $projectId]) ?>?branch=<?= urlencode($branch) ?>"
-                    hx-target="#environment-activities"
-                    hx-swap="innerHTML"
-                    hx-on:click="document.querySelectorAll('.tw-branch-item').forEach(el => el.classList.remove('active')); this.classList.add('active')">
-                <i class="<?= $icon ?> tw-branch-icon"></i>
-                <?= $this->e($branch) ?>
-            </button>
+            <div class="tw-branch-row">
+                <button class="tw-branch-item"
+                        hx-get="<?= $this->url('project.environment', ['id' => $projectId]) ?>?branch=<?= urlencode($branch) ?>"
+                        hx-target="#environment-activities"
+                        hx-swap="innerHTML"
+                        hx-on:click="document.querySelectorAll('.tw-branch-item').forEach(el => el.classList.remove('active')); this.classList.add('active')">
+                    <i class="<?= $icon ?> tw-branch-icon"></i>
+                    <?= $this->e($branch) ?>
+                </button>
+                <?= $this->fetch('partial::project/branch-status', [
+                    'branch'      => $branch,
+                    'isActive'    => $isActive($branch),
+                    'isProtected' => $isMain($branch),
+                    'projectId'   => $projectId,
+                ]) ?>
+            </div>
             <?php if ($hasChildren): ?>
                 <ul>
                     <?php $renderBranches($children[$branch]) ?>
@@ -42,6 +63,8 @@ $renderBranches = function (array $nodes) use (&$renderBranches, $children, $pro
     }
 };
 ?>
+
+<input type="hidden" id="tw-csrf-token" name="csrf_token" value="<?= $this->getCsrfToken() ?>">
 
 <div class="mb-3">
     <label class="form-label text-body-secondary small mb-1"><?= _('Git clone URL') ?></label>

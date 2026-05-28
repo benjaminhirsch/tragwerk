@@ -6,6 +6,7 @@ namespace Tragwerk\Application\Handler\Project;
 
 use Laminas\Diactoros\Response\EmptyResponse;
 use Override;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -13,25 +14,25 @@ use Throwable;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Team;
-use Tragwerk\Domain\Repository\BuildLogRepository;
+use Tragwerk\Domain\Event\BranchActivated;
+use Tragwerk\Domain\Event\BranchDeactivated;
 use Tragwerk\Domain\Repository\EnvironmentRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
-use Tragwerk\Infrastructure\Git\BareRepository;
 
-use function assert;
 use function in_array;
+use function is_array;
 use function is_string;
-use function iterator_to_array;
 
-final readonly class EnvironmentHandler implements RequestHandlerInterface
+final readonly class ToggleBranchHandler implements RequestHandlerInterface
 {
+    private const array PROTECTED_BRANCHES = ['main', 'master'];
+
     public function __construct(
         private ResponseRenderer $renderer,
         private ProjectRepository $projectRepository,
-        private BareRepository $bareRepository,
-        private BuildLogRepository $buildLogRepository,
         private EnvironmentRepository $environmentRepository,
+        private EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -39,39 +40,33 @@ final readonly class EnvironmentHandler implements RequestHandlerInterface
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $project = $this->resolveProject($request);
-
         if (! $project instanceof Project) {
             return new EmptyResponse(404);
         }
 
-        $params = $request->getQueryParams();
-        $branch = is_string($params['branch'] ?? null) ? $params['branch'] : null;
-
+        $body   = $request->getParsedBody();
+        $branch = is_array($body) && is_string($body['branch'] ?? null) ? $body['branch'] : null;
         if ($branch === null || $branch === '') {
             return new EmptyResponse(400);
         }
 
-        try {
-            $commits = $this->bareRepository->getCommits($project->id->toString(), $branch);
-        } catch (Throwable) {
-            $commits = [];
+        if (in_array($branch, self::PROTECTED_BRANCHES, true)) {
+            return new EmptyResponse(400);
         }
 
-        $buildLogs = iterator_to_array(
-            $this->buildLogRepository->getLatestByProjectAndBranch($project->id, $branch),
-            false,
-        );
+        $isActive = $this->environmentRepository->isActive($project->id, $branch);
 
-        $isProtected = in_array($branch, ['main', 'master'], true);
-        $isActive    = $isProtected || $this->environmentRepository->isActive($project->id, $branch);
+        if ($isActive) {
+            $this->eventDispatcher->dispatch(new BranchDeactivated($project->id, $branch));
+        } else {
+            $this->eventDispatcher->dispatch(new BranchActivated($project->id, $branch));
+        }
 
-        return $this->renderer->render($request, 'page::project/tab/environment', [
-            'project'     => $project,
+        return $this->renderer->render($request, 'partial::project/branch-status', [
             'branch'      => $branch,
-            'commits'     => $commits,
-            'buildLogs'   => $buildLogs,
-            'isActive'    => $isActive,
-            'isProtected' => $isProtected,
+            'isActive'    => ! $isActive,
+            'isProtected' => false,
+            'projectId'   => $project->id->toString(),
         ]);
     }
 
@@ -89,7 +84,9 @@ final readonly class EnvironmentHandler implements RequestHandlerInterface
 
         try {
             $project = $this->projectRepository->getById(ProjectIdentifier::fromString($routeId));
-            assert($project instanceof Project);
+            if (! $project instanceof Project) {
+                return null;
+            }
 
             if ($project->teamId->toString() !== $activeTeam->id->toString()) {
                 return null;

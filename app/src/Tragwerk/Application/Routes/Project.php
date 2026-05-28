@@ -57,6 +57,12 @@ final readonly class Project
         );
 
         $routes->post(
+            '/projects/{id}/environments/toggle',
+            $this->middlewareFactory->prepare([Handler\Project\ToggleBranchHandler::class]),
+            'project.environment.toggle',
+        );
+
+        $routes->post(
             '/projects/{id}/delete',
             $this->middlewareFactory->prepare([Handler\Project\DeleteHandler::class]),
             'project.delete',
