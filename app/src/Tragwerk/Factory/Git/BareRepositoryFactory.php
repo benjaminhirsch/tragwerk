@@ -19,8 +19,10 @@ final readonly class BareRepositoryFactory
         assert(is_array($config));
 
         $repositoriesPath = $config['git']['repositories_path'] ?? 'data/repositories';
+        $appInternalUrl   = $config['git']['app_internal_url'] ?? 'http://app';
         assert(is_string($repositoriesPath));
+        assert(is_string($appInternalUrl));
 
-        return new BareRepository($repositoriesPath);
+        return new BareRepository($repositoriesPath, $appInternalUrl);
     }
 }

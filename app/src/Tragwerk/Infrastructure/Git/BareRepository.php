@@ -10,8 +10,10 @@ use RuntimeException;
 use function array_filter;
 use function array_map;
 use function array_values;
+use function chmod;
 use function explode;
 use function fclose;
+use function file_put_contents;
 use function implode;
 use function is_dir;
 use function mkdir;
@@ -28,6 +30,7 @@ final readonly class BareRepository
 
     public function __construct(
         private string $repositoriesPath,
+        private string $appInternalUrl,
     ) {
     }
 
@@ -39,6 +42,28 @@ final readonly class BareRepository
         }
 
         $this->run(['git', 'init', '--bare', $path]);
+        $this->installPostReceiveHook($path);
+    }
+
+    private function installPostReceiveHook(string $repoPath): void
+    {
+        $url  = $this->appInternalUrl;
+        $hook = <<<SHELL
+            #!/bin/sh
+            while IFS=' ' read -r old_sha new_sha refname; do
+                branch="\${refname#refs/heads/}"
+                project_id=\$(basename "\$PWD")
+                body="{\\"projectId\\":\\"\${project_id}\\",\\"branch\\":\\"\${branch}\\""
+                body="\${body},\\"oldSha\\":\\"\${old_sha}\\",\\"newSha\\":\\"\${new_sha}\\"}"
+                curl -s -f -X POST "{$url}/webhooks/git-push" \\
+                    -H 'Content-Type: application/json' \\
+                    -d "\${body}" >/dev/null 2>&1 || true
+            done
+            SHELL;
+
+        $hookPath = $repoPath . '/hooks/post-receive';
+        file_put_contents($hookPath, $hook);
+        chmod($hookPath, 0755);
     }
 
     public function remove(string $projectId): void
@@ -108,6 +133,15 @@ final readonly class BareRepository
         }
 
         return $commits;
+    }
+
+    public function getFileContent(string $projectId, string $commitSha, string $path): string|null
+    {
+        try {
+            return $this->run(['git', '-C', $this->getPath($projectId), 'show', $commitSha . ':' . $path]);
+        } catch (RuntimeException) {
+            return null;
+        }
     }
 
     public function exists(string $projectId): bool

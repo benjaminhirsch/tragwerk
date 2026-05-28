@@ -107,16 +107,58 @@ final class ProjectRepositoryTest extends IntegrationTestCase
         $this->repository->getById($project->id);
     }
 
+    #[Test]
+    public function isServerInUseReturnsFalseWhenNoProjectUsesServer(): void
+    {
+        $serverId = ServerIdentifier::create();
+
+        self::assertFalse($this->repository->isServerInUse($serverId));
+    }
+
+    #[Test]
+    public function isServerInUseReturnsTrueWhenProjectAssignedToServer(): void
+    {
+        $serverId = ServerIdentifier::create();
+        $this->repository->create($this->makeProject(serverId: $serverId));
+
+        self::assertTrue($this->repository->isServerInUse($serverId));
+    }
+
+    #[Test]
+    public function isServerInUseReturnsFalseWhenOnlyMatchingProjectIsExcluded(): void
+    {
+        $serverId = ServerIdentifier::create();
+        $project  = $this->makeProject(serverId: $serverId);
+        $this->repository->create($project);
+
+        self::assertFalse($this->repository->isServerInUse($serverId, excludeProjectId: $project->id));
+    }
+
+    #[Test]
+    public function isServerInUseIgnoresUnrelatedExcludeProject(): void
+    {
+        $serverId        = ServerIdentifier::create();
+        $projectOnServer = $this->makeProject(serverId: $serverId);
+        $unrelated       = $this->makeProject(serverId: ServerIdentifier::create());
+
+        $this->repository->create($projectOnServer);
+        $this->repository->create($unrelated);
+
+        // Excluding $unrelated should not affect the result — $projectOnServer still uses the server
+        self::assertTrue($this->repository->isServerInUse($serverId, excludeProjectId: $unrelated->id));
+    }
+
     private function makeProject(
         string $name = 'Test Project',
         TeamIdentifier|null $teamId = null,
+        ServerIdentifier|null $serverId = null,
     ): Project {
         $now = TimestampImmutable::now();
 
         return new Project(
             ProjectIdentifier::create(),
             $name,
-            ServerIdentifier::create(),
+            $serverId ?? ServerIdentifier::create(),
             $teamId ?? TeamIdentifier::create(),
             $now,
             UserIdentifier::create(),

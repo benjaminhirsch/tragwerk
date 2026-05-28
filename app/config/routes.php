@@ -22,4 +22,5 @@ return static function (Application $app, MiddlewareFactory $factory, ContainerI
     new Routes\Server($middlewareFactory)->registerRoutes($routeCollector);
     new Routes\Team($middlewareFactory)->registerRoutes($routeCollector);
     new Routes\Profile($middlewareFactory)->registerRoutes($routeCollector);
+    new Routes\Webhook($middlewareFactory)->registerRoutes($routeCollector);
 };

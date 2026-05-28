@@ -1,16 +1,45 @@
 <?php
 /**
- * @var \Tragwerk\Domain\Entity\Project  $project
- * @var string                           $branch
- * @var \Tragwerk\Infrastructure\Git\Commit[] $commits
+ * @var \Tragwerk\Domain\Entity\Project         $project
+ * @var string                                  $branch
+ * @var \Tragwerk\Infrastructure\Git\Commit[]   $commits
+ * @var \Tragwerk\Domain\Entity\BuildLog[]       $buildLogs
  */
 ?>
-<?php if ($commits === []): ?>
-    <div class="text-body-secondary">
-        <i class="bi bi-info-circle me-1"></i>
-        <?= _('No commits on this branch yet.') ?>
-    </div>
-<?php else: ?>
+<?php if ($buildLogs !== []): ?>
+    <h6 class="text-body-secondary small text-uppercase fw-semibold mb-2 mt-3">
+        <?= _('Build Log') ?>
+    </h6>
+    <ul class="list-unstyled mb-4">
+        <?php foreach ($buildLogs as $log): ?>
+            <li class="d-flex gap-3 py-2 border-bottom">
+                <div class="flex-shrink-0 mt-1">
+                    <?php $icon = match ($log->type->value) {
+                        'PUSH'    => 'bi-arrow-up-circle text-primary',
+                        'WEBHOOK' => 'bi-plug text-info',
+                        'CRONJOB' => 'bi-clock text-warning',
+                        default   => 'bi-gear text-secondary',
+                    } ?>
+                    <i class="bi <?= $icon ?>"></i>
+                </div>
+                <div class="flex-grow-1 overflow-hidden">
+                    <div class="small text-body-secondary">
+                        <span class="badge bg-secondary me-1"><?= $this->e($log->type->value) ?></span>
+                        <span title="<?= $this->e($log->createdAt->format('Y-m-d H:i:s')) ?>">
+                            <?= $this->e($log->createdAt->format('Y-m-d H:i')) ?>
+                        </span>
+                    </div>
+                    <pre class="mb-0 mt-1 small text-body-secondary" style="white-space: pre-wrap; word-break: break-word;"><?= $this->e($log->message) ?></pre>
+                </div>
+            </li>
+        <?php endforeach ?>
+    </ul>
+<?php endif ?>
+
+<?php if ($commits !== []): ?>
+    <h6 class="text-body-secondary small text-uppercase fw-semibold mb-2">
+        <?= _('Commits') ?>
+    </h6>
     <ul class="list-unstyled mb-0">
         <?php foreach ($commits as $commit): ?>
             <li class="d-flex gap-3 py-2 border-bottom">
@@ -33,4 +62,9 @@
             </li>
         <?php endforeach ?>
     </ul>
+<?php elseif ($buildLogs === []): ?>
+    <div class="text-body-secondary">
+        <i class="bi bi-info-circle me-1"></i>
+        <?= _('No commits on this branch yet.') ?>
+    </div>
 <?php endif ?>

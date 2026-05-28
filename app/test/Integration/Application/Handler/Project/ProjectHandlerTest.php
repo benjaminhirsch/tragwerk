@@ -132,6 +132,40 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
     }
 
     #[Test]
+    public function createPostWithAlreadyUsedServerReRendersForm(): void
+    {
+        $this->seedProject('Existing Project');
+
+        $response = $this->dispatch(
+            'POST',
+            $this->url('project.create'),
+            ['name' => 'New Project', 'serverId' => $this->server->id->toString()],
+            $this->sessionCookie,
+        );
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function editPostWithAlreadyUsedServerReRendersForm(): void
+    {
+        // $this->server is occupied by $occupyingProject; $editedProject gets a fresh server
+        $occupyingProject = $this->seedProject('Occupying Project');
+        $secondServer     = $this->seedExtraServer();
+        $editedProject    = $this->seedProjectForTeam($this->team->id, 'Edited Project', $secondServer->id);
+
+        // Try to move $editedProject onto the already-occupied $this->server
+        $response = $this->dispatch(
+            'POST',
+            $this->url('project.edit', ['id' => $editedProject->id->toString()]),
+            ['name' => 'Edited Project', 'serverId' => $occupyingProject->serverId->toString()],
+            $this->sessionCookie,
+        );
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    #[Test]
     public function showGetRendersDetailPage(): void
     {
         $project  = $this->seedProject();
@@ -425,13 +459,38 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
         return $this->seedProjectForTeam($this->team->id, $name);
     }
 
-    private function seedProjectForTeam(TeamIdentifier $teamId, string $name = 'Test Project'): Project
+    private function seedExtraServer(): Server
     {
+        $now    = TimestampImmutable::now();
+        $server = new Server(
+            ServerIdentifier::create(),
+            'Extra Test Server',
+            '10.0.0.2',
+            null,
+            $this->team->id,
+            $now,
+            $this->user->id,
+            $now,
+            $this->user->id,
+        );
+
+        $repository = $this->container->get(ServerRepository::class);
+        assert($repository instanceof ServerRepository);
+        $repository->create($server);
+
+        return $server;
+    }
+
+    private function seedProjectForTeam(
+        TeamIdentifier $teamId,
+        string $name = 'Test Project',
+        ServerIdentifier|null $serverId = null,
+    ): Project {
         $now     = TimestampImmutable::now();
         $project = new Project(
             ProjectIdentifier::create(),
             $name,
-            $this->server->id,
+            $serverId ?? $this->server->id,
             $teamId,
             $now,
             $this->user->id,
