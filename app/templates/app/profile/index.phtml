@@ -31,22 +31,19 @@ $this->layout('layout::default', ['title' => _('Profile')]);
                             <?= $this->e($key->createdAt->format('Y-m-d')) ?>
                         </td>
                         <td class="text-end">
-                            <form method="post"
-                                  action="<?= $this->url('profile') ?>"
-                                  onsubmit="return confirm('<?= _('Remove this SSH key?') ?>')">
-                                <?= $this->fetch('partial::input/csrf') ?>
-                                <input type="hidden" name="action" value="delete">
-                                <input type="hidden" name="keyId" value="<?= $this->e($key->id->toString()) ?>">
-                                <?= $this->fetch('partial::input/button', [
-                                    'classes' => 'btn btn-outline-danger btn-sm',
-                                    'icon'    => 'bi bi-trash3',
-                                ]) ?>
-                            </form>
+                            <?= $this->fetch('partial::input/button', [
+                                'classes'      => 'btn btn-outline-danger btn-sm',
+                                'icon'         => 'bi bi-trash3',
+                                'type'         => 'button',
+                                'dataBsToggle' => 'modal',
+                                'dataBsTarget' => '#tw-delete-key-modal-' . $key->id->toString(),
+                            ]) ?>
                         </td>
                     </tr>
                 <?php endforeach ?>
             </tbody>
         </table>
+
     <?php else: ?>
         <p class="text-body-secondary mb-4"><?= _('No SSH keys added yet.') ?></p>
     <?php endif ?>
@@ -76,3 +73,16 @@ $this->layout('layout::default', ['title' => _('Profile')]);
         ]) ?>
     </form>
 <?php $this->stop() ?>
+
+<?php foreach ($keys as $key): ?>
+    <?= $this->fetch('partial::modal', [
+        'id'            => 'tw-delete-key-modal-' . $key->id->toString(),
+        'header'        => _('Delete SSH key'),
+        'body'          => sprintf(_('Are you sure you want to delete the SSH key %s? This action cannot be undone.'), '<strong>' . $this->e($key->name) . '</strong>'),
+        'actionUrl'     => $this->url('profile'),
+        'actionLabel'   => _('Delete key'),
+        'actionClasses' => 'btn btn-danger',
+        'actionIcon'    => 'bi bi-trash3',
+        'extraFields'   => ['action' => 'delete', 'keyId' => $key->id->toString()],
+    ]) ?>
+<?php endforeach ?>

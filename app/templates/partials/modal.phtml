@@ -8,10 +8,12 @@
 /** @var string|null $actionIcon*/
 /** @var string $body */
 /** @var string|null $size  e.g. 'modal-sm', 'modal-lg', 'modal-xl' */
-$id     = $id ?? 'tw-modal';
-$size   = $size ?? null;
-$header = $header ?? '';
-$body   = $body ?? '';
+/** @var array<string, string>|null $extraFields  Additional hidden inputs added to the action form */
+$id          = $id ?? 'tw-modal';
+$size        = $size ?? null;
+$header      = $header ?? '';
+$body        = $body ?? '';
+$extraFields = $extraFields ?? [];
 ?>
 <div class="modal fade" id="<?= $this->e($id) ?>" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered<?= $size !== null ? ' ' . $this->e($size) : '' ?>">
@@ -33,6 +35,9 @@ $body   = $body ?? '';
                 <?php if (($actionUrl ?? null) !== null && ($actionLabel ?? null) !== null): ?>
                     <form action="<?= $actionUrl ?>" method="post">
                         <?= $this->fetch('partial::input/csrf') ?>
+                        <?php foreach ($extraFields as $fieldName => $fieldValue): ?>
+                            <input type="hidden" name="<?= $this->e($fieldName) ?>" value="<?= $this->e($fieldValue) ?>">
+                        <?php endforeach ?>
                         <?= $this->fetch('partial::input/button', [
                                 'label'   => $actionLabel,
                                 'classes' => $actionClasses ?? null,
