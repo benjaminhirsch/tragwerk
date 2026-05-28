@@ -193,12 +193,11 @@ final readonly class BareRepository
                     continue;
                 }
 
-                if ($mergeBase !== $tips[$candidate]) {
-                    continue;
-                }
-
                 try {
-                    $range    = $candidate . '..' . $branch;
+                    // Distance = commits in branch since divergence from candidate.
+                    // mergeBase..branch stays correct even when candidate moved forward
+                    // after this branch was created.
+                    $range    = $mergeBase . '..' . $branch;
                     $distance = intval(trim($this->run(['git', '-C', $path, 'rev-list', '--count', $range])));
                 } catch (RuntimeException) {
                     continue;
