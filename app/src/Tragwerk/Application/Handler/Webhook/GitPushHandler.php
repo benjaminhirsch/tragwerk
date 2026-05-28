@@ -12,11 +12,14 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Throwable;
+use Tragwerk\Application\Queue\Message\BuildEnvironment;
+use Tragwerk\Application\Queue\Producer;
 use Tragwerk\Domain\Config\ConfigValidator;
 use Tragwerk\Domain\Entity\BuildLog;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Enum\BuildLogType;
 use Tragwerk\Domain\Event\BuildLogCreated;
+use Tragwerk\Domain\Repository\EnvironmentRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\ValueObject\BuildLogIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
@@ -35,6 +38,8 @@ final readonly class GitPushHandler implements RequestHandlerInterface
         private BareRepository $bareRepository,
         private ConfigValidator $configValidator,
         private EventDispatcherInterface $eventDispatcher,
+        private EnvironmentRepository $environmentRepository,
+        private Producer $producer,
     ) {
     }
 
@@ -70,7 +75,7 @@ final readonly class GitPushHandler implements RequestHandlerInterface
             return new EmptyResponse(404);
         }
 
-        $message = $this->validateConfig($project->id->toString(), $newSha);
+        [$message, $configValid] = $this->validateConfig($project->id->toString(), $newSha);
 
         $this->eventDispatcher->dispatch(new BuildLogCreated(new BuildLog(
             id:        BuildLogIdentifier::create(),
@@ -81,23 +86,35 @@ final readonly class GitPushHandler implements RequestHandlerInterface
             createdAt: TimestampImmutable::now(),
         )));
 
+        $isProtected = $branch === 'main' || $branch === 'master';
+        $isActive    = $isProtected || $this->environmentRepository->isActive($project->id, $branch);
+
+        if ($configValid && $isActive) {
+            $this->producer->sendMessage(new BuildEnvironment(
+                projectId: $project->id->toString(),
+                branch:    $branch,
+                commitSha: $newSha,
+            ));
+        }
+
         return new JsonResponse(['status' => 'ok']);
     }
 
-    private function validateConfig(string $projectId, string $commitSha): string
+    /** @return array{string, bool} */
+    private function validateConfig(string $projectId, string $commitSha): array
     {
         $content = $this->bareRepository->getFileContent($projectId, $commitSha, '.tragwerk/config.xml');
 
         if ($content === null || $content === '') {
-            return 'No .tragwerk/config.xml found — skipping validation';
+            return ['No .tragwerk/config.xml found — skipping validation', false];
         }
 
         $errors = $this->configValidator->validate($content);
 
         if ($errors === []) {
-            return 'Configuration validated successfully';
+            return ['Configuration validated successfully', true];
         }
 
-        return 'Configuration is invalid:' . "\n" . implode("\n", $errors);
+        return ['Configuration is invalid:' . "\n" . implode("\n", $errors), false];
     }
 }

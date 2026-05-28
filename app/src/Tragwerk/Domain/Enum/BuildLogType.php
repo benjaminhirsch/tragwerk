@@ -10,4 +10,5 @@ enum BuildLogType: string
     case WEBHOOK = 'WEBHOOK';
     case CRONJOB = 'CRONJOB';
     case SYSTEM  = 'SYSTEM';
+    case BUILD   = 'BUILD';
 }
