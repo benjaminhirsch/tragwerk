@@ -11,6 +11,8 @@ use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Tragwerk\Application\Queue\Handler\BuildEnvironment;
 use Tragwerk\Application\Queue\Message;
+use Tragwerk\Application\Queue\Producer;
+use Tragwerk\Application\Queue\Queue;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
 use Tragwerk\Domain\Docker\DockerfileGenerator;
@@ -68,6 +70,17 @@ final class BuildEnvironmentTest extends TestCase
             ->allowScalarValueCasting()
             ->mapper();
 
+        $nullProducer = new class implements Producer {
+            public function sendMessage(
+                Message $message,
+                Queue $queue = Queue::DEFAULT,
+                int|null $priority = 4,
+                int|null $delay = null,
+                int|null $timeToLive = null,
+            ): void {
+            }
+        };
+
         $this->handler = new BuildEnvironment(
             $this->bareRepository,
             new XmlToArrayConverter(),
@@ -77,6 +90,7 @@ final class BuildEnvironmentTest extends TestCase
             new EventDispatcher(),
             new NullLogger(),
             $this->tempDataDir,
+            $nullProducer,
         );
     }
 

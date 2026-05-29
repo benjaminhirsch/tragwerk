@@ -12,6 +12,7 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 use Tragwerk\Application\Queue\Message;
+use Tragwerk\Application\Queue\Producer;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
 use Tragwerk\Domain\Docker\DockerfileGenerator;
@@ -45,6 +46,7 @@ final readonly class BuildEnvironment
         private EventDispatcherInterface $eventDispatcher,
         private LoggerInterface $logger,
         private string $projectDataPath,
+        private Producer $producer,
     ) {
     }
 
@@ -110,6 +112,8 @@ final readonly class BuildEnvironment
         }
 
         $this->createBuildZip($outDir);
+
+        $this->producer->sendMessage(new Message\DeployEnvironment($projectId, $branch, $commitSha));
 
         $this->log($projectId, $branch, implode("\n", $messages));
 

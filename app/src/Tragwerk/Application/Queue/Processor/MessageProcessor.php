@@ -30,6 +30,7 @@ final readonly class MessageProcessor implements Processor
         private Handler\RunSetupJob $runSetupJob,
         private Handler\SendMail $sendMail,
         private Handler\BuildEnvironment $buildEnvironment,
+        private Handler\RunDeployEnvironment $runDeployEnvironment,
     ) {
     }
 
@@ -49,9 +50,10 @@ final readonly class MessageProcessor implements Processor
         }
 
         match ($parsedMessage::class) {
-            Message\RunSetupJob::class    => $this->runSetupJob->handle($parsedMessage),
-            Message\SendMail::class       => $this->sendMail->handle($parsedMessage),
+            Message\RunSetupJob::class      => $this->runSetupJob->handle($parsedMessage),
+            Message\SendMail::class         => $this->sendMail->handle($parsedMessage),
             Message\BuildEnvironment::class => $this->buildEnvironment->handle($parsedMessage),
+            Message\DeployEnvironment::class => $this->runDeployEnvironment->handle($parsedMessage),
             default => throw new InvalidArgumentException('Unknown message class: ' . $parsedMessage::class),
         };
 
