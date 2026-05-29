@@ -381,6 +381,61 @@ final class DockerComposeGeneratorTest extends TestCase
     }
 
     #[Test]
+    public function postgresqlServiceHasHealthcheck(): void
+    {
+        $service = new ServiceConfig(name: 'db', type: ServiceRuntime::POSTGRES18, disk: 2048);
+        $config  = self::project(
+            [self::app('app')],
+            [self::upstream('https://{default}', 'app:http')],
+            [$service],
+        );
+
+        $db          = $this->service($this->generator->generate($config), 'db');
+        $healthcheck = $db['healthcheck'];
+
+        self::assertIsArray($healthcheck);
+        self::assertSame(['CMD-SHELL', 'pg_isready -U app -d app'], $healthcheck['test']);
+        self::assertArrayHasKey('interval', $healthcheck);
+        self::assertArrayHasKey('retries', $healthcheck);
+    }
+
+    #[Test]
+    public function redisServiceHasHealthcheck(): void
+    {
+        $service = new ServiceConfig(name: 'redis', type: ServiceRuntime::REDIS8, disk: null);
+        $config  = self::project(
+            [self::app('app')],
+            [self::upstream('https://{default}', 'app:http')],
+            [$service],
+        );
+
+        $db          = $this->service($this->generator->generate($config), 'redis');
+        $healthcheck = $db['healthcheck'];
+
+        self::assertIsArray($healthcheck);
+        self::assertSame(['CMD', 'redis-cli', 'ping'], $healthcheck['test']);
+    }
+
+    #[Test]
+    public function appDependsOnServiceWithHealthyCondition(): void
+    {
+        $rel    = new RelationshipConfig(name: 'database', target: 'db');
+        $svc    = new ServiceConfig(name: 'db', type: ServiceRuntime::POSTGRES18, disk: null);
+        $config = self::project(
+            [self::app('app', relationships: [$rel])],
+            [self::upstream('https://{default}', 'app:http')],
+            [$svc],
+        );
+
+        $svc       = $this->service($this->generator->generate($config), 'app');
+        $dependsOn = $svc['depends_on'];
+
+        self::assertIsArray($dependsOn);
+        self::assertArrayHasKey('db', $dependsOn);
+        self::assertSame('service_healthy', $dependsOn['db']['condition']);
+    }
+
+    #[Test]
     public function phpAppServiceIsReadOnly(): void
     {
         $config = self::project([self::app('app')], [self::upstream('https://{default}', 'app:http')]);

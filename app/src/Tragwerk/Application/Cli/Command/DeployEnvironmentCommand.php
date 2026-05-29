@@ -219,17 +219,22 @@ final class DeployEnvironmentCommand extends Command
             return Command::FAILURE;
         }
 
-        $this->log($jobId, '[Deploy] Running docker compose up --build -d...');
+        $this->log($jobId, '[Deploy] Running docker compose up --build --wait...');
 
         $this->streamExec(
             $sftp,
-            'cd ~/' . $remoteDir . ' && docker compose up --build -d 2>&1',
+            'cd ~/' . $remoteDir . ' && docker compose up --build --wait --wait-timeout 120 2>&1',
             $jobId,
         );
 
         $exitStatus = $sftp->getExitStatus();
 
         if ($exitStatus !== 0) {
+            $this->streamExec(
+                $sftp,
+                'cd ~/' . $remoteDir . ' && docker compose logs --tail 50 2>&1',
+                $jobId,
+            );
             $this->log($jobId, sprintf('[Deploy] Deploy failed with exit code %d.', $exitStatus ?? -1));
             $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
 

@@ -55,12 +55,13 @@ final readonly class DockerComposeGenerator
                 $volumes[$volName] = null;
             }
 
+            /** @var array<string, array<string, string>> $dependsOn */
             $dependsOn   = [];
             $environment = ['SERVER_NAME' => ':80'];
 
             foreach ($app->relationships as $rel) {
-                $targetSlug  = $this->slugify($rel->target);
-                $dependsOn[] = $targetSlug;
+                $targetSlug             = $this->slugify($rel->target);
+                $dependsOn[$targetSlug] = ['condition' => 'service_healthy'];
 
                 if (! array_key_exists($rel->target, $serviceIndex)) {
                     continue;
@@ -120,6 +121,8 @@ final readonly class DockerComposeGenerator
                 $svcConfig['volumes'] = [$volName . ':' . $dataPath];
                 $volumes[$volName]    = null;
             }
+
+            $svcConfig['healthcheck'] = $this->serviceHealthcheck($service->type);
 
             $services[$slug] = $svcConfig;
         }
@@ -351,5 +354,40 @@ final readonly class DockerComposeGenerator
         }
 
         return null;
+    }
+
+    /** @return array<string, mixed> */
+    private function serviceHealthcheck(ServiceRuntime $runtime): array
+    {
+        if (str_starts_with($runtime->value, 'postgresql:')) {
+            return [
+                'test'         => ['CMD-SHELL', 'pg_isready -U app -d app'],
+                'interval'     => '5s',
+                'timeout'      => '3s',
+                'retries'      => 10,
+                'start_period' => '10s',
+            ];
+        }
+
+        if (
+            str_starts_with($runtime->value, 'mysql:')
+            || str_starts_with($runtime->value, 'mariadb:')
+        ) {
+            return [
+                'test'         => ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'app', '--password=secret'],
+                'interval'     => '5s',
+                'timeout'      => '3s',
+                'retries'      => 10,
+                'start_period' => '10s',
+            ];
+        }
+
+        // Redis / Valkey
+        return [
+            'test'     => ['CMD', 'redis-cli', 'ping'],
+            'interval' => '5s',
+            'timeout'  => '3s',
+            'retries'  => 5,
+        ];
     }
 }
