@@ -70,11 +70,9 @@ $renderBranches = function (array $nodes) use (
 };
 ?>
 <div id="tw-branch-list"
-    <?php if ($hasActiveJobs): ?>
     hx-get="<?= $this->e($listUrl) ?>"
-    hx-trigger="every 3s"
+    hx-trigger="every <?= $hasActiveJobs ? '3s' : '10s' ?>"
     hx-swap="outerHTML"
-    <?php endif ?>
     hx-on:htmx:load="var b=document.getElementById('tw-active-branch')?.value;if(b){document.querySelectorAll('.tw-branch-item').forEach(function(e){e.classList.toggle('active',e.dataset.branch===b)})}"
 >
     <?php if ($branchParents === []): ?>
