@@ -14,10 +14,12 @@ use function array_map;
 use function array_merge;
 use function array_unique;
 use function array_values;
+use function count;
 use function explode;
 use function implode;
 use function ltrim;
 use function preg_replace;
+use function rtrim;
 use function str_starts_with;
 use function strtolower;
 use function trim;
@@ -35,12 +37,16 @@ final readonly class DockerfileGenerator
         $deployHooks     = $this->filterHooks($app->hooks, HookType::DEPLOY);
         $postDeployHooks = $this->filterHooks($app->hooks, HookType::POST_DEPLOY);
         $hasEntrypoint   = $deployHooks !== [] || $postDeployHooks !== [];
+        $isPhp           = str_starts_with($app->type->value, 'php:');
+        $hasCaddyfile    = $isPhp && $app->web->locations !== [];
 
         return new DockerfileOutput(
             dockerfileName:    'Dockerfile.' . $slug,
-            dockerfileContent: $this->buildDockerfile($app, $slug, $buildHooks, $hasEntrypoint),
+            dockerfileContent: $this->buildDockerfile($app, $slug, $buildHooks, $hasEntrypoint, $hasCaddyfile),
             entrypointName:    $hasEntrypoint ? 'docker-entrypoint.' . $slug . '.sh' : null,
             entrypointContent: $hasEntrypoint ? $this->buildEntrypoint($deployHooks, $postDeployHooks) : null,
+            caddyfileName:     $hasCaddyfile ? 'Caddyfile.' . $slug : null,
+            caddyfileContent:  $hasCaddyfile ? $this->buildCaddyfile($app) : null,
         );
     }
 
@@ -67,6 +73,7 @@ final readonly class DockerfileGenerator
         string $slug,
         array $buildHooks,
         bool $hasEntrypoint,
+        bool $hasCaddyfile,
     ): string {
         $image      = $this->imageResolver->forApplication($app->type);
         $copySource = $app->root === '/' ? '.' : ltrim($app->root, '/');
@@ -98,6 +105,11 @@ final readonly class DockerfileGenerator
 
             $lines[] = '';
             $lines[] = 'RUN ' . implode(" \\\n    && ", $scriptLines);
+        }
+
+        if ($hasCaddyfile) {
+            $lines[] = '';
+            $lines[] = 'COPY Caddyfile.' . $slug . ' /etc/caddy/Caddyfile';
         }
 
         if ($hasEntrypoint) {
@@ -143,6 +155,38 @@ final readonly class DockerfileGenerator
         }
 
         $lines[] = 'exec "$@"';
+
+        return implode("\n", $lines) . "\n";
+    }
+
+    private function buildCaddyfile(ApplicationConfig $app): string
+    {
+        $lines   = [];
+        $lines[] = '{';
+        $lines[] = '    frankenphp';
+        $lines[] = '    order php_server before file_server';
+        $lines[] = '}';
+
+        foreach ($app->web->locations as $location) {
+            $root = '/app/' . ltrim($location->root, '/');
+
+            $lines[] = '';
+            $lines[] = count($app->web->locations) > 1
+                ? ':80' . rtrim($location->path, '/')
+                : ':80';
+
+            $lines[] = '{';
+            $lines[] = '    root * ' . $root;
+            $lines[] = '    encode zstd br gzip';
+
+            if ($location->passthru !== null) {
+                $lines[] = '    php_server';
+            } else {
+                $lines[] = '    file_server';
+            }
+
+            $lines[] = '}';
+        }
 
         return implode("\n", $lines) . "\n";
     }

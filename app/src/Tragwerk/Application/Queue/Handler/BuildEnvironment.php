@@ -104,6 +104,11 @@ final readonly class BuildEnvironment
                 file_put_contents($outDir . '/' . $dockerfile->dockerfileName, $dockerfile->dockerfileContent);
                 $messages[] = 'Generated ' . $dockerfile->dockerfileName;
 
+                if ($dockerfile->caddyfileName !== null && $dockerfile->caddyfileContent !== null) {
+                    file_put_contents($outDir . '/' . $dockerfile->caddyfileName, $dockerfile->caddyfileContent);
+                    $messages[] = 'Generated ' . $dockerfile->caddyfileName;
+                }
+
                 if ($dockerfile->entrypointName !== null && $dockerfile->entrypointContent !== null) {
                     $path = $outDir . '/' . $dockerfile->entrypointName;
                     file_put_contents($path, $dockerfile->entrypointContent);

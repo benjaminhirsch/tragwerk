@@ -11,6 +11,8 @@ final readonly class DockerfileOutput
         public string $dockerfileContent,
         public string|null $entrypointName,
         public string|null $entrypointContent,
+        public string|null $caddyfileName,
+        public string|null $caddyfileContent,
     ) {
     }
 }
