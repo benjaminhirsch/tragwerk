@@ -114,6 +114,10 @@ final readonly class DockerfileGenerator
             $lines[] = 'RUN chmod +x /usr/local/bin/docker-entrypoint.sh';
             $lines[] = '';
             $lines[] = 'ENTRYPOINT ["docker-entrypoint.sh"]';
+
+            if (str_starts_with($app->type->value, 'php:')) {
+                $lines[] = 'CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]';
+            }
         }
 
         return implode("\n", $lines) . "\n";
