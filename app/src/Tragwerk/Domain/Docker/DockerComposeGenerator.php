@@ -350,7 +350,11 @@ final readonly class DockerComposeGenerator
     private function dataVolumePath(ServiceRuntime $runtime): string|null
     {
         if (str_starts_with($runtime->value, 'postgresql:')) {
-            return '/var/lib/postgresql/data';
+            // PostgreSQL 18+ stores data in a version-specific subdirectory under /var/lib/postgresql
+            // and refuses to start when a volume is mounted directly at /data.
+            $version = (int) explode(':', $runtime->value, 2)[1];
+
+            return $version >= 18 ? '/var/lib/postgresql' : '/var/lib/postgresql/data';
         }
 
         if (
