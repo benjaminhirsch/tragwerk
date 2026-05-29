@@ -1,73 +1,14 @@
 <?php
 /**
- * @var \Tragwerk\Domain\Entity\Project                     $project
- * @var array<string, string|null>                          $branchParents  branch → parent branch (null = root)
- * @var string                                              $cloneUrl
- * @var string[]                                            $activeBranches
- * @var array<string, \Tragwerk\Domain\Enum\DeployJobStatus> $deployStatuses
+ * @var \Tragwerk\Domain\Entity\Project $project
+ * @var string                          $cloneUrl
  */
 
-$projectId = $project->id->toString();
-
-$isMain = static fn (string $b): bool => in_array($b, ['main', 'master'], true);
-
-$isActive = static function (string $branch) use ($isMain, $activeBranches): bool {
-    return $isMain($branch) || in_array($branch, $activeBranches, true);
-};
-
-// Build children map from the flat parent map
-$children = [];
-foreach ($branchParents as $branch => $parent) {
-    $children[$parent ?? ''][] = $branch;
-}
-
-/**
- * Recursively render branches as a nested <ul> tree.
- *
- * @param string[] $nodes
- */
-$renderBranches = function (array $nodes) use (
-    &$renderBranches,
-    $children,
-    $projectId,
-    $isMain,
-    $isActive,
-    $deployStatuses,
-): void {
-    foreach ($nodes as $branch) {
-        $hasChildren = isset($children[$branch]);
-        $icon        = $hasChildren ? 'bi-diagram-2' : 'bi-subtract';
-        ?>
-        <li>
-            <div class="tw-branch-row">
-                <button class="tw-branch-item"
-                        hx-get="<?= $this->url('project.environment', ['id' => $projectId]) ?>?branch=<?= urlencode($branch) ?>"
-                        hx-target="#environment-activities"
-                        hx-swap="innerHTML"
-                        hx-on:click="document.querySelectorAll('.tw-branch-item').forEach(el => el.classList.remove('active')); this.classList.add('active')">
-                    <i class="<?= $icon ?> tw-branch-icon"></i>
-                    <?= $this->e($branch) ?>
-                </button>
-                <?= $this->fetch('partial::project/branch-status', [
-                    'branch'        => $branch,
-                    'isActive'      => $isActive($branch),
-                    'isProtected'   => $isMain($branch),
-                    'projectId'     => $projectId,
-                    'deployStatus'  => $deployStatuses[$branch] ?? null,
-                ]) ?>
-            </div>
-            <?php if ($hasChildren): ?>
-                <ul>
-                    <?php $renderBranches($children[$branch]) ?>
-                </ul>
-            <?php endif ?>
-        </li>
-        <?php
-    }
-};
+$listUrl = $this->url('project.environment.branch-list', ['id' => $project->id->toString()]);
 ?>
 
 <input type="hidden" id="tw-csrf-token" name="csrf_token" value="<?= $this->getCsrfToken() ?>">
+<input type="hidden" id="tw-active-branch" value="">
 
 <div class="mb-3">
     <label class="form-label text-body-secondary small mb-1"><?= _('Git clone URL') ?></label>
@@ -80,17 +21,11 @@ $renderBranches = function (array $nodes) use (
 
 <div class="row g-4">
     <div class="col-12 col-lg-4">
-        <?php if ($branchParents === []): ?>
-            <div class="text-body-secondary small">
-                <i class="bi bi-info-circle me-1"></i>
-                <?= _('No branches yet. Push your first commit to get started.') ?>
-            </div>
-        <?php else: ?>
-            <p class="text-body-secondary small mb-2"><?= _('Select a branch to view its activity.') ?></p>
-            <ul class="tw-branch-tree">
-                <?php $renderBranches($children[''] ?? []) ?>
-            </ul>
-        <?php endif ?>
+        <div id="tw-branch-list"
+             hx-get="<?= $this->e($listUrl) ?>"
+             hx-trigger="load"
+             hx-swap="outerHTML">
+        </div>
     </div>
 
     <div class="col-12 col-lg-8">
