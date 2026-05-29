@@ -23,10 +23,12 @@ use Tragwerk\Domain\ValueObject\BuildLogIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
 use Tragwerk\Infrastructure\Git\BareRepository;
+use ZipArchive;
 
+use function basename;
 use function chmod;
-use function dirname;
 use function file_put_contents;
+use function glob;
 use function implode;
 use function is_dir;
 use function mkdir;
@@ -42,6 +44,7 @@ final readonly class BuildEnvironment
         private DockerfileGenerator $dockerfileGenerator,
         private EventDispatcherInterface $eventDispatcher,
         private LoggerInterface $logger,
+        private string $projectDataPath,
     ) {
     }
 
@@ -106,12 +109,34 @@ final readonly class BuildEnvironment
             }
         }
 
+        $this->createBuildZip($outDir);
+
         $this->log($projectId, $branch, implode("\n", $messages));
 
         $this->logger->info('Build completed', [
             'project_id' => $projectId,
             'branch'     => $branch,
         ]);
+    }
+
+    private function createBuildZip(string $outDir): void
+    {
+        $zipPath = $outDir . '/build.zip';
+        $zip     = new ZipArchive();
+
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            return;
+        }
+
+        foreach (glob($outDir . '/*') ?: [] as $file) {
+            if ($file === $zipPath) {
+                continue;
+            }
+
+            $zip->addFile($file, basename($file));
+        }
+
+        $zip->close();
     }
 
     private function parseConfig(string $xmlContent): ProjectConfig
@@ -138,7 +163,7 @@ final readonly class BuildEnvironment
 
     private function ensureBuildDir(string $projectId, string $branch): string
     {
-        $base = rtrim(dirname(__DIR__, 5), '/') . '/data/builds/' . $projectId . '/' . $branch;
+        $base = rtrim($this->projectDataPath, '/') . '/' . $projectId . '/' . $branch;
         if (! is_dir($base)) {
             mkdir($base, 0755, true);
         }

@@ -101,6 +101,12 @@ $tabId = 'tw-env-tab-' . md5($branch);
                 <?= _('No .tragwerk/config.xml found on this branch.') ?>
             </div>
         <?php else: ?>
+            <div class="mb-3">
+                <a href="<?= $this->url('project.environment.download', ['id' => $project->id->toString()]) ?>?branch=<?= urlencode($branch) ?>"
+                   class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-download me-1"></i><?= _('Docker-Konfiguration herunterladen') ?>
+                </a>
+            </div>
             <?php if ($projectConfig->applications !== []): ?>
                 <h6 class="text-body-secondary small text-uppercase fw-semibold mb-2 mt-1">
                     <?= _('Applications') ?>
