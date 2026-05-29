@@ -23,6 +23,7 @@ use Tragwerk\Domain\Enum\DeployJobStatus;
 use Tragwerk\Domain\Event\BuildLogCreated;
 use Tragwerk\Domain\Event\DeployJobCreated;
 use Tragwerk\Domain\Model\ProjectConfig;
+use Tragwerk\Domain\Repository\DomainRepository;
 use Tragwerk\Domain\ValueObject\BuildLogIdentifier;
 use Tragwerk\Domain\ValueObject\DeployJobIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
@@ -30,6 +31,7 @@ use Tragwerk\Domain\ValueObject\TimestampImmutable;
 use Tragwerk\Infrastructure\Git\BareRepository;
 use ZipArchive;
 
+use function array_map;
 use function basename;
 use function chmod;
 use function file_put_contents;
@@ -51,6 +53,7 @@ final readonly class BuildEnvironment
         private LoggerInterface $logger,
         private string $projectDataPath,
         private Producer $producer,
+        private DomainRepository $domainRepository,
     ) {
     }
 
@@ -84,10 +87,16 @@ final readonly class BuildEnvironment
 
         $outDir = $this->ensureBuildDir($projectId, $branch);
 
+        $projectIdentifier = ProjectIdentifier::fromString($projectId);
+        $domains           = array_map(
+            static fn ($d) => $d->host,
+            $this->domainRepository->findByProject($projectIdentifier),
+        );
+
         $messages = ['Build started for commit ' . $commitSha];
 
         try {
-            $compose = Yaml::dump($this->composeGenerator->generate($config), 10, 2);
+            $compose = Yaml::dump($this->composeGenerator->generate($config, $domains), 10, 2);
             file_put_contents($outDir . '/docker-compose.yml', $compose);
             $messages[] = 'Generated docker-compose.yml';
         } catch (RuntimeException $e) {

@@ -81,6 +81,24 @@ final readonly class Project
         );
 
         $routes->post(
+            '/projects/{id}/domains',
+            $this->middlewareFactory->prepare([Handler\Project\Domain\AddDomainHandler::class]),
+            'project.domain.add',
+        );
+
+        $routes->post(
+            '/projects/{id}/domains/{domainId}/delete',
+            $this->middlewareFactory->prepare([Handler\Project\Domain\DeleteDomainHandler::class]),
+            'project.domain.delete',
+        );
+
+        $routes->post(
+            '/projects/{id}/domains/{domainId}/primary',
+            $this->middlewareFactory->prepare([Handler\Project\Domain\SetPrimaryDomainHandler::class]),
+            'project.domain.primary',
+        );
+
+        $routes->post(
             '/projects/{id}/delete',
             $this->middlewareFactory->prepare([Handler\Project\DeleteHandler::class]),
             'project.delete',
