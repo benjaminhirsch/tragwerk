@@ -86,7 +86,7 @@ final readonly class DockerComposeGenerator
                 // PHP and Caddy need writable scratch space even in a read-only container
                 $svcConfig['tmpfs']       = ['/tmp', '/data', '/config'];
                 $svcConfig['healthcheck'] = [
-                    'test'         => ['CMD', 'curl', '--max-time', '5', '-so', '/dev/null', 'http://localhost/'],
+                    'test'         => $this->phpHealthcheck(),
                     'interval'     => '5s',
                     'timeout'      => '6s',
                     'retries'      => 12,
@@ -396,5 +396,15 @@ final readonly class DockerComposeGenerator
             'timeout'  => '3s',
             'retries'  => 5,
         ];
+    }
+
+    /** @return list<string> */
+    private function phpHealthcheck(): array
+    {
+        // Uses PHP's built-in TCP client — works on Alpine and Debian regardless of whether
+        // the curl or wget binaries are installed.
+        $script = '$f=@stream_socket_client("tcp://127.0.0.1:80",$e,$m,5);exit($f===false?1:0);';
+
+        return ['CMD-SHELL', 'php -r \'' . $script . '\''];
     }
 }

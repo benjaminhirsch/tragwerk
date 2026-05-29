@@ -195,6 +195,10 @@ final class DeployEnvironmentCommand extends Command
             return Command::FAILURE;
         }
 
+        // Disable the cumulative timeout — exec() resets curTimeout to $this->timeout on each call,
+        // and docker compose build can run silently for many minutes (layer pulls, compilation).
+        $sftp->setTimeout(0);
+
         $remoteDir = 'tragwerk/' . $projectId . '/' . $branch;
         $sftp->mkdir($remoteDir, -1, true);
 
@@ -221,21 +225,27 @@ final class DeployEnvironmentCommand extends Command
 
         $this->log($jobId, '[Deploy] Running docker compose up --build --wait...');
 
-        $this->streamExec(
-            $sftp,
-            'cd ~/' . $remoteDir . ' && docker compose up --build --wait 2>&1',
-            $jobId,
-        );
+        try {
+            $this->streamExec(
+                $sftp,
+                'cd ~/' . $remoteDir . ' && docker compose --no-color up --build --wait 2>&1',
+                $jobId,
+            );
+        } catch (Throwable $e) {
+            $this->log($jobId, '[Deploy] SSH error during deploy: ' . $e->getMessage());
+            $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+            return Command::FAILURE;
+        }
 
         $exitStatus = $sftp->getExitStatus();
 
         if ($exitStatus !== 0) {
-            $this->streamExec(
-                $sftp,
-                'cd ~/' . $remoteDir . ' && docker compose logs --tail 50 2>&1',
-                $jobId,
-            );
-            $this->log($jobId, sprintf('[Deploy] Deploy failed with exit code %d.', $exitStatus ?? -1));
+            $code = $exitStatus ?? -1;
+            $this->log($jobId, sprintf('[Deploy] Deploy failed (exit code %d). Collecting diagnostics...', $code));
+            $this->streamExec($sftp, 'cd ~/' . $remoteDir . ' && docker compose --no-color ps 2>&1', $jobId);
+            $logsCmd = 'cd ~/' . $remoteDir . ' && docker compose --no-color logs --tail 200 2>&1';
+            $this->streamExec($sftp, $logsCmd, $jobId);
             $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
 
             return Command::FAILURE;
