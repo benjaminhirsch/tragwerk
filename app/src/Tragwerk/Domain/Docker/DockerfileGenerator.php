@@ -83,14 +83,10 @@ final readonly class DockerfileGenerator
         $lines[] = '';
         $lines[] = 'WORKDIR /app';
 
-        if (str_starts_with($app->type->value, 'php:') && $app->extensions !== []) {
+        if (str_starts_with($app->type->value, 'php:')) {
             $lines[] = '';
             $lines[] = $this->buildExtensionRun($app->extensions);
-        }
-
-        $lines[] = '';
-
-        if (str_starts_with($app->type->value, 'php:')) {
+            $lines[] = '';
             $lines[] = 'COPY --from=composer:latest /usr/bin/composer /usr/bin/composer';
             $lines[] = '';
         }
@@ -196,18 +192,18 @@ final readonly class DockerfileGenerator
     {
         $extNames    = array_map(static fn (ExtensionConfig $e) => $e->name, $extensions);
         $aptPackages = array_unique(array_merge(
+            ['unzip'], // always needed so composer can extract packages
             ...array_map(fn (string $name) => $this->aptDepsForExtension($name), $extNames),
         ));
 
-        $parts = [];
+        $parts   = [];
+        $parts[] = 'apt-get update -qq';
+        $parts[] = 'apt-get install -y --no-install-recommends ' . implode(' ', $aptPackages);
+        $parts[] = 'rm -rf /var/lib/apt/lists/*';
 
-        if ($aptPackages !== []) {
-            $parts[] = 'apt-get update -qq';
-            $parts[] = 'apt-get install -y --no-install-recommends ' . implode(' ', $aptPackages);
-            $parts[] = 'rm -rf /var/lib/apt/lists/*';
+        if ($extNames !== []) {
+            $parts[] = 'docker-php-ext-install ' . implode(' ', $extNames);
         }
-
-        $parts[] = 'docker-php-ext-install ' . implode(' ', $extNames);
 
         return 'RUN ' . implode(" \\\n    && ", $parts);
     }

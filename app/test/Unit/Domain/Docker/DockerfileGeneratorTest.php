@@ -245,10 +245,12 @@ final class DockerfileGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function noExtensionLayerWhenNoExtensions(): void
+    public function phpAppAlwaysInstallsUnzip(): void
     {
         $output = $this->generator->generate(self::app());
 
+        self::assertStringContainsString('unzip', $output->dockerfileContent);
+        self::assertStringContainsString('apt-get', $output->dockerfileContent);
         self::assertStringNotContainsString('docker-php-ext-install', $output->dockerfileContent);
     }
 
@@ -261,7 +263,7 @@ final class DockerfileGeneratorTest extends TestCase
         ]));
 
         self::assertStringContainsString('docker-php-ext-install gettext sockets', $output->dockerfileContent);
-        self::assertStringNotContainsString('apt-get', $output->dockerfileContent);
+        self::assertStringContainsString('unzip', $output->dockerfileContent);
     }
 
     #[Test]
