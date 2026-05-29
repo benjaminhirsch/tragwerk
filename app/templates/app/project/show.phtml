@@ -82,6 +82,39 @@ $this->layout('layout::default', ['title' => $project->name]);
     <div class="tab-pane fade" id="tab-domains" role="tabpanel"></div>
 </div>
 
+<div class="modal fade" id="tw-domain-delete-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><?= _('Domain entfernen') ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0"><?= _('Domain') ?> <strong id="tw-domain-delete-host"></strong> <?= _('wirklich entfernen?') ?></p>
+            </div>
+            <div class="modal-footer">
+                <?= $this->fetch('partial::input/button', [
+                    'label'        => _('Abbrechen'),
+                    'classes'      => 'btn btn-secondary',
+                    'type'         => 'button',
+                    'dataBsToggle' => 'modal',
+                ]) ?>
+                <button type="button"
+                        id="tw-domain-delete-confirm"
+                        class="btn btn-danger"
+                        data-bs-dismiss="modal"
+                        hx-post=""
+                        hx-target="#domain-list"
+                        hx-swap="outerHTML"
+                        hx-include="#tw-csrf-token">
+                    <i class="bi bi-trash me-1"></i><?= _('Entfernen') ?>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php $this->start('javascript') ?>
 <script src="/js/detail-tabs.js"></script>
+<script src="/js/domain-delete-modal.js"></script>
 <?php $this->stop() ?>

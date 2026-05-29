@@ -14,19 +14,28 @@ use Throwable;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Entity\Domain;
 use Tragwerk\Domain\Entity\Project;
+use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Event\DomainAdded;
 use Tragwerk\Domain\Repository\DomainRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
+use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\ValueObject\DomainIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
+use Tragwerk\Infrastructure\Dns\DnsResolver;
 
+use function assert;
+use function filter_var;
 use function is_array;
 use function is_string;
 use function preg_match;
+use function sprintf;
 use function strtolower;
 use function trim;
+
+use const FILTER_VALIDATE_IP;
 
 final readonly class AddDomainHandler implements RequestHandlerInterface
 {
@@ -34,6 +43,8 @@ final readonly class AddDomainHandler implements RequestHandlerInterface
         private ResponseRenderer $renderer,
         private ProjectRepository $projectRepository,
         private DomainRepository $domainRepository,
+        private ServerRepository $serverRepository,
+        private DnsResolver $dnsResolver,
         private EventDispatcherInterface $eventDispatcher,
     ) {
     }
@@ -49,7 +60,7 @@ final readonly class AddDomainHandler implements RequestHandlerInterface
         $body = $request->getParsedBody();
         $host = is_array($body) && is_string($body['host'] ?? null) ? trim(strtolower($body['host'])) : '';
 
-        $error = $this->validate($host, $project->id);
+        $error = $this->validate($host, $project->id) ?? $this->checkDns($host, $project->serverId);
 
         if ($error === null) {
             $existing = $this->domainRepository->findByProject($project->id);
@@ -80,6 +91,42 @@ final readonly class AddDomainHandler implements RequestHandlerInterface
             if ($existing->host === $host) {
                 return 'Diese Domain ist bereits hinzugefügt.';
             }
+        }
+
+        return null;
+    }
+
+    private function checkDns(string $host, ServerIdentifier $serverId): string|null
+    {
+        try {
+            $server = $this->serverRepository->getById($serverId);
+        } catch (Throwable) {
+            return null;
+        }
+
+        assert($server instanceof Server);
+
+        if (filter_var($server->host, FILTER_VALIDATE_IP) !== false) {
+            $serverIp = $server->host;
+        } else {
+            $serverIp = $this->dnsResolver->toIpv4($server->host);
+            if ($serverIp === null) {
+                return null; // server hostname can't be resolved — skip check
+            }
+        }
+
+        $resolvedIp = $this->dnsResolver->toIpv4($host);
+
+        if ($resolvedIp === null) {
+            return 'Domain konnte nicht aufgelöst werden. Bitte A-Record oder CNAME setzen.';
+        }
+
+        if ($resolvedIp !== $serverIp) {
+            return sprintf(
+                'Domain zeigt auf %s, erwartet wird %s (Server). Bitte DNS-Eintrag aktualisieren.',
+                $resolvedIp,
+                $serverIp,
+            );
         }
 
         return null;

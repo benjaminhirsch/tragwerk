@@ -37,16 +37,17 @@
                         <button class="btn btn-outline-secondary btn-sm"
                                 hx-post="<?= $this->e($primaryUrl) ?>"
                                 hx-target="#domain-list"
-                                hx-swap="outerHTML">
+                                hx-swap="outerHTML"
+                                hx-include="#tw-csrf-token">
                             <?= _('Als primär') ?>
                         </button>
                     <?php endif ?>
 
                     <button class="btn btn-outline-danger btn-sm"
-                            hx-post="<?= $this->e($deleteUrl) ?>"
-                            hx-target="#domain-list"
-                            hx-swap="outerHTML"
-                            hx-confirm="<?= $this->e(sprintf(_('Domain %s wirklich entfernen?'), $domain->host)) ?>">
+                            data-bs-toggle="modal"
+                            data-bs-target="#tw-domain-delete-modal"
+                            data-delete-url="<?= $this->e($deleteUrl) ?>"
+                            data-domain-host="<?= $this->e($domain->host) ?>">
                         <i class="bi bi-trash"></i>
                     </button>
                 </li>
