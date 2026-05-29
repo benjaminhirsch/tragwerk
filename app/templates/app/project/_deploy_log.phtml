@@ -1,10 +1,10 @@
 <?php
 /**
- * @var \Tragwerk\Domain\Entity\Project       $project
- * @var string                               $branch
+ * @var \Tragwerk\Domain\Entity\Project        $project
+ * @var string                                 $branch
  * @var \Tragwerk\Domain\Entity\DeployJob|null $job
  */
-$logUrl = $this->url('project.environment.deploy-log', ['id' => $project->id->toString()])
+$logUrl  = $this->url('project.environment.deploy-log', ['id' => $project->id->toString()])
     . '?branch=' . urlencode($branch);
 $polling = $job !== null && ($job->status->value === 'pending' || $job->status->value === 'running');
 ?>
@@ -14,6 +14,7 @@ $polling = $job !== null && ($job->status->value === 'pending' || $job->status->
     hx-trigger="every 2s"
     hx-swap="outerHTML"
     <?php endif ?>
+    hx-on:htmx:load="var p=this.querySelector('#tw-deploy-pre');if(p)p.scrollTop=p.scrollHeight"
 >
     <?php if ($job === null): ?>
         <div class="text-body-secondary small">
@@ -38,7 +39,8 @@ $polling = $job !== null && ($job->status->value === 'pending' || $job->status->
                 <?= $this->e($job->createdAt->format('Y-m-d H:i')) ?>
             </span>
         </div>
-        <pre class="bg-dark text-light p-3 rounded mb-0"
+        <pre id="tw-deploy-pre"
+             class="bg-dark text-light p-3 rounded mb-0"
              style="min-height: 80px; max-height: 500px; overflow-y: auto; font-size: 0.8rem; white-space: pre-wrap;"
         ><?= $this->e($job->output !== '' ? $job->output : '...') ?></pre>
     <?php endif ?>

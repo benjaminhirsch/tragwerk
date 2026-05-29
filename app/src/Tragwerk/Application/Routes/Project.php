@@ -63,6 +63,12 @@ final readonly class Project
         );
 
         $routes->get(
+            '/projects/{id}/environments/branch-list',
+            $this->middlewareFactory->prepare([Handler\Project\BranchListHandler::class]),
+            'project.environment.branch-list',
+        );
+
+        $routes->get(
             '/projects/{id}/environments/deploy-log',
             $this->middlewareFactory->prepare([Handler\Project\DeployLogHandler::class]),
             'project.environment.deploy-log',

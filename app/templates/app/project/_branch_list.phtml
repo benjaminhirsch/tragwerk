@@ -1,0 +1,91 @@
+<?php
+/**
+ * @var \Tragwerk\Domain\Entity\Project                      $project
+ * @var array<string, string|null>                           $branchParents  branch → parent (null = root)
+ * @var string[]                                             $activeBranches
+ * @var array<string, \Tragwerk\Domain\Enum\DeployJobStatus> $deployStatuses
+ */
+
+$projectId = $project->id->toString();
+$listUrl   = $this->url('project.environment.branch-list', ['id' => $projectId]);
+
+$isMain = static fn (string $b): bool => in_array($b, ['main', 'master'], true);
+
+$isActive = static function (string $branch) use ($isMain, $activeBranches): bool {
+    return $isMain($branch) || in_array($branch, $activeBranches, true);
+};
+
+$children = [];
+foreach ($branchParents as $branch => $parent) {
+    $children[$parent ?? ''][] = $branch;
+}
+
+$hasActiveJobs = false;
+foreach ($deployStatuses as $status) {
+    if ($status->value === 'pending' || $status->value === 'running') {
+        $hasActiveJobs = true;
+        break;
+    }
+}
+
+$renderBranches = function (array $nodes) use (
+    &$renderBranches,
+    $children,
+    $projectId,
+    $isMain,
+    $isActive,
+    $deployStatuses,
+): void {
+    foreach ($nodes as $branch) {
+        $hasChildren = isset($children[$branch]);
+        $icon        = $hasChildren ? 'bi-diagram-2' : 'bi-subtract';
+        ?>
+        <li>
+            <div class="tw-branch-row">
+                <button class="tw-branch-item"
+                        data-branch="<?= $this->e($branch) ?>"
+                        hx-get="<?= $this->url('project.environment', ['id' => $projectId]) ?>?branch=<?= urlencode($branch) ?>"
+                        hx-target="#environment-activities"
+                        hx-swap="innerHTML"
+                        hx-on:click="document.getElementById('tw-active-branch').value=this.dataset.branch;document.querySelectorAll('.tw-branch-item').forEach(function(e){e.classList.remove('active')});this.classList.add('active')">
+                    <i class="<?= $icon ?> tw-branch-icon"></i>
+                    <?= $this->e($branch) ?>
+                </button>
+                <?= $this->fetch('partial::project/branch-status', [
+                    'branch'       => $branch,
+                    'isActive'     => $isActive($branch),
+                    'isProtected'  => $isMain($branch),
+                    'projectId'    => $projectId,
+                    'deployStatus' => $deployStatuses[$branch] ?? null,
+                ]) ?>
+            </div>
+            <?php if ($hasChildren): ?>
+                <ul>
+                    <?php $renderBranches($children[$branch]) ?>
+                </ul>
+            <?php endif ?>
+        </li>
+        <?php
+    }
+};
+?>
+<div id="tw-branch-list"
+    <?php if ($hasActiveJobs): ?>
+    hx-get="<?= $this->e($listUrl) ?>"
+    hx-trigger="every 3s"
+    hx-swap="outerHTML"
+    <?php endif ?>
+    hx-on:htmx:load="var b=document.getElementById('tw-active-branch')?.value;if(b){document.querySelectorAll('.tw-branch-item').forEach(function(e){e.classList.toggle('active',e.dataset.branch===b)})}"
+>
+    <?php if ($branchParents === []): ?>
+        <div class="text-body-secondary small">
+            <i class="bi bi-info-circle me-1"></i>
+            <?= _('No branches yet. Push your first commit to get started.') ?>
+        </div>
+    <?php else: ?>
+        <p class="text-body-secondary small mb-2"><?= _('Select a branch to view its activity.') ?></p>
+        <ul class="tw-branch-tree">
+            <?php $renderBranches($children[''] ?? []) ?>
+        </ul>
+    <?php endif ?>
+</div>
