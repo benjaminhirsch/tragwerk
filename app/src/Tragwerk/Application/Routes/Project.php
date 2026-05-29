@@ -62,6 +62,12 @@ final readonly class Project
             'project.environment.toggle',
         );
 
+        $routes->get(
+            '/projects/{id}/environments/download',
+            $this->middlewareFactory->prepare([Handler\Project\DownloadBuildHandler::class]),
+            'project.environment.download',
+        );
+
         $routes->post(
             '/projects/{id}/delete',
             $this->middlewareFactory->prepare([Handler\Project\DeleteHandler::class]),

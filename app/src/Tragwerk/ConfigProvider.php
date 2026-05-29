@@ -46,10 +46,13 @@ use Tragwerk\Domain\Event;
 use Tragwerk\Domain\Repository\UserRepository;
 use Tragwerk\Factory\Config\ConfigValidatorFactory;
 use Tragwerk\Factory\Event\DispatcherFactory;
+use Tragwerk\Factory\EventListener\Project\DeleteProjectDataFactory;
 use Tragwerk\Factory\EventListener\SshKey\UpdateAuthorizedKeysFactory;
 use Tragwerk\Factory\Git\BareRepositoryFactory;
+use Tragwerk\Factory\Handler\Project\DownloadBuildHandlerFactory;
 use Tragwerk\Factory\Handler\Project\TabHandlerFactory;
 use Tragwerk\Factory\Middleware\MiddlewareFactory;
+use Tragwerk\Factory\Queue\Handler\BuildEnvironmentFactory;
 use Tragwerk\Factory\Valinor\DefaultMapperBuilderFactory;
 use Tragwerk\Factory\Valinor\DefaultNormalizeBuilderFactory;
 use Tragwerk\Factory\Valinor\TreeMapperFactory;
@@ -87,9 +90,12 @@ final readonly class ConfigProvider
                 'factories'          => [
                     Invoker::class        => Factory\Invoker\InvokerFactory::class,
                     BareRepository::class => BareRepositoryFactory::class,
-                    Application\Handler\Project\TabHandler::class    => TabHandlerFactory::class,
-                    EventListener\SshKey\UpdateAuthorizedKeys::class  => UpdateAuthorizedKeysFactory::class,
-                    ConfigValidator::class                            => ConfigValidatorFactory::class,
+                    Application\Handler\Project\TabHandler::class         => TabHandlerFactory::class,
+                    Application\Handler\Project\DownloadBuildHandler::class => DownloadBuildHandlerFactory::class,
+                    Application\Queue\Handler\BuildEnvironment::class     => BuildEnvironmentFactory::class,
+                    EventListener\SshKey\UpdateAuthorizedKeys::class   => UpdateAuthorizedKeysFactory::class,
+                    ConfigValidator::class                              => ConfigValidatorFactory::class,
+                    EventListener\Project\DeleteProjectData::class     => DeleteProjectDataFactory::class,
                 ],
                 'abstract_factories' => [Factory\Invoker\InvokerAbstractFactory::class],
             ],
@@ -350,6 +356,7 @@ final readonly class ConfigProvider
                 Event\ProjectDeleted::class      => [
                     EventListener\Project\DeleteProject::class,
                     EventListener\Project\DeleteGitRepository::class,
+                    EventListener\Project\DeleteProjectData::class,
                 ],
                 Event\QueueMessageDeleted::class => [EventListener\Queue\DeleteQueueMessage::class],
                 Event\SshKeyCreated::class       => [
