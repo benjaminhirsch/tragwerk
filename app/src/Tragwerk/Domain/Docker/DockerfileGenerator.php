@@ -14,6 +14,7 @@ use function explode;
 use function implode;
 use function ltrim;
 use function preg_replace;
+use function str_starts_with;
 use function strtolower;
 use function trim;
 
@@ -71,6 +72,12 @@ final readonly class DockerfileGenerator
         $lines[] = '';
         $lines[] = 'WORKDIR /app';
         $lines[] = '';
+
+        if (str_starts_with($app->type->value, 'php:')) {
+            $lines[] = 'COPY --from=composer:latest /usr/bin/composer /usr/bin/composer';
+            $lines[] = '';
+        }
+
         $lines[] = 'COPY ' . $copySource . ' .';
 
         foreach ($buildHooks as $hook) {
