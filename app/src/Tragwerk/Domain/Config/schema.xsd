@@ -60,6 +60,7 @@
         </xs:annotation>
         <xs:all>
             <xs:element name="web"           type="WebType"/>
+            <xs:element name="extensions"    type="ExtensionsType"     minOccurs="0"/>
             <xs:element name="hooks"         type="HooksType"          minOccurs="0"/>
             <xs:element name="mounts"        type="MountsType"         minOccurs="0"/>
             <xs:element name="relationships" type="RelationshipsType"  minOccurs="0"/>
@@ -87,6 +88,33 @@
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
+    </xs:complexType>
+
+    <!-- ============================================================ -->
+    <!-- PHP Extensions                                               -->
+    <!-- ============================================================ -->
+    <xs:complexType name="ExtensionsType">
+        <xs:annotation>
+            <xs:documentation>
+                PHP extensions to install in the container image. Each extension
+                is installed via docker-php-ext-install; required system packages
+                (e.g. libicu-dev for intl) are resolved automatically.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="extension" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:attribute name="name" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>
+                                PHP extension name as accepted by docker-php-ext-install,
+                                e.g. "intl", "gettext", "sockets", "pdo_pgsql", "gd".
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
     </xs:complexType>
 
     <!-- ============================================================ -->

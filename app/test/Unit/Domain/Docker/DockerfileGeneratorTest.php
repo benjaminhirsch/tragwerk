@@ -11,6 +11,7 @@ use Tragwerk\Domain\Docker\ServiceImageResolver;
 use Tragwerk\Domain\Enum\ApplicationRuntime;
 use Tragwerk\Domain\Enum\HookType;
 use Tragwerk\Domain\Model\ApplicationConfig;
+use Tragwerk\Domain\Model\ExtensionConfig;
 use Tragwerk\Domain\Model\HookConfig;
 use Tragwerk\Domain\Model\LocationConfig;
 use Tragwerk\Domain\Model\WebConfig;
@@ -26,12 +27,16 @@ final class DockerfileGeneratorTest extends TestCase
         $this->generator = new DockerfileGenerator(new ServiceImageResolver());
     }
 
-    /** @param list<HookConfig> $hooks */
+    /**
+     * @param list<HookConfig>      $hooks
+     * @param list<ExtensionConfig> $extensions
+     */
     private static function app(
         string $name = 'app',
         ApplicationRuntime $type = ApplicationRuntime::PHP85,
         string $root = '/',
         array $hooks = [],
+        array $extensions = [],
     ): ApplicationConfig {
         return new ApplicationConfig(
             name: $name,
@@ -39,6 +44,7 @@ final class DockerfileGeneratorTest extends TestCase
             root: $root,
             web: new WebConfig([new LocationConfig(path: '/', root: 'public')]),
             hooks: $hooks,
+            extensions: $extensions,
         );
     }
 
@@ -235,5 +241,64 @@ final class DockerfileGeneratorTest extends TestCase
         self::assertStringContainsString('ENTRYPOINT', $output->dockerfileContent);
         self::assertNotNull($output->entrypointContent);
         self::assertStringContainsString('php artisan migrate', $output->entrypointContent);
+    }
+
+    #[Test]
+    public function noExtensionLayerWhenNoExtensions(): void
+    {
+        $output = $this->generator->generate(self::app());
+
+        self::assertStringNotContainsString('docker-php-ext-install', $output->dockerfileContent);
+    }
+
+    #[Test]
+    public function phpExtensionsWithNoAptDepsEmitDockerPhpExtInstall(): void
+    {
+        $output = $this->generator->generate(self::app(extensions: [
+            new ExtensionConfig('gettext'),
+            new ExtensionConfig('sockets'),
+        ]));
+
+        self::assertStringContainsString('docker-php-ext-install gettext sockets', $output->dockerfileContent);
+        self::assertStringNotContainsString('apt-get', $output->dockerfileContent);
+    }
+
+    #[Test]
+    public function phpExtensionsWithAptDepsEmitAptInstallAndDockerPhpExtInstall(): void
+    {
+        $output = $this->generator->generate(self::app(extensions: [
+            new ExtensionConfig('intl'),
+        ]));
+
+        self::assertStringContainsString('libicu-dev', $output->dockerfileContent);
+        self::assertStringContainsString('docker-php-ext-install intl', $output->dockerfileContent);
+    }
+
+    #[Test]
+    public function extensionLayerAppearsBeforeCopyStep(): void
+    {
+        $output = $this->generator->generate(self::app(extensions: [
+            new ExtensionConfig('intl'),
+        ]));
+
+        $extPos  = strpos($output->dockerfileContent, 'docker-php-ext-install');
+        $copyPos = strpos($output->dockerfileContent, 'COPY ');
+
+        self::assertNotFalse($extPos);
+        self::assertNotFalse($copyPos);
+        self::assertLessThan($copyPos, $extPos);
+    }
+
+    #[Test]
+    public function mixedExtensionsDedupAptPackages(): void
+    {
+        $output = $this->generator->generate(self::app(extensions: [
+            new ExtensionConfig('gettext'),
+            new ExtensionConfig('intl'),
+            new ExtensionConfig('sockets'),
+        ]));
+
+        self::assertStringContainsString('docker-php-ext-install gettext intl sockets', $output->dockerfileContent);
+        self::assertStringContainsString('libicu-dev', $output->dockerfileContent);
     }
 }
