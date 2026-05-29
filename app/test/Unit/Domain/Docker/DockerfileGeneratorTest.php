@@ -228,6 +228,10 @@ final class DockerfileGeneratorTest extends TestCase
 
         self::assertStringContainsString('COPY docker-entrypoint.app.sh', $output->dockerfileContent);
         self::assertStringContainsString('ENTRYPOINT ["docker-entrypoint.sh"]', $output->dockerfileContent);
+        self::assertStringContainsString(
+            'CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]',
+            $output->dockerfileContent,
+        );
     }
 
     #[Test]
