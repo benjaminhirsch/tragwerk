@@ -38,6 +38,7 @@ $commands = [
         Command\ConfigLoader::class,
         Command\GenerateDockerConfig::class,
         Command\SetupServerCommand::class,
+        Command\DeployEnvironmentCommand::class,
 
         DoctrineMigrationsCommand\CurrentCommand::class,
         DoctrineMigrationsCommand\DiffCommand::class,

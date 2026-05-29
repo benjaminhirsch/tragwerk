@@ -9,6 +9,7 @@ use Psr\Container\ContainerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use Tragwerk\Application\Queue\Handler\BuildEnvironment;
+use Tragwerk\Application\Queue\Producer;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
 use Tragwerk\Domain\Docker\DockerfileGenerator;
@@ -35,6 +36,7 @@ final readonly class BuildEnvironmentFactory
         $dockerGenerator  = $container->get(DockerfileGenerator::class);
         $dispatcher       = $container->get(EventDispatcherInterface::class);
         $logger           = $container->get(LoggerInterface::class);
+        $producer         = $container->get(Producer::class);
 
         assert($bareRepository instanceof BareRepository);
         assert($xmlConverter instanceof XmlToArrayConverter);
@@ -43,6 +45,7 @@ final readonly class BuildEnvironmentFactory
         assert($dockerGenerator instanceof DockerfileGenerator);
         assert($dispatcher instanceof EventDispatcherInterface);
         assert($logger instanceof LoggerInterface);
+        assert($producer instanceof Producer);
 
         return new BuildEnvironment(
             $bareRepository,
@@ -53,6 +56,7 @@ final readonly class BuildEnvironmentFactory
             $dispatcher,
             $logger,
             $dataPath,
+            $producer,
         );
     }
 }
