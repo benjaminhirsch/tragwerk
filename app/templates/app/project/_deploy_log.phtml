@@ -1,0 +1,45 @@
+<?php
+/**
+ * @var \Tragwerk\Domain\Entity\Project       $project
+ * @var string                               $branch
+ * @var \Tragwerk\Domain\Entity\DeployJob|null $job
+ */
+$logUrl = $this->url('project.environment.deploy-log', ['id' => $project->id->toString()])
+    . '?branch=' . urlencode($branch);
+$polling = $job !== null && ($job->status->value === 'pending' || $job->status->value === 'running');
+?>
+<div id="tw-deploy-log"
+    <?php if ($polling): ?>
+    hx-get="<?= $this->e($logUrl) ?>"
+    hx-trigger="every 2s"
+    hx-swap="outerHTML"
+    <?php endif ?>
+>
+    <?php if ($job === null): ?>
+        <div class="text-body-secondary small">
+            <i class="bi bi-info-circle me-1"></i>
+            <?= _('No deploy yet.') ?>
+        </div>
+    <?php else: ?>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <?php if ($job->status->value === 'completed'): ?>
+                <span class="badge bg-success"><?= _('Completed') ?></span>
+            <?php elseif ($job->status->value === 'failed'): ?>
+                <span class="badge bg-danger"><?= _('Failed') ?></span>
+            <?php elseif ($job->status->value === 'running'): ?>
+                <span class="badge bg-primary">
+                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    <?= _('Running') ?>
+                </span>
+            <?php else: ?>
+                <span class="badge bg-secondary"><?= _('Pending') ?></span>
+            <?php endif ?>
+            <span class="text-body-secondary small">
+                <?= $this->e($job->createdAt->format('Y-m-d H:i')) ?>
+            </span>
+        </div>
+        <pre class="bg-dark text-light p-3 rounded mb-0"
+             style="min-height: 80px; max-height: 500px; overflow-y: auto; font-size: 0.8rem; white-space: pre-wrap;"
+        ><?= $this->e($job->output !== '' ? $job->output : '...') ?></pre>
+    <?php endif ?>
+</div>

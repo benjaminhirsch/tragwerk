@@ -20,6 +20,7 @@ final readonly class EntityHelper
             EntityType::PROJECT       => 'projects',
             EntityType::SSH_KEY       => 'ssh_keys',
             EntityType::BUILD_LOG     => 'build_logs',
+            EntityType::DEPLOY_JOB    => 'deploy_jobs',
         };
     }
 }

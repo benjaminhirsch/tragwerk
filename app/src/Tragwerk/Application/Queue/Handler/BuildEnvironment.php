@@ -17,10 +17,14 @@ use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
 use Tragwerk\Domain\Docker\DockerfileGenerator;
 use Tragwerk\Domain\Entity\BuildLog;
+use Tragwerk\Domain\Entity\DeployJob;
 use Tragwerk\Domain\Enum\BuildLogType;
+use Tragwerk\Domain\Enum\DeployJobStatus;
 use Tragwerk\Domain\Event\BuildLogCreated;
+use Tragwerk\Domain\Event\DeployJobCreated;
 use Tragwerk\Domain\Model\ProjectConfig;
 use Tragwerk\Domain\ValueObject\BuildLogIdentifier;
+use Tragwerk\Domain\ValueObject\DeployJobIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
 use Tragwerk\Infrastructure\Git\BareRepository;
@@ -113,7 +117,21 @@ final readonly class BuildEnvironment
 
         $this->createBuildZip($outDir);
 
-        $this->producer->sendMessage(new Message\DeployEnvironment($projectId, $branch, $commitSha));
+        $deployJob = new DeployJob(
+            id:        DeployJobIdentifier::create(),
+            projectId: ProjectIdentifier::fromString($projectId),
+            branch:    $branch,
+            commitSha: $commitSha,
+            status:    DeployJobStatus::Pending,
+            output:    '',
+            createdAt: TimestampImmutable::now(),
+            updatedAt: TimestampImmutable::now(),
+        );
+        $this->eventDispatcher->dispatch(new DeployJobCreated($deployJob));
+
+        $this->producer->sendMessage(
+            new Message\DeployEnvironment($projectId, $branch, $commitSha, $deployJob->id->toString()),
+        );
 
         $this->log($projectId, $branch, implode("\n", $messages));
 

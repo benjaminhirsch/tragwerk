@@ -12,6 +12,7 @@ final readonly class DeployEnvironment implements Message
         public string $projectId,
         public string $branch,
         public string $commitSha,
+        public string $deployJobId,
     ) {
     }
 }

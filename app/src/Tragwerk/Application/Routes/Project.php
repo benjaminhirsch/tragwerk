@@ -63,6 +63,12 @@ final readonly class Project
         );
 
         $routes->get(
+            '/projects/{id}/environments/deploy-log',
+            $this->middlewareFactory->prepare([Handler\Project\DeployLogHandler::class]),
+            'project.environment.deploy-log',
+        );
+
+        $routes->get(
             '/projects/{id}/environments/download',
             $this->middlewareFactory->prepare([Handler\Project\DownloadBuildHandler::class]),
             'project.environment.download',

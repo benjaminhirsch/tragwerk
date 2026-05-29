@@ -1,9 +1,10 @@
 <?php
 /**
- * @var string $branch
- * @var bool   $isActive
- * @var bool   $isProtected
- * @var string $projectId
+ * @var string                                        $branch
+ * @var bool                                          $isActive
+ * @var bool                                          $isProtected
+ * @var string                                        $projectId
+ * @var \Tragwerk\Domain\Enum\DeployJobStatus|null    $deployStatus
  */
 
 $statusId  = 'tw-branch-status-' . md5($branch);
@@ -11,6 +12,17 @@ $toggleUrl = $this->url('project.environment.toggle', ['id' => $projectId]);
 $valsJson  = htmlspecialchars((string) json_encode(['branch' => $branch]), ENT_QUOTES);
 ?>
 <div class="tw-branch-status" id="<?= $statusId ?>">
+    <?php if ($deployStatus !== null): ?>
+        <?php if ($deployStatus->value === 'completed'): ?>
+            <i class="bi bi-check-circle-fill text-success me-1" title="<?= _('Deploy successful') ?>"></i>
+        <?php elseif ($deployStatus->value === 'failed'): ?>
+            <i class="bi bi-x-circle-fill text-danger me-1" title="<?= _('Deploy failed') ?>"></i>
+        <?php else: ?>
+            <span class="spinner-border spinner-border-sm text-primary me-1" role="status"
+                  title="<?= $deployStatus->value === 'running' ? _('Deploying') : _('Deploy queued') ?>"></span>
+        <?php endif ?>
+    <?php endif ?>
+
     <?php if ($isActive): ?>
         <span class="badge rounded-pill tw-env-active"><?= _('active') ?></span>
         <?php if (! $isProtected): ?>

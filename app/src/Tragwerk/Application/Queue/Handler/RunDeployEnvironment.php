@@ -31,8 +31,10 @@ final readonly class RunDeployEnvironment
             'commit_sha' => $commitSha,
         ]);
 
+        $deployJobId = $message->deployJobId;
+
         $process = new Process(
-            ['php', 'bin/cli', 'project:deploy', $projectId, $branch, $commitSha],
+            ['php', 'bin/cli', 'project:deploy', $projectId, $branch, $commitSha, $deployJobId],
             $workDir,
             timeout: 600,
         );
