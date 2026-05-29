@@ -37,7 +37,10 @@ use function mkdir;
 use function rmdir;
 use function rtrim;
 use function sprintf;
+use function strpos;
+use function substr;
 use function sys_get_temp_dir;
+use function trim;
 use function uniqid;
 use function unlink;
 
@@ -195,16 +198,24 @@ final class DeployEnvironmentCommand extends Command
 
         unlink($tarPath);
 
-        $deployCmd = 'cd ~/' . $remoteDir
-            . ' && tar xzf deploy.tar.gz'
-            . ' && rm deploy.tar.gz'
-            . ' && docker compose up --build -d 2>&1';
+        $extractResult = $sftp->exec('cd ~/' . $remoteDir . ' && tar xzf deploy.tar.gz && rm deploy.tar.gz 2>&1');
 
-        $dockerOutput = $sftp->exec($deployCmd);
+        $extractError = is_string($extractResult) ? $extractResult : '';
 
-        if (is_string($dockerOutput) && $dockerOutput !== '') {
-            $this->log($id, $branch, '[Deploy] docker compose output:' . "\n" . $dockerOutput);
+        if ($sftp->getExitStatus() !== 0) {
+            $this->log($id, $branch, '[Deploy] Failed to extract archive: ' . $extractError);
+
+            return Command::FAILURE;
         }
+
+        $this->log($id, $branch, '[Deploy] Running docker compose up --build -d...');
+
+        $this->streamExec(
+            $sftp,
+            'cd ~/' . $remoteDir . ' && docker compose up --build -d 2>&1',
+            $id,
+            $branch,
+        );
 
         $exitStatus = $sftp->getExitStatus();
 
@@ -217,6 +228,32 @@ final class DeployEnvironmentCommand extends Command
         $this->log($id, $branch, '[Deploy] Deploy completed successfully.');
 
         return Command::SUCCESS;
+    }
+
+    private function streamExec(SFTP $sftp, string $cmd, ProjectIdentifier $projectId, string $branch): void
+    {
+        $buffer = '';
+
+        $sftp->exec($cmd, function (string $chunk) use ($projectId, $branch, &$buffer): void {
+            $buffer .= $chunk;
+
+            while (($pos = strpos($buffer, "\n")) !== false) {
+                $line   = substr($buffer, 0, $pos);
+                $buffer = substr($buffer, $pos + 1);
+
+                if (trim($line) === '') {
+                    continue;
+                }
+
+                $this->log($projectId, $branch, $line);
+            }
+        });
+
+        if (trim($buffer) === '') {
+            return;
+        }
+
+        $this->log($projectId, $branch, $buffer);
     }
 
     private function log(ProjectIdentifier $projectId, string $branch, string $message): void
