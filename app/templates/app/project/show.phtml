@@ -54,6 +54,22 @@ $this->layout('layout::default', ['title' => $project->name]);
             'label'        => _('Environments'),
         ]) ?>
     </li>
+    <li class="nav-item" role="presentation">
+        <?= $this->fetch('partial::input/button', [
+            'classes'      => 'nav-link',
+            'type'         => 'button',
+            'role'         => 'tab',
+            'id'           => 'tab-domains-btn',
+            'dataBsToggle' => 'tab',
+            'dataBsTarget' => '#tab-domains',
+            'hxGet'        => $this->url('project.show.tab', ['id' => $project->id->toString(), 'tab' => 'domains']),
+            'hxTarget'     => '#tab-domains',
+            'hxSwap'       => 'innerHTML',
+            'hxTrigger'    => 'shown.bs.tab once',
+            'icon'         => 'bi bi-globe me-1',
+            'label'        => _('Domains'),
+        ]) ?>
+    </li>
 </ul>
 
 <div class="tab-content tw-card tw-card-tabs">
@@ -63,6 +79,7 @@ $this->layout('layout::default', ['title' => $project->name]);
          hx-swap="innerHTML">
     </div>
     <div class="tab-pane fade" id="tab-environments" role="tabpanel"></div>
+    <div class="tab-pane fade" id="tab-domains" role="tabpanel"></div>
 </div>
 
 <?php $this->start('javascript') ?>

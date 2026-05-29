@@ -8,6 +8,7 @@ use CuyZ\Valinor\MapperBuilder;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use RuntimeException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Tragwerk\Application\Queue\Handler\BuildEnvironment;
 use Tragwerk\Application\Queue\Message;
@@ -17,6 +18,9 @@ use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
 use Tragwerk\Domain\Docker\DockerfileGenerator;
 use Tragwerk\Domain\Docker\ServiceImageResolver;
+use Tragwerk\Domain\Entity\Domain;
+use Tragwerk\Domain\Repository\DomainRepository;
+use Tragwerk\Domain\ValueObject\DomainIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Infrastructure\Git\BareRepository;
 use ZipArchive;
@@ -81,6 +85,35 @@ final class BuildEnvironmentTest extends TestCase
             }
         };
 
+        $nullDomainRepo = new class implements DomainRepository {
+            public function getById(DomainIdentifier $id): Domain
+            {
+                throw new RuntimeException('not used');
+            }
+
+            public function create(Domain $domain): void
+            {
+            }
+
+            public function delete(DomainIdentifier $id): void
+            {
+            }
+
+            /** @return list<Domain> */
+            public function findByProject(ProjectIdentifier $projectId): array
+            {
+                return [];
+            }
+
+            public function clearPrimary(ProjectIdentifier $projectId): void
+            {
+            }
+
+            public function setPrimary(DomainIdentifier $id): void
+            {
+            }
+        };
+
         $this->handler = new BuildEnvironment(
             $this->bareRepository,
             new XmlToArrayConverter(),
@@ -91,6 +124,7 @@ final class BuildEnvironmentTest extends TestCase
             new NullLogger(),
             $this->tempDataDir,
             $nullProducer,
+            $nullDomainRepo,
         );
     }
 

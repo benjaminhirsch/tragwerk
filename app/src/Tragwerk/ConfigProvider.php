@@ -287,6 +287,8 @@ final readonly class ConfigProvider
                         Infrastructure\Repository\DeployJobRepository::class,
                     Domain\Repository\EnvironmentRepository::class =>
                         Infrastructure\Repository\EnvironmentRepository::class,
+                    Domain\Repository\DomainRepository::class =>
+                        Infrastructure\Repository\DomainRepository::class,
                 ],
             ],
         ];
@@ -375,6 +377,15 @@ final readonly class ConfigProvider
                 ],
                 Event\BranchActivated::class   => [EventListener\Environment\ActivateBranch::class],
                 Event\BranchDeactivated::class => [EventListener\Environment\DeactivateBranch::class],
+                Event\DomainAdded::class       => [
+                    EventListener\Domain\AddDomain::class,
+                    EventListener\Domain\TriggerProjectRedeploy::class,
+                ],
+                Event\DomainDeleted::class     => [
+                    EventListener\Domain\RemoveDomain::class,
+                    EventListener\Domain\TriggerProjectRedeploy::class,
+                ],
+                Event\DomainSetPrimary::class  => [EventListener\Domain\SetDomainAsPrimary::class],
                 Event\BuildLogCreated::class   => [EventListener\BuildLog\PersistBuildLog::class],
                 Event\DeployJobCreated::class  => [EventListener\DeployJob\PersistDeployJob::class],
                 Event\TeamInvitationCreated::class =>

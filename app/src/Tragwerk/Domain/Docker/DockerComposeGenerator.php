@@ -16,6 +16,7 @@ use function array_key_exists;
 use function explode;
 use function ltrim;
 use function preg_replace;
+use function str_contains;
 use function str_replace;
 use function str_starts_with;
 use function strtolower;
@@ -27,8 +28,12 @@ final readonly class DockerComposeGenerator
     {
     }
 
-    /** @return array<string, mixed> */
-    public function generate(ProjectConfig $config): array
+    /**
+     * @param list<string> $domains
+     *
+     * @return array<string, mixed>
+     */
+    public function generate(ProjectConfig $config, array $domains = []): array
     {
         /** @var array<string, mixed> $services */
         $services = [];
@@ -73,7 +78,7 @@ final readonly class DockerComposeGenerator
                 }
             }
 
-            $labels = $this->buildTraefikLabels($app, $config);
+            $labels = $this->buildTraefikLabels($app, $config, $domains);
 
             /** @var array<string, mixed> $svcConfig */
             $svcConfig = [
@@ -146,8 +151,12 @@ final readonly class DockerComposeGenerator
         return preg_replace('/[^a-z0-9-]/', '', $slug) ?? '';
     }
 
-    /** @return list<string> */
-    private function buildTraefikLabels(ApplicationConfig $app, ProjectConfig $config): array
+    /**
+     * @param list<string> $domains
+     *
+     * @return list<string>
+     */
+    private function buildTraefikLabels(ApplicationConfig $app, ProjectConfig $config, array $domains): array
     {
         $slug   = $this->slugify($app->name);
         $routes = $this->routesForApp($app, $config);
@@ -163,28 +172,34 @@ final readonly class DockerComposeGenerator
         $redIdx      = 0;
 
         foreach ($routes as $route) {
-            $host    = $this->extractHost($route->pattern);
             $isHttps = $this->patternIsHttps($route->pattern);
+            $usesDef = str_contains($route->pattern, '{default}');
+            $hosts   = $usesDef && $domains !== []
+                ? $domains
+                : [$this->extractHost($route->pattern)];
 
-            if ($route->type === RouteType::REDIRECT) {
-                $hasRedirect = true;
-                $routerName  = $slug . '-http-' . $redIdx;
-                $entrypoint  = $isHttps ? 'websecure' : 'web';
-                $labels[]    = 'traefik.http.routers.' . $routerName . '.rule=Host(`' . $host . '`)';
-                $labels[]    = 'traefik.http.routers.' . $routerName . '.entrypoints=' . $entrypoint;
-                $labels[]    = 'traefik.http.routers.' . $routerName . '.middlewares=' . $slug . '-redirect-to-https';
-                $redIdx++;
-            } else {
-                $routerName = $slug . '-https-' . $upIdx;
-                $entrypoint = $isHttps ? 'websecure' : 'web';
-                $labels[]   = 'traefik.http.routers.' . $routerName . '.rule=Host(`' . $host . '`)';
-                $labels[]   = 'traefik.http.routers.' . $routerName . '.entrypoints=' . $entrypoint;
-                $labels[]   = 'traefik.http.routers.' . $routerName . '.service=' . $slug;
-                if ($isHttps) {
-                    $labels[] = 'traefik.http.routers.' . $routerName . '.tls.certresolver=letsencrypt';
+            foreach ($hosts as $host) {
+                if ($route->type === RouteType::REDIRECT) {
+                    $hasRedirect = true;
+                    $routerName  = $slug . '-http-' . $redIdx;
+                    $entrypoint  = $isHttps ? 'websecure' : 'web';
+                    $middleware  = $slug . '-redirect-to-https';
+                    $labels[]    = 'traefik.http.routers.' . $routerName . '.rule=Host(`' . $host . '`)';
+                    $labels[]    = 'traefik.http.routers.' . $routerName . '.entrypoints=' . $entrypoint;
+                    $labels[]    = 'traefik.http.routers.' . $routerName . '.middlewares=' . $middleware;
+                    $redIdx++;
+                } else {
+                    $routerName = $slug . '-https-' . $upIdx;
+                    $entrypoint = $isHttps ? 'websecure' : 'web';
+                    $labels[]   = 'traefik.http.routers.' . $routerName . '.rule=Host(`' . $host . '`)';
+                    $labels[]   = 'traefik.http.routers.' . $routerName . '.entrypoints=' . $entrypoint;
+                    $labels[]   = 'traefik.http.routers.' . $routerName . '.service=' . $slug;
+                    if ($isHttps) {
+                        $labels[] = 'traefik.http.routers.' . $routerName . '.tls.certresolver=letsencrypt';
+                    }
+
+                    $upIdx++;
                 }
-
-                $upIdx++;
             }
         }
 
