@@ -6,9 +6,13 @@ namespace Tragwerk\Domain\Docker;
 
 use Tragwerk\Domain\Enum\HookType;
 use Tragwerk\Domain\Model\ApplicationConfig;
+use Tragwerk\Domain\Model\ExtensionConfig;
 use Tragwerk\Domain\Model\HookConfig;
 
 use function array_filter;
+use function array_map;
+use function array_merge;
+use function array_unique;
 use function array_values;
 use function explode;
 use function implode;
@@ -71,6 +75,12 @@ final readonly class DockerfileGenerator
         $lines[] = 'FROM ' . $image;
         $lines[] = '';
         $lines[] = 'WORKDIR /app';
+
+        if (str_starts_with($app->type->value, 'php:') && $app->extensions !== []) {
+            $lines[] = '';
+            $lines[] = $this->buildExtensionRun($app->extensions);
+        }
+
         $lines[] = '';
 
         if (str_starts_with($app->type->value, 'php:')) {
@@ -135,6 +145,41 @@ final readonly class DockerfileGenerator
         $lines[] = 'exec "$@"';
 
         return implode("\n", $lines) . "\n";
+    }
+
+    /** @param list<ExtensionConfig> $extensions */
+    private function buildExtensionRun(array $extensions): string
+    {
+        $extNames    = array_map(static fn (ExtensionConfig $e) => $e->name, $extensions);
+        $aptPackages = array_unique(array_merge(
+            ...array_map(fn (string $name) => $this->aptDepsForExtension($name), $extNames),
+        ));
+
+        $parts = [];
+
+        if ($aptPackages !== []) {
+            $parts[] = 'apt-get update -qq';
+            $parts[] = 'apt-get install -y --no-install-recommends ' . implode(' ', $aptPackages);
+            $parts[] = 'rm -rf /var/lib/apt/lists/*';
+        }
+
+        $parts[] = 'docker-php-ext-install ' . implode(' ', $extNames);
+
+        return 'RUN ' . implode(" \\\n    && ", $parts);
+    }
+
+    /** @return list<string> */
+    private function aptDepsForExtension(string $extension): array
+    {
+        return match ($extension) {
+            'intl'                  => ['libicu-dev'],
+            'gd'                    => ['libpng-dev', 'libfreetype6-dev', 'libjpeg62-turbo-dev'],
+            'zip'                   => ['libzip-dev'],
+            'pdo_pgsql', 'pgsql'   => ['libpq-dev'],
+            'xsl'                   => ['libxslt-dev'],
+            'imap'                  => ['libc-client-dev', 'libkrb5-dev'],
+            default                 => [],
+        };
     }
 
     /** @return list<string> */

@@ -110,6 +110,7 @@ final readonly class XmlToArrayConverter
             'hooks',
             'mounts',
             'relationships',
+            'extensions',
         ], true);
     }
 

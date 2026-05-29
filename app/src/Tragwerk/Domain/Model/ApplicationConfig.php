@@ -12,6 +12,7 @@ final readonly class ApplicationConfig
      * @param list<HookConfig>         $hooks
      * @param list<MountConfig>        $mounts
      * @param list<RelationshipConfig> $relationships
+     * @param list<ExtensionConfig>    $extensions
      */
     public function __construct(
         public string $name,
@@ -21,6 +22,7 @@ final readonly class ApplicationConfig
         public array $hooks = [],
         public array $mounts = [],
         public array $relationships = [],
+        public array $extensions = [],
     ) {
     }
 }
