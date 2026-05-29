@@ -464,8 +464,10 @@ final class DockerComposeGeneratorTest extends TestCase
         $healthcheck = $svc['healthcheck'];
 
         self::assertIsArray($healthcheck);
-        $expected = ['CMD', 'curl', '--max-time', '5', '-so', '/dev/null', 'http://localhost/'];
-        self::assertSame($expected, $healthcheck['test']);
+        self::assertIsArray($healthcheck['test']);
+        self::assertSame('CMD-SHELL', $healthcheck['test'][0]);
+        self::assertIsString($healthcheck['test'][1]);
+        self::assertStringContainsString('stream_socket_client', $healthcheck['test'][1]);
         self::assertArrayHasKey('start_period', $healthcheck);
         self::assertArrayHasKey('retries', $healthcheck);
     }
