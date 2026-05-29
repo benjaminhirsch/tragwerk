@@ -283,6 +283,8 @@ final readonly class ConfigProvider
                         Infrastructure\Repository\SshKeyRepository::class,
                     Domain\Repository\BuildLogRepository::class =>
                         Infrastructure\Repository\BuildLogRepository::class,
+                    Domain\Repository\DeployJobRepository::class =>
+                        Infrastructure\Repository\DeployJobRepository::class,
                     Domain\Repository\EnvironmentRepository::class =>
                         Infrastructure\Repository\EnvironmentRepository::class,
                 ],
@@ -373,7 +375,8 @@ final readonly class ConfigProvider
                 ],
                 Event\BranchActivated::class   => [EventListener\Environment\ActivateBranch::class],
                 Event\BranchDeactivated::class => [EventListener\Environment\DeactivateBranch::class],
-                Event\BuildLogCreated::class => [EventListener\BuildLog\PersistBuildLog::class],
+                Event\BuildLogCreated::class   => [EventListener\BuildLog\PersistBuildLog::class],
+                Event\DeployJobCreated::class  => [EventListener\DeployJob\PersistDeployJob::class],
                 Event\TeamInvitationCreated::class =>
                     [EventListener\Team\SendTeamInvitation::class],
                 Event\UserSwitchedTeam::class => [EventListener\User\PersistLastActiveTeam::class],

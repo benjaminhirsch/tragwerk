@@ -1,9 +1,10 @@
 <?php
 /**
- * @var \Tragwerk\Domain\Entity\Project $project
- * @var array<string, string|null>      $branchParents  branch → parent branch (null = root)
- * @var string                          $cloneUrl
- * @var string[]                        $activeBranches
+ * @var \Tragwerk\Domain\Entity\Project                     $project
+ * @var array<string, string|null>                          $branchParents  branch → parent branch (null = root)
+ * @var string                                              $cloneUrl
+ * @var string[]                                            $activeBranches
+ * @var array<string, \Tragwerk\Domain\Enum\DeployJobStatus> $deployStatuses
  */
 
 $projectId = $project->id->toString();
@@ -31,6 +32,7 @@ $renderBranches = function (array $nodes) use (
     $projectId,
     $isMain,
     $isActive,
+    $deployStatuses,
 ): void {
     foreach ($nodes as $branch) {
         $hasChildren = isset($children[$branch]);
@@ -47,10 +49,11 @@ $renderBranches = function (array $nodes) use (
                     <?= $this->e($branch) ?>
                 </button>
                 <?= $this->fetch('partial::project/branch-status', [
-                    'branch'      => $branch,
-                    'isActive'    => $isActive($branch),
-                    'isProtected' => $isMain($branch),
-                    'projectId'   => $projectId,
+                    'branch'        => $branch,
+                    'isActive'      => $isActive($branch),
+                    'isProtected'   => $isMain($branch),
+                    'projectId'     => $projectId,
+                    'deployStatus'  => $deployStatuses[$branch] ?? null,
                 ]) ?>
             </div>
             <?php if ($hasChildren): ?>

@@ -14,6 +14,7 @@ use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
+use Tragwerk\Domain\Repository\DeployJobRepository;
 use Tragwerk\Domain\Repository\EnvironmentRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
@@ -21,6 +22,7 @@ use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Infrastructure\Git\BareRepository;
 
+use function array_keys;
 use function assert;
 use function is_string;
 
@@ -33,6 +35,7 @@ final readonly class TabHandler implements RequestHandlerInterface
         private TeamRepository $teamRepository,
         private BareRepository $bareRepository,
         private EnvironmentRepository $environmentRepository,
+        private DeployJobRepository $deployJobRepository,
         private string $gitSshHost,
         private string $gitSshRepoBase,
     ) {
@@ -81,12 +84,18 @@ final readonly class TabHandler implements RequestHandlerInterface
 
         $cloneUrl       = 'git@' . $this->gitSshHost . ':' . $this->gitSshRepoBase . '/' . $project->id->toString();
         $activeBranches = $this->environmentRepository->getActiveBranches($project->id);
+        $allBranches    = array_keys($branchParents);
+        $deployStatuses = $this->deployJobRepository->getLatestStatusByProjectAndBranches(
+            $project->id,
+            $allBranches,
+        );
 
         return $this->renderer->render($request, 'page::project/tab/environments', [
             'project'        => $project,
             'branchParents'  => $branchParents,
             'cloneUrl'       => $cloneUrl,
             'activeBranches' => $activeBranches,
+            'deployStatuses' => $deployStatuses,
         ]);
     }
 
