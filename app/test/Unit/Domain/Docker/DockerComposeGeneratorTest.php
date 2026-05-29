@@ -457,6 +457,20 @@ final class DockerComposeGeneratorTest extends TestCase
     }
 
     #[Test]
+    public function phpAppServiceHasHttpHealthcheck(): void
+    {
+        $config      = self::project([self::app('app')], [self::upstream('https://{default}', 'app:http')]);
+        $svc         = $this->service($this->generator->generate($config), 'app');
+        $healthcheck = $svc['healthcheck'];
+
+        self::assertIsArray($healthcheck);
+        $expected = ['CMD', 'curl', '--max-time', '5', '-so', '/dev/null', 'http://localhost/'];
+        self::assertSame($expected, $healthcheck['test']);
+        self::assertArrayHasKey('start_period', $healthcheck);
+        self::assertArrayHasKey('retries', $healthcheck);
+    }
+
+    #[Test]
     public function traefikServiceIsNotReadOnly(): void
     {
         $config  = self::project([self::app('app')], [self::upstream('https://{default}', 'app:http')]);

@@ -84,7 +84,14 @@ final readonly class DockerComposeGenerator
 
             if (str_starts_with($app->type->value, 'php:')) {
                 // PHP and Caddy need writable scratch space even in a read-only container
-                $svcConfig['tmpfs'] = ['/tmp', '/data', '/config'];
+                $svcConfig['tmpfs']       = ['/tmp', '/data', '/config'];
+                $svcConfig['healthcheck'] = [
+                    'test'         => ['CMD', 'curl', '--max-time', '5', '-so', '/dev/null', 'http://localhost/'],
+                    'interval'     => '5s',
+                    'timeout'      => '6s',
+                    'retries'      => 12,
+                    'start_period' => '30s',
+                ];
             }
 
             if ($appVolumes !== []) {
