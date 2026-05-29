@@ -403,7 +403,9 @@ final readonly class DockerComposeGenerator
     {
         // Uses PHP's built-in TCP client — works on Alpine and Debian regardless of whether
         // the curl or wget binaries are installed.
-        $script = '$f=@stream_socket_client("tcp://127.0.0.1:80",$e,$m,5);exit($f===false?1:0);';
+        // $$ is used instead of $ so Docker Compose does not interpolate $f/$e/$m as
+        // compose variables when it reads the generated docker-compose.yml.
+        $script = '$$f=@stream_socket_client("tcp://127.0.0.1:80",$$e,$$m,5);exit($$f===false?1:0);';
 
         return ['CMD-SHELL', 'php -r \'' . $script . '\''];
     }
