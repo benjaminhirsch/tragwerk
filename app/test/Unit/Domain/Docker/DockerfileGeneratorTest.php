@@ -17,6 +17,7 @@ use Tragwerk\Domain\Model\LocationConfig;
 use Tragwerk\Domain\Model\WebConfig;
 
 use function strpos;
+use function substr_count;
 
 final class DockerfileGeneratorTest extends TestCase
 {
@@ -300,5 +301,118 @@ final class DockerfileGeneratorTest extends TestCase
 
         self::assertStringContainsString('docker-php-ext-install gettext intl sockets', $output->dockerfileContent);
         self::assertStringContainsString('libicu-dev', $output->dockerfileContent);
+    }
+
+    #[Test]
+    public function caddyfileGeneratedForPhpApp(): void
+    {
+        $output = $this->generator->generate(self::app());
+
+        self::assertNotNull($output->caddyfileName);
+        self::assertNotNull($output->caddyfileContent);
+        self::assertSame('Caddyfile.app', $output->caddyfileName);
+    }
+
+    #[Test]
+    public function caddyfileContainsFrankenPhpAndDocumentRoot(): void
+    {
+        $output = $this->generator->generate(self::app());
+
+        self::assertNotNull($output->caddyfileContent);
+        self::assertStringContainsString('frankenphp', $output->caddyfileContent);
+        self::assertStringContainsString('root * /app/public', $output->caddyfileContent);
+    }
+
+    #[Test]
+    public function caddyfileUsesPhpServerWhenPassthruSet(): void
+    {
+        $app    = new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([new LocationConfig(path: '/', root: 'public', passthru: '/index.php')]),
+            hooks: [],
+            extensions: [],
+        );
+        $output = $this->generator->generate($app);
+
+        self::assertNotNull($output->caddyfileContent);
+        // global "order" line + server-block directive = 2 occurrences of php_server
+        // global "order" line = 1 occurrence of file_server (no server-block file_server)
+        self::assertSame(2, substr_count($output->caddyfileContent, 'php_server'));
+        self::assertSame(1, substr_count($output->caddyfileContent, 'file_server'));
+    }
+
+    #[Test]
+    public function caddyfileUsesFileServerWhenNoPassthru(): void
+    {
+        $app    = new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([new LocationConfig(path: '/', root: 'public')]),
+            hooks: [],
+            extensions: [],
+        );
+        $output = $this->generator->generate($app);
+
+        self::assertNotNull($output->caddyfileContent);
+        // global "order" line = 1 occurrence of php_server (no server-block php_server)
+        // global "order" line + server-block directive = 2 occurrences of file_server
+        self::assertSame(1, substr_count($output->caddyfileContent, 'php_server'));
+        self::assertSame(2, substr_count($output->caddyfileContent, 'file_server'));
+    }
+
+    #[Test]
+    public function caddyfileMultipleLocationsGetPrefixedPaths(): void
+    {
+        $app    = new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([
+                new LocationConfig(path: '/', root: 'public', passthru: '/index.php'),
+                new LocationConfig(path: '/static', root: 'static'),
+            ]),
+            hooks: [],
+            extensions: [],
+        );
+        $output = $this->generator->generate($app);
+
+        self::assertNotNull($output->caddyfileContent);
+        self::assertStringContainsString(':80/', $output->caddyfileContent);
+        self::assertStringContainsString(':80/static', $output->caddyfileContent);
+    }
+
+    #[Test]
+    public function dockerfileCopiesCaddyfile(): void
+    {
+        $output = $this->generator->generate(self::app());
+
+        self::assertStringContainsString('COPY Caddyfile.app /etc/caddy/Caddyfile', $output->dockerfileContent);
+    }
+
+    #[Test]
+    public function caddyfileCopyAppearsAfterBuildSteps(): void
+    {
+        $output = $this->generator->generate(self::app(hooks: [
+            self::hook(HookType::BUILD, 'composer install'),
+        ]));
+
+        $runPos   = strpos($output->dockerfileContent, 'RUN composer install');
+        $caddyPos = strpos($output->dockerfileContent, 'COPY Caddyfile');
+
+        self::assertNotFalse($runPos);
+        self::assertNotFalse($caddyPos);
+        self::assertLessThan($caddyPos, $runPos);
+    }
+
+    #[Test]
+    public function caddyfileEncodesCompression(): void
+    {
+        $output = $this->generator->generate(self::app());
+
+        self::assertNotNull($output->caddyfileContent);
+        self::assertStringContainsString('encode zstd br gzip', $output->caddyfileContent);
     }
 }

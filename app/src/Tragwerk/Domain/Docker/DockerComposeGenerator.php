@@ -66,8 +66,10 @@ final readonly class DockerComposeGenerator
                     continue;
                 }
 
-                $envKey               = strtoupper(str_replace('-', '_', $rel->name)) . '_URL';
-                $environment[$envKey] = $this->connectionUrl($serviceIndex[$rel->target], $targetSlug);
+                $prefix = 'TRAGWERK_' . strtoupper(str_replace(['-', ' '], '_', $rel->name)) . '_';
+                foreach ($this->connectionVars($serviceIndex[$rel->target], $targetSlug) as $key => $value) {
+                    $environment[$prefix . $key] = $value;
+                }
             }
 
             $labels = $this->buildTraefikLabels($app, $config);
@@ -75,8 +77,14 @@ final readonly class DockerComposeGenerator
             /** @var array<string, mixed> $svcConfig */
             $svcConfig = [
                 'build'       => ['context' => '.', 'dockerfile' => 'Dockerfile.' . $appSlug],
+                'read_only'   => true,
                 'environment' => $environment,
             ];
+
+            if (str_starts_with($app->type->value, 'php:')) {
+                // PHP and Caddy need writable scratch space even in a read-only container
+                $svcConfig['tmpfs'] = ['/tmp', '/data', '/config'];
+            }
 
             if ($appVolumes !== []) {
                 $svcConfig['volumes'] = $appVolumes;
@@ -271,20 +279,36 @@ final readonly class DockerComposeGenerator
         ];
     }
 
-    private function connectionUrl(ServiceConfig $service, string $slug): string
+    /** @return array<string, string> */
+    private function connectionVars(ServiceConfig $service, string $slug): array
     {
         if (str_starts_with($service->type->value, 'postgresql:')) {
-            return 'postgresql://app:secret@' . $slug . ':5432/app';
+            return [
+                'HOST'     => $slug,
+                'PORT'     => '5432',
+                'DATABASE' => 'app',
+                'USER'     => 'app',
+                'PASSWORD' => 'secret',
+            ];
         }
 
         if (
             str_starts_with($service->type->value, 'mysql:')
             || str_starts_with($service->type->value, 'mariadb:')
         ) {
-            return 'mysql://app:secret@' . $slug . ':3306/app';
+            return [
+                'HOST'     => $slug,
+                'PORT'     => '3306',
+                'DATABASE' => 'app',
+                'USER'     => 'app',
+                'PASSWORD' => 'secret',
+            ];
         }
 
-        return 'redis://' . $slug . ':6379';
+        return [
+            'HOST' => $slug,
+            'PORT' => '6379',
+        ];
     }
 
     /** @return array<string, string> */

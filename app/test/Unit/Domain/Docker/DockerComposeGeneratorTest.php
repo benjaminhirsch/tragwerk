@@ -272,7 +272,7 @@ final class DockerComposeGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function relationshipInjectsEnvVar(): void
+    public function postgresRelationshipInjectsIndividualEnvVars(): void
     {
         $rel    = new RelationshipConfig(name: 'database', target: 'db');
         $svc    = new ServiceConfig(name: 'db', type: ServiceRuntime::POSTGRES18, disk: null);
@@ -282,11 +282,69 @@ final class DockerComposeGeneratorTest extends TestCase
             [$svc],
         );
 
-        $compose = $this->generator->generate($config);
-        $env     = $this->environment($compose, 'app');
+        $env = $this->environment($this->generator->generate($config), 'app');
 
-        self::assertArrayHasKey('DATABASE_URL', $env);
-        self::assertStringContainsString('postgresql://', $env['DATABASE_URL']);
+        self::assertSame('db', $env['TRAGWERK_DATABASE_HOST']);
+        self::assertSame('5432', $env['TRAGWERK_DATABASE_PORT']);
+        self::assertSame('app', $env['TRAGWERK_DATABASE_DATABASE']);
+        self::assertSame('app', $env['TRAGWERK_DATABASE_USER']);
+        self::assertSame('secret', $env['TRAGWERK_DATABASE_PASSWORD']);
+        self::assertArrayNotHasKey('DATABASE_URL', $env);
+    }
+
+    #[Test]
+    public function mysqlRelationshipInjectsIndividualEnvVars(): void
+    {
+        $rel    = new RelationshipConfig(name: 'db', target: 'mysql');
+        $svc    = new ServiceConfig(name: 'mysql', type: ServiceRuntime::MYSQL8, disk: null);
+        $config = self::project(
+            [self::app('app', relationships: [$rel])],
+            [self::upstream('https://{default}', 'app:http')],
+            [$svc],
+        );
+
+        $env = $this->environment($this->generator->generate($config), 'app');
+
+        self::assertSame('mysql', $env['TRAGWERK_DB_HOST']);
+        self::assertSame('3306', $env['TRAGWERK_DB_PORT']);
+        self::assertSame('app', $env['TRAGWERK_DB_DATABASE']);
+        self::assertSame('app', $env['TRAGWERK_DB_USER']);
+        self::assertSame('secret', $env['TRAGWERK_DB_PASSWORD']);
+    }
+
+    #[Test]
+    public function redisRelationshipInjectsHostAndPort(): void
+    {
+        $rel    = new RelationshipConfig(name: 'cache', target: 'redis');
+        $svc    = new ServiceConfig(name: 'redis', type: ServiceRuntime::REDIS8, disk: null);
+        $config = self::project(
+            [self::app('app', relationships: [$rel])],
+            [self::upstream('https://{default}', 'app:http')],
+            [$svc],
+        );
+
+        $env = $this->environment($this->generator->generate($config), 'app');
+
+        self::assertSame('redis', $env['TRAGWERK_CACHE_HOST']);
+        self::assertSame('6379', $env['TRAGWERK_CACHE_PORT']);
+        self::assertArrayNotHasKey('TRAGWERK_CACHE_DATABASE', $env);
+        self::assertArrayNotHasKey('TRAGWERK_CACHE_USER', $env);
+    }
+
+    #[Test]
+    public function relationshipNameWithHyphensNormalisedInEnvVarPrefix(): void
+    {
+        $rel    = new RelationshipConfig(name: 'primary-db', target: 'db');
+        $svc    = new ServiceConfig(name: 'db', type: ServiceRuntime::POSTGRES18, disk: null);
+        $config = self::project(
+            [self::app('app', relationships: [$rel])],
+            [self::upstream('https://{default}', 'app:http')],
+            [$svc],
+        );
+
+        $env = $this->environment($this->generator->generate($config), 'app');
+
+        self::assertArrayHasKey('TRAGWERK_PRIMARY_DB_HOST', $env);
     }
 
     #[Test]
@@ -320,6 +378,51 @@ final class DockerComposeGeneratorTest extends TestCase
         $svc     = $this->service($compose, 'app');
 
         self::assertArrayNotHasKey('volumes', $svc);
+    }
+
+    #[Test]
+    public function phpAppServiceIsReadOnly(): void
+    {
+        $config = self::project([self::app('app')], [self::upstream('https://{default}', 'app:http')]);
+        $svc    = $this->service($this->generator->generate($config), 'app');
+
+        self::assertTrue($svc['read_only']);
+    }
+
+    #[Test]
+    public function phpAppServiceHasTmpfsForWritableScratch(): void
+    {
+        $config = self::project([self::app('app')], [self::upstream('https://{default}', 'app:http')]);
+        $svc    = $this->service($this->generator->generate($config), 'app');
+
+        self::assertIsArray($svc['tmpfs']);
+        self::assertContains('/tmp', $svc['tmpfs']);
+        self::assertContains('/data', $svc['tmpfs']);
+        self::assertContains('/config', $svc['tmpfs']);
+    }
+
+    #[Test]
+    public function traefikServiceIsNotReadOnly(): void
+    {
+        $config  = self::project([self::app('app')], [self::upstream('https://{default}', 'app:http')]);
+        $traefik = $this->service($this->generator->generate($config), 'traefik');
+
+        self::assertArrayNotHasKey('read_only', $traefik);
+    }
+
+    #[Test]
+    public function backingServiceIsNotReadOnly(): void
+    {
+        $service = new ServiceConfig(name: 'db', type: ServiceRuntime::POSTGRES18, disk: 2048);
+        $config  = self::project(
+            [self::app('app')],
+            [self::upstream('https://{default}', 'app:http')],
+            [$service],
+        );
+
+        $db = $this->service($this->generator->generate($config), 'db');
+
+        self::assertArrayNotHasKey('read_only', $db);
     }
 
     public static function slugifyProvider(): Generator
