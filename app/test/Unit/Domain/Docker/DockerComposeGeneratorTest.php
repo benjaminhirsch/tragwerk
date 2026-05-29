@@ -267,8 +267,23 @@ final class DockerComposeGeneratorTest extends TestCase
         $compose = $this->generator->generate($config);
 
         self::assertSame('postgres:18', $this->service($compose, 'db')['image']);
-        self::assertContains('db-data:/var/lib/postgresql/data', $this->serviceVolumes($compose, 'db'));
+        self::assertContains('db-data:/var/lib/postgresql', $this->serviceVolumes($compose, 'db'));
         self::assertSame('app', $this->environment($compose, 'db')['POSTGRES_DB']);
+    }
+
+    #[Test]
+    public function postgresqlPre18UsesDataSubdirectory(): void
+    {
+        $service = new ServiceConfig(name: 'db', type: ServiceRuntime::POSTGRES16, disk: 2048);
+        $config  = self::project(
+            [self::app('app')],
+            [self::upstream('https://{default}', 'app:http')],
+            [$service],
+        );
+
+        $compose = $this->generator->generate($config);
+
+        self::assertContains('db-data:/var/lib/postgresql/data', $this->serviceVolumes($compose, 'db'));
     }
 
     #[Test]
