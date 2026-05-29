@@ -223,7 +223,7 @@ final class DeployEnvironmentCommand extends Command
 
         $this->streamExec(
             $sftp,
-            'cd ~/' . $remoteDir . ' && docker compose up --build --wait --wait-timeout 120 2>&1',
+            'cd ~/' . $remoteDir . ' && docker compose up --build --wait 2>&1',
             $jobId,
         );
 
