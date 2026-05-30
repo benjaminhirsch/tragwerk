@@ -1,25 +1,25 @@
-<?php $this->layout('layout::default', ['title' => _('Create server')]) ?>
+<?php $this->layout('layout::default', ['title' => $this->t('Create server')]) ?>
 
-<h1><?= _('Create server') ?></h1>
+<h1><?= $this->t('Create server') ?></h1>
 
 <?php $this->start('card-content') ?>
     <form action="<?= $this->url('server.create') ?>" method="post">
         <?= $this->fetch('partial::input/csrf') ?>
         <?= $this->fetch('partial::input/text', [
                 'id' => 'name',
-                'label' => _('Server name'),
+                'label' => $this->t('Server name'),
                 'autofocus' => 'autofocus',
                 'validation' => $validationBag ?? null
         ]) ?>
         <?= $this->fetch('partial::input/text', [
                 'id' => 'host',
-                'label' => _('IP address (IPv4 or IPv6)'),
+                'label' => $this->t('IP address (IPv4 or IPv6)'),
                 'validation' => $validationBag ?? null
         ]) ?>
         <?= $this->fetch('partial::input/input', [
                 'id'         => 'port',
                 'type'       => 'number',
-                'label'      => _('SSH port'),
+                'label'      => $this->t('SSH port'),
                 'min'        => '1',
                 'max'        => '65535',
                 'validation' => $validationBag ?? null,
@@ -32,16 +32,16 @@
         ?>
         <?= $this->fetch('partial::input/select', [
             'id'                 => 'credentialId',
-            'label'              => _('Credential'),
+            'label'              => $this->t('Credential'),
             'validation'         => $validationBag ?? null,
             'options'            => $credentialOptions,
-            'defaultOptionLabel' => _('— no credential —'),
+            'defaultOptionLabel' => $this->t('— no credential —'),
         ]) ?>
         <?= $this->fetch('partial::input/button', [
-                'label' => _('Save'),
+                'label' => $this->t('Save'),
         ]) ?>
         <?= $this->fetch('partial::link', [
-                'label' => _('Cancel'),
+                'label' => $this->t('Cancel'),
                 'href' => $this->url('server'),
                 'classes' => 'btn btn-secondary',
         ]) ?>

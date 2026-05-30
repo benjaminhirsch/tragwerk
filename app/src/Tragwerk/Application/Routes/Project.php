@@ -81,19 +81,19 @@ final readonly class Project
         );
 
         $routes->post(
-            '/projects/{id}/domains',
+            '/projects/{id}/environments/{branch}/domains',
             $this->middlewareFactory->prepare([Handler\Project\Domain\AddDomainHandler::class]),
             'project.domain.add',
         );
 
         $routes->post(
-            '/projects/{id}/domains/{domainId}/delete',
+            '/projects/{id}/environments/{branch}/domains/{domainId}/delete',
             $this->middlewareFactory->prepare([Handler\Project\Domain\DeleteDomainHandler::class]),
             'project.domain.delete',
         );
 
         $routes->post(
-            '/projects/{id}/domains/{domainId}/primary',
+            '/projects/{id}/environments/{branch}/domains/{domainId}/primary',
             $this->middlewareFactory->prepare([Handler\Project\Domain\SetPrimaryDomainHandler::class]),
             'project.domain.primary',
         );

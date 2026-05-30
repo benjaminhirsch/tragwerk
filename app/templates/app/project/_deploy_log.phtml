@@ -19,21 +19,21 @@ $polling = $job !== null && ($job->status->value === 'pending' || $job->status->
     <?php if ($job === null): ?>
         <div class="text-body-secondary small">
             <i class="bi bi-info-circle me-1"></i>
-            <?= _('No deploy yet.') ?>
+            <?= $this->t('No deploy yet.') ?>
         </div>
     <?php else: ?>
         <div class="d-flex justify-content-between align-items-center mb-2">
             <?php if ($job->status->value === 'completed'): ?>
-                <span class="badge bg-success"><?= _('Completed') ?></span>
+                <span class="badge bg-success"><?= $this->t('Completed') ?></span>
             <?php elseif ($job->status->value === 'failed'): ?>
-                <span class="badge bg-danger"><?= _('Failed') ?></span>
+                <span class="badge bg-danger"><?= $this->t('Failed') ?></span>
             <?php elseif ($job->status->value === 'running'): ?>
                 <span class="badge bg-primary">
                     <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                    <?= _('Running') ?>
+                    <?= $this->t('Running') ?>
                 </span>
             <?php else: ?>
-                <span class="badge bg-secondary"><?= _('Pending') ?></span>
+                <span class="badge bg-secondary"><?= $this->t('Pending') ?></span>
             <?php endif ?>
             <span class="text-body-secondary small">
                 <?= $this->e($job->createdAt->format('Y-m-d H:i')) ?>

@@ -16,6 +16,8 @@ final class Domain implements Entity
         public string $host,
         public bool $isPrimary,
         public TimestampImmutable $createdAt,
+        public string $placeholder = 'default',
+        public string $branch = 'main',
     ) {
     }
 }

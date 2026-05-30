@@ -1,6 +1,7 @@
 <?php
 /**
  * @var \Tragwerk\Domain\Entity\Project       $project
+ * @var string                                $branch
  * @var list<\Tragwerk\Domain\Entity\Domain>  $domains
  * @var string|null                           $error
  */
@@ -13,33 +14,36 @@
     <?php endif ?>
 
     <?php if ($domains === []): ?>
-        <p class="text-body-secondary mb-0"><?= _('Noch keine Domains hinzugefügt.') ?></p>
+        <p class="text-body-secondary mb-0"><?= $this->t('No domains added yet.') ?></p>
     <?php else: ?>
         <ul class="list-group">
             <?php foreach ($domains as $domain): ?>
                 <?php
                 $deleteUrl  = $this->url('project.domain.delete', [
                     'id'       => $project->id->toString(),
+                    'branch'   => $branch,
                     'domainId' => $domain->id->toString(),
                 ]);
                 $primaryUrl = $this->url('project.domain.primary', [
                     'id'       => $project->id->toString(),
+                    'branch'   => $branch,
                     'domainId' => $domain->id->toString(),
                 ]);
                 ?>
                 <li class="list-group-item d-flex align-items-center gap-2">
                     <i class="bi bi-globe text-body-secondary"></i>
                     <span class="flex-grow-1 font-monospace"><?= $this->e($domain->host) ?></span>
+                    <code class="badge text-bg-secondary fw-normal">{<?= $this->e($domain->placeholder) ?>}</code>
 
                     <?php if ($domain->isPrimary): ?>
-                        <span class="badge bg-primary"><?= _('Primär') ?></span>
+                        <span class="badge bg-primary"><?= $this->t('Primary') ?></span>
                     <?php else: ?>
                         <button class="btn btn-outline-secondary btn-sm"
                                 hx-post="<?= $this->e($primaryUrl) ?>"
                                 hx-target="#domain-list"
                                 hx-swap="outerHTML"
                                 hx-include="#tw-csrf-token">
-                            <?= _('Als primär') ?>
+                            <?= $this->t('Set as primary') ?>
                         </button>
                     <?php endif ?>
 

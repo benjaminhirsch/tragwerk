@@ -3,20 +3,20 @@
  * @var \Tragwerk\Domain\Entity\SshKey[]              $keys
  * @var \Tragwerk\Application\Validation\ValidationBag|null $validationBag
  */
-$this->layout('layout::default', ['title' => _('Profile')]);
+$this->layout('layout::default', ['title' => $this->t('Profile')]);
 ?>
 
-<h1><?= _('Profile') ?></h1>
+<h1><?= $this->t('Profile') ?></h1>
 
 <?php $this->start('card-content') ?>
-    <h2 class="h5 mb-3"><?= _('SSH Keys') ?></h2>
+    <h2 class="h5 mb-3"><?= $this->t('SSH Keys') ?></h2>
 
     <?php if ($keys !== []): ?>
         <table class="table table-borderless mb-4">
             <thead>
                 <tr>
-                    <th><?= _('Name') ?></th>
-                    <th><?= _('Added') ?></th>
+                    <th><?= $this->t('Name') ?></th>
+                    <th><?= $this->t('Added') ?></th>
                     <th></th>
                 </tr>
             </thead>
@@ -45,30 +45,30 @@ $this->layout('layout::default', ['title' => _('Profile')]);
         </table>
 
     <?php else: ?>
-        <p class="text-body-secondary mb-4"><?= _('No SSH keys added yet.') ?></p>
+        <p class="text-body-secondary mb-4"><?= $this->t('No SSH keys added yet.') ?></p>
     <?php endif ?>
 
-    <h3 class="h6 mb-3"><?= _('Add SSH key') ?></h3>
+    <h3 class="h6 mb-3"><?= $this->t('Add SSH key') ?></h3>
     <form method="post" action="<?= $this->url('profile') ?>">
         <?= $this->fetch('partial::input/csrf') ?>
         <input type="hidden" name="action" value="create">
 
         <?= $this->fetch('partial::input/text', [
             'id'         => 'name',
-            'label'      => _('Name'),
+            'label'      => $this->t('Name'),
             'validation' => $validationBag,
         ]) ?>
 
         <?= $this->fetch('partial::input/textarea', [
             'id'          => 'publicKey',
-            'label'       => _('Public key'),
+            'label'       => $this->t('Public key'),
             'placeholder' => 'ssh-ed25519 AAAA...',
             'rows'        => 4,
             'validation'  => $validationBag,
         ]) ?>
 
         <?= $this->fetch('partial::input/button', [
-            'label' => _('Add key'),
+            'label' => $this->t('Add key'),
             'icon'  => 'bi bi-plus-lg',
         ]) ?>
     </form>
@@ -77,10 +77,10 @@ $this->layout('layout::default', ['title' => _('Profile')]);
 <?php foreach ($keys as $key): ?>
     <?= $this->fetch('partial::modal', [
         'id'            => 'tw-delete-key-modal-' . $key->id->toString(),
-        'header'        => _('Delete SSH key'),
-        'body'          => sprintf(_('Are you sure you want to delete the SSH key %s? This action cannot be undone.'), '<strong>' . $this->e($key->name) . '</strong>'),
+        'header'        => $this->t('Delete SSH key'),
+        'body'          => $this->t('Are you sure you want to delete the SSH key {name}? This action cannot be undone.', ['name' => '<strong>' . $this->e($key->name) . '</strong>']),
         'actionUrl'     => $this->url('profile'),
-        'actionLabel'   => _('Delete key'),
+        'actionLabel'   => $this->t('Delete key'),
         'actionClasses' => 'btn btn-danger',
         'actionIcon'    => 'bi bi-trash3',
         'extraFields'   => ['action' => 'delete', 'keyId' => $key->id->toString()],

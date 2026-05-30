@@ -2,13 +2,13 @@
 /** @var \Tragwerk\Domain\Entity\User[] $members */
 ?>
 <?php if ($members === []): ?>
-    <p class="text-body-secondary mb-0"><?= _('No members in this team.') ?></p>
+    <p class="text-body-secondary mb-0"><?= $this->t('No members in this team.') ?></p>
 <?php else: ?>
     <table class="table table-borderless mb-0">
         <thead>
             <tr>
-                <th><?= _('Name') ?></th>
-                <th><?= _('Email') ?></th>
+                <th><?= $this->t('Name') ?></th>
+                <th><?= $this->t('Email') ?></th>
             </tr>
         </thead>
         <tbody>

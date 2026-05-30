@@ -4,37 +4,37 @@ $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
 $links = [
         [
                 'include' => 'partial::link',
-                'label' => _('Servers'),
+                'label' => $this->t('Servers'),
                 'href' => $this->url('server'),
                 'classes' => 'nav-link bi bi-hdd-stack',
         ],
         [
                 'include' => 'partial::link',
-                'label' => _('Credentials'),
+                'label' => $this->t('Credentials'),
                 'href' => $this->url('credential'),
                 'classes' => 'nav-link bi bi-key',
         ],
         [
                 'include' => 'partial::link',
-                'label' => _('Teams'),
+                'label' => $this->t('Teams'),
                 'href' => $this->url('team'),
                 'classes' => 'nav-link bi bi-people',
         ],
         [
                 'include' => 'partial::link',
-                'label' => _('Projects'),
+                'label' => $this->t('Projects'),
                 'href' => $this->url('project'),
                 'classes' => 'nav-link bi bi-folder',
         ],
         [
                 'include' => 'partial::link',
-                'label' => _('Queue'),
+                'label' => $this->t('Queue'),
                 'href' => $this->url('queue'),
                 'classes' => 'nav-link bi bi-list-task',
         ],
         [
                 'include' => 'partial::link',
-                'label' => _('Profile'),
+                'label' => $this->t('Profile'),
                 'href' => $this->url('profile'),
                 'classes' => 'nav-link bi bi-person',
         ],

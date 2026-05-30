@@ -20,7 +20,7 @@ $ownerId       = $ownerId ?? '';
                 <?= $this->e($member->fullName()) ?>
                 <span class="text-muted small">&lt;<?= $this->e($member->email) ?>&gt;</span>
                 <?php if ($member->id->toString() === $ownerId): ?>
-                    <span class="badge text-bg-primary ms-1"><?= _('Owner') ?></span>
+                    <span class="badge text-bg-primary ms-1"><?= $this->t('Owner') ?></span>
                 <?php endif; ?>
             </span>
         </div>

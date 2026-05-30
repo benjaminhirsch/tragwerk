@@ -8,11 +8,11 @@
 <table class="table table-borderless mb-0">
     <tbody>
         <tr>
-            <th class="w-25 text-body-secondary fw-normal"><?= _('Name') ?></th>
+            <th class="w-25 text-body-secondary fw-normal"><?= $this->t('Name') ?></th>
             <td><?= $this->e($project->name) ?></td>
         </tr>
         <tr>
-            <th class="text-body-secondary fw-normal"><?= _('Server') ?></th>
+            <th class="text-body-secondary fw-normal"><?= $this->t('Server') ?></th>
             <td>
                 <?= $this->fetch('partial::link', [
                     'href'  => $this->url('server.show', ['id' => $server->id->toString()]),
@@ -21,7 +21,7 @@
             </td>
         </tr>
         <tr>
-            <th class="text-body-secondary fw-normal"><?= _('Team') ?></th>
+            <th class="text-body-secondary fw-normal"><?= $this->t('Team') ?></th>
             <td>
                 <?= $this->fetch('partial::link', [
                     'href'  => $this->url('team.show', ['id' => $team->id->toString()]),
@@ -30,11 +30,11 @@
             </td>
         </tr>
         <tr>
-            <th class="text-body-secondary fw-normal"><?= _('Created') ?></th>
+            <th class="text-body-secondary fw-normal"><?= $this->t('Created') ?></th>
             <td><?= $this->e($project->createdAt->format('Y-m-d H:i')) ?></td>
         </tr>
         <tr>
-            <th class="text-body-secondary fw-normal"><?= _('Updated') ?></th>
+            <th class="text-body-secondary fw-normal"><?= $this->t('Updated') ?></th>
             <td><?= $this->e($project->updatedAt->format('Y-m-d H:i')) ?></td>
         </tr>
     </tbody>

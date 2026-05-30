@@ -14,7 +14,6 @@ use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
-use Tragwerk\Domain\Repository\DomainRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
@@ -30,7 +29,6 @@ final readonly class TabHandler implements RequestHandlerInterface
         private ProjectRepository $projectRepository,
         private ServerRepository $serverRepository,
         private TeamRepository $teamRepository,
-        private DomainRepository $domainRepository,
         private string $gitSshHost,
         private string $gitSshRepoBase,
     ) {
@@ -50,7 +48,6 @@ final readonly class TabHandler implements RequestHandlerInterface
         return match ($tab) {
             'overview'     => $this->renderOverview($request, $project),
             'environments' => $this->renderEnvironments($request, $project),
-            'domains'      => $this->renderDomains($request, $project),
             default        => new EmptyResponse(404),
         };
     }
@@ -77,14 +74,6 @@ final readonly class TabHandler implements RequestHandlerInterface
         return $this->renderer->render($request, 'page::project/tab/environments', [
             'project'  => $project,
             'cloneUrl' => $cloneUrl,
-        ]);
-    }
-
-    private function renderDomains(ServerRequestInterface $request, Project $project): ResponseInterface
-    {
-        return $this->renderer->render($request, 'page::project/tab/domains', [
-            'project' => $project,
-            'domains' => $this->domainRepository->findByProject($project->id),
         ]);
     }
 

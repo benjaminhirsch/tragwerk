@@ -12,6 +12,7 @@ final readonly class DomainSetPrimary
     public function __construct(
         public DomainIdentifier $domainId,
         public ProjectIdentifier $projectId,
+        public string $branch,
     ) {
     }
 }

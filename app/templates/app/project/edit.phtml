@@ -1,9 +1,9 @@
 <?php
 /** @var \Tragwerk\Domain\Entity\Project $project */
-$this->layout('layout::default', ['title' => _('Edit project')]);
+$this->layout('layout::default', ['title' => $this->t('Edit project')]);
 ?>
 
-<h1><?= _('Edit project') ?></h1>
+<h1><?= $this->t('Edit project') ?></h1>
 
 <?php $this->start('card-content') ?>
     <form action="<?= $this->url('project.edit', ['id' => $project->id->toString()]) ?>" method="post">
@@ -11,7 +11,7 @@ $this->layout('layout::default', ['title' => _('Edit project')]);
 
         <?= $this->fetch('partial::input/text', [
             'id'         => 'name',
-            'label'      => _('Project name'),
+            'label'      => $this->t('Project name'),
             'autofocus'  => 'autofocus',
             'validation' => $validationBag,
         ]) ?>
@@ -24,7 +24,7 @@ $this->layout('layout::default', ['title' => _('Edit project')]);
         ?>
         <?= $this->fetch('partial::input/select', [
             'id'           => 'serverId',
-            'label'        => _('Server'),
+            'label'        => $this->t('Server'),
             'validation'   => $validationBag,
             'options'      => $serverOptions,
             'defaultValue' => $validationBag->getValueByName('serverId'),
@@ -32,11 +32,11 @@ $this->layout('layout::default', ['title' => _('Edit project')]);
 
         <div class="d-flex gap-2">
             <?= $this->fetch('partial::input/button', [
-                'label' => _('Save'),
+                'label' => $this->t('Save'),
             ]) ?>
 
             <?= $this->fetch('partial::link', [
-                'label'   => _('Cancel'),
+                'label'   => $this->t('Cancel'),
                 'href'    => $this->url('project.show', ['id' => $project->id->toString()]),
                 'classes' => 'btn btn-secondary',
             ]) ?>
@@ -55,13 +55,10 @@ $this->layout('layout::default', ['title' => _('Edit project')]);
 
 <?= $this->fetch('partial::modal', [
     'id'            => 'tw-delete-project-modal',
-    'header'        => _('Delete project'),
-    'body'          => sprintf(
-        _('Are you sure you want to delete the project %s? This action cannot be undone.'),
-        '<strong>' . $this->e($project->name) . '</strong>',
-    ),
+    'header'        => $this->t('Delete project'),
+    'body'          => $this->t('Are you sure you want to delete the project {name}? This action cannot be undone.', ['name' => '<strong>' . $this->e($project->name) . '</strong>']),
     'actionUrl'     => $this->url('project.delete', ['id' => $project->id->toString()]),
-    'actionLabel'   => _('Delete project'),
+    'actionLabel'   => $this->t('Delete project'),
     'actionClasses' => 'btn btn-danger',
     'actionIcon'    => 'bi bi-trash3',
 ]) ?>

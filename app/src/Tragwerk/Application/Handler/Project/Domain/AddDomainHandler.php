@@ -57,39 +57,53 @@ final readonly class AddDomainHandler implements RequestHandlerInterface
             return new EmptyResponse(404);
         }
 
-        $body = $request->getParsedBody();
-        $host = is_array($body) && is_string($body['host'] ?? null) ? trim(strtolower($body['host'])) : '';
+        $branch = $request->getAttribute('branch');
+        if (! is_string($branch) || $branch === '') {
+            return new EmptyResponse(400);
+        }
 
-        $error = $this->validate($host, $project->id) ?? $this->checkDns($host, $project->serverId);
+        $body        = $request->getParsedBody();
+        $host        = is_array($body) && is_string($body['host'] ?? null) ? trim(strtolower($body['host'])) : '';
+        $placeholder = is_array($body) && is_string($body['placeholder'] ?? null)
+            ? trim(strtolower($body['placeholder']))
+            : 'default';
+
+        if ($placeholder === '' || preg_match('/^[a-z][a-z0-9_-]*$/', $placeholder) !== 1) {
+            $placeholder = 'default';
+        }
+
+        $error = $this->validate($host, $project->id, $branch) ?? $this->checkDns($host, $project->serverId);
 
         if ($error === null) {
-            $existing = $this->domainRepository->findByProject($project->id);
+            $existing = $this->domainRepository->findByEnvironment($project->id, $branch);
             $domain   = new Domain(
-                id:        DomainIdentifier::create(),
-                projectId: $project->id,
-                host:      $host,
-                isPrimary: $existing === [],
-                createdAt: TimestampImmutable::now(),
+                id:          DomainIdentifier::create(),
+                projectId:   $project->id,
+                host:        $host,
+                isPrimary:   $existing === [],
+                createdAt:   TimestampImmutable::now(),
+                placeholder: $placeholder,
+                branch:      $branch,
             );
             $this->eventDispatcher->dispatch(new DomainAdded($domain));
         }
 
-        return $this->renderList($request, $project, $error);
+        return $this->renderList($request, $project, $branch, $error);
     }
 
-    private function validate(string $host, ProjectIdentifier $projectId): string|null
+    private function validate(string $host, ProjectIdentifier $projectId, string $branch): string|null
     {
         if ($host === '') {
-            return 'Domain darf nicht leer sein.';
+            return 'Domain must not be empty.';
         }
 
         if (preg_match('/^([a-z0-9]([a-z0-9\-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/', $host) !== 1) {
-            return 'Ungültige Domain (z. B. example.com oder sub.example.com).';
+            return 'Invalid domain (e.g. example.com or sub.example.com).';
         }
 
-        foreach ($this->domainRepository->findByProject($projectId) as $existing) {
+        foreach ($this->domainRepository->findByEnvironment($projectId, $branch) as $existing) {
             if ($existing->host === $host) {
-                return 'Diese Domain ist bereits hinzugefügt.';
+                return 'This domain has already been added.';
             }
         }
 
@@ -111,19 +125,19 @@ final readonly class AddDomainHandler implements RequestHandlerInterface
         } else {
             $serverIp = $this->dnsResolver->toIpv4($server->host);
             if ($serverIp === null) {
-                return null; // server hostname can't be resolved — skip check
+                return null;
             }
         }
 
         $resolvedIp = $this->dnsResolver->toIpv4($host);
 
         if ($resolvedIp === null) {
-            return 'Domain konnte nicht aufgelöst werden. Bitte A-Record oder CNAME setzen.';
+            return 'Domain could not be resolved. Please set an A record or CNAME.';
         }
 
         if ($resolvedIp !== $serverIp) {
             return sprintf(
-                'Domain zeigt auf %s, erwartet wird %s (Server). Bitte DNS-Eintrag aktualisieren.',
+                'Domain points to %s, expected %s (server). Please update the DNS record.',
                 $resolvedIp,
                 $serverIp,
             );
@@ -135,11 +149,13 @@ final readonly class AddDomainHandler implements RequestHandlerInterface
     private function renderList(
         ServerRequestInterface $request,
         Project $project,
+        string $branch,
         string|null $error,
     ): ResponseInterface {
         return $this->renderer->render($request, 'partial::project/domain-list', [
             'project' => $project,
-            'domains' => $this->domainRepository->findByProject($project->id),
+            'branch'  => $branch,
+            'domains' => $this->domainRepository->findByEnvironment($project->id, $branch),
             'error'   => $error,
         ]);
     }

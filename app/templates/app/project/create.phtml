@@ -1,6 +1,6 @@
-<?php $this->layout('layout::default', ['title' => _('Create project')]) ?>
+<?php $this->layout('layout::default', ['title' => $this->t('Create project')]) ?>
 
-<h1><?= _('Create project') ?></h1>
+<h1><?= $this->t('Create project') ?></h1>
 
 <?php $this->start('card-content') ?>
     <form action="<?= $this->url('project.create') ?>" method="post">
@@ -8,7 +8,7 @@
 
         <?= $this->fetch('partial::input/text', [
             'id'         => 'name',
-            'label'      => _('Project name'),
+            'label'      => $this->t('Project name'),
             'autofocus'  => 'autofocus',
             'validation' => $validationBag ?? null,
         ]) ?>
@@ -21,19 +21,19 @@
         ?>
         <?= $this->fetch('partial::input/select', [
             'id'                 => 'serverId',
-            'label'              => _('Server'),
+            'label'              => $this->t('Server'),
             'validation'         => $validationBag ?? null,
             'options'            => $serverOptions,
-            'defaultOptionLabel' => _('— select a server —'),
+            'defaultOptionLabel' => $this->t('— select a server —'),
         ]) ?>
 
         <div class="d-flex gap-2">
             <?= $this->fetch('partial::input/button', [
-                'label' => _('Save'),
+                'label' => $this->t('Save'),
             ]) ?>
 
             <?= $this->fetch('partial::link', [
-                'label'   => _('Cancel'),
+                'label'   => $this->t('Cancel'),
                 'href'    => $this->url('project'),
                 'classes' => 'btn btn-secondary',
             ]) ?>

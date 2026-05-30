@@ -8,7 +8,7 @@ $this->layout('layout::default', ['title' => $server->name]);
         <nav aria-label="breadcrumb" class="mb-1">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item">
-                    <?= $this->fetch('partial::link', ['href' => $this->url('server'), 'label' => _('Servers')]) ?>
+                    <?= $this->fetch('partial::link', ['href' => $this->url('server'), 'label' => $this->t('Servers')]) ?>
                 </li>
                 <li class="breadcrumb-item active"><?= $this->e($server->name) ?></li>
             </ol>
@@ -17,7 +17,7 @@ $this->layout('layout::default', ['title' => $server->name]);
     </div>
     <div class="d-flex gap-2">
         <?= $this->fetch('partial::link', [
-            'label'   => _('Edit'),
+            'label'   => $this->t('Edit'),
             'href'    => $this->url('server.edit', ['id' => $server->id->toString()]),
             'icon'    => 'bi bi-pencil',
             'classes' => 'btn btn-outline-secondary btn-sm',
@@ -35,7 +35,7 @@ $this->layout('layout::default', ['title' => $server->name]);
             'dataBsToggle' => 'tab',
             'dataBsTarget' => '#tab-overview',
             'icon'         => 'bi bi-info-circle me-1',
-            'label'        => _('Overview'),
+            'label'        => $this->t('Overview'),
         ]) ?>
     </li>
     <li class="nav-item" role="presentation">
@@ -51,7 +51,7 @@ $this->layout('layout::default', ['title' => $server->name]);
             'hxSwap'       => 'innerHTML',
             'hxTrigger'    => 'shown.bs.tab once',
             'icon'         => 'bi bi-terminal me-1',
-            'label'        => _('Setup Log'),
+            'label'        => $this->t('Setup Log'),
         ]) ?>
     </li>
 </ul>

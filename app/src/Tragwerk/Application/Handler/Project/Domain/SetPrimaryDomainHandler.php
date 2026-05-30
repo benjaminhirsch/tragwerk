@@ -46,11 +46,12 @@ final readonly class SetPrimaryDomainHandler implements RequestHandlerInterface
             return new EmptyResponse(404);
         }
 
-        $this->eventDispatcher->dispatch(new DomainSetPrimary($domain->id, $project->id));
+        $this->eventDispatcher->dispatch(new DomainSetPrimary($domain->id, $project->id, $domain->branch));
 
         return $this->renderer->render($request, 'partial::project/domain-list', [
             'project' => $project,
-            'domains' => $this->domainRepository->findByProject($project->id),
+            'branch'  => $domain->branch,
+            'domains' => $this->domainRepository->findByEnvironment($project->id, $domain->branch),
             'error'   => null,
         ]);
     }

@@ -78,10 +78,10 @@ $renderBranches = function (array $nodes) use (
     <?php if ($branchParents === []): ?>
         <div class="text-body-secondary small">
             <i class="bi bi-info-circle me-1"></i>
-            <?= _('No branches yet. Push your first commit to get started.') ?>
+            <?= $this->t('No branches yet. Push your first commit to get started.') ?>
         </div>
     <?php else: ?>
-        <p class="text-body-secondary small mb-2"><?= _('Select a branch to view its activity.') ?></p>
+        <p class="text-body-secondary small mb-2"><?= $this->t('Select a branch to view its activity.') ?></p>
         <ul class="tw-branch-tree">
             <?php $renderBranches($children[''] ?? []) ?>
         </ul>
