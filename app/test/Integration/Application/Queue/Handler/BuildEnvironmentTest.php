@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace TragwerkTest\Integration\Application\Queue\Handler;
 
 use CuyZ\Valinor\MapperBuilder;
+use Generator;
+use Mezzio\Authentication\UserInterface;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -19,9 +21,19 @@ use Tragwerk\Domain\Docker\DockerComposeGenerator;
 use Tragwerk\Domain\Docker\DockerfileGenerator;
 use Tragwerk\Domain\Docker\ServiceImageResolver;
 use Tragwerk\Domain\Entity\Domain;
+use Tragwerk\Domain\Entity\Entity;
+use Tragwerk\Domain\Entity\Project;
+use Tragwerk\Domain\Entity\Team;
+use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\Repository\DomainRepository;
+use Tragwerk\Domain\Repository\ProjectRepository;
+use Tragwerk\Domain\Repository\TeamRepository;
+use Tragwerk\Domain\Repository\UserRepository;
 use Tragwerk\Domain\ValueObject\DomainIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Domain\ValueObject\ServerIdentifier;
+use Tragwerk\Domain\ValueObject\TeamIdentifier;
+use Tragwerk\Domain\ValueObject\UserIdentifier;
 use Tragwerk\Infrastructure\Git\BareRepository;
 use ZipArchive;
 
@@ -114,6 +126,123 @@ final class BuildEnvironmentTest extends TestCase
             }
         };
 
+        $nullProjectRepo = new class implements ProjectRepository {
+            public function getById(ProjectIdentifier $id): Entity
+            {
+                throw new RuntimeException('not used');
+            }
+
+            public function create(Project $entity): void
+            {
+            }
+
+            public function update(Project $entity): void
+            {
+            }
+
+            public function delete(ProjectIdentifier $id): void
+            {
+            }
+
+            public function getAll(TeamIdentifier|null $teamId = null): Generator
+            {
+                yield from [];
+            }
+
+            public function isServerInUse(
+                ServerIdentifier $serverId,
+                ProjectIdentifier|null $excludeProjectId = null,
+            ): bool {
+                return false;
+            }
+        };
+
+        $nullTeamRepo = new class implements TeamRepository {
+            public function getById(TeamIdentifier $id): Entity
+            {
+                throw new RuntimeException('not used');
+            }
+
+            public function create(Team $entity): void
+            {
+            }
+
+            public function update(Team $entity): void
+            {
+            }
+
+            public function getAll(
+                array|null $ids = null,
+                array|null $names = null,
+                array|null $ownerIds = null,
+            ): Generator {
+                yield from [];
+            }
+
+            public function delete(TeamIdentifier $id): void
+            {
+            }
+
+            /** @param UserIdentifier[] $userIds */
+            public function assignUsers(TeamIdentifier $teamId, array $userIds): void
+            {
+            }
+
+            public function getByUserId(UserIdentifier $userId): Generator
+            {
+                yield from [];
+            }
+
+            public function getUsersByTeamId(TeamIdentifier $teamId): Generator
+            {
+                yield from [];
+            }
+
+            public function removeUser(TeamIdentifier $teamId, UserIdentifier $userId): void
+            {
+            }
+        };
+
+        $nullUserRepo = new class implements UserRepository {
+            public function getById(UserIdentifier $id): Entity
+            {
+                throw new RuntimeException('not used');
+            }
+
+            public function getByEmail(string $email): User
+            {
+                throw new RuntimeException('not used');
+            }
+
+            public function create(User $entity): void
+            {
+            }
+
+            public function getAll(array|null $ids = null, array|null $emails = null): Generator
+            {
+                yield from [];
+            }
+
+            public function searchByEmail(string $email): Generator
+            {
+                yield from [];
+            }
+
+            public function getLastActiveTeamId(UserIdentifier $userId): TeamIdentifier|null
+            {
+                return null;
+            }
+
+            public function setLastActiveTeam(UserIdentifier $userId, TeamIdentifier $teamId): void
+            {
+            }
+
+            public function authenticate(string $identity, string|null $credential = null): UserInterface|null
+            {
+                return null;
+            }
+        };
+
         $this->handler = new BuildEnvironment(
             $this->bareRepository,
             new XmlToArrayConverter(),
@@ -125,6 +254,9 @@ final class BuildEnvironmentTest extends TestCase
             $this->tempDataDir,
             $nullProducer,
             $nullDomainRepo,
+            $nullProjectRepo,
+            $nullTeamRepo,
+            $nullUserRepo,
         );
     }
 

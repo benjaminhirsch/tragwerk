@@ -48,6 +48,8 @@ final class GenerateDockerConfig extends Command
         OutputInterface $output,
         #[Option(description: 'Output directory for generated files')]
         string $outputDir = '.',
+        #[Option(description: 'Email address for Let\'s Encrypt ACME certificate registration')]
+        string $acmeEmail = '',
     ): int {
         if (! file_exists($configFile)) {
             $output->writeln('Configuration file not found: ' . $configFile);
@@ -98,7 +100,7 @@ final class GenerateDockerConfig extends Command
         }
 
         $outDir  = rtrim($outputDir, '/');
-        $compose = Yaml::dump($this->composeGenerator->generate($config), 10, 2);
+        $compose = Yaml::dump($this->composeGenerator->generate($config, [], $acmeEmail), 10, 2);
 
         if (file_put_contents($outDir . '/docker-compose.yml', $compose) === false) {
             $output->writeln('Failed to write docker-compose.yml');
