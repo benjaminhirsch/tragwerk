@@ -11,8 +11,10 @@
 $tabId        = 'tw-env-tab-' . md5($branch);
 $deployUrl    = $this->url('project.environment.deploy-log', ['id' => $project->id->toString()])
     . '?branch=' . urlencode($branch);
-$redeployUrl  = $this->url('project.environment.redeploy', ['id' => $project->id->toString()]);
-$syncDataUrl  = $this->url('project.environment.sync-data', ['id' => $project->id->toString()]);
+$redeployUrl       = $this->url('project.environment.redeploy', ['id' => $project->id->toString()]);
+$syncDataUrl       = $this->url('project.environment.sync-data', ['id' => $project->id->toString()]);
+$containerStatusUrl = $this->url('project.environment.container-status', ['id' => $project->id->toString()])
+    . '?branch=' . urlencode($branch);
 $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString(), 'branch' => $branch]);
 ?>
 <ul class="nav nav-tabs nav-tabs-sm mb-3" id="<?= $tabId ?>" role="tablist">
@@ -42,6 +44,17 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
                 data-bs-toggle="tab" data-bs-target="#<?= $tabId ?>-config"
                 type="button" role="tab">
             <?= $this->t('Configuration') ?>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="<?= $tabId ?>-containers-tab"
+                data-bs-toggle="tab" data-bs-target="#<?= $tabId ?>-containers"
+                type="button" role="tab"
+                hx-get="<?= $this->e($containerStatusUrl) ?>"
+                hx-trigger="shown.bs.tab once"
+                hx-target="#tw-container-status"
+                hx-swap="innerHTML">
+            <?= $this->t('Containers') ?>
         </button>
     </li>
 </ul>
@@ -168,6 +181,15 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
             'error'   => null,
         ]) ?>
 
+    </div>
+
+    <div class="tab-pane fade" id="<?= $tabId ?>-containers" role="tabpanel">
+        <div id="tw-container-status">
+            <div class="text-body-secondary small">
+                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                <?= $this->t('Loading...') ?>
+            </div>
+        </div>
     </div>
 
     <div class="tab-pane fade" id="<?= $tabId ?>-config" role="tabpanel">
