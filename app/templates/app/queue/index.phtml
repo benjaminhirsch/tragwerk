@@ -2,7 +2,7 @@
 /** @var \Tragwerk\Domain\Entity\QueueMessage[] $messages */
 $this->layout('layout::default', ['title' => $this->t('Queue Messages')]);
 
-$statusLabel = static function (\Tragwerk\Domain\Entity\QueueMessage $m): string {
+$statusLabel = function (\Tragwerk\Domain\Entity\QueueMessage $m): string {
     if ($m->isFailed()) {
         return '<span class="badge bg-danger">' . $this->t('Failed') . '</span>';
     }
