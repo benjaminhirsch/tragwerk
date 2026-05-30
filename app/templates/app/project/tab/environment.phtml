@@ -15,14 +15,31 @@ $redeployUrl       = $this->url('project.environment.redeploy', ['id' => $projec
 $syncDataUrl       = $this->url('project.environment.sync-data', ['id' => $project->id->toString()]);
 $containerStatusUrl = $this->url('project.environment.container-status', ['id' => $project->id->toString()])
     . '?branch=' . urlencode($branch);
-$volumeSizesUrl     = $this->url('project.environment.volume-sizes', ['id' => $project->id->toString()])
-    . '?branch=' . urlencode($branch);
-
 $slugify    = static function (string $name): string {
     $slug = preg_replace('/[\s_]+/', '-', strtolower($name)) ?? '';
     return preg_replace('/[^a-z0-9-]/', '', $slug) ?? '';
 };
 $branchSlug = $slugify(basename($branch));
+
+$volDescriptions = [];
+if ($projectConfig !== null) {
+    foreach ($projectConfig->applications as $app) {
+        $appSlug = $slugify($app->name);
+        foreach ($app->mounts as $mount) {
+            if ($mount->source->value !== 'local') {
+                continue;
+            }
+            $volDescriptions[$appSlug . '-' . $slugify($mount->name)] = $app->name . ' · ' . $mount->path;
+        }
+    }
+    foreach ($projectConfig->services as $service) {
+        $volDescriptions[$slugify($service->name) . '-data'] = $service->name . ' · ' . $service->type->value;
+    }
+}
+
+$volumeSizesUrl = $this->url('project.environment.volume-sizes', ['id' => $project->id->toString()])
+    . '?branch=' . urlencode($branch)
+    . '&desc=' . urlencode((string) json_encode($volDescriptions));
 $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString(), 'branch' => $branch]);
 ?>
 <ul class="nav nav-tabs nav-tabs-sm mb-3" id="<?= $tabId ?>" role="tablist">

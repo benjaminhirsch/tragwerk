@@ -2,11 +2,13 @@
 /**
  * @var \Tragwerk\Domain\Entity\Project $project
  * @var string                          $branch
- * @var array<string, string>           $volumes  volume name → size
+ * @var array<string, string>           $volumes       volume name → size
+ * @var array<string, string>           $descriptions  short volume name → label
  * @var string|null                     $error
  */
 $sizesUrl   = $this->url('project.environment.volume-sizes', ['id' => $project->id->toString()])
-    . '?branch=' . urlencode($branch);
+    . '?branch=' . urlencode($branch)
+    . '&desc=' . urlencode((string) json_encode($descriptions));
 $branchSlug = preg_replace('/[^a-z0-9-]/', '', preg_replace('/[\s_]+/', '-', strtolower(basename($branch))) ?? '') ?? '';
 $prefix     = $branchSlug . '_';
 ?>
@@ -28,10 +30,21 @@ $prefix     = $branchSlug . '_';
     <?php else: ?>
         <ul class="list-group list-group-flush border rounded">
             <?php foreach ($volumes as $name => $size): ?>
+                <?php
+                $shortName = substr($name, strlen($prefix));
+                $label     = $descriptions[$shortName] ?? null;
+                ?>
                 <li class="list-group-item d-flex align-items-center gap-3 py-2">
                     <i class="bi bi-hdd-fill text-body-secondary flex-shrink-0"></i>
                     <div class="flex-grow-1 overflow-hidden">
-                        <code class="small"><?= $this->e(substr($name, strlen($prefix))) ?></code>
+                        <?php if ($label !== null): ?>
+                            <div class="small fw-medium"><?= $this->e($label) ?></div>
+                            <div class="text-body-secondary text-truncate" style="font-size:.72rem">
+                                <code><?= $this->e($shortName) ?></code>
+                            </div>
+                        <?php else: ?>
+                            <code class="small"><?= $this->e($shortName) ?></code>
+                        <?php endif ?>
                     </div>
                     <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle flex-shrink-0">
                         <?= $this->e($size) ?>

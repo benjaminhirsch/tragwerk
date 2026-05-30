@@ -28,7 +28,9 @@ use function assert;
 use function basename;
 use function count;
 use function explode;
+use function is_array;
 use function is_string;
+use function json_decode;
 use function preg_replace;
 use function preg_split;
 use function str_contains;
@@ -71,11 +73,16 @@ final readonly class VolumeSizesHandler implements RequestHandlerInterface
             $error = $e->getMessage();
         }
 
+        $descRaw      = is_string($params['desc'] ?? null) ? $params['desc'] : '{}';
+        $decoded      = json_decode($descRaw, true);
+        $descriptions = is_array($decoded) ? $decoded : [];
+
         return $this->renderer->render($request, 'page::project/_volume_sizes', [
-            'project' => $project,
-            'branch'  => $branch,
-            'volumes' => $volumes,
-            'error'   => $error,
+            'project'      => $project,
+            'branch'       => $branch,
+            'volumes'      => $volumes,
+            'descriptions' => $descriptions,
+            'error'        => $error,
         ]);
     }
 
