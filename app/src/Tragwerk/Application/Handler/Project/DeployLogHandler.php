@@ -43,12 +43,14 @@ final readonly class DeployLogHandler implements RequestHandlerInterface
             return new EmptyResponse(400);
         }
 
-        $job = $this->deployJobRepository->getLatestByProjectAndBranch($project->id, $branch);
+        $job        = $this->deployJobRepository->getLatestByProjectAndBranch($project->id, $branch);
+        $activeJobs = $this->deployJobRepository->getActiveByProjectAndBranch($project->id, $branch);
 
         return $this->renderer->render($request, 'page::project/_deploy_log', [
             'project'      => $project,
             'branch'       => $branch,
             'job'          => $job,
+            'activeJobs'   => $activeJobs,
             'forcePolling' => false,
         ]);
     }

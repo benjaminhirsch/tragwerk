@@ -25,6 +25,13 @@ interface DeployJobRepository
     public function getLatestByProjectAndBranch(ProjectIdentifier $projectId, string $branch): DeployJob|null;
 
     /**
+     * Returns all pending and running jobs, ordered oldest-first (i.e. deploy order).
+     *
+     * @return list<DeployJob>
+     */
+    public function getActiveByProjectAndBranch(ProjectIdentifier $projectId, string $branch): array;
+
+    /**
      * @param string[] $branches
      *
      * @return array<string, DeployJobStatus> branch → latest status
