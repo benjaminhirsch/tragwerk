@@ -177,6 +177,10 @@ final class DeployEnvironmentCommand extends Command
             unlink($file);
         }
 
+        foreach (glob($tempDir . '/docker-compose*.yaml') ?: [] as $file) {
+            unlink($file);
+        }
+
         foreach (glob($tempDir . '/Dockerfile*') ?: [] as $file) {
             unlink($file);
         }
