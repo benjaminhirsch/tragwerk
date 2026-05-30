@@ -237,7 +237,7 @@ final class DockerComposeGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function redirectRouteAddsMiddlewareLabels(): void
+    public function redirectRouteGeneratesRedirectregexMiddleware(): void
     {
         $config = self::project(
             [self::app('app')],
@@ -247,18 +247,70 @@ final class DockerComposeGeneratorTest extends TestCase
             ],
         );
 
-        $compose = $this->generator->generate($config, 'main');
+        $compose = $this->generator->generate($config, 'main', ['default' => ['example.com']]);
         $labels  = $this->labels($compose, 'app');
 
         self::assertContains(
-            'traefik.http.middlewares.app-main-redirect-to-https.redirectscheme.scheme=https',
+            'traefik.http.middlewares.app-main-redirect-0.redirectregex.regex=^https?://example\.com(/.*)?$',
             $labels,
         );
         self::assertContains(
-            'traefik.http.middlewares.app-main-redirect-to-https.redirectscheme.permanent=true',
+            'traefik.http.middlewares.app-main-redirect-0.redirectregex.replacement=https://example.com$${1}',
             $labels,
         );
-        self::assertContains('traefik.http.routers.app-main-http-0.middlewares=app-main-redirect-to-https', $labels);
+        self::assertContains(
+            'traefik.http.middlewares.app-main-redirect-0.redirectregex.permanent=true',
+            $labels,
+        );
+        self::assertContains('traefik.http.routers.app-main-redirect-0.middlewares=app-main-redirect-0', $labels);
+        self::assertContains('traefik.http.routers.app-main-redirect-0.service=app-main', $labels);
+    }
+
+    #[Test]
+    public function crossHostRedirectIsIncludedEvenWithoutMatchingUpstream(): void
+    {
+        $config = self::project(
+            [self::app('app')],
+            [
+                self::upstream('https://{default}', 'app:http'),
+                self::redirect('https://www.{default}', 'https://{default}'),
+            ],
+        );
+
+        $compose = $this->generator->generate($config, 'main', ['default' => ['example.com']]);
+        $labels  = $this->labels($compose, 'app');
+
+        self::assertContains(
+            'traefik.http.middlewares.app-main-redirect-0.redirectregex.regex=^https?://www\.example\.com(/.*)?$',
+            $labels,
+        );
+        self::assertContains(
+            'traefik.http.middlewares.app-main-redirect-0.redirectregex.replacement=https://example.com$${1}',
+            $labels,
+        );
+    }
+
+    #[Test]
+    public function staticCrossDomainRedirectUsesToField(): void
+    {
+        $config = self::project(
+            [self::app('app')],
+            [
+                self::upstream('https://{default}', 'app:http'),
+                self::redirect('http://{default}/old', 'https://www.benjaminhirsch.net'),
+            ],
+        );
+
+        $compose = $this->generator->generate($config, 'main', ['default' => ['example.com']]);
+        $labels  = $this->labels($compose, 'app');
+
+        self::assertContains(
+            'traefik.http.middlewares.app-main-redirect-0.redirectregex.regex=^https?://example\.com/old(/.*)?$',
+            $labels,
+        );
+        // phpcs:ignore Generic.Files.LineLength.TooLong
+        $replacement = 'traefik.http.middlewares.app-main-redirect-0.redirectregex.replacement=https://www.benjaminhirsch.net$${1}';
+        self::assertContains($replacement, $labels);
     }
 
     #[Test]
