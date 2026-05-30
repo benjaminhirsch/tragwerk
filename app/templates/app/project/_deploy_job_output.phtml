@@ -41,6 +41,5 @@ $outputUrl = $this->url('project.environment.deploy-job-output', [
     <pre id="tw-deploy-pre"
          class="bg-dark text-light p-3 rounded-bottom mb-0"
          style="min-height: 120px; max-height: 500px; overflow-y: auto; font-size: 0.8rem; white-space: pre-wrap;"
-         hx-on:htmx:after-swap="document.getElementById('tw-deploy-pre')?.scrollTo(0,999999)"
     ><?= $this->e($job->output !== '' ? $job->output : '...') ?></pre>
 </div>
