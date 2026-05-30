@@ -1,15 +1,11 @@
 <?php
 /**
  * @var string                                        $branch
- * @var bool                                          $isActive
- * @var bool                                          $isProtected
  * @var string                                        $projectId
  * @var \Tragwerk\Domain\Enum\DeployJobStatus|null    $deployStatus
  */
 
-$statusId  = 'tw-branch-status-' . md5($branch);
-$toggleUrl = $this->url('project.environment.toggle', ['id' => $projectId]);
-$valsJson  = htmlspecialchars((string) json_encode(['branch' => $branch]), ENT_QUOTES);
+$statusId = 'tw-branch-status-' . md5($branch);
 ?>
 <div class="tw-branch-status" id="<?= $statusId ?>">
     <?php if ($deployStatus !== null): ?>
@@ -21,29 +17,5 @@ $valsJson  = htmlspecialchars((string) json_encode(['branch' => $branch]), ENT_Q
             <span class="spinner-border spinner-border-sm text-primary me-1" role="status"
                   title="<?= $deployStatus->value === 'running' ? $this->t('Deploying') : $this->t('Deploy queued') ?>"></span>
         <?php endif ?>
-    <?php endif ?>
-
-    <?php if ($isActive): ?>
-        <span class="badge rounded-pill tw-env-active"><?= $this->t('active') ?></span>
-        <?php if (! $isProtected): ?>
-            <button class="btn btn-link btn-sm p-0 ms-1 tw-env-toggle text-body-secondary"
-                    hx-post="<?= $toggleUrl ?>"
-                    hx-vals='<?= $valsJson ?>'
-                    hx-include="#tw-csrf-token"
-                    hx-target="closest .tw-branch-status"
-                    hx-swap="outerHTML">
-                <?= $this->t('Deactivate') ?>
-            </button>
-        <?php endif ?>
-    <?php else: ?>
-        <span class="badge rounded-pill tw-env-inactive"><?= $this->t('inactive') ?></span>
-        <button class="btn btn-link btn-sm p-0 ms-1 tw-env-toggle text-success"
-                hx-post="<?= $toggleUrl ?>"
-                hx-vals='<?= $valsJson ?>'
-                hx-include="#tw-csrf-token"
-                hx-target="closest .tw-branch-status"
-                hx-swap="outerHTML">
-            <?= $this->t('Activate') ?>
-        </button>
     <?php endif ?>
 </div>

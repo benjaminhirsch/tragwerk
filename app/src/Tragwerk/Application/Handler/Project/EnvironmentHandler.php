@@ -19,14 +19,12 @@ use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Model\ProjectConfig;
 use Tragwerk\Domain\Repository\BuildLogRepository;
 use Tragwerk\Domain\Repository\DomainRepository;
-use Tragwerk\Domain\Repository\EnvironmentRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Infrastructure\Git\BareRepository;
 use Tragwerk\Infrastructure\Git\Commit;
 
 use function assert;
-use function in_array;
 use function is_string;
 use function iterator_to_array;
 
@@ -38,7 +36,6 @@ final readonly class EnvironmentHandler implements RequestHandlerInterface
         private BareRepository $bareRepository,
         private BuildLogRepository $buildLogRepository,
         private DomainRepository $domainRepository,
-        private EnvironmentRepository $environmentRepository,
         private XmlToArrayConverter $xmlConverter,
         private TreeMapper $treeMapper,
     ) {
@@ -71,8 +68,6 @@ final readonly class EnvironmentHandler implements RequestHandlerInterface
             false,
         );
 
-        $isProtected   = in_array($branch, ['main', 'master'], true);
-        $isActive      = $isProtected || $this->environmentRepository->isActive($project->id, $branch);
         $projectConfig = $this->loadProjectConfig($project->id->toString(), $commits);
         $domains       = $this->domainRepository->findByEnvironment($project->id, $branch);
 
@@ -81,8 +76,6 @@ final readonly class EnvironmentHandler implements RequestHandlerInterface
             'branch'        => $branch,
             'commits'       => $commits,
             'buildLogs'     => $buildLogs,
-            'isActive'      => $isActive,
-            'isProtected'   => $isProtected,
             'projectConfig' => $projectConfig,
             'domains'       => $domains,
         ]);

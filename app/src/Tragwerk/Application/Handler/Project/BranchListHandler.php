@@ -14,7 +14,6 @@ use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Repository\DeployJobRepository;
-use Tragwerk\Domain\Repository\EnvironmentRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Infrastructure\Git\BareRepository;
@@ -29,7 +28,6 @@ final readonly class BranchListHandler implements RequestHandlerInterface
         private ResponseRenderer $renderer,
         private ProjectRepository $projectRepository,
         private BareRepository $bareRepository,
-        private EnvironmentRepository $environmentRepository,
         private DeployJobRepository $deployJobRepository,
     ) {
     }
@@ -48,16 +46,14 @@ final readonly class BranchListHandler implements RequestHandlerInterface
             $branchParents = [];
         }
 
-        $activeBranches = $this->environmentRepository->getActiveBranches($project->id);
         $deployStatuses = $this->deployJobRepository->getLatestStatusByProjectAndBranches(
             $project->id,
             array_keys($branchParents),
         );
 
         return $this->renderer->render($request, 'page::project/_branch_list', [
-            'project'        => $project,
-            'branchParents'  => $branchParents,
-            'activeBranches' => $activeBranches,
+            'project'       => $project,
+            'branchParents' => $branchParents,
             'deployStatuses' => $deployStatuses,
         ]);
     }

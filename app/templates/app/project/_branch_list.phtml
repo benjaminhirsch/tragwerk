@@ -2,18 +2,11 @@
 /**
  * @var \Tragwerk\Domain\Entity\Project                      $project
  * @var array<string, string|null>                           $branchParents  branch → parent (null = root)
- * @var string[]                                             $activeBranches
  * @var array<string, \Tragwerk\Domain\Enum\DeployJobStatus> $deployStatuses
  */
 
 $projectId = $project->id->toString();
 $listUrl   = $this->url('project.environment.branch-list', ['id' => $projectId]);
-
-$isMain = static fn (string $b): bool => in_array($b, ['main', 'master'], true);
-
-$isActive = static function (string $branch) use ($isMain, $activeBranches): bool {
-    return $isMain($branch) || in_array($branch, $activeBranches, true);
-};
 
 $children = [];
 foreach ($branchParents as $branch => $parent) {
@@ -32,8 +25,6 @@ $renderBranches = function (array $nodes) use (
     &$renderBranches,
     $children,
     $projectId,
-    $isMain,
-    $isActive,
     $deployStatuses,
 ): void {
     foreach ($nodes as $branch) {
@@ -53,8 +44,6 @@ $renderBranches = function (array $nodes) use (
                 </button>
                 <?= $this->fetch('partial::project/branch-status', [
                     'branch'       => $branch,
-                    'isActive'     => $isActive($branch),
-                    'isProtected'  => $isMain($branch),
                     'projectId'    => $projectId,
                     'deployStatus' => $deployStatuses[$branch] ?? null,
                 ]) ?>
