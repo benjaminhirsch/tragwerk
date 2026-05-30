@@ -40,6 +40,14 @@ interface DeployJobRepository
 
     public function hasCompletedDeploy(ProjectIdentifier $projectId, string $branch): bool;
 
+    /** @return list<DeployJob> */
+    public function getPagedByProjectAndBranch(
+        ProjectIdentifier $projectId,
+        string $branch,
+        int $limit,
+        int $offset,
+    ): array;
+
     /** @throws EntityCreationFailed */
     public function create(DeployJob $entity): void;
 

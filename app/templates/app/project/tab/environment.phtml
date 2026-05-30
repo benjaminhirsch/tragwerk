@@ -321,6 +321,23 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
         </div>
     </div>
 
+    <div class="modal fade" id="tw-job-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><?= $this->t('Deploy Log') ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0" id="tw-job-modal-body">
+                    <div class="p-3 text-body-secondary small">
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        <?= $this->t('Loading...') ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="tw-domain-delete-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content">

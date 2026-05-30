@@ -81,6 +81,12 @@ final readonly class Project
         );
 
         $routes->get(
+            '/projects/{id}/environments/deploy-jobs/{jobId}/output',
+            $this->middlewareFactory->prepare([Handler\Project\DeployJobOutputHandler::class]),
+            'project.environment.deploy-job-output',
+        );
+
+        $routes->get(
             '/projects/{id}/environments/download',
             $this->middlewareFactory->prepare([Handler\Project\DownloadBuildHandler::class]),
             'project.environment.download',

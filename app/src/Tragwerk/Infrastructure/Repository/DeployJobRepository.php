@@ -133,6 +133,34 @@ final class DeployJobRepository extends GenericRepository implements DeployJobRe
         }
     }
 
+    /** @return list<DeployJob> */
+    #[Override]
+    public function getPagedByProjectAndBranch(
+        ProjectIdentifier $projectId,
+        string $branch,
+        int $limit,
+        int $offset,
+    ): array {
+        $qb = $this->connection->createQueryBuilder();
+        $qb->select('*')
+            ->from(EntityHelper::getDbTableName(EntityType::DEPLOY_JOB))
+            ->where($qb->expr()->eq('project_id', ':project_id'))
+            ->andWhere($qb->expr()->eq('branch', ':branch'))
+            ->setParameter('project_id', $projectId->toString())
+            ->setParameter('branch', $branch)
+            ->orderBy('created_at', 'DESC')
+            ->setMaxResults($limit)
+            ->setFirstResult($offset);
+
+        try {
+            $rows = $qb->executeQuery()->fetchAllAssociative();
+
+            return array_map(fn (array $row) => $this->map($row, DeployJob::class), $rows);
+        } catch (MappingError | Exception) {
+            return [];
+        }
+    }
+
     #[Override]
     public function updateStatus(DeployJobIdentifier $id, DeployJobStatus $status): void
     {

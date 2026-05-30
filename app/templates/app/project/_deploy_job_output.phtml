@@ -1,0 +1,46 @@
+<?php
+/**
+ * @var \Tragwerk\Domain\Entity\Project   $project
+ * @var \Tragwerk\Domain\Entity\DeployJob $job
+ */
+$isActive  = $job->status->value === 'pending' || $job->status->value === 'running';
+$outputUrl = $this->url('project.environment.deploy-job-output', [
+    'id'    => $project->id->toString(),
+    'jobId' => $job->id->toString(),
+]);
+?>
+<div <?php if ($isActive): ?>
+     hx-get="<?= $this->e($outputUrl) ?>"
+     hx-trigger="every 2s"
+     hx-target="#tw-job-modal-body"
+     hx-swap="innerHTML"
+     <?php endif ?>>
+    <div class="px-3 py-2 border-bottom d-flex align-items-center gap-2">
+        <?php if ($job->status->value === 'completed'): ?>
+            <span class="badge bg-success"><?= $this->t('Completed') ?></span>
+        <?php elseif ($job->status->value === 'failed'): ?>
+            <span class="badge bg-danger"><?= $this->t('Failed') ?></span>
+        <?php elseif ($job->status->value === 'running'): ?>
+            <span class="badge bg-primary">
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                <?= $this->t('Running') ?>
+            </span>
+        <?php else: ?>
+            <span class="badge bg-secondary">
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                <?= $this->t('Pending') ?>
+            </span>
+        <?php endif ?>
+        <?php if ($job->commitSha !== ''): ?>
+            <code class="small"><?= $this->e(substr($job->commitSha, 0, 7)) ?></code>
+        <?php endif ?>
+        <span class="text-body-secondary small ms-auto">
+            <?= $this->e($job->createdAt->format('Y-m-d H:i:s')) ?>
+        </span>
+    </div>
+    <pre id="tw-deploy-pre"
+         class="bg-dark text-light p-3 rounded-bottom mb-0"
+         style="min-height: 120px; max-height: 500px; overflow-y: auto; font-size: 0.8rem; white-space: pre-wrap;"
+         hx-on:htmx:after-swap="document.getElementById('tw-deploy-pre')?.scrollTo(0,999999)"
+    ><?= $this->e($job->output !== '' ? $job->output : '...') ?></pre>
+</div>
