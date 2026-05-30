@@ -496,6 +496,9 @@ final class DeployEnvironmentCommand extends Command
             . ' --providers.docker.exposedbydefault=false'
             . ' --providers.docker.network=tragwerk-net'
             . ' --entrypoints.web.address=:80'
+            . ' --entrypoints.web.http.redirections.entrypoint.to=websecure'
+            . ' --entrypoints.web.http.redirections.entrypoint.scheme=https'
+            . ' --entrypoints.web.http.redirections.entrypoint.permanent=true'
             . ' --entrypoints.websecure.address=:443'
             . ' --certificatesresolvers.letsencrypt.acme.tlschallenge=true'
             . ' ' . $emailFlag
