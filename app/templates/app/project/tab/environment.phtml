@@ -336,7 +336,7 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
                         <li class="d-flex align-items-center gap-2 py-1 border-bottom small">
                             <i class="bi bi-arrow-right text-body-secondary flex-shrink-0"></i>
                             <code class="text-truncate flex-grow-1"><?= $this->e($route->pattern) ?></code>
-                            <span class="badge bg-secondary ms-auto flex-shrink-0"><?= $this->e($route->type->value) ?></span>
+                            <span class="badge bg-secondary ms-auto flex-shrink-0"><?= $this->e($route->upstream ?? '') ?></span>
                         </li>
                     <?php endforeach ?>
                 </ul>
