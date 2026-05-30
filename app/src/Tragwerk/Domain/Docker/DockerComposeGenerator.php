@@ -213,6 +213,11 @@ final readonly class DockerComposeGenerator
                     $labels[] = 'traefik.http.routers.' . $routerName . '.entrypoints=' . $entrypoint;
                     $labels[] = 'traefik.http.routers.' . $routerName . '.middlewares=' . $mwName;
                     $labels[] = 'traefik.http.routers.' . $routerName . '.service=' . $fullSlug;
+
+                    if ($isHttps) {
+                        $labels[] = 'traefik.http.routers.' . $routerName . '.tls.certresolver=letsencrypt';
+                    }
+
                     $labels[] = 'traefik.http.middlewares.' . $mwName . '.redirectregex.regex=' . $srcRegex;
                     $labels[] = 'traefik.http.middlewares.' . $mwName . '.redirectregex.replacement='
                         . $toTarget . '$${1}';
