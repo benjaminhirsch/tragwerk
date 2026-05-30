@@ -19,7 +19,7 @@ use Tragwerk\Domain\Entity\BuildLog;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Enum\BuildLogType;
 use Tragwerk\Domain\Event\BuildLogCreated;
-use Tragwerk\Domain\Repository\EnvironmentRepository;
+use Tragwerk\Domain\Repository\DomainRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\ValueObject\BuildLogIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
@@ -38,7 +38,7 @@ final readonly class GitPushHandler implements RequestHandlerInterface
         private BareRepository $bareRepository,
         private ConfigValidator $configValidator,
         private EventDispatcherInterface $eventDispatcher,
-        private EnvironmentRepository $environmentRepository,
+        private DomainRepository $domainRepository,
         private Producer $producer,
     ) {
     }
@@ -86,10 +86,10 @@ final readonly class GitPushHandler implements RequestHandlerInterface
             createdAt: TimestampImmutable::now(),
         )));
 
-        $isProtected = $branch === 'main' || $branch === 'master';
-        $isActive    = $isProtected || $this->environmentRepository->isActive($project->id, $branch);
+        $isMain    = $branch === 'main' || $branch === 'master';
+        $hasDomain = $isMain || $this->domainRepository->findByEnvironment($project->id, $branch) !== [];
 
-        if ($configValid && $isActive) {
+        if ($configValid && $hasDomain) {
             $this->producer->sendMessage(new BuildEnvironment(
                 projectId: $project->id->toString(),
                 branch:    $branch,

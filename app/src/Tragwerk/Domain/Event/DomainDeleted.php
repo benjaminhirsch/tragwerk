@@ -12,6 +12,7 @@ final readonly class DomainDeleted
     public function __construct(
         public DomainIdentifier $domainId,
         public ProjectIdentifier $projectId,
+        public string $branch,
     ) {
     }
 }

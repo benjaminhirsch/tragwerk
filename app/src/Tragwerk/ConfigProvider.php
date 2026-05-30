@@ -285,8 +285,6 @@ final readonly class ConfigProvider
                         Infrastructure\Repository\BuildLogRepository::class,
                     Domain\Repository\DeployJobRepository::class =>
                         Infrastructure\Repository\DeployJobRepository::class,
-                    Domain\Repository\EnvironmentRepository::class =>
-                        Infrastructure\Repository\EnvironmentRepository::class,
                     Domain\Repository\DomainRepository::class =>
                         Infrastructure\Repository\DomainRepository::class,
                 ],
@@ -375,8 +373,6 @@ final readonly class ConfigProvider
                     EventListener\SshKey\DeleteSshKey::class,
                     EventListener\SshKey\UpdateAuthorizedKeys::class,
                 ],
-                Event\BranchActivated::class   => [EventListener\Environment\ActivateBranch::class],
-                Event\BranchDeactivated::class => [EventListener\Environment\DeactivateBranch::class],
                 Event\DomainAdded::class       => [
                     EventListener\Domain\AddDomain::class,
                     EventListener\Domain\TriggerProjectRedeploy::class,
