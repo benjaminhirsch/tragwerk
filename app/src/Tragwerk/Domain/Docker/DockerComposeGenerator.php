@@ -34,12 +34,14 @@ final readonly class DockerComposeGenerator
      *
      * @return array<string, mixed>
      */
-    public function generate(ProjectConfig $config, array $domainsByPlaceholder = [], string $acmeEmail = ''): array
+    public function generate(ProjectConfig $config, string $branch = '', array $domainsByPlaceholder = []): array
     {
         /** @var array<string, mixed> $services */
         $services = [];
         /** @var array<string, null> $volumes */
         $volumes = [];
+
+        $branchSlug = $this->slugify($branch);
 
         /** @var array<string, ServiceConfig> $serviceIndex */
         $serviceIndex = [];
@@ -79,7 +81,7 @@ final readonly class DockerComposeGenerator
                 }
             }
 
-            $labels = $this->buildTraefikLabels($app, $config, $domainsByPlaceholder);
+            $labels = $this->buildTraefikLabels($app, $config, $domainsByPlaceholder, $branchSlug);
 
             /** @var array<string, mixed> $svcConfig */
             $svcConfig = [
@@ -112,10 +114,11 @@ final readonly class DockerComposeGenerator
                 $svcConfig['depends_on'] = $dependsOn;
             }
 
+            // App containers join the shared Traefik network so the server-level Traefik can route to them
+            $svcConfig['networks'] = ['default', 'tragwerk-net'];
+
             $services[$appSlug] = $svcConfig;
         }
-
-        $services['traefik'] = $this->buildTraefikService($acmeEmail);
 
         foreach ($config->services as $service) {
             $slug = $this->slugify($service->name);
@@ -140,9 +143,11 @@ final readonly class DockerComposeGenerator
             $services[$slug] = $svcConfig;
         }
 
-        $volumes['traefik-certs'] = null;
-
-        return ['services' => $services, 'volumes' => $volumes];
+        return [
+            'services' => $services,
+            'volumes'  => $volumes,
+            'networks' => ['tragwerk-net' => ['external' => true]],
+        ];
     }
 
     public function slugify(string $name): string
@@ -161,16 +166,18 @@ final readonly class DockerComposeGenerator
         ApplicationConfig $app,
         ProjectConfig $config,
         array $domainsByPlaceholder,
+        string $branchSlug,
     ): array {
-        $slug   = $this->slugify($app->name);
-        $routes = $this->routesForApp($app, $config);
+        $slug     = $this->slugify($app->name);
+        $fullSlug = $branchSlug !== '' ? $slug . '-' . $branchSlug : $slug;
+        $routes   = $this->routesForApp($app, $config);
 
         if ($routes === []) {
             return [];
         }
 
         $labels      = ['traefik.enable=true'];
-        $labels[]    = 'traefik.http.services.' . $slug . '.loadbalancer.server.port=80';
+        $labels[]    = 'traefik.http.services.' . $fullSlug . '.loadbalancer.server.port=80';
         $hasRedirect = false;
         $upIdx       = 0;
         $redIdx      = 0;
@@ -184,19 +191,19 @@ final readonly class DockerComposeGenerator
             foreach ($hosts as $host) {
                 if ($route->type === RouteType::REDIRECT) {
                     $hasRedirect = true;
-                    $routerName  = $slug . '-http-' . $redIdx;
+                    $routerName  = $fullSlug . '-http-' . $redIdx;
                     $entrypoint  = $isHttps ? 'websecure' : 'web';
-                    $middleware  = $slug . '-redirect-to-https';
+                    $middleware  = $fullSlug . '-redirect-to-https';
                     $labels[]    = 'traefik.http.routers.' . $routerName . '.rule=Host(`' . $host . '`)';
                     $labels[]    = 'traefik.http.routers.' . $routerName . '.entrypoints=' . $entrypoint;
                     $labels[]    = 'traefik.http.routers.' . $routerName . '.middlewares=' . $middleware;
                     $redIdx++;
                 } else {
-                    $routerName = $slug . '-https-' . $upIdx;
+                    $routerName = $fullSlug . '-https-' . $upIdx;
                     $entrypoint = $isHttps ? 'websecure' : 'web';
                     $labels[]   = 'traefik.http.routers.' . $routerName . '.rule=Host(`' . $host . '`)';
                     $labels[]   = 'traefik.http.routers.' . $routerName . '.entrypoints=' . $entrypoint;
-                    $labels[]   = 'traefik.http.routers.' . $routerName . '.service=' . $slug;
+                    $labels[]   = 'traefik.http.routers.' . $routerName . '.service=' . $fullSlug;
                     if ($isHttps) {
                         $labels[] = 'traefik.http.routers.' . $routerName . '.tls.certresolver=letsencrypt';
                     }
@@ -207,8 +214,8 @@ final readonly class DockerComposeGenerator
         }
 
         if ($hasRedirect) {
-            $labels[] = 'traefik.http.middlewares.' . $slug . '-redirect-to-https.redirectscheme.scheme=https';
-            $labels[] = 'traefik.http.middlewares.' . $slug . '-redirect-to-https.redirectscheme.permanent=true';
+            $labels[] = 'traefik.http.middlewares.' . $fullSlug . '-redirect-to-https.redirectscheme.scheme=https';
+            $labels[] = 'traefik.http.middlewares.' . $fullSlug . '-redirect-to-https.redirectscheme.permanent=true';
         }
 
         return $labels;
@@ -292,28 +299,6 @@ final readonly class DockerComposeGenerator
     private function patternIsHttps(string $pattern): bool
     {
         return str_starts_with($pattern, 'https://');
-    }
-
-    /** @return array<string, mixed> */
-    private function buildTraefikService(string $acmeEmail): array
-    {
-        return [
-            'image'   => 'traefik:v3',
-            'command' => [
-                '--providers.docker=true',
-                '--providers.docker.exposedbydefault=false',
-                '--entrypoints.web.address=:80',
-                '--entrypoints.websecure.address=:443',
-                '--certificatesresolvers.letsencrypt.acme.tlschallenge=true',
-                '--certificatesresolvers.letsencrypt.acme.email=' . $acmeEmail,
-                '--certificatesresolvers.letsencrypt.acme.storage=/certs/acme.json',
-            ],
-            'ports'   => ['80:80', '443:443'],
-            'volumes' => [
-                '/var/run/docker.sock:/var/run/docker.sock:ro',
-                'traefik-certs:/certs',
-            ],
-        ];
     }
 
     /** @return array<string, string> */

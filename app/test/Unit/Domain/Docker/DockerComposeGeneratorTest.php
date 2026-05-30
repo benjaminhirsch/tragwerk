@@ -139,13 +139,48 @@ final class DockerComposeGeneratorTest extends TestCase
     public function singleAppGetsTraefikLabels(): void
     {
         $config  = self::project([self::app('app')], [self::upstream('https://{default}', 'app:http')]);
-        $compose = $this->generator->generate($config);
+        $compose = $this->generator->generate($config, 'main');
 
         $labels = $this->labels($compose, 'app');
         self::assertContains('traefik.enable=true', $labels);
-        self::assertContains('traefik.http.routers.app-https-0.rule=Host(`${DEFAULT:-localhost}`)', $labels);
-        self::assertContains('traefik.http.routers.app-https-0.entrypoints=websecure', $labels);
-        self::assertContains('traefik.http.routers.app-https-0.tls.certresolver=letsencrypt', $labels);
+        self::assertContains('traefik.http.routers.app-main-https-0.rule=Host(`${DEFAULT:-localhost}`)', $labels);
+        self::assertContains('traefik.http.routers.app-main-https-0.entrypoints=websecure', $labels);
+        self::assertContains('traefik.http.routers.app-main-https-0.tls.certresolver=letsencrypt', $labels);
+    }
+
+    #[Test]
+    public function routerNamesArePrefixedWithBranch(): void
+    {
+        $config  = self::project([self::app('app')], [self::upstream('https://{default}', 'app:http')]);
+        $main    = $this->generator->generate($config, 'main');
+        $staging = $this->generator->generate($config, 'staging');
+
+        self::assertContains(
+            'traefik.http.routers.app-main-https-0.rule=Host(`${DEFAULT:-localhost}`)',
+            $this->labels($main, 'app'),
+        );
+        self::assertContains(
+            'traefik.http.routers.app-staging-https-0.rule=Host(`${DEFAULT:-localhost}`)',
+            $this->labels($staging, 'app'),
+        );
+    }
+
+    #[Test]
+    public function appContainerIsOnTragwerkNet(): void
+    {
+        $config  = self::project([self::app('app')], [self::upstream('https://{default}', 'app:http')]);
+        $compose = $this->generator->generate($config, 'main');
+
+        $svc = $this->service($compose, 'app');
+        /** @var mixed $networks */
+        $networks = $svc['networks'];
+        self::assertIsArray($networks);
+        self::assertContains('tragwerk-net', $networks);
+        self::assertContains('default', $networks);
+
+        self::assertIsArray($compose['networks'] ?? null);
+        self::assertArrayHasKey('tragwerk-net', $compose['networks']);
+        self::assertTrue($compose['networks']['tragwerk-net']['external']);
     }
 
     #[Test]
@@ -159,16 +194,16 @@ final class DockerComposeGeneratorTest extends TestCase
             ],
         );
 
-        $compose      = $this->generator->generate($config);
+        $compose      = $this->generator->generate($config, 'main');
         $appLabels    = $this->labels($compose, 'app');
         $foobarLabels = $this->labels($compose, 'foobar');
 
         self::assertContains('traefik.enable=true', $appLabels);
-        self::assertContains('traefik.http.routers.app-https-0.rule=Host(`${DEFAULT:-localhost}`)', $appLabels);
+        self::assertContains('traefik.http.routers.app-main-https-0.rule=Host(`${DEFAULT:-localhost}`)', $appLabels);
 
         self::assertContains('traefik.enable=true', $foobarLabels);
         self::assertContains(
-            'traefik.http.routers.foobar-https-0.rule=Host(`foobar.${DEFAULT:-localhost}`)',
+            'traefik.http.routers.foobar-main-https-0.rule=Host(`foobar.${DEFAULT:-localhost}`)',
             $foobarLabels,
         );
     }
@@ -212,29 +247,30 @@ final class DockerComposeGeneratorTest extends TestCase
             ],
         );
 
-        $compose = $this->generator->generate($config);
+        $compose = $this->generator->generate($config, 'main');
         $labels  = $this->labels($compose, 'app');
 
         self::assertContains(
-            'traefik.http.middlewares.app-redirect-to-https.redirectscheme.scheme=https',
+            'traefik.http.middlewares.app-main-redirect-to-https.redirectscheme.scheme=https',
             $labels,
         );
         self::assertContains(
-            'traefik.http.middlewares.app-redirect-to-https.redirectscheme.permanent=true',
+            'traefik.http.middlewares.app-main-redirect-to-https.redirectscheme.permanent=true',
             $labels,
         );
-        self::assertContains('traefik.http.routers.app-http-0.middlewares=app-redirect-to-https', $labels);
+        self::assertContains('traefik.http.routers.app-main-http-0.middlewares=app-main-redirect-to-https', $labels);
     }
 
     #[Test]
-    public function traefikServiceAlwaysPresent(): void
+    public function noTraefikServiceInGeneratedCompose(): void
     {
         $config  = self::project([self::app('app')], [self::upstream('https://{default}', 'app:http')]);
-        $compose = $this->generator->generate($config);
-        $traefik = $this->service($compose, 'traefik');
+        $compose = $this->generator->generate($config, 'main');
 
-        self::assertSame('traefik:v3', $traefik['image']);
-        self::assertContains('traefik-certs:/certs', $this->serviceVolumes($compose, 'traefik'));
+        /** @var mixed $services */
+        $services = $compose['services'];
+        self::assertIsArray($services);
+        self::assertArrayNotHasKey('traefik', $services);
     }
 
     #[Test]
@@ -485,15 +521,6 @@ final class DockerComposeGeneratorTest extends TestCase
         self::assertStringContainsString('stream_socket_client', $healthcheck['test'][1]);
         self::assertArrayHasKey('start_period', $healthcheck);
         self::assertArrayHasKey('retries', $healthcheck);
-    }
-
-    #[Test]
-    public function traefikServiceIsNotReadOnly(): void
-    {
-        $config  = self::project([self::app('app')], [self::upstream('https://{default}', 'app:http')]);
-        $traefik = $this->service($this->generator->generate($config), 'traefik');
-
-        self::assertArrayNotHasKey('read_only', $traefik);
     }
 
     #[Test]

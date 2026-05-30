@@ -107,7 +107,7 @@ final readonly class BuildEnvironment
         $messages  = ['Build started for commit ' . $commitSha];
 
         try {
-            $compose = Yaml::dump($this->composeGenerator->generate($config, $domainsByPlaceholder, $acmeEmail), 10, 2);
+            $compose = Yaml::dump($this->composeGenerator->generate($config, $branch, $domainsByPlaceholder), 10, 2);
             file_put_contents($outDir . '/docker-compose.yml', $compose);
             $messages[] = 'Generated docker-compose.yml';
         } catch (RuntimeException $e) {
@@ -155,7 +155,7 @@ final readonly class BuildEnvironment
         $this->eventDispatcher->dispatch(new DeployJobCreated($deployJob));
 
         $this->producer->sendMessage(
-            new Message\DeployEnvironment($projectId, $branch, $commitSha, $deployJob->id->toString()),
+            new Message\DeployEnvironment($projectId, $branch, $commitSha, $deployJob->id->toString(), $acmeEmail),
         );
 
         $this->log($projectId, $branch, implode("\n", $messages));
