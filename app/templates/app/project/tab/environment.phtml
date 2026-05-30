@@ -9,9 +9,10 @@
  * @var \Tragwerk\Domain\Model\ProjectConfig|null $projectConfig
  * @var list<\Tragwerk\Domain\Entity\Domain>    $domains
  */
-$tabId     = 'tw-env-tab-' . md5($branch);
-$deployUrl = $this->url('project.environment.deploy-log', ['id' => $project->id->toString()])
+$tabId        = 'tw-env-tab-' . md5($branch);
+$deployUrl    = $this->url('project.environment.deploy-log', ['id' => $project->id->toString()])
     . '?branch=' . urlencode($branch);
+$redeployUrl  = $this->url('project.environment.redeploy', ['id' => $project->id->toString()]);
 $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString(), 'branch' => $branch]);
 ?>
 <ul class="nav nav-tabs nav-tabs-sm mb-3" id="<?= $tabId ?>" role="tablist">
@@ -47,6 +48,13 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
 
 <div class="tab-content">
     <div class="tab-pane fade show active" id="<?= $tabId ?>-deploy" role="tabpanel">
+        <div class="d-flex justify-content-end mb-2">
+            <button class="btn btn-outline-secondary btn-sm"
+                    data-bs-toggle="modal"
+                    data-bs-target="#tw-redeploy-modal">
+                <i class="bi bi-arrow-clockwise me-1"></i><?= $this->t('Redeploy') ?>
+            </button>
+        </div>
         <div hx-get="<?= $this->e($deployUrl) ?>"
              hx-trigger="load"
              hx-swap="outerHTML">
@@ -153,34 +161,6 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
             'error'   => null,
         ]) ?>
 
-        <div class="modal fade" id="tw-domain-delete-modal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-sm">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title"><?= $this->t('Remove domain') ?></h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p class="mb-0"><?= $this->t('Really remove domain') ?> <strong id="tw-domain-delete-host"></strong>?</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            <?= $this->t('Cancel') ?>
-                        </button>
-                        <button type="button"
-                                id="tw-domain-delete-confirm"
-                                class="btn btn-danger"
-                                data-bs-dismiss="modal"
-                                hx-post=""
-                                hx-target="#domain-list"
-                                hx-swap="outerHTML"
-                                hx-include="#tw-csrf-token">
-                            <i class="bi bi-trash me-1"></i><?= $this->t('Remove') ?>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <div class="tab-pane fade" id="<?= $tabId ?>-config" role="tabpanel">
@@ -269,5 +249,65 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
                 </ul>
             <?php endif ?>
         <?php endif ?>
+    </div>
+</div>
+
+<div id="tw-env-modal-container" hx-swap-oob="true">
+    <div class="modal fade" id="tw-redeploy-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><?= $this->t('Redeploy') ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0"><?= $this->t('Redeploy the latest commit on branch') ?> <strong><?= $this->e($branch) ?></strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <?= $this->t('Cancel') ?>
+                    </button>
+                    <button type="button"
+                            class="btn btn-primary"
+                            data-bs-dismiss="modal"
+                            hx-post="<?= $this->e($redeployUrl) ?>"
+                            hx-vals='{"branch": "<?= $this->e($branch) ?>"}'
+                            hx-include="#tw-csrf-token"
+                            hx-target="#tw-deploy-log"
+                            hx-swap="outerHTML">
+                        <i class="bi bi-arrow-clockwise me-1"></i><?= $this->t('Redeploy') ?>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="tw-domain-delete-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><?= $this->t('Remove domain') ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0"><?= $this->t('Really remove domain') ?> <strong id="tw-domain-delete-host"></strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <?= $this->t('Cancel') ?>
+                    </button>
+                    <button type="button"
+                            id="tw-domain-delete-confirm"
+                            class="btn btn-danger"
+                            data-bs-dismiss="modal"
+                            hx-post=""
+                            hx-target="#domain-list"
+                            hx-swap="outerHTML"
+                            hx-include="#tw-csrf-token">
+                        <i class="bi bi-trash me-1"></i><?= $this->t('Remove') ?>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

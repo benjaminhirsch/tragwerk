@@ -3,10 +3,11 @@
  * @var \Tragwerk\Domain\Entity\Project        $project
  * @var string                                 $branch
  * @var \Tragwerk\Domain\Entity\DeployJob|null $job
+ * @var bool                                   $forcePolling
  */
 $logUrl  = $this->url('project.environment.deploy-log', ['id' => $project->id->toString()])
     . '?branch=' . urlencode($branch);
-$polling = $job !== null && ($job->status->value === 'pending' || $job->status->value === 'running');
+$polling = $forcePolling || ($job !== null && ($job->status->value === 'pending' || $job->status->value === 'running'));
 ?>
 <div id="tw-deploy-log"
     <?php if ($polling): ?>

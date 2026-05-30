@@ -10,22 +10,27 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Throwable;
+use Tragwerk\Application\Queue\Message\BuildEnvironment;
+use Tragwerk\Application\Queue\Producer;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Repository\DeployJobRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Infrastructure\Git\BareRepository;
 
-use function assert;
+use function is_array;
 use function is_string;
 
-final readonly class DeployLogHandler implements RequestHandlerInterface
+final readonly class RedeployEnvironmentHandler implements RequestHandlerInterface
 {
     public function __construct(
         private ResponseRenderer $renderer,
         private ProjectRepository $projectRepository,
+        private BareRepository $bareRepository,
         private DeployJobRepository $deployJobRepository,
+        private Producer $producer,
     ) {
     }
 
@@ -37,11 +42,27 @@ final readonly class DeployLogHandler implements RequestHandlerInterface
             return new EmptyResponse(404);
         }
 
-        $params = $request->getQueryParams();
-        $branch = is_string($params['branch'] ?? null) ? $params['branch'] : null;
+        $body   = $request->getParsedBody();
+        $branch = is_array($body) && is_string($body['branch'] ?? null) ? $body['branch'] : null;
         if ($branch === null || $branch === '') {
             return new EmptyResponse(400);
         }
+
+        try {
+            $commits = $this->bareRepository->getCommits($project->id->toString(), $branch, 1);
+        } catch (Throwable) {
+            $commits = [];
+        }
+
+        if ($commits === []) {
+            return new EmptyResponse(400);
+        }
+
+        $this->producer->sendMessage(new BuildEnvironment(
+            projectId: $project->id->toString(),
+            branch:    $branch,
+            commitSha: $commits[0]->hash,
+        ));
 
         $job = $this->deployJobRepository->getLatestByProjectAndBranch($project->id, $branch);
 
@@ -49,7 +70,7 @@ final readonly class DeployLogHandler implements RequestHandlerInterface
             'project'      => $project,
             'branch'       => $branch,
             'job'          => $job,
-            'forcePolling' => false,
+            'forcePolling' => true,
         ]);
     }
 
@@ -67,13 +88,11 @@ final readonly class DeployLogHandler implements RequestHandlerInterface
 
         try {
             $project = $this->projectRepository->getById(ProjectIdentifier::fromString($routeId));
-            assert($project instanceof Project);
-
-            if ($project->teamId->toString() !== $activeTeam->id->toString()) {
+            if (! $project instanceof Project) {
                 return null;
             }
 
-            return $project;
+            return $project->teamId->toString() === $activeTeam->id->toString() ? $project : null;
         } catch (Throwable) {
             return null;
         }
