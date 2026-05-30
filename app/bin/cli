@@ -39,6 +39,7 @@ $commands = [
         Command\GenerateDockerConfig::class,
         Command\SetupServerCommand::class,
         Command\DeployEnvironmentCommand::class,
+        Command\SyncEnvironmentDataCommand::class,
 
         DoctrineMigrationsCommand\CurrentCommand::class,
         DoctrineMigrationsCommand\DiffCommand::class,

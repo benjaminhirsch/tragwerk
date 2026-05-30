@@ -1,16 +1,18 @@
 <?php
 /**
- * @var \Tragwerk\Domain\Entity\Project         $project
- * @var string                                  $branch
- * @var \Tragwerk\Infrastructure\Git\Commit[]   $commits
- * @var \Tragwerk\Domain\Entity\BuildLog[]       $buildLogs
+ * @var \Tragwerk\Domain\Entity\Project          $project
+ * @var string                                   $branch
+ * @var \Tragwerk\Infrastructure\Git\Commit[]    $commits
+ * @var \Tragwerk\Domain\Entity\BuildLog[]        $buildLogs
  * @var \Tragwerk\Domain\Model\ProjectConfig|null $projectConfig
- * @var list<\Tragwerk\Domain\Entity\Domain>    $domains
+ * @var list<\Tragwerk\Domain\Entity\Domain>     $domains
+ * @var string|null                              $parentBranch
  */
 $tabId        = 'tw-env-tab-' . md5($branch);
 $deployUrl    = $this->url('project.environment.deploy-log', ['id' => $project->id->toString()])
     . '?branch=' . urlencode($branch);
 $redeployUrl  = $this->url('project.environment.redeploy', ['id' => $project->id->toString()]);
+$syncDataUrl  = $this->url('project.environment.sync-data', ['id' => $project->id->toString()]);
 $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString(), 'branch' => $branch]);
 ?>
 <ul class="nav nav-tabs nav-tabs-sm mb-3" id="<?= $tabId ?>" role="tablist">
@@ -46,7 +48,14 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
 
 <div class="tab-content">
     <div class="tab-pane fade show active" id="<?= $tabId ?>-deploy" role="tabpanel">
-        <div class="d-flex justify-content-end mb-2">
+        <div class="d-flex justify-content-end gap-2 mb-2">
+            <?php if ($parentBranch !== null): ?>
+            <button class="btn btn-outline-secondary btn-sm"
+                    data-bs-toggle="modal"
+                    data-bs-target="#tw-sync-data-modal">
+                <i class="bi bi-arrow-down-circle me-1"></i><?= $this->t('Sync from parent') ?>
+            </button>
+            <?php endif ?>
             <button class="btn btn-outline-secondary btn-sm"
                     data-bs-toggle="modal"
                     data-bs-target="#tw-redeploy-modal">
@@ -251,6 +260,38 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
 </div>
 
 <div id="tw-env-modal-container" hx-swap-oob="true">
+    <?php if ($parentBranch !== null): ?>
+    <div class="modal fade" id="tw-sync-data-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><?= $this->t('Sync from parent') ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0"><?= $this->t('Copy data volumes from branch') ?> <strong><?= $this->e($parentBranch) ?></strong> <?= $this->t('into') ?> <strong><?= $this->e($branch) ?></strong>?</p>
+                    <p class="small text-body-secondary mt-2 mb-0"><?= $this->t('Existing database contents will be overwritten. This cannot be undone.') ?></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <?= $this->t('Cancel') ?>
+                    </button>
+                    <button type="button"
+                            class="btn btn-warning"
+                            data-bs-dismiss="modal"
+                            hx-post="<?= $this->e($syncDataUrl) ?>"
+                            hx-vals='{"branch": "<?= $this->e($branch) ?>"}'
+                            hx-include="#tw-csrf-token"
+                            hx-target="#tw-deploy-log"
+                            hx-swap="outerHTML">
+                        <i class="bi bi-arrow-down-circle me-1"></i><?= $this->t('Sync') ?>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif ?>
+
     <div class="modal fade" id="tw-redeploy-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content">

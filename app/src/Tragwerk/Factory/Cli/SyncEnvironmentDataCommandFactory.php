@@ -6,7 +6,7 @@ namespace Tragwerk\Factory\Cli;
 
 use CuyZ\Valinor\Mapper\TreeMapper;
 use Psr\Container\ContainerInterface;
-use Tragwerk\Application\Cli\Command\DeployEnvironmentCommand;
+use Tragwerk\Application\Cli\Command\SyncEnvironmentDataCommand;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\DeployJobRepository;
@@ -15,19 +15,11 @@ use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Infrastructure\Git\BareRepository;
 
 use function assert;
-use function is_array;
-use function is_string;
 
-final readonly class DeployEnvironmentCommandFactory
+final readonly class SyncEnvironmentDataCommandFactory
 {
-    public function __invoke(ContainerInterface $container): DeployEnvironmentCommand
+    public function __invoke(ContainerInterface $container): SyncEnvironmentDataCommand
     {
-        $config = $container->get('config');
-        assert(is_array($config));
-
-        $dataPath = $config['project']['data_path'] ?? 'data/project';
-        assert(is_string($dataPath));
-
         $projects    = $container->get(ProjectRepository::class);
         $servers     = $container->get(ServerRepository::class);
         $credentials = $container->get(CredentialRepository::class);
@@ -44,7 +36,7 @@ final readonly class DeployEnvironmentCommandFactory
         assert($xmlConv instanceof XmlToArrayConverter);
         assert($mapper instanceof TreeMapper);
 
-        return new DeployEnvironmentCommand(
+        return new SyncEnvironmentDataCommand(
             $projects,
             $servers,
             $credentials,
@@ -52,7 +44,6 @@ final readonly class DeployEnvironmentCommandFactory
             $bareRepo,
             $xmlConv,
             $mapper,
-            $dataPath,
         );
     }
 }

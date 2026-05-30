@@ -113,6 +113,27 @@ final class DeployJobRepository extends GenericRepository implements DeployJobRe
     }
 
     #[Override]
+    public function hasCompletedDeploy(ProjectIdentifier $projectId, string $branch): bool
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb->select('1')
+            ->from(EntityHelper::getDbTableName(EntityType::DEPLOY_JOB))
+            ->where($qb->expr()->eq('project_id', ':project_id'))
+            ->andWhere($qb->expr()->eq('branch', ':branch'))
+            ->andWhere($qb->expr()->eq('status', ':status'))
+            ->setParameter('project_id', $projectId->toString())
+            ->setParameter('branch', $branch)
+            ->setParameter('status', DeployJobStatus::Completed->value)
+            ->setMaxResults(1);
+
+        try {
+            return $qb->executeQuery()->fetchOne() !== false;
+        } catch (Exception) {
+            return false;
+        }
+    }
+
+    #[Override]
     public function updateStatus(DeployJobIdentifier $id, DeployJobStatus $status): void
     {
         try {
