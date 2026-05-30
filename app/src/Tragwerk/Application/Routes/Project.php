@@ -87,6 +87,12 @@ final readonly class Project
         );
 
         $routes->get(
+            '/projects/{id}/environments/container-status',
+            $this->middlewareFactory->prepare([Handler\Project\ContainerStatusHandler::class]),
+            'project.environment.container-status',
+        );
+
+        $routes->get(
             '/projects/{id}/environments/download',
             $this->middlewareFactory->prepare([Handler\Project\DownloadBuildHandler::class]),
             'project.environment.download',
