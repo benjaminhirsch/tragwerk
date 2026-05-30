@@ -214,7 +214,7 @@
             </xs:simpleType>
         </xs:attribute>
         <xs:attribute name="path" type="xs:string" use="required"/>
-        <xs:attribute name="clone-from-parent" type="xs:boolean" default="false">
+        <xs:attribute name="clone-from-parent" type="xs:boolean" default="true">
             <xs:annotation>
                 <xs:documentation>
                     When creating a new branch environment, copy the contents of
