@@ -1,17 +1,16 @@
 <?php
 /**
- * @var \Tragwerk\Domain\Entity\Project        $project
- * @var string                                 $branch
- * @var \Tragwerk\Domain\Entity\DeployJob|null $job
- * @var list<\Tragwerk\Domain\Entity\DeployJob> $activeJobs
- * @var bool                                   $forcePolling
+ * @var \Tragwerk\Domain\Entity\Project            $project
+ * @var string                                     $branch
+ * @var list<\Tragwerk\Domain\Entity\DeployJob>    $jobs
+ * @var list<\Tragwerk\Domain\Entity\DeployJob>    $activeJobs
+ * @var int                                        $offset
+ * @var bool                                       $hasMore
+ * @var bool                                       $forcePolling
  */
-$logUrl  = $this->url('project.environment.deploy-log', ['id' => $project->id->toString()])
+$logUrl   = $this->url('project.environment.deploy-log', ['id' => $project->id->toString()])
     . '?branch=' . urlencode($branch);
-$polling = $forcePolling || $activeJobs !== [] || ($job !== null && ($job->status->value === 'pending' || $job->status->value === 'running'));
-
-$displayJob = $activeJobs !== [] ? $activeJobs[0] : $job;
-$pendingJobs = array_slice($activeJobs, 1);
+$polling  = $forcePolling || $activeJobs !== [];
 ?>
 <div id="tw-deploy-log"
     <?php if ($polling): ?>
@@ -19,55 +18,21 @@ $pendingJobs = array_slice($activeJobs, 1);
     hx-trigger="every 2s"
     hx-swap="outerHTML"
     <?php endif ?>
-    hx-on:htmx:load="var p=this.querySelector('#tw-deploy-pre');if(p)p.scrollTop=p.scrollHeight"
 >
-    <?php if ($displayJob === null): ?>
+    <?php if ($jobs === []): ?>
         <div class="text-body-secondary small">
             <i class="bi bi-info-circle me-1"></i>
-            <?= $this->t('No deploy yet.') ?>
+            <?= $this->t('No deploys yet.') ?>
         </div>
     <?php else: ?>
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <?php if ($displayJob->status->value === 'completed'): ?>
-                <span class="badge bg-success"><?= $this->t('Completed') ?></span>
-            <?php elseif ($displayJob->status->value === 'failed'): ?>
-                <span class="badge bg-danger"><?= $this->t('Failed') ?></span>
-            <?php elseif ($displayJob->status->value === 'running'): ?>
-                <span class="badge bg-primary">
-                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                    <?= $this->t('Running') ?>
-                </span>
-            <?php else: ?>
-                <span class="badge bg-secondary">
-                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                    <?= $this->t('Pending') ?>
-                </span>
-            <?php endif ?>
-            <span class="text-body-secondary small">
-                <?= $this->e($displayJob->createdAt->format('Y-m-d H:i')) ?>
-            </span>
+        <div class="list-group list-group-flush border rounded" id="tw-deploy-job-list">
+            <?= $this->fetch('page::project/_deploy_log_items', [
+                'project' => $project,
+                'branch'  => $branch,
+                'jobs'    => $jobs,
+                'offset'  => $offset,
+                'hasMore' => $hasMore,
+            ]) ?>
         </div>
-        <pre id="tw-deploy-pre"
-             class="bg-dark text-light p-3 rounded mb-0"
-             style="min-height: 80px; max-height: 500px; overflow-y: auto; font-size: 0.8rem; white-space: pre-wrap;"
-        ><?= $this->e($displayJob->output !== '' ? $displayJob->output : '...') ?></pre>
-
-        <?php if ($pendingJobs !== []): ?>
-            <div class="mt-3 text-body-secondary small">
-                <i class="bi bi-hourglass-split me-1"></i>
-                <?= $this->t('{count} job(s) waiting in queue:', ['count' => count($pendingJobs)]) ?>
-                <ul class="list-unstyled ms-3 mt-1 mb-0">
-                    <?php foreach ($pendingJobs as $queued): ?>
-                        <li>
-                            <i class="bi bi-clock me-1"></i>
-                            <?= $this->t('Commit {sha} — queued at {time}', [
-                                'sha'  => $this->e(substr($queued->commitSha, 0, 7)),
-                                'time' => $this->e($queued->createdAt->format('H:i:s')),
-                            ]) ?>
-                        </li>
-                    <?php endforeach ?>
-                </ul>
-            </div>
-        <?php endif ?>
     <?php endif ?>
 </div>

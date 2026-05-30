@@ -20,6 +20,8 @@ use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Infrastructure\Git\BareRepository;
 
+use function array_slice;
+use function count;
 use function is_array;
 use function is_string;
 
@@ -64,12 +66,18 @@ final readonly class RedeployEnvironmentHandler implements RequestHandlerInterfa
             commitSha: $commits[0]->hash,
         ));
 
-        $job = $this->deployJobRepository->getLatestByProjectAndBranch($project->id, $branch);
+        $jobs       = $this->deployJobRepository->getPagedByProjectAndBranch($project->id, $branch, 21, 0);
+        $hasMore    = count($jobs) > 20;
+        $jobs       = array_slice($jobs, 0, 20);
+        $activeJobs = $this->deployJobRepository->getActiveByProjectAndBranch($project->id, $branch);
 
         return $this->renderer->render($request, 'page::project/_deploy_log', [
             'project'      => $project,
             'branch'       => $branch,
-            'job'          => $job,
+            'jobs'         => $jobs,
+            'activeJobs'   => $activeJobs,
+            'offset'       => 0,
+            'hasMore'      => $hasMore,
             'forcePolling' => true,
         ]);
     }

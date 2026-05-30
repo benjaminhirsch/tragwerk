@@ -11,23 +11,19 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Throwable;
 use Tragwerk\Application\Response\ResponseRenderer;
+use Tragwerk\Domain\Entity\DeployJob;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Repository\DeployJobRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
+use Tragwerk\Domain\ValueObject\DeployJobIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 
-use function array_slice;
 use function assert;
-use function count;
-use function is_numeric;
 use function is_string;
-use function max;
 
-final readonly class DeployLogHandler implements RequestHandlerInterface
+final readonly class DeployJobOutputHandler implements RequestHandlerInterface
 {
-    private const int PAGE_SIZE = 20;
-
     public function __construct(
         private ResponseRenderer $renderer,
         private ProjectRepository $projectRepository,
@@ -44,44 +40,27 @@ final readonly class DeployLogHandler implements RequestHandlerInterface
             return new EmptyResponse(404);
         }
 
-        $params = $request->getQueryParams();
-        $branch = is_string($params['branch'] ?? null) ? $params['branch'] : null;
+        $jobId = $request->getAttribute('jobId');
 
-        if ($branch === null || $branch === '') {
-            return new EmptyResponse(400);
+        if (! is_string($jobId) || ! DeployJobIdentifier::isValid($jobId)) {
+            return new EmptyResponse(404);
         }
 
-        $offset = max(0, is_numeric($params['offset'] ?? null) ? (int) $params['offset'] : 0);
-        $jobs   = $this->deployJobRepository->getPagedByProjectAndBranch(
-            $project->id,
-            $branch,
-            self::PAGE_SIZE + 1,
-            $offset,
-        );
-
-        $hasMore = count($jobs) > self::PAGE_SIZE;
-        $jobs    = array_slice($jobs, 0, self::PAGE_SIZE);
-
-        if ($offset > 0) {
-            return $this->renderer->render($request, 'page::project/_deploy_log_items', [
-                'project' => $project,
-                'branch'  => $branch,
-                'jobs'    => $jobs,
-                'offset'  => $offset,
-                'hasMore' => $hasMore,
-            ]);
+        try {
+            $job = $this->deployJobRepository->getById(DeployJobIdentifier::fromString($jobId));
+        } catch (Throwable) {
+            return new EmptyResponse(404);
         }
 
-        $activeJobs = $this->deployJobRepository->getActiveByProjectAndBranch($project->id, $branch);
+        assert($job instanceof DeployJob);
 
-        return $this->renderer->render($request, 'page::project/_deploy_log', [
-            'project'      => $project,
-            'branch'       => $branch,
-            'jobs'         => $jobs,
-            'activeJobs'   => $activeJobs,
-            'offset'       => $offset,
-            'hasMore'      => $hasMore,
-            'forcePolling' => false,
+        if ($job->projectId->toString() !== $project->id->toString()) {
+            return new EmptyResponse(404);
+        }
+
+        return $this->renderer->render($request, 'page::project/_deploy_job_output', [
+            'project' => $project,
+            'job'     => $job,
         ]);
     }
 
