@@ -328,7 +328,8 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
                     <h5 class="modal-title"><?= $this->t('Deploy Log') ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-0" id="tw-job-modal-body">
+                <div class="modal-body p-0" id="tw-job-modal-body"
+                     hx-on:htmx:after-swap="var p=this.querySelector('#tw-deploy-pre');if(p)p.scrollTop=p.scrollHeight">
                     <div class="p-3 text-body-secondary small">
                         <span class="spinner-border spinner-border-sm me-2" role="status"></span>
                         <?= $this->t('Loading...') ?>
