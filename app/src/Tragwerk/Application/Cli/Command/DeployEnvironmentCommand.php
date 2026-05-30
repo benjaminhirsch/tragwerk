@@ -62,7 +62,8 @@ final class DeployEnvironmentCommand extends Command
             ->addArgument('project-id', InputArgument::REQUIRED, 'Project UUID')
             ->addArgument('branch', InputArgument::REQUIRED, 'Git branch name')
             ->addArgument('commit-sha', InputArgument::REQUIRED, 'Git commit SHA')
-            ->addArgument('deploy-job-id', InputArgument::REQUIRED, 'Deploy job UUID');
+            ->addArgument('deploy-job-id', InputArgument::REQUIRED, 'Deploy job UUID')
+            ->addArgument('acme-email', InputArgument::OPTIONAL, 'ACME email for Traefik', '');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -71,11 +72,13 @@ final class DeployEnvironmentCommand extends Command
         $branch      = $input->getArgument('branch');
         $commitSha   = $input->getArgument('commit-sha');
         $deployJobId = $input->getArgument('deploy-job-id');
+        $acmeEmail   = $input->getArgument('acme-email') ?? '';
 
         assert(is_string($projectId));
         assert(is_string($branch));
         assert(is_string($commitSha));
         assert(is_string($deployJobId));
+        assert(is_string($acmeEmail));
 
         $id    = ProjectIdentifier::fromString($projectId);
         $jobId = DeployJobIdentifier::fromString($deployJobId);
@@ -223,6 +226,9 @@ final class DeployEnvironmentCommand extends Command
             return Command::FAILURE;
         }
 
+        // Create the shared Traefik network before docker compose up so external network refs resolve
+        $sftp->exec('docker network create tragwerk-net 2>/dev/null; true');
+
         $this->log($jobId, '[Deploy] Running docker compose up --build --wait...');
 
         $dc = 'NO_COLOR=1 docker compose -f docker-compose.yml';
@@ -246,6 +252,10 @@ final class DeployEnvironmentCommand extends Command
         // because --wait implies detached mode, so container stdout is not part of the up stream.
         $this->streamExec($sftp, 'cd ~/' . $remoteDir . ' && ' . $dc . ' logs --no-color --tail 500 2>&1', $jobId);
 
+        // Ensure server-level Traefik is running after docker compose up (which may have stopped
+        // a project-level Traefik from an older compose that included it).
+        $this->ensureServerTraefik($sftp, $acmeEmail, $jobId);
+
         if ($exitStatus !== 0) {
             $code = $exitStatus ?? -1;
             $this->log($jobId, sprintf('[Deploy] Deploy failed (exit code %d). Collecting diagnostics...', $code));
@@ -259,6 +269,60 @@ final class DeployEnvironmentCommand extends Command
         $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Completed);
 
         return Command::SUCCESS;
+    }
+
+    private function ensureServerTraefik(SFTP $sftp, string $acmeEmail, DeployJobIdentifier $jobId): void
+    {
+        $running = trim((string) $sftp->exec(
+            'docker inspect --format "{{.State.Running}}" tragwerk-traefik 2>/dev/null',
+        ));
+
+        if ($running === 'true') {
+            return;
+        }
+
+        $this->log($jobId, '[Deploy] Starting server-level Traefik...');
+
+        // Stop any project-compose Traefik containers that may still hold ports 80/443
+        $sftp->exec(
+            'docker ps --filter "name=traefik" --format "{{.Names}}"'
+            . ' | grep -v "^tragwerk-traefik$"'
+            . ' | xargs -r docker stop 2>/dev/null; true',
+        );
+
+        // Remove stale managed Traefik container (stopped state)
+        $sftp->exec('docker rm -f tragwerk-traefik 2>/dev/null; true');
+
+        $emailFlag = escapeshellarg('--certificatesresolvers.letsencrypt.acme.email=' . $acmeEmail);
+
+        $result = $sftp->exec(
+            'docker run -d'
+            . ' --name tragwerk-traefik'
+            . ' --restart unless-stopped'
+            . ' --network tragwerk-net'
+            . ' -v /var/run/docker.sock:/var/run/docker.sock:ro'
+            . ' -v tragwerk-traefik-certs:/certs'
+            . ' -p 80:80'
+            . ' -p 443:443'
+            . ' traefik:v3'
+            . ' --providers.docker=true'
+            . ' --providers.docker.exposedbydefault=false'
+            . ' --providers.docker.network=tragwerk-net'
+            . ' --entrypoints.web.address=:80'
+            . ' --entrypoints.websecure.address=:443'
+            . ' --certificatesresolvers.letsencrypt.acme.tlschallenge=true'
+            . ' ' . $emailFlag
+            . ' --certificatesresolvers.letsencrypt.acme.storage=/certs/acme.json'
+            . ' 2>&1',
+        );
+
+        if ($sftp->getExitStatus() !== 0) {
+            $this->log($jobId, '[Deploy] Warning: Could not start Traefik: ' . (string) $result);
+
+            return;
+        }
+
+        $this->log($jobId, '[Deploy] Server-level Traefik started.');
     }
 
     private function streamExec(SFTP $sftp, string $cmd, DeployJobIdentifier $jobId): void
