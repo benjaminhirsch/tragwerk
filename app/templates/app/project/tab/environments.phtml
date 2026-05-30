@@ -1,7 +1,6 @@
 <?php
 /**
  * @var \Tragwerk\Domain\Entity\Project $project
- * @var string                          $cloneUrl
  */
 
 $listUrl = $this->url('project.environment.branch-list', ['id' => $project->id->toString()]);
@@ -9,15 +8,6 @@ $listUrl = $this->url('project.environment.branch-list', ['id' => $project->id->
 
 <input type="hidden" id="tw-csrf-token" name="csrf_token" value="<?= $this->getCsrfToken() ?>">
 <input type="hidden" id="tw-active-branch" value="">
-
-<div class="mb-3">
-    <label class="form-label text-body-secondary small mb-1"><?= $this->t('Git clone URL') ?></label>
-    <div class="input-group input-group-sm">
-        <span class="input-group-text"><i class="bi bi-git"></i></span>
-        <input type="text" class="form-control font-monospace" value="<?= $this->e($cloneUrl) ?>" readonly
-               onclick="this.select()">
-    </div>
-</div>
 
 <div class="row g-4">
     <div class="col-12 col-lg-4">
