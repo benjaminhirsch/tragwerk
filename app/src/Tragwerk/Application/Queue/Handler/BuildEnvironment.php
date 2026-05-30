@@ -11,6 +11,7 @@ use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
+use Throwable;
 use Tragwerk\Application\Queue\Message;
 use Tragwerk\Application\Queue\Producer;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
@@ -18,12 +19,18 @@ use Tragwerk\Domain\Docker\DockerComposeGenerator;
 use Tragwerk\Domain\Docker\DockerfileGenerator;
 use Tragwerk\Domain\Entity\BuildLog;
 use Tragwerk\Domain\Entity\DeployJob;
+use Tragwerk\Domain\Entity\Project;
+use Tragwerk\Domain\Entity\Team;
+use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\Enum\BuildLogType;
 use Tragwerk\Domain\Enum\DeployJobStatus;
 use Tragwerk\Domain\Event\BuildLogCreated;
 use Tragwerk\Domain\Event\DeployJobCreated;
 use Tragwerk\Domain\Model\ProjectConfig;
 use Tragwerk\Domain\Repository\DomainRepository;
+use Tragwerk\Domain\Repository\ProjectRepository;
+use Tragwerk\Domain\Repository\TeamRepository;
+use Tragwerk\Domain\Repository\UserRepository;
 use Tragwerk\Domain\ValueObject\BuildLogIdentifier;
 use Tragwerk\Domain\ValueObject\DeployJobIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
@@ -32,6 +39,7 @@ use Tragwerk\Infrastructure\Git\BareRepository;
 use ZipArchive;
 
 use function array_map;
+use function assert;
 use function basename;
 use function chmod;
 use function file_put_contents;
@@ -54,6 +62,9 @@ final readonly class BuildEnvironment
         private string $projectDataPath,
         private Producer $producer,
         private DomainRepository $domainRepository,
+        private ProjectRepository $projectRepository,
+        private TeamRepository $teamRepository,
+        private UserRepository $userRepository,
     ) {
     }
 
@@ -93,10 +104,11 @@ final readonly class BuildEnvironment
             $this->domainRepository->findByProject($projectIdentifier),
         );
 
-        $messages = ['Build started for commit ' . $commitSha];
+        $acmeEmail = $this->ownerEmail($projectIdentifier);
+        $messages  = ['Build started for commit ' . $commitSha];
 
         try {
-            $compose = Yaml::dump($this->composeGenerator->generate($config, $domains), 10, 2);
+            $compose = Yaml::dump($this->composeGenerator->generate($config, $domains, $acmeEmail), 10, 2);
             file_put_contents($outDir . '/docker-compose.yml', $compose);
             $messages[] = 'Generated docker-compose.yml';
         } catch (RuntimeException $e) {
@@ -205,6 +217,24 @@ final readonly class BuildEnvironment
         }
 
         return $base;
+    }
+
+    private function ownerEmail(ProjectIdentifier $projectId): string
+    {
+        try {
+            $project = $this->projectRepository->getById($projectId);
+            assert($project instanceof Project);
+
+            $team = $this->teamRepository->getById($project->teamId);
+            assert($team instanceof Team);
+
+            $user = $this->userRepository->getById($team->ownerId);
+            assert($user instanceof User);
+
+            return $user->email;
+        } catch (Throwable) {
+            return '';
+        }
     }
 
     private function log(string $projectId, string $branch, string $message): void

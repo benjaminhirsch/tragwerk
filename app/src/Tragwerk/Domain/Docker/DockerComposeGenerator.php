@@ -33,7 +33,7 @@ final readonly class DockerComposeGenerator
      *
      * @return array<string, mixed>
      */
-    public function generate(ProjectConfig $config, array $domains = []): array
+    public function generate(ProjectConfig $config, array $domains = [], string $acmeEmail = ''): array
     {
         /** @var array<string, mixed> $services */
         $services = [];
@@ -114,7 +114,7 @@ final readonly class DockerComposeGenerator
             $services[$appSlug] = $svcConfig;
         }
 
-        $services['traefik'] = $this->buildTraefikService();
+        $services['traefik'] = $this->buildTraefikService($acmeEmail);
 
         foreach ($config->services as $service) {
             $slug = $this->slugify($service->name);
@@ -283,7 +283,7 @@ final readonly class DockerComposeGenerator
     }
 
     /** @return array<string, mixed> */
-    private function buildTraefikService(): array
+    private function buildTraefikService(string $acmeEmail): array
     {
         return [
             'image'   => 'traefik:v3',
@@ -293,7 +293,7 @@ final readonly class DockerComposeGenerator
                 '--entrypoints.web.address=:80',
                 '--entrypoints.websecure.address=:443',
                 '--certificatesresolvers.letsencrypt.acme.tlschallenge=true',
-                '--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-admin@example.com}',
+                '--certificatesresolvers.letsencrypt.acme.email=' . $acmeEmail,
                 '--certificatesresolvers.letsencrypt.acme.storage=/certs/acme.json',
             ],
             'ports'   => ['80:80', '443:443'],
