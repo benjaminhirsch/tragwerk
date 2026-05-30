@@ -93,6 +93,12 @@ final readonly class Project
         );
 
         $routes->get(
+            '/projects/{id}/environments/volume-sizes',
+            $this->middlewareFactory->prepare([Handler\Project\VolumeSizesHandler::class]),
+            'project.environment.volume-sizes',
+        );
+
+        $routes->get(
             '/projects/{id}/environments/download',
             $this->middlewareFactory->prepare([Handler\Project\DownloadBuildHandler::class]),
             'project.environment.download',
