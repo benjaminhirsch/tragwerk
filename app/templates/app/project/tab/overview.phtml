@@ -3,6 +3,7 @@
  * @var \Tragwerk\Domain\Entity\Project $project
  * @var \Tragwerk\Domain\Entity\Server  $server
  * @var \Tragwerk\Domain\Entity\Team    $team
+ * @var string                          $cloneUrl
  */
 ?>
 <table class="table table-borderless mb-0">
@@ -36,6 +37,16 @@
         <tr>
             <th class="text-body-secondary fw-normal"><?= $this->t('Updated') ?></th>
             <td><?= $this->e($project->updatedAt->format('Y-m-d H:i')) ?></td>
+        </tr>
+        <tr>
+            <th class="text-body-secondary fw-normal"><?= $this->t('Git clone URL') ?></th>
+            <td>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="bi bi-git"></i></span>
+                    <input type="text" class="form-control form-control-sm font-monospace"
+                           value="<?= $this->e($cloneUrl) ?>" readonly onclick="this.select()">
+                </div>
+            </td>
         </tr>
     </tbody>
 </table>

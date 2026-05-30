@@ -54,27 +54,24 @@ final readonly class TabHandler implements RequestHandlerInterface
 
     private function renderOverview(ServerRequestInterface $request, Project $project): ResponseInterface
     {
-        $server = $this->serverRepository->getById($project->serverId);
-        $team   = $this->teamRepository->getById($project->teamId);
+        $server   = $this->serverRepository->getById($project->serverId);
+        $team     = $this->teamRepository->getById($project->teamId);
+        $cloneUrl = 'git@' . $this->gitSshHost . ':' . $this->gitSshRepoBase . '/' . $project->id->toString();
 
         assert($server instanceof Server);
         assert($team instanceof Team);
 
         return $this->renderer->render($request, 'page::project/tab/overview', [
-            'project' => $project,
-            'server'  => $server,
-            'team'    => $team,
+            'project'  => $project,
+            'server'   => $server,
+            'team'     => $team,
+            'cloneUrl' => $cloneUrl,
         ]);
     }
 
     private function renderEnvironments(ServerRequestInterface $request, Project $project): ResponseInterface
     {
-        $cloneUrl = 'git@' . $this->gitSshHost . ':' . $this->gitSshRepoBase . '/' . $project->id->toString();
-
-        return $this->renderer->render($request, 'page::project/tab/environments', [
-            'project'  => $project,
-            'cloneUrl' => $cloneUrl,
-        ]);
+        return $this->renderer->render($request, 'page::project/tab/environments', ['project' => $project]);
     }
 
     private function resolveProject(ServerRequestInterface $request): Project|null
