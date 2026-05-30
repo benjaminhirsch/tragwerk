@@ -4,16 +4,23 @@ declare(strict_types=1);
 
 namespace Tragwerk\Application\Cli\Command;
 
+use CuyZ\Valinor\Mapper\MappingError;
+use CuyZ\Valinor\Mapper\TreeMapper;
+use DOMDocument;
 use phpseclib3\Crypt\PublicKeyLoader;
 use phpseclib3\Exception\NoKeyLoadedException;
 use phpseclib3\Net\SFTP;
+use RuntimeException;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Throwable;
+use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Enum\DeployJobStatus;
+use Tragwerk\Domain\Enum\MountSource;
+use Tragwerk\Domain\Model\ProjectConfig;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\DeployJobRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
@@ -32,10 +39,13 @@ use function implode;
 use function is_dir;
 use function is_string;
 use function mkdir;
+use function preg_replace;
 use function rmdir;
 use function rtrim;
 use function sprintf;
+use function str_starts_with;
 use function strpos;
+use function strtolower;
 use function substr;
 use function sys_get_temp_dir;
 use function trim;
@@ -51,6 +61,8 @@ final class DeployEnvironmentCommand extends Command
         private readonly CredentialRepository $credentialRepository,
         private readonly DeployJobRepository $deployJobRepository,
         private readonly BareRepository $bareRepository,
+        private readonly XmlToArrayConverter $xmlConverter,
+        private readonly TreeMapper $treeMapper,
         private readonly string $projectDataPath,
     ) {
         parent::__construct();
@@ -265,10 +277,171 @@ final class DeployEnvironmentCommand extends Command
             return Command::FAILURE;
         }
 
+        $this->syncFromParentIfFirstDeploy($sftp, $projectId, $branch, $commitSha, $jobId);
+
         $this->log($jobId, '[Deploy] Deploy completed successfully.');
         $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Completed);
 
         return Command::SUCCESS;
+    }
+
+    private function syncFromParentIfFirstDeploy(
+        SFTP $sftp,
+        string $projectId,
+        string $branch,
+        string $commitSha,
+        DeployJobIdentifier $jobId,
+    ): void {
+        $id = ProjectIdentifier::fromString($projectId);
+
+        if ($this->deployJobRepository->hasCompletedDeploy($id, $branch)) {
+            return;
+        }
+
+        $parents      = $this->bareRepository->getBranchParents($projectId);
+        $parentBranch = $parents[$branch] ?? null;
+
+        if ($parentBranch === null) {
+            return;
+        }
+
+        if (! $this->deployJobRepository->hasCompletedDeploy($id, $parentBranch)) {
+            return;
+        }
+
+        $xmlContent = $this->bareRepository->getFileContent($projectId, $commitSha, '.tragwerk/config.xml');
+
+        if ($xmlContent === null || $xmlContent === '') {
+            return;
+        }
+
+        try {
+            $config = $this->parseProjectConfig($xmlContent);
+        } catch (Throwable) {
+            return;
+        }
+
+        $this->log($jobId, '[Sync] Syncing data volumes from parent branch "' . $parentBranch . '"...');
+
+        $this->syncVolumes($sftp, $projectId, $branch, $parentBranch, $config, $jobId);
+
+        $this->log($jobId, '[Sync] Data sync completed.');
+    }
+
+    private function syncVolumes(
+        SFTP $sftp,
+        string $projectId,
+        string $branch,
+        string $parentBranch,
+        ProjectConfig $config,
+        DeployJobIdentifier $jobId,
+    ): void {
+        $parentSlug = $this->slugify(basename($parentBranch));
+        $branchSlug = $this->slugify(basename($branch));
+        $parentDir  = 'tragwerk/' . $projectId . '/' . $parentBranch;
+        $childDir   = 'tragwerk/' . $projectId . '/' . $branch;
+
+        foreach ($config->services as $service) {
+            $type = $service->type->value;
+
+            if (
+                ! str_starts_with($type, 'postgresql:')
+                && ! str_starts_with($type, 'mysql:')
+                && ! str_starts_with($type, 'mariadb:')
+            ) {
+                continue;
+            }
+
+            $serviceSlug = $this->slugify($service->name);
+            $volName     = $serviceSlug . '-data';
+            $src         = $parentSlug . '_' . $volName;
+            $dst         = $branchSlug . '_' . $volName;
+
+            $this->log($jobId, '[Sync] Syncing DB volume "' . $volName . '" from parent...');
+
+            $sftp->exec(
+                'cd ~/' . $parentDir . ' && NO_COLOR=1 docker compose stop '
+                . escapeshellarg($serviceSlug) . ' 2>&1',
+            );
+            $sftp->exec(
+                'cd ~/' . $childDir . ' && NO_COLOR=1 docker compose stop '
+                . escapeshellarg($serviceSlug) . ' 2>&1',
+            );
+
+            $sftp->exec(
+                'docker run --rm'
+                . ' -v ' . escapeshellarg($src) . ':/src:ro'
+                . ' -v ' . escapeshellarg($dst) . ':/dst'
+                . ' alpine sh -c "cp -a /src/. /dst/" 2>&1',
+            );
+
+            $sftp->exec(
+                'cd ~/' . $parentDir . ' && NO_COLOR=1 docker compose start '
+                . escapeshellarg($serviceSlug) . ' 2>&1',
+            );
+            $sftp->exec(
+                'cd ~/' . $childDir . ' && NO_COLOR=1 docker compose start '
+                . escapeshellarg($serviceSlug) . ' 2>&1',
+            );
+
+            $this->log($jobId, '[Sync] Volume "' . $volName . '" synced.');
+        }
+
+        foreach ($config->applications as $app) {
+            $appSlug = $this->slugify($app->name);
+
+            foreach ($app->mounts as $mount) {
+                if ($mount->source !== MountSource::LOCAL || ! $mount->cloneFromParent) {
+                    continue;
+                }
+
+                $mountSlug = $this->slugify($mount->name);
+                $volName   = $appSlug . '-' . $mountSlug;
+                $src       = $parentSlug . '_' . $volName;
+                $dst       = $branchSlug . '_' . $volName;
+
+                $this->log($jobId, '[Sync] Syncing app mount volume "' . $volName . '"...');
+
+                $sftp->exec(
+                    'docker run --rm'
+                    . ' -v ' . escapeshellarg($src) . ':/src:ro'
+                    . ' -v ' . escapeshellarg($dst) . ':/dst'
+                    . ' alpine sh -c "cp -a /src/. /dst/" 2>&1',
+                );
+
+                $this->log($jobId, '[Sync] Volume "' . $volName . '" synced.');
+            }
+        }
+    }
+
+    private function parseProjectConfig(string $xmlContent): ProjectConfig
+    {
+        $dom = new DOMDocument();
+
+        if (! $dom->loadXML($xmlContent)) {
+            throw new RuntimeException('Invalid XML');
+        }
+
+        $source = $this->xmlConverter->convert($dom);
+        unset($source['xsi:noNamespaceSchemaLocation']);
+
+        try {
+            return $this->treeMapper->map(ProjectConfig::class, $source);
+        } catch (MappingError $e) {
+            $errors = [];
+            foreach ($e->messages() as $msg) {
+                $errors[] = $msg->path() . ': ' . $msg->toString();
+            }
+
+            throw new RuntimeException('Config mapping failed: ' . implode(', ', $errors));
+        }
+    }
+
+    private function slugify(string $name): string
+    {
+        $slug = preg_replace('/[\s_]+/', '-', strtolower($name)) ?? '';
+
+        return preg_replace('/[^a-z0-9-]/', '', $slug) ?? '';
     }
 
     private function ensureServerTraefik(SFTP $sftp, string $acmeEmail, DeployJobIdentifier $jobId): void

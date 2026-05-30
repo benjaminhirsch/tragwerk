@@ -62,6 +62,12 @@ final readonly class Project
             'project.environment.redeploy',
         );
 
+        $routes->post(
+            '/projects/{id}/environments/sync-data',
+            $this->middlewareFactory->prepare([Handler\Project\SyncEnvironmentDataHandler::class]),
+            'project.environment.sync-data',
+        );
+
         $routes->get(
             '/projects/{id}/environments/branch-list',
             $this->middlewareFactory->prepare([Handler\Project\BranchListHandler::class]),

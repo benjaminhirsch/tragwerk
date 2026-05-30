@@ -18,6 +18,7 @@ use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Model\ProjectConfig;
 use Tragwerk\Domain\Repository\BuildLogRepository;
+use Tragwerk\Domain\Repository\DeployJobRepository;
 use Tragwerk\Domain\Repository\DomainRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
@@ -36,6 +37,7 @@ final readonly class EnvironmentHandler implements RequestHandlerInterface
         private BareRepository $bareRepository,
         private BuildLogRepository $buildLogRepository,
         private DomainRepository $domainRepository,
+        private DeployJobRepository $deployJobRepository,
         private XmlToArrayConverter $xmlConverter,
         private TreeMapper $treeMapper,
     ) {
@@ -71,6 +73,8 @@ final readonly class EnvironmentHandler implements RequestHandlerInterface
         $projectConfig = $this->loadProjectConfig($project->id->toString(), $commits);
         $domains       = $this->domainRepository->findByEnvironment($project->id, $branch);
 
+        $parentBranch = $this->resolveParentBranch($project->id->toString(), $branch);
+
         return $this->renderer->render($request, 'page::project/tab/environment', [
             'project'       => $project,
             'branch'        => $branch,
@@ -78,7 +82,31 @@ final readonly class EnvironmentHandler implements RequestHandlerInterface
             'buildLogs'     => $buildLogs,
             'projectConfig' => $projectConfig,
             'domains'       => $domains,
+            'parentBranch'  => $parentBranch,
         ]);
+    }
+
+    private function resolveParentBranch(string $projectId, string $branch): string|null
+    {
+        try {
+            $parents      = $this->bareRepository->getBranchParents($projectId);
+            $parentBranch = $parents[$branch] ?? null;
+
+            if ($parentBranch === null) {
+                return null;
+            }
+
+            $parentId       = ProjectIdentifier::fromString($projectId);
+            $parentDeployed = $this->deployJobRepository->hasCompletedDeploy($parentId, $parentBranch);
+
+            if (! $parentDeployed) {
+                return null;
+            }
+
+            return $parentBranch;
+        } catch (Throwable) {
+            return null;
+        }
     }
 
     /** @param Commit[] $commits */

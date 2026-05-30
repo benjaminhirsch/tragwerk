@@ -38,6 +38,8 @@ interface DeployJobRepository
      */
     public function getLatestStatusByProjectAndBranches(ProjectIdentifier $projectId, array $branches): array;
 
+    public function hasCompletedDeploy(ProjectIdentifier $projectId, string $branch): bool;
+
     /** @throws EntityCreationFailed */
     public function create(DeployJob $entity): void;
 

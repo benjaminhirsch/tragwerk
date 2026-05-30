@@ -45,6 +45,7 @@ use Tragwerk\Domain\Config\ConfigValidator;
 use Tragwerk\Domain\Event;
 use Tragwerk\Domain\Repository\UserRepository;
 use Tragwerk\Factory\Cli\DeployEnvironmentCommandFactory;
+use Tragwerk\Factory\Cli\SyncEnvironmentDataCommandFactory;
 use Tragwerk\Factory\Config\ConfigValidatorFactory;
 use Tragwerk\Factory\Event\DispatcherFactory;
 use Tragwerk\Factory\EventListener\Project\DeleteProjectDataFactory;
@@ -55,6 +56,7 @@ use Tragwerk\Factory\Handler\Project\TabHandlerFactory;
 use Tragwerk\Factory\Middleware\MiddlewareFactory;
 use Tragwerk\Factory\Queue\Handler\BuildEnvironmentFactory;
 use Tragwerk\Factory\Queue\Handler\RunDeployEnvironmentFactory;
+use Tragwerk\Factory\Queue\Handler\RunSyncEnvironmentDataFactory;
 use Tragwerk\Factory\Valinor\DefaultMapperBuilderFactory;
 use Tragwerk\Factory\Valinor\DefaultNormalizeBuilderFactory;
 use Tragwerk\Factory\Valinor\TreeMapperFactory;
@@ -94,9 +96,11 @@ final readonly class ConfigProvider
                     BareRepository::class => BareRepositoryFactory::class,
                     Application\Handler\Project\TabHandler::class         => TabHandlerFactory::class,
                     Application\Handler\Project\DownloadBuildHandler::class => DownloadBuildHandlerFactory::class,
-                    Application\Queue\Handler\BuildEnvironment::class       => BuildEnvironmentFactory::class,
-                    Application\Queue\Handler\RunDeployEnvironment::class   => RunDeployEnvironmentFactory::class,
-                    Application\Cli\Command\DeployEnvironmentCommand::class => DeployEnvironmentCommandFactory::class,
+                    Application\Queue\Handler\BuildEnvironment::class         => BuildEnvironmentFactory::class,
+                    Application\Queue\Handler\RunDeployEnvironment::class     => RunDeployEnvironmentFactory::class,
+                    Application\Queue\Handler\RunSyncEnvironmentData::class   => RunSyncEnvironmentDataFactory::class,
+                    Application\Cli\Command\DeployEnvironmentCommand::class   => DeployEnvironmentCommandFactory::class,
+                    Application\Cli\Command\SyncEnvironmentDataCommand::class => SyncEnvironmentDataCommandFactory::class, // phpcs:ignore Generic.Files.LineLength.TooLong
                     EventListener\SshKey\UpdateAuthorizedKeys::class        => UpdateAuthorizedKeysFactory::class,
                     ConfigValidator::class                              => ConfigValidatorFactory::class,
                     EventListener\Project\DeleteProjectData::class     => DeleteProjectDataFactory::class,
