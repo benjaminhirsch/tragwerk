@@ -138,7 +138,8 @@ final readonly class DockerComposeGenerator
                 $volumes[$volName]    = null;
             }
 
-            $svcConfig['healthcheck'] = $this->serviceHealthcheck($service->type);
+            $svcConfig['healthcheck']       = $this->serviceHealthcheck($service->type);
+            $svcConfig['stop_grace_period'] = $this->serviceStopGracePeriod($service->type);
 
             $services[$slug] = $svcConfig;
         }
@@ -412,6 +413,18 @@ final readonly class DockerComposeGenerator
             'timeout'  => '3s',
             'retries'  => 5,
         ];
+    }
+
+    private function serviceStopGracePeriod(ServiceRuntime $runtime): string
+    {
+        if (
+            str_starts_with($runtime->value, 'mysql:')
+            || str_starts_with($runtime->value, 'mariadb:')
+        ) {
+            return '60s';
+        }
+
+        return '30s';
     }
 
     /** @return list<string> */
