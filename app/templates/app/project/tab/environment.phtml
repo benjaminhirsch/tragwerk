@@ -15,6 +15,14 @@ $redeployUrl       = $this->url('project.environment.redeploy', ['id' => $projec
 $syncDataUrl       = $this->url('project.environment.sync-data', ['id' => $project->id->toString()]);
 $containerStatusUrl = $this->url('project.environment.container-status', ['id' => $project->id->toString()])
     . '?branch=' . urlencode($branch);
+$volumeSizesUrl     = $this->url('project.environment.volume-sizes', ['id' => $project->id->toString()])
+    . '?branch=' . urlencode($branch);
+
+$slugify    = static function (string $name): string {
+    $slug = preg_replace('/[\s_]+/', '-', strtolower($name)) ?? '';
+    return preg_replace('/[^a-z0-9-]/', '', $slug) ?? '';
+};
+$branchSlug = $slugify(basename($branch));
 $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString(), 'branch' => $branch]);
 ?>
 <ul class="nav nav-tabs nav-tabs-sm mb-3" id="<?= $tabId ?>" role="tablist">
@@ -220,11 +228,33 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
                                 <?php endif ?>
                             </div>
                             <?php if ($app->mounts !== []): ?>
-                                <div class="small mt-2">
-                                    <span class="text-body-secondary"><?= $this->t('Mounts:') ?></span>
-                                    <?php foreach ($app->mounts as $mount): ?>
-                                        <code class="ms-1"><?= $this->e($mount->path) ?></code>
-                                    <?php endforeach ?>
+                                <div class="mt-2">
+                                    <div class="text-body-secondary small fw-semibold mb-1">
+                                        <?= $this->t('Mounts') ?>
+                                    </div>
+                                    <ul class="list-unstyled mb-0">
+                                        <?php foreach ($app->mounts as $mount): ?>
+                                            <?php
+                                            $appSlug   = $slugify($app->name);
+                                            $mountSlug = $slugify($mount->name);
+                                            $volName   = $branchSlug . '_' . $appSlug . '-' . $mountSlug;
+                                            ?>
+                                            <li class="d-flex align-items-center gap-2 py-1 border-bottom small">
+                                                <i class="bi bi-hdd text-body-secondary flex-shrink-0"></i>
+                                                <div class="flex-grow-1 overflow-hidden">
+                                                    <code><?= $this->e($mount->path) ?></code>
+                                                    <span class="text-body-secondary ms-2" style="font-size:.72rem">
+                                                        <?= $this->e($volName) ?>
+                                                    </span>
+                                                </div>
+                                                <?php if (! $mount->cloneFromParent): ?>
+                                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle flex-shrink-0">
+                                                        no clone
+                                                    </span>
+                                                <?php endif ?>
+                                            </li>
+                                        <?php endforeach ?>
+                                    </ul>
                                 </div>
                             <?php endif ?>
                             <?php if ($app->relationships !== []): ?>
@@ -254,10 +284,27 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
                 </h6>
                 <ul class="list-unstyled mb-3">
                     <?php foreach ($projectConfig->services as $service): ?>
+                        <?php
+                        $svcSlug   = $slugify($service->name);
+                        $svcType   = $service->type->value;
+                        $hasVolume = str_starts_with($svcType, 'postgresql:')
+                            || str_starts_with($svcType, 'mysql:')
+                            || str_starts_with($svcType, 'mariadb:');
+                        $volName   = $branchSlug . '_' . $svcSlug . '-data';
+                        ?>
                         <li class="d-flex align-items-center gap-2 py-1 border-bottom">
                             <i class="bi bi-database text-body-secondary flex-shrink-0"></i>
-                            <span class="fw-medium"><?= $this->e($service->name) ?></span>
-                            <span class="badge bg-secondary ms-auto"><?= $this->e($service->type->value) ?></span>
+                            <div class="flex-grow-1 overflow-hidden">
+                                <span class="fw-medium"><?= $this->e($service->name) ?></span>
+                                <?php if ($hasVolume): ?>
+                                    <span class="text-body-secondary ms-2" style="font-size:.72rem">
+                                        <?= $this->e($volName) ?>
+                                    </span>
+                                <?php endif ?>
+                            </div>
+                            <span class="badge bg-secondary ms-auto flex-shrink-0">
+                                <?= $this->e($svcType) ?>
+                            </span>
                         </li>
                     <?php endforeach ?>
                 </ul>
@@ -277,6 +324,18 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
                     <?php endforeach ?>
                 </ul>
             <?php endif ?>
+            <h6 class="text-body-secondary small text-uppercase fw-semibold mb-2 mt-3">
+                <?= $this->t('Volumes') ?>
+            </h6>
+            <div id="tw-volume-sizes"
+                 hx-get="<?= $this->e($volumeSizesUrl) ?>"
+                 hx-trigger="shown.bs.tab from:#<?= $tabId ?>-config-tab once"
+                 hx-swap="outerHTML">
+                <div class="text-body-secondary small">
+                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    <?= $this->t('Loading...') ?>
+                </div>
+            </div>
         <?php endif ?>
     </div>
 </div>
