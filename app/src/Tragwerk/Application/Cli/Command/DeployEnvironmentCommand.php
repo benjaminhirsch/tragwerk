@@ -171,6 +171,16 @@ final class DeployEnvironmentCommand extends Command
             return Command::FAILURE;
         }
 
+        // Remove any docker-related files from the repo source so they cannot
+        // conflict with or supplement the generated Dockerfiles and compose config.
+        foreach (glob($tempDir . '/docker-compose*.yml') ?: [] as $file) {
+            unlink($file);
+        }
+
+        foreach (glob($tempDir . '/Dockerfile*') ?: [] as $file) {
+            unlink($file);
+        }
+
         $buildDir = rtrim($this->projectDataPath, '/') . '/' . $projectId . '/' . $branch;
 
         foreach (glob($buildDir . '/*') ?: [] as $file) {
