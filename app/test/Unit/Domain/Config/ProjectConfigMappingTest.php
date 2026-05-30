@@ -15,7 +15,6 @@ use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Enum\ApplicationRuntime;
 use Tragwerk\Domain\Enum\HookType;
 use Tragwerk\Domain\Enum\MountSource;
-use Tragwerk\Domain\Enum\RouteType;
 use Tragwerk\Domain\Enum\ServiceRuntime;
 use Tragwerk\Domain\Model\ProjectConfig;
 
@@ -47,7 +46,7 @@ final class ProjectConfigMappingTest extends TestCase
         string $appType = 'php:8.5',
         string $appExtras = '',
         string $services = '',
-        string $routeXml = '<route pattern="https://{default}" type="upstream" upstream="app:http"/>',
+        string $routeXml = '<route pattern="https://{default}" upstream="app:http"/>',
     ): string {
         return <<<XML
             <project>
@@ -194,29 +193,15 @@ final class ProjectConfigMappingTest extends TestCase
     }
 
     #[Test]
-    public function mapsUpstreamRoute(): void
+    public function mapsRoute(): void
     {
         $config = $this->map(self::projectXml(
-            routeXml: '<route pattern="https://{default}" type="upstream" upstream="app:http"/>',
+            routeXml: '<route pattern="https://{default}" upstream="app:http"/>',
         ));
 
         $route = $config->routes[0];
-        self::assertSame(RouteType::UPSTREAM, $route->type);
+        self::assertSame('https://{default}', $route->pattern);
         self::assertSame('app:http', $route->upstream);
-        self::assertNull($route->to);
-    }
-
-    #[Test]
-    public function mapsRedirectRoute(): void
-    {
-        $config = $this->map(self::projectXml(
-            routeXml: '<route pattern="http://{default}" type="redirect" to="https://{default}"/>',
-        ));
-
-        $route = $config->routes[0];
-        self::assertSame(RouteType::REDIRECT, $route->type);
-        self::assertSame('https://{default}', $route->to);
-        self::assertNull($route->upstream);
     }
 
     #[Test]
@@ -237,7 +222,7 @@ final class ProjectConfigMappingTest extends TestCase
                         <web><location path="/" root="public" passthru="/index.php"/></web>
                     </application>
                 </applications>
-                <routes><route pattern="https://{default}" type="upstream" upstream="app:http"/></routes>
+                <routes><route pattern="https://{default}" upstream="app:http"/></routes>
             </project>
         XML;
 
@@ -264,7 +249,7 @@ final class ProjectConfigMappingTest extends TestCase
                         <web><location path="/" root="public" index="app.php"/></web>
                     </application>
                 </applications>
-                <routes><route pattern="https://{default}" type="upstream" upstream="app:http"/></routes>
+                <routes><route pattern="https://{default}" upstream="app:http"/></routes>
             </project>
         XML;
 
@@ -363,15 +348,15 @@ final class ProjectConfigMappingTest extends TestCase
     public function multipleRoutesAreMapped(): void
     {
         $routes = <<<'XML'
-            <route pattern="https://{default}" type="upstream" upstream="app:http"/>
-            <route pattern="http://{default}" type="redirect" to="https://{default}"/>
+            <route pattern="https://{default}" upstream="app:http"/>
+            <route pattern="https://www.{default}" upstream="app:http"/>
         XML;
 
         $config = $this->map(self::projectXml(routeXml: $routes));
 
         self::assertCount(2, $config->routes);
-        self::assertSame(RouteType::UPSTREAM, $config->routes[0]->type);
-        self::assertSame(RouteType::REDIRECT, $config->routes[1]->type);
+        self::assertSame('https://{default}', $config->routes[0]->pattern);
+        self::assertSame('https://www.{default}', $config->routes[1]->pattern);
     }
 
     #[Test]

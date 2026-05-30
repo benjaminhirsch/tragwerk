@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tragwerk\Domain\Docker;
 
 use Tragwerk\Domain\Enum\MountSource;
-use Tragwerk\Domain\Enum\RouteType;
 use Tragwerk\Domain\Enum\ServiceRuntime;
 use Tragwerk\Domain\Model\ApplicationConfig;
 use Tragwerk\Domain\Model\ProjectConfig;
@@ -17,10 +16,8 @@ use function array_map;
 use function explode;
 use function ltrim;
 use function preg_match;
-use function preg_quote;
 use function preg_replace;
 use function preg_replace_callback;
-use function rtrim;
 use function str_replace;
 use function str_starts_with;
 use function strtolower;
@@ -183,7 +180,6 @@ final readonly class DockerComposeGenerator
         $labels   = ['traefik.enable=true'];
         $labels[] = 'traefik.http.services.' . $fullSlug . '.loadbalancer.server.port=80';
         $upIdx    = 0;
-        $redIdx   = 0;
 
         foreach ($routes as $route) {
             $isHttps     = $this->patternIsHttps($route->pattern);
@@ -195,49 +191,24 @@ final readonly class DockerComposeGenerator
             if ($resolved !== [] && $placeholder !== null) {
                 $rawHost = $this->extractRawHostPart($route->pattern);
                 $hosts   = array_map(
-                    static fn (string $d) => str_replace('{' . $placeholder . '}', $d, $rawHost),
+                    static fn (string $d): string => (string) str_replace('{' . $placeholder . '}', $d, $rawHost),
                     $resolved,
                 );
             }
 
             foreach ($hosts as $host) {
-                if ($route->type === RouteType::REDIRECT) {
-                    $routerName = $fullSlug . '-redirect-' . $redIdx;
-                    $mwName     = $fullSlug . '-redirect-' . $redIdx;
-                    $entrypoint = $isHttps ? 'websecure' : 'web';
-                    $srcPath    = $this->extractPatternPath($route->pattern);
-                    $srcRegex   = '^https?://' . preg_quote($host) . preg_quote($srcPath) . '(/.*)?$';
-                    $toTarget   = rtrim($this->resolveRedirectTarget($route->to ?? '', $domainsByPlaceholder), '/');
+                $routerName = $fullSlug . '-https-' . $upIdx;
+                $entrypoint = $isHttps ? 'websecure' : 'web';
 
-                    $labels[] = 'traefik.http.routers.' . $routerName . '.rule=Host(`' . $host . '`)';
-                    $labels[] = 'traefik.http.routers.' . $routerName . '.entrypoints=' . $entrypoint;
-                    $labels[] = 'traefik.http.routers.' . $routerName . '.middlewares=' . $mwName;
-                    $labels[] = 'traefik.http.routers.' . $routerName . '.service=' . $fullSlug;
+                $labels[] = 'traefik.http.routers.' . $routerName . '.rule=Host(`' . $host . '`)';
+                $labels[] = 'traefik.http.routers.' . $routerName . '.entrypoints=' . $entrypoint;
+                $labels[] = 'traefik.http.routers.' . $routerName . '.service=' . $fullSlug;
 
-                    if ($isHttps) {
-                        $labels[] = 'traefik.http.routers.' . $routerName . '.tls.certresolver=letsencrypt';
-                    }
-
-                    $labels[] = 'traefik.http.middlewares.' . $mwName . '.redirectregex.regex=' . $srcRegex;
-                    $labels[] = 'traefik.http.middlewares.' . $mwName . '.redirectregex.replacement='
-                        . $toTarget . '$${1}';
-                    $labels[] = 'traefik.http.middlewares.' . $mwName . '.redirectregex.permanent=true';
-
-                    $redIdx++;
-                } else {
-                    $routerName = $fullSlug . '-https-' . $upIdx;
-                    $entrypoint = $isHttps ? 'websecure' : 'web';
-
-                    $labels[] = 'traefik.http.routers.' . $routerName . '.rule=Host(`' . $host . '`)';
-                    $labels[] = 'traefik.http.routers.' . $routerName . '.entrypoints=' . $entrypoint;
-                    $labels[] = 'traefik.http.routers.' . $routerName . '.service=' . $fullSlug;
-
-                    if ($isHttps) {
-                        $labels[] = 'traefik.http.routers.' . $routerName . '.tls.certresolver=letsencrypt';
-                    }
-
-                    $upIdx++;
+                if ($isHttps) {
+                    $labels[] = 'traefik.http.routers.' . $routerName . '.tls.certresolver=letsencrypt';
                 }
+
+                $upIdx++;
             }
         }
 
@@ -252,15 +223,6 @@ final readonly class DockerComposeGenerator
         $routes   = [];
 
         foreach ($config->routes as $route) {
-            if ($route->type === RouteType::REDIRECT) {
-                // Redirect routes are not app-specific — assign all to the first app
-                if ($app === $firstApp) {
-                    $routes[] = $route;
-                }
-
-                continue;
-            }
-
             $upstreamName  = explode(':', $route->upstream ?? '', 2)[0];
             $matchedByName = $upstreamName === $app->name || $upstreamName === $slug;
             $noAppMatches  = ! $this->anyAppMatches($upstreamName, $config);
@@ -438,32 +400,6 @@ final readonly class DockerComposeGenerator
         $withoutScheme = preg_replace('#^https?://#', '', $pattern) ?? $pattern;
 
         return explode('/', $withoutScheme, 2)[0];
-    }
-
-    private function extractPatternPath(string $pattern): string
-    {
-        $withoutScheme = preg_replace('#^https?://#', '', $pattern) ?? $pattern;
-        $parts         = explode('/', $withoutScheme, 2);
-
-        if (! isset($parts[1]) || $parts[1] === '') {
-            return '';
-        }
-
-        return '/' . rtrim($parts[1], '/');
-    }
-
-    /** @param array<string, list<string>> $domainsByPlaceholder */
-    private function resolveRedirectTarget(string $to, array $domainsByPlaceholder): string
-    {
-        return preg_replace_callback(
-            '/\{([^}]+)\}/',
-            static function (array $m) use ($domainsByPlaceholder): string {
-                $resolved = $domainsByPlaceholder[$m[1]] ?? [];
-
-                return $resolved !== [] ? $resolved[0] : 'localhost';
-            },
-            $to,
-        ) ?? $to;
     }
 
     /** @return list<string> */

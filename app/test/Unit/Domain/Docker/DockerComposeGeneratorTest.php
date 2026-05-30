@@ -12,7 +12,6 @@ use Tragwerk\Domain\Docker\DockerComposeGenerator;
 use Tragwerk\Domain\Docker\ServiceImageResolver;
 use Tragwerk\Domain\Enum\ApplicationRuntime;
 use Tragwerk\Domain\Enum\MountSource;
-use Tragwerk\Domain\Enum\RouteType;
 use Tragwerk\Domain\Enum\ServiceRuntime;
 use Tragwerk\Domain\Model\ApplicationConfig;
 use Tragwerk\Domain\Model\HookConfig;
@@ -58,12 +57,7 @@ final class DockerComposeGeneratorTest extends TestCase
 
     private static function upstream(string $pattern, string $upstream): RouteConfig
     {
-        return new RouteConfig(pattern: $pattern, type: RouteType::UPSTREAM, upstream: $upstream, to: null);
-    }
-
-    private static function redirect(string $pattern, string $to): RouteConfig
-    {
-        return new RouteConfig(pattern: $pattern, type: RouteType::REDIRECT, upstream: null, to: $to);
+        return new RouteConfig(pattern: $pattern, upstream: $upstream);
     }
 
     /**
@@ -234,83 +228,6 @@ final class DockerComposeGeneratorTest extends TestCase
 
         self::assertArrayHasKey('labels', $app);
         self::assertArrayNotHasKey('labels', $other);
-    }
-
-    #[Test]
-    public function redirectRouteGeneratesRedirectregexMiddleware(): void
-    {
-        $config = self::project(
-            [self::app('app')],
-            [
-                self::upstream('https://{default}', 'app:http'),
-                self::redirect('http://{default}', 'https://{default}'),
-            ],
-        );
-
-        $compose = $this->generator->generate($config, 'main', ['default' => ['example.com']]);
-        $labels  = $this->labels($compose, 'app');
-
-        self::assertContains(
-            'traefik.http.middlewares.app-main-redirect-0.redirectregex.regex=^https?://example\.com(/.*)?$',
-            $labels,
-        );
-        self::assertContains(
-            'traefik.http.middlewares.app-main-redirect-0.redirectregex.replacement=https://example.com$${1}',
-            $labels,
-        );
-        self::assertContains(
-            'traefik.http.middlewares.app-main-redirect-0.redirectregex.permanent=true',
-            $labels,
-        );
-        self::assertContains('traefik.http.routers.app-main-redirect-0.middlewares=app-main-redirect-0', $labels);
-        self::assertContains('traefik.http.routers.app-main-redirect-0.service=app-main', $labels);
-    }
-
-    #[Test]
-    public function crossHostRedirectIsIncludedEvenWithoutMatchingUpstream(): void
-    {
-        $config = self::project(
-            [self::app('app')],
-            [
-                self::upstream('https://{default}', 'app:http'),
-                self::redirect('https://www.{default}', 'https://{default}'),
-            ],
-        );
-
-        $compose = $this->generator->generate($config, 'main', ['default' => ['example.com']]);
-        $labels  = $this->labels($compose, 'app');
-
-        self::assertContains(
-            'traefik.http.middlewares.app-main-redirect-0.redirectregex.regex=^https?://www\.example\.com(/.*)?$',
-            $labels,
-        );
-        self::assertContains(
-            'traefik.http.middlewares.app-main-redirect-0.redirectregex.replacement=https://example.com$${1}',
-            $labels,
-        );
-    }
-
-    #[Test]
-    public function staticCrossDomainRedirectUsesToField(): void
-    {
-        $config = self::project(
-            [self::app('app')],
-            [
-                self::upstream('https://{default}', 'app:http'),
-                self::redirect('http://{default}/old', 'https://www.benjaminhirsch.net'),
-            ],
-        );
-
-        $compose = $this->generator->generate($config, 'main', ['default' => ['example.com']]);
-        $labels  = $this->labels($compose, 'app');
-
-        self::assertContains(
-            'traefik.http.middlewares.app-main-redirect-0.redirectregex.regex=^https?://example\.com/old(/.*)?$',
-            $labels,
-        );
-        // phpcs:ignore Generic.Files.LineLength.TooLong
-        $replacement = 'traefik.http.middlewares.app-main-redirect-0.redirectregex.replacement=https://www.benjaminhirsch.net$${1}';
-        self::assertContains($replacement, $labels);
     }
 
     #[Test]

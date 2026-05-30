@@ -67,7 +67,7 @@ final class BuildEnvironmentTest extends TestCase
                 </application>
             </applications>
             <routes>
-                <route pattern="https://{default}" type="upstream" upstream="app:http"/>
+                <route pattern="https://{default}" upstream="app:http"/>
             </routes>
         </project>
         XML;

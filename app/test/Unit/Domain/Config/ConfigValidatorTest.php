@@ -29,7 +29,7 @@ final class ConfigValidatorTest extends TestCase
             . '<web><location path="/" root="public" index="index.php" passthru="/index.php"/></web>'
             . '</application>'
             . '</applications>'
-            . '<routes><route pattern="{default}" type="upstream" upstream="app:http"/></routes>'
+            . '<routes><route pattern="{default}" upstream="app:http"/></routes>'
             . '</project>';
 
         self::assertSame([], $this->validator->validate($xml));
@@ -69,7 +69,7 @@ final class ConfigValidatorTest extends TestCase
             . '<web><location path="/" root="public" index="index.php"/></web>'
             . '</application>'
             . '</applications>'
-            . '<routes><route pattern="{default}" type="upstream" upstream="app:http"/></routes>'
+            . '<routes><route pattern="{default}" upstream="app:http"/></routes>'
             . '</project>';
 
         $errors = $this->validator->validate($xml);

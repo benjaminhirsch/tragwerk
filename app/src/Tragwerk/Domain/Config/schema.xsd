@@ -298,26 +298,10 @@
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="type" use="required">
-            <xs:simpleType>
-                <xs:restriction base="xs:string">
-                    <xs:enumeration value="upstream"/>
-                    <xs:enumeration value="redirect"/>
-                </xs:restriction>
-            </xs:simpleType>
-        </xs:attribute>
-        <xs:attribute name="upstream" type="xs:string">
+        <xs:attribute name="upstream" type="xs:string" use="required">
             <xs:annotation>
                 <xs:documentation>
-                    Target in the form "application:endpoint", e.g. "app:http".
-                    Required when type="upstream".
-                </xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="to" type="xs:anyURI">
-            <xs:annotation>
-                <xs:documentation>
-                    Target URL for redirects. Required when type="redirect".
+                    Target application in the form "name:endpoint", e.g. "app:http".
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
