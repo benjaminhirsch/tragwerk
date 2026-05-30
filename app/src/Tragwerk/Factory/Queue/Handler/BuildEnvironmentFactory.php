@@ -8,6 +8,7 @@ use CuyZ\Valinor\Mapper\TreeMapper;
 use Psr\Container\ContainerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Lock\LockFactory;
 use Tragwerk\Application\Queue\Handler\BuildEnvironment;
 use Tragwerk\Application\Queue\Producer;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
@@ -45,6 +46,7 @@ final readonly class BuildEnvironmentFactory
         $projects         = $container->get(ProjectRepository::class);
         $teams            = $container->get(TeamRepository::class);
         $users            = $container->get(UserRepository::class);
+        $lockFactory      = $container->get(LockFactory::class);
 
         assert($bareRepository instanceof BareRepository);
         assert($xmlConverter instanceof XmlToArrayConverter);
@@ -58,6 +60,7 @@ final readonly class BuildEnvironmentFactory
         assert($projects instanceof ProjectRepository);
         assert($teams instanceof TeamRepository);
         assert($users instanceof UserRepository);
+        assert($lockFactory instanceof LockFactory);
 
         return new BuildEnvironment(
             $bareRepository,
@@ -73,6 +76,7 @@ final readonly class BuildEnvironmentFactory
             $projects,
             $teams,
             $users,
+            $lockFactory,
         );
     }
 }

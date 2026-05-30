@@ -10,6 +10,7 @@ use DOMDocument;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Yaml\Yaml;
 use Throwable;
 use Tragwerk\Application\Queue\Message;
@@ -64,6 +65,7 @@ final readonly class BuildEnvironment
         private ProjectRepository $projectRepository,
         private TeamRepository $teamRepository,
         private UserRepository $userRepository,
+        private LockFactory $lockFactory,
     ) {
     }
 
@@ -73,6 +75,18 @@ final readonly class BuildEnvironment
         $branch    = $message->branch;
         $commitSha = $message->commitSha;
 
+        $lock = $this->lockFactory->createLock('build:' . $projectId . ':' . $branch, ttl: 600.0);
+        $lock->acquire(blocking: true);
+
+        try {
+            $this->doBuild($projectId, $branch, $commitSha);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    private function doBuild(string $projectId, string $branch, string $commitSha): void
+    {
         $this->logger->info('Starting build', [
             'project_id' => $projectId,
             'branch'     => $branch,

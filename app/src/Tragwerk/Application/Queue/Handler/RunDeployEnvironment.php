@@ -6,6 +6,7 @@ namespace Tragwerk\Application\Queue\Handler;
 
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Process\Process;
 use Tragwerk\Application\Queue\Message;
 
@@ -14,8 +15,10 @@ use function sprintf;
 
 final readonly class RunDeployEnvironment
 {
-    public function __construct(private LoggerInterface $logger)
-    {
+    public function __construct(
+        private LoggerInterface $logger,
+        private LockFactory $lockFactory,
+    ) {
     }
 
     public function handle(Message\DeployEnvironment $message): void
@@ -34,31 +37,38 @@ final readonly class RunDeployEnvironment
         $deployJobId = $message->deployJobId;
         $acmeEmail   = $message->acmeEmail;
 
-        $process = new Process(
-            ['php', 'bin/cli', 'project:deploy', $projectId, $branch, $commitSha, $deployJobId, $acmeEmail],
-            $workDir,
-            timeout: 600,
-        );
+        $lock = $this->lockFactory->createLock('deploy:' . $projectId . ':' . $branch, ttl: 600.0);
+        $lock->acquire(blocking: true);
 
-        $process->run(function (string $type, string $buffer) use ($projectId): void {
-            $this->logger->debug('Deploy process output', [
+        try {
+            $process = new Process(
+                ['php', 'bin/cli', 'project:deploy', $projectId, $branch, $commitSha, $deployJobId, $acmeEmail],
+                $workDir,
+                timeout: 600,
+            );
+
+            $process->run(function (string $type, string $buffer) use ($projectId): void {
+                $this->logger->debug('Deploy process output', [
+                    'project_id' => $projectId,
+                    'type'       => $type,
+                    'output'     => $buffer,
+                ]);
+            });
+
+            if (! $process->isSuccessful()) {
+                throw new RuntimeException(sprintf(
+                    'Deploy process for project %s failed with exit code %d',
+                    $projectId,
+                    $process->getExitCode() ?? -1,
+                ));
+            }
+
+            $this->logger->info('Deploy process completed', [
                 'project_id' => $projectId,
-                'type'       => $type,
-                'output'     => $buffer,
+                'branch'     => $branch,
             ]);
-        });
-
-        if (! $process->isSuccessful()) {
-            throw new RuntimeException(sprintf(
-                'Deploy process for project %s failed with exit code %d',
-                $projectId,
-                $process->getExitCode() ?? -1,
-            ));
+        } finally {
+            $lock->release();
         }
-
-        $this->logger->info('Deploy process completed', [
-            'project_id' => $projectId,
-            'branch'     => $branch,
-        ]);
     }
 }

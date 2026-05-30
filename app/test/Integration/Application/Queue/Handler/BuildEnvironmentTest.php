@@ -12,6 +12,8 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use RuntimeException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\InMemoryStore;
 use Tragwerk\Application\Queue\Handler\BuildEnvironment;
 use Tragwerk\Application\Queue\Message;
 use Tragwerk\Application\Queue\Producer;
@@ -263,6 +265,7 @@ final class BuildEnvironmentTest extends TestCase
             $nullProjectRepo,
             $nullTeamRepo,
             $nullUserRepo,
+            new LockFactory(new InMemoryStore()),
         );
     }
 

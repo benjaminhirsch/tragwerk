@@ -20,6 +20,8 @@ use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
 use Tragwerk\Infrastructure\Helper\EntityHelper;
 
+use function array_map;
+
 final class DeployJobRepository extends GenericRepository implements DeployJobRepositoryInterface
 {
     #[Override]
@@ -84,6 +86,30 @@ final class DeployJobRepository extends GenericRepository implements DeployJobRe
         }
 
         return $result;
+    }
+
+    /** @return list<DeployJob> */
+    #[Override]
+    public function getActiveByProjectAndBranch(ProjectIdentifier $projectId, string $branch): array
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb->select('*')
+            ->from(EntityHelper::getDbTableName(EntityType::DEPLOY_JOB))
+            ->where($qb->expr()->eq('project_id', ':project_id'))
+            ->andWhere($qb->expr()->eq('branch', ':branch'))
+            ->andWhere($qb->expr()->in('status', ':statuses'))
+            ->setParameter('project_id', $projectId->toString())
+            ->setParameter('branch', $branch)
+            ->setParameter('statuses', ['pending', 'running'], ArrayParameterType::STRING)
+            ->orderBy('created_at', 'ASC');
+
+        try {
+            $rows = $qb->executeQuery()->fetchAllAssociative();
+
+            return array_map(fn (array $row) => $this->map($row, DeployJob::class), $rows);
+        } catch (MappingError | Exception) {
+            return [];
+        }
     }
 
     #[Override]
