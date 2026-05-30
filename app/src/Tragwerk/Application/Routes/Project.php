@@ -62,6 +62,12 @@ final readonly class Project
             'project.environment.toggle',
         );
 
+        $routes->post(
+            '/projects/{id}/environments/redeploy',
+            $this->middlewareFactory->prepare([Handler\Project\RedeployEnvironmentHandler::class]),
+            'project.environment.redeploy',
+        );
+
         $routes->get(
             '/projects/{id}/environments/branch-list',
             $this->middlewareFactory->prepare([Handler\Project\BranchListHandler::class]),

@@ -225,10 +225,12 @@ final class DeployEnvironmentCommand extends Command
 
         $this->log($jobId, '[Deploy] Running docker compose up --build --wait...');
 
+        $dc = 'NO_COLOR=1 docker compose -f docker-compose.yml';
+
         try {
             $this->streamExec(
                 $sftp,
-                'cd ~/' . $remoteDir . ' && NO_COLOR=1 docker compose -f docker-compose.yml up --build --wait 2>&1',
+                'cd ~/' . $remoteDir . ' && ' . $dc . ' up --build --wait 2>&1',
                 $jobId,
             );
         } catch (Throwable $e) {
@@ -240,13 +242,14 @@ final class DeployEnvironmentCommand extends Command
 
         $exitStatus = $sftp->getExitStatus();
 
+        // Always capture container logs — deploy hook output (e.g. migrations) goes there
+        // because --wait implies detached mode, so container stdout is not part of the up stream.
+        $this->streamExec($sftp, 'cd ~/' . $remoteDir . ' && ' . $dc . ' logs --no-color --tail 500 2>&1', $jobId);
+
         if ($exitStatus !== 0) {
             $code = $exitStatus ?? -1;
             $this->log($jobId, sprintf('[Deploy] Deploy failed (exit code %d). Collecting diagnostics...', $code));
-            $dc = 'NO_COLOR=1 docker compose -f docker-compose.yml';
             $this->streamExec($sftp, 'cd ~/' . $remoteDir . ' && ' . $dc . ' ps 2>&1', $jobId);
-            $logsCmd = 'cd ~/' . $remoteDir . ' && ' . $dc . ' logs --tail 200 2>&1';
-            $this->streamExec($sftp, $logsCmd, $jobId);
             $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
 
             return Command::FAILURE;
