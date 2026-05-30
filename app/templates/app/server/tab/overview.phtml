@@ -5,15 +5,15 @@
 <table class="table table-borderless mb-0">
     <tbody>
         <tr>
-            <th class="w-25 text-body-secondary fw-normal"><?= _('Host') ?></th>
+            <th class="w-25 text-body-secondary fw-normal"><?= $this->t('Host') ?></th>
             <td><code><?= $this->e($server->host) ?></code></td>
         </tr>
         <tr>
-            <th class="text-body-secondary fw-normal"><?= _('SSH Port') ?></th>
+            <th class="text-body-secondary fw-normal"><?= $this->t('SSH Port') ?></th>
             <td><code><?= $this->e((string) $server->port) ?></code></td>
         </tr>
         <tr>
-            <th class="text-body-secondary fw-normal"><?= _('Credential') ?></th>
+            <th class="text-body-secondary fw-normal"><?= $this->t('Credential') ?></th>
             <td>
                 <?php if ($credential !== null): ?>
                     <?= $this->fetch('partial::link', [
@@ -26,7 +26,7 @@
             </td>
         </tr>
         <tr>
-            <th class="text-body-secondary fw-normal"><?= _('Docker') ?></th>
+            <th class="text-body-secondary fw-normal"><?= $this->t('Docker') ?></th>
             <td>
                 <?php if ($server->dockerVersion !== null): ?>
                     <code><?= $this->e($server->dockerVersion) ?></code>
@@ -36,7 +36,7 @@
             </td>
         </tr>
         <tr>
-            <th class="text-body-secondary fw-normal"><?= _('Docker Compose') ?></th>
+            <th class="text-body-secondary fw-normal"><?= $this->t('Docker Compose') ?></th>
             <td>
                 <?php if ($server->dockerComposeVersion !== null): ?>
                     <code><?= $this->e($server->dockerComposeVersion) ?></code>
@@ -46,7 +46,7 @@
             </td>
         </tr>
         <tr>
-            <th class="text-body-secondary fw-normal"><?= _('Created') ?></th>
+            <th class="text-body-secondary fw-normal"><?= $this->t('Created') ?></th>
             <td><?= $this->e($server->createdAt->format('Y-m-d H:i')) ?></td>
         </tr>
     </tbody>

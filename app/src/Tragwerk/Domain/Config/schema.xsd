@@ -292,8 +292,9 @@
         <xs:attribute name="pattern" type="xs:string" use="required">
             <xs:annotation>
                 <xs:documentation>
-                    URL pattern. The placeholder {default} is replaced at runtime
-                    with the environment's hostname.
+                    URL pattern. Named placeholders like {default}, {frontend} or
+                    {api} are replaced at build time with the domains assigned to
+                    that placeholder in the project's domain settings.
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>

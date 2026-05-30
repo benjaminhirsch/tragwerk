@@ -8,7 +8,7 @@ $this->layout('layout::default', ['title' => $message->getMessageType()]);
         <nav aria-label="breadcrumb" class="mb-1">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item">
-                    <?= $this->fetch('partial::link', ['href' => $this->url('queue'), 'label' => _('Queue Messages')]) ?>
+                    <?= $this->fetch('partial::link', ['href' => $this->url('queue'), 'label' => $this->t('Queue Messages')]) ?>
                 </li>
                 <li class="breadcrumb-item active"><?= $this->e($message->getMessageType()) ?></li>
             </ol>
@@ -20,13 +20,13 @@ $this->layout('layout::default', ['title' => $message->getMessageType()]);
             <form method="post" action="<?= $this->url('queue.requeue', ['id' => $message->id]) ?>">
                 <?= $this->fetch('partial::input/csrf') ?>
                 <?= $this->fetch('partial::input/button', [
-                    'label'   => _('Requeue'),
+                    'label'   => $this->t('Requeue'),
                     'classes' => 'btn btn-warning btn-sm',
                     'icon'    => 'bi bi-arrow-clockwise',
                 ]) ?>
             </form>
             <?= $this->fetch('partial::input/button', [
-                'label'        => _('Delete'),
+                'label'        => $this->t('Delete'),
                 'classes'      => 'btn btn-outline-danger btn-sm',
                 'icon'         => 'bi bi-trash3',
                 'type'         => 'button',
@@ -47,7 +47,7 @@ $this->layout('layout::default', ['title' => $message->getMessageType()]);
             'dataBsToggle' => 'tab',
             'dataBsTarget' => '#tab-overview',
             'icon'         => 'bi bi-info-circle me-1',
-            'label'        => _('Overview'),
+            'label'        => $this->t('Overview'),
         ]) ?>
     </li>
     <li class="nav-item" role="presentation">
@@ -63,7 +63,7 @@ $this->layout('layout::default', ['title' => $message->getMessageType()]);
             'hxSwap'       => 'innerHTML',
             'hxTrigger'    => 'shown.bs.tab once',
             'icon'         => 'bi bi-braces me-1',
-            'label'        => _('Payload'),
+            'label'        => $this->t('Payload'),
         ]) ?>
     </li>
 </ul>
@@ -84,13 +84,10 @@ $this->layout('layout::default', ['title' => $message->getMessageType()]);
 <?php if ($message->isFailed()): ?>
     <?= $this->fetch('partial::modal', [
         'id'            => 'tw-delete-queue-modal',
-        'header'        => _('Delete queue message'),
-        'body'          => sprintf(
-            _('Are you sure you want to delete the message %s? This action cannot be undone.'),
-            '<strong>' . $this->e($message->getMessageType()) . '</strong>',
-        ),
+        'header'        => $this->t('Delete queue message'),
+        'body'          => $this->t('Are you sure you want to delete the message {name}? This action cannot be undone.', ['name' => '<strong>' . $this->e($message->getMessageType()) . '</strong>']),
         'actionUrl'     => $this->url('queue.delete', ['id' => $message->id]),
-        'actionLabel'   => _('Delete'),
+        'actionLabel'   => $this->t('Delete'),
         'actionClasses' => 'btn btn-danger',
         'actionIcon'    => 'bi bi-trash3',
     ]) ?>

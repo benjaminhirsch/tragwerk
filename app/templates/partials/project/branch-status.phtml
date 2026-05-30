@@ -14,17 +14,17 @@ $valsJson  = htmlspecialchars((string) json_encode(['branch' => $branch]), ENT_Q
 <div class="tw-branch-status" id="<?= $statusId ?>">
     <?php if ($deployStatus !== null): ?>
         <?php if ($deployStatus->value === 'completed'): ?>
-            <i class="bi bi-check-circle-fill text-success me-1" title="<?= _('Deploy successful') ?>"></i>
+            <i class="bi bi-check-circle-fill text-success me-1" title="<?= $this->t('Deploy successful') ?>"></i>
         <?php elseif ($deployStatus->value === 'failed'): ?>
-            <i class="bi bi-x-circle-fill text-danger me-1" title="<?= _('Deploy failed') ?>"></i>
+            <i class="bi bi-x-circle-fill text-danger me-1" title="<?= $this->t('Deploy failed') ?>"></i>
         <?php else: ?>
             <span class="spinner-border spinner-border-sm text-primary me-1" role="status"
-                  title="<?= $deployStatus->value === 'running' ? _('Deploying') : _('Deploy queued') ?>"></span>
+                  title="<?= $deployStatus->value === 'running' ? $this->t('Deploying') : $this->t('Deploy queued') ?>"></span>
         <?php endif ?>
     <?php endif ?>
 
     <?php if ($isActive): ?>
-        <span class="badge rounded-pill tw-env-active"><?= _('active') ?></span>
+        <span class="badge rounded-pill tw-env-active"><?= $this->t('active') ?></span>
         <?php if (! $isProtected): ?>
             <button class="btn btn-link btn-sm p-0 ms-1 tw-env-toggle text-body-secondary"
                     hx-post="<?= $toggleUrl ?>"
@@ -32,18 +32,18 @@ $valsJson  = htmlspecialchars((string) json_encode(['branch' => $branch]), ENT_Q
                     hx-include="#tw-csrf-token"
                     hx-target="closest .tw-branch-status"
                     hx-swap="outerHTML">
-                <?= _('Deactivate') ?>
+                <?= $this->t('Deactivate') ?>
             </button>
         <?php endif ?>
     <?php else: ?>
-        <span class="badge rounded-pill tw-env-inactive"><?= _('inactive') ?></span>
+        <span class="badge rounded-pill tw-env-inactive"><?= $this->t('inactive') ?></span>
         <button class="btn btn-link btn-sm p-0 ms-1 tw-env-toggle text-success"
                 hx-post="<?= $toggleUrl ?>"
                 hx-vals='<?= $valsJson ?>'
                 hx-include="#tw-csrf-token"
                 hx-target="closest .tw-branch-status"
                 hx-swap="outerHTML">
-            <?= _('Activate') ?>
+            <?= $this->t('Activate') ?>
         </button>
     <?php endif ?>
 </div>

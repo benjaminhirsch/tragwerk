@@ -7,31 +7,40 @@
  * @var bool                                    $isActive
  * @var bool                                    $isProtected
  * @var \Tragwerk\Domain\Model\ProjectConfig|null $projectConfig
+ * @var list<\Tragwerk\Domain\Entity\Domain>    $domains
  */
 $tabId     = 'tw-env-tab-' . md5($branch);
 $deployUrl = $this->url('project.environment.deploy-log', ['id' => $project->id->toString()])
     . '?branch=' . urlencode($branch);
+$addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString(), 'branch' => $branch]);
 ?>
 <ul class="nav nav-tabs nav-tabs-sm mb-3" id="<?= $tabId ?>" role="tablist">
     <li class="nav-item" role="presentation">
         <button class="nav-link active" id="<?= $tabId ?>-deploy-tab"
                 data-bs-toggle="tab" data-bs-target="#<?= $tabId ?>-deploy"
                 type="button" role="tab">
-            <?= _('Deploy Log') ?>
+            <?= $this->t('Deploy Log') ?>
         </button>
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="<?= $tabId ?>-log-tab"
                 data-bs-toggle="tab" data-bs-target="#<?= $tabId ?>-log"
                 type="button" role="tab">
-            <?= _('Build-Log') ?>
+            <?= $this->t('Build Log') ?>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="<?= $tabId ?>-domains-tab"
+                data-bs-toggle="tab" data-bs-target="#<?= $tabId ?>-domains"
+                type="button" role="tab">
+            <?= $this->t('Domains') ?>
         </button>
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="<?= $tabId ?>-config-tab"
                 data-bs-toggle="tab" data-bs-target="#<?= $tabId ?>-config"
                 type="button" role="tab">
-            <?= _('Konfiguration') ?>
+            <?= $this->t('Configuration') ?>
         </button>
     </li>
 </ul>
@@ -47,7 +56,7 @@ $deployUrl = $this->url('project.environment.deploy-log', ['id' => $project->id-
     <div class="tab-pane fade" id="<?= $tabId ?>-log" role="tabpanel">
         <?php if ($buildLogs !== []): ?>
             <h6 class="text-body-secondary small text-uppercase fw-semibold mb-2 mt-1">
-                <?= _('Build Log') ?>
+                <?= $this->t('Build Log') ?>
             </h6>
             <ul class="list-unstyled mb-4">
                 <?php foreach ($buildLogs as $log): ?>
@@ -78,7 +87,7 @@ $deployUrl = $this->url('project.environment.deploy-log', ['id' => $project->id-
 
         <?php if ($commits !== []): ?>
             <h6 class="text-body-secondary small text-uppercase fw-semibold mb-2">
-                <?= _('Commits') ?>
+                <?= $this->t('Commits') ?>
             </h6>
             <ul class="list-unstyled mb-0">
                 <?php foreach ($commits as $commit): ?>
@@ -105,27 +114,91 @@ $deployUrl = $this->url('project.environment.deploy-log', ['id' => $project->id-
         <?php elseif ($buildLogs === []): ?>
             <div class="text-body-secondary">
                 <i class="bi bi-info-circle me-1"></i>
-                <?= _('No commits on this branch yet.') ?>
+                <?= $this->t('No commits on this branch yet.') ?>
             </div>
         <?php endif ?>
+    </div>
+
+    <div class="tab-pane fade" id="<?= $tabId ?>-domains" role="tabpanel">
+        <form hx-post="<?= $this->e($addDomainUrl) ?>"
+              hx-target="#domain-list"
+              hx-swap="outerHTML"
+              class="mb-4">
+            <input type="hidden" name="csrf_token" value="<?= $this->getCsrfToken() ?>">
+            <label class="form-label"><?= $this->t('Add domain') ?></label>
+            <input type="text"
+                   name="host"
+                   class="form-control mb-2"
+                   placeholder="example.com"
+                   required>
+            <label class="form-label"><?= $this->t('Placeholder') ?></label>
+            <input type="text"
+                   name="placeholder"
+                   class="form-control mb-2"
+                   value="default"
+                   pattern="[a-z][a-z0-9_-]*"
+                   title="<?= $this->t('Lowercase letters, digits, hyphens and underscores; must start with a letter') ?>">
+            <div class="form-text mb-2">
+                <?= $this->t('Corresponds to the placeholder in config.xml, e.g.') ?> <code>{default}</code>, <code>{frontend}</code>, <code>{api}</code>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg me-1"></i><?= $this->t('Add') ?>
+            </button>
+        </form>
+
+        <?= $this->fetch('partial::project/domain-list', [
+            'project' => $project,
+            'branch'  => $branch,
+            'domains' => $domains,
+            'error'   => null,
+        ]) ?>
+
+        <div class="modal fade" id="tw-domain-delete-modal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><?= $this->t('Remove domain') ?></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-0"><?= $this->t('Really remove domain') ?> <strong id="tw-domain-delete-host"></strong>?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <?= $this->t('Cancel') ?>
+                        </button>
+                        <button type="button"
+                                id="tw-domain-delete-confirm"
+                                class="btn btn-danger"
+                                data-bs-dismiss="modal"
+                                hx-post=""
+                                hx-target="#domain-list"
+                                hx-swap="outerHTML"
+                                hx-include="#tw-csrf-token">
+                            <i class="bi bi-trash me-1"></i><?= $this->t('Remove') ?>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="tab-pane fade" id="<?= $tabId ?>-config" role="tabpanel">
         <?php if ($projectConfig === null): ?>
             <div class="text-body-secondary">
                 <i class="bi bi-file-earmark-x me-1"></i>
-                <?= _('No .tragwerk/config.xml found on this branch.') ?>
+                <?= $this->t('No .tragwerk/config.xml found on this branch.') ?>
             </div>
         <?php else: ?>
             <div class="mb-3">
                 <a href="<?= $this->url('project.environment.download', ['id' => $project->id->toString()]) ?>?branch=<?= urlencode($branch) ?>"
                    class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-download me-1"></i><?= _('Docker-Konfiguration herunterladen') ?>
+                    <i class="bi bi-download me-1"></i><?= $this->t('Download Docker configuration') ?>
                 </a>
             </div>
             <?php if ($projectConfig->applications !== []): ?>
                 <h6 class="text-body-secondary small text-uppercase fw-semibold mb-2 mt-1">
-                    <?= _('Applications') ?>
+                    <?= $this->t('Applications') ?>
                 </h6>
                 <?php foreach ($projectConfig->applications as $app): ?>
                     <div class="card mb-3">
@@ -139,7 +212,7 @@ $deployUrl = $this->url('project.environment.deploy-log', ['id' => $project->id-
                             </div>
                             <?php if ($app->mounts !== []): ?>
                                 <div class="small mt-2">
-                                    <span class="text-body-secondary"><?= _('Mounts:') ?></span>
+                                    <span class="text-body-secondary"><?= $this->t('Mounts:') ?></span>
                                     <?php foreach ($app->mounts as $mount): ?>
                                         <code class="ms-1"><?= $this->e($mount->path) ?></code>
                                     <?php endforeach ?>
@@ -147,7 +220,7 @@ $deployUrl = $this->url('project.environment.deploy-log', ['id' => $project->id-
                             <?php endif ?>
                             <?php if ($app->relationships !== []): ?>
                                 <div class="small mt-1">
-                                    <span class="text-body-secondary"><?= _('Relationships:') ?></span>
+                                    <span class="text-body-secondary"><?= $this->t('Relationships:') ?></span>
                                     <?php foreach ($app->relationships as $rel): ?>
                                         <span class="ms-1"><code><?= $this->e($rel->name) ?></code> → <code><?= $this->e($rel->target) ?></code></span>
                                     <?php endforeach ?>
@@ -155,7 +228,7 @@ $deployUrl = $this->url('project.environment.deploy-log', ['id' => $project->id-
                             <?php endif ?>
                             <?php if ($app->hooks !== []): ?>
                                 <div class="small mt-1">
-                                    <span class="text-body-secondary"><?= _('Hooks:') ?></span>
+                                    <span class="text-body-secondary"><?= $this->t('Hooks:') ?></span>
                                     <?php foreach ($app->hooks as $hook): ?>
                                         <span class="badge bg-light text-dark ms-1"><?= $this->e($hook->type->value) ?></span>
                                     <?php endforeach ?>
@@ -168,7 +241,7 @@ $deployUrl = $this->url('project.environment.deploy-log', ['id' => $project->id-
 
             <?php if ($projectConfig->services !== []): ?>
                 <h6 class="text-body-secondary small text-uppercase fw-semibold mb-2">
-                    <?= _('Services') ?>
+                    <?= $this->t('Services') ?>
                 </h6>
                 <ul class="list-unstyled mb-3">
                     <?php foreach ($projectConfig->services as $service): ?>
@@ -183,7 +256,7 @@ $deployUrl = $this->url('project.environment.deploy-log', ['id' => $project->id-
 
             <?php if ($projectConfig->routes !== []): ?>
                 <h6 class="text-body-secondary small text-uppercase fw-semibold mb-2">
-                    <?= _('Routes') ?>
+                    <?= $this->t('Routes') ?>
                 </h6>
                 <ul class="list-unstyled mb-0">
                     <?php foreach ($projectConfig->routes as $route): ?>

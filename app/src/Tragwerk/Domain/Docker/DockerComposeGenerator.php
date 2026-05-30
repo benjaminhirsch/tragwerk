@@ -15,8 +15,9 @@ use Tragwerk\Domain\Model\ServiceConfig;
 use function array_key_exists;
 use function explode;
 use function ltrim;
+use function preg_match;
 use function preg_replace;
-use function str_contains;
+use function preg_replace_callback;
 use function str_replace;
 use function str_starts_with;
 use function strtolower;
@@ -29,11 +30,11 @@ final readonly class DockerComposeGenerator
     }
 
     /**
-     * @param list<string> $domains
+     * @param array<string, list<string>> $domainsByPlaceholder
      *
      * @return array<string, mixed>
      */
-    public function generate(ProjectConfig $config, array $domains = [], string $acmeEmail = ''): array
+    public function generate(ProjectConfig $config, array $domainsByPlaceholder = [], string $acmeEmail = ''): array
     {
         /** @var array<string, mixed> $services */
         $services = [];
@@ -78,7 +79,7 @@ final readonly class DockerComposeGenerator
                 }
             }
 
-            $labels = $this->buildTraefikLabels($app, $config, $domains);
+            $labels = $this->buildTraefikLabels($app, $config, $domainsByPlaceholder);
 
             /** @var array<string, mixed> $svcConfig */
             $svcConfig = [
@@ -152,12 +153,15 @@ final readonly class DockerComposeGenerator
     }
 
     /**
-     * @param list<string> $domains
+     * @param array<string, list<string>> $domainsByPlaceholder
      *
      * @return list<string>
      */
-    private function buildTraefikLabels(ApplicationConfig $app, ProjectConfig $config, array $domains): array
-    {
+    private function buildTraefikLabels(
+        ApplicationConfig $app,
+        ProjectConfig $config,
+        array $domainsByPlaceholder,
+    ): array {
         $slug   = $this->slugify($app->name);
         $routes = $this->routesForApp($app, $config);
 
@@ -172,11 +176,10 @@ final readonly class DockerComposeGenerator
         $redIdx      = 0;
 
         foreach ($routes as $route) {
-            $isHttps = $this->patternIsHttps($route->pattern);
-            $usesDef = str_contains($route->pattern, '{default}');
-            $hosts   = $usesDef && $domains !== []
-                ? $domains
-                : [$this->extractHost($route->pattern)];
+            $isHttps     = $this->patternIsHttps($route->pattern);
+            $placeholder = $this->extractPlaceholder($route->pattern);
+            $resolved    = $placeholder !== null ? ($domainsByPlaceholder[$placeholder] ?? []) : [];
+            $hosts       = $resolved !== [] ? $resolved : [$this->extractHost($route->pattern)];
 
             foreach ($hosts as $host) {
                 if ($route->type === RouteType::REDIRECT) {
@@ -274,7 +277,16 @@ final readonly class DockerComposeGenerator
         $withoutScheme = preg_replace('#^https?://#', '', $pattern) ?? $pattern;
         $parts         = explode('/', $withoutScheme, 2);
 
-        return str_replace('{default}', '${DOMAIN:-localhost}', $parts[0]);
+        return preg_replace_callback(
+            '/\{([^}]+)\}/',
+            static fn (array $m) => '${' . strtoupper($m[1]) . ':-localhost}',
+            $parts[0],
+        ) ?? $parts[0];
+    }
+
+    private function extractPlaceholder(string $pattern): string|null
+    {
+        return preg_match('/\{([^}]+)\}/', $pattern, $m) === 1 ? $m[1] : null;
     }
 
     private function patternIsHttps(string $pattern): bool

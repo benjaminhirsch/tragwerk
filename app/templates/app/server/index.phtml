@@ -1,10 +1,10 @@
-<?php $this->layout('layout::default', ['title' => _('Servers')]) ?>
+<?php $this->layout('layout::default', ['title' => $this->t('Servers')]) ?>
 
-<h1><?= _('Servers') ?></h1>
+<h1><?= $this->t('Servers') ?></h1>
 
 <div class="tw-card">
     <?= $this->fetch('partial::link', [
-        'label'   => _('Create server'),
+        'label'   => $this->t('Create server'),
         'icon'    => 'bi bi-plus-circle',
         'classes' => 'btn btn-primary',
         'href'    => $this->url('server.create'),
@@ -15,12 +15,12 @@
     <table class="table table-striped table-hover">
         <thead>
         <tr>
-            <th><?= _('Name') ?></th>
-            <th><?= _('IP address') ?></th>
-            <th><?= _('Credentials assigned') ?></th>
-            <th><?= _('Docker') ?></th>
-            <th><?= _('Docker Compose') ?></th>
-            <th><?= _('Ready to deploy') ?></th>
+            <th><?= $this->t('Name') ?></th>
+            <th><?= $this->t('IP address') ?></th>
+            <th><?= $this->t('Credentials assigned') ?></th>
+            <th><?= $this->t('Docker') ?></th>
+            <th><?= $this->t('Docker Compose') ?></th>
+            <th><?= $this->t('Ready to deploy') ?></th>
         </tr>
         </thead>
         <tbody>

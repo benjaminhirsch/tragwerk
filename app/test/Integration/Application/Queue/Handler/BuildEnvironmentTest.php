@@ -117,7 +117,13 @@ final class BuildEnvironmentTest extends TestCase
                 return [];
             }
 
-            public function clearPrimary(ProjectIdentifier $projectId): void
+            /** @return list<Domain> */
+            public function findByEnvironment(ProjectIdentifier $projectId, string $branch): array
+            {
+                return [];
+            }
+
+            public function clearPrimary(ProjectIdentifier $projectId, string $branch): void
             {
             }
 

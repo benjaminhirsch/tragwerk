@@ -143,7 +143,7 @@ final class DockerComposeGeneratorTest extends TestCase
 
         $labels = $this->labels($compose, 'app');
         self::assertContains('traefik.enable=true', $labels);
-        self::assertContains('traefik.http.routers.app-https-0.rule=Host(`${DOMAIN:-localhost}`)', $labels);
+        self::assertContains('traefik.http.routers.app-https-0.rule=Host(`${DEFAULT:-localhost}`)', $labels);
         self::assertContains('traefik.http.routers.app-https-0.entrypoints=websecure', $labels);
         self::assertContains('traefik.http.routers.app-https-0.tls.certresolver=letsencrypt', $labels);
     }
@@ -164,11 +164,11 @@ final class DockerComposeGeneratorTest extends TestCase
         $foobarLabels = $this->labels($compose, 'foobar');
 
         self::assertContains('traefik.enable=true', $appLabels);
-        self::assertContains('traefik.http.routers.app-https-0.rule=Host(`${DOMAIN:-localhost}`)', $appLabels);
+        self::assertContains('traefik.http.routers.app-https-0.rule=Host(`${DEFAULT:-localhost}`)', $appLabels);
 
         self::assertContains('traefik.enable=true', $foobarLabels);
         self::assertContains(
-            'traefik.http.routers.foobar-https-0.rule=Host(`foobar.${DOMAIN:-localhost}`)',
+            'traefik.http.routers.foobar-https-0.rule=Host(`foobar.${DEFAULT:-localhost}`)',
             $foobarLabels,
         );
     }

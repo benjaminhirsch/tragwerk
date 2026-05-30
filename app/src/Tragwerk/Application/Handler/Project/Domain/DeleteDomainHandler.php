@@ -48,18 +48,20 @@ final readonly class DeleteDomainHandler implements RequestHandlerInterface
         }
 
         $wasPrimary = $domain->isPrimary;
+        $branch     = $domain->branch;
         $this->eventDispatcher->dispatch(new DomainDeleted($domain->id, $project->id));
 
         if ($wasPrimary) {
-            $remaining = $this->domainRepository->findByProject($project->id);
+            $remaining = $this->domainRepository->findByEnvironment($project->id, $branch);
             if ($remaining !== []) {
-                $this->eventDispatcher->dispatch(new DomainSetPrimary($remaining[0]->id, $project->id));
+                $this->eventDispatcher->dispatch(new DomainSetPrimary($remaining[0]->id, $project->id, $branch));
             }
         }
 
         return $this->renderer->render($request, 'partial::project/domain-list', [
             'project' => $project,
-            'domains' => $this->domainRepository->findByProject($project->id),
+            'branch'  => $branch,
+            'domains' => $this->domainRepository->findByEnvironment($project->id, $branch),
             'error'   => null,
         ]);
     }

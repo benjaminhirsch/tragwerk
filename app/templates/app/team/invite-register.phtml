@@ -4,10 +4,10 @@ use Tragwerk\Domain\Entity\TeamInvitation;
 
 assert(isset($invitation) && $invitation instanceof TeamInvitation);
 
-$this->layout('layout::default', ['title' => _('Complete registration')]);
+$this->layout('layout::default', ['title' => $this->t('Complete registration')]);
 ?>
 
-<h4 class="card-title mb-1"><?= _('Complete registration') ?></h4>
+<h4 class="card-title mb-1"><?= $this->t('Complete registration') ?></h4>
 <p class="text-body-secondary small mb-4">
     <?= $this->t('You have been invited to join a team. Create your account to continue.') ?>
 </p>
@@ -16,7 +16,7 @@ $this->layout('layout::default', ['title' => _('Complete registration')]);
     <?= $this->fetch('partial::input/csrf') ?>
 
     <div class="form-group mb-3">
-        <label class="form-label"><?= _('E-Mail') ?></label>
+        <label class="form-label"><?= $this->t('E-Mail') ?></label>
         <input class="form-control" type="email" value="<?= $this->e($invitation->email) ?>" disabled>
     </div>
 

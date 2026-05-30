@@ -18,6 +18,7 @@ use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Model\ProjectConfig;
 use Tragwerk\Domain\Repository\BuildLogRepository;
+use Tragwerk\Domain\Repository\DomainRepository;
 use Tragwerk\Domain\Repository\EnvironmentRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
@@ -36,6 +37,7 @@ final readonly class EnvironmentHandler implements RequestHandlerInterface
         private ProjectRepository $projectRepository,
         private BareRepository $bareRepository,
         private BuildLogRepository $buildLogRepository,
+        private DomainRepository $domainRepository,
         private EnvironmentRepository $environmentRepository,
         private XmlToArrayConverter $xmlConverter,
         private TreeMapper $treeMapper,
@@ -72,6 +74,7 @@ final readonly class EnvironmentHandler implements RequestHandlerInterface
         $isProtected   = in_array($branch, ['main', 'master'], true);
         $isActive      = $isProtected || $this->environmentRepository->isActive($project->id, $branch);
         $projectConfig = $this->loadProjectConfig($project->id->toString(), $commits);
+        $domains       = $this->domainRepository->findByEnvironment($project->id, $branch);
 
         return $this->renderer->render($request, 'page::project/tab/environment', [
             'project'       => $project,
@@ -81,6 +84,7 @@ final readonly class EnvironmentHandler implements RequestHandlerInterface
             'isActive'      => $isActive,
             'isProtected'   => $isProtected,
             'projectConfig' => $projectConfig,
+            'domains'       => $domains,
         ]);
     }
 

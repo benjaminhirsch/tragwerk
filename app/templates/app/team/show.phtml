@@ -8,7 +8,7 @@ $this->layout('layout::default', ['title' => $team->name]);
         <nav aria-label="breadcrumb" class="mb-1">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item">
-                    <?= $this->fetch('partial::link', ['href' => $this->url('team'), 'label' => _('Teams')]) ?>
+                    <?= $this->fetch('partial::link', ['href' => $this->url('team'), 'label' => $this->t('Teams')]) ?>
                 </li>
                 <li class="breadcrumb-item active"><?= $this->e($team->name) ?></li>
             </ol>
@@ -17,7 +17,7 @@ $this->layout('layout::default', ['title' => $team->name]);
     </div>
     <div class="d-flex gap-2">
         <?= $this->fetch('partial::link', [
-            'label'   => _('Edit'),
+            'label'   => $this->t('Edit'),
             'href'    => $this->url('team.edit', ['id' => $team->id->toString()]),
             'icon'    => 'bi bi-pencil',
             'classes' => 'btn btn-outline-secondary btn-sm',
@@ -35,7 +35,7 @@ $this->layout('layout::default', ['title' => $team->name]);
             'dataBsToggle' => 'tab',
             'dataBsTarget' => '#tab-overview',
             'icon'         => 'bi bi-info-circle me-1',
-            'label'        => _('Overview'),
+            'label'        => $this->t('Overview'),
         ]) ?>
     </li>
     <li class="nav-item" role="presentation">
@@ -51,7 +51,7 @@ $this->layout('layout::default', ['title' => $team->name]);
             'hxSwap'       => 'innerHTML',
             'hxTrigger'    => 'shown.bs.tab once',
             'icon'         => 'bi bi-people me-1',
-            'label'        => _('Members'),
+            'label'        => $this->t('Members'),
         ]) ?>
     </li>
 </ul>

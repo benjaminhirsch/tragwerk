@@ -1,10 +1,10 @@
-<?php $this->layout('layout::default', ['title' => _('Projects')]) ?>
+<?php $this->layout('layout::default', ['title' => $this->t('Projects')]) ?>
 
-<h1><?= _('Projects') ?></h1>
+<h1><?= $this->t('Projects') ?></h1>
 
 <div class="tw-card">
     <?= $this->fetch('partial::link', [
-        'label'   => _('Create Project'),
+        'label'   => $this->t('Create Project'),
         'icon'    => 'bi bi-plus-circle',
         'classes' => 'btn btn-primary',
         'href'    => $this->url('project.create'),
@@ -15,8 +15,8 @@
     <table class="table table-striped table-hover">
         <thead>
         <tr>
-            <th><?= _('Name') ?></th>
-            <th><?= _('Server') ?></th>
+            <th><?= $this->t('Name') ?></th>
+            <th><?= $this->t('Server') ?></th>
         </tr>
         </thead>
         <tbody>

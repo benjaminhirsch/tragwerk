@@ -1,6 +1,6 @@
-<?php $this->layout('layout::default', ['title' => _('Create team')]) ?>
+<?php $this->layout('layout::default', ['title' => $this->t('Create team')]) ?>
 
-<h1><?= _('Create team') ?></h1>
+<h1><?= $this->t('Create team') ?></h1>
 
 <?php $this->start('card-content') ?>
     <form action="<?= $this->url('team.create') ?>" method="post">
@@ -8,13 +8,13 @@
 
         <?= $this->fetch('partial::input/text', [
             'id'         => 'name',
-            'label'      => _('Team name'),
+            'label'      => $this->t('Team name'),
             'autofocus'  => 'autofocus',
             'validation' => $validationBag ?? null,
         ]) ?>
 
         <div class="form-group">
-            <label class="form-label"><?= _('Invite team members (optional)') ?></label>
+            <label class="form-label"><?= $this->t('Invite team members (optional)') ?></label>
             <?= $this->fetch('partial::team/email-fields', [
                 'emails'     => $validationBag?->getArrayValueByName('emailsToInvite') ?: [''],
                 'validation' => $validationBag ?? null,
@@ -22,11 +22,11 @@
         </div>
 
         <?= $this->fetch('partial::input/button', [
-            'label' => _('Save'),
+            'label' => $this->t('Save'),
         ]) ?>
 
         <?= $this->fetch('partial::link', [
-                'label' => _('Cancel'),
+                'label' => $this->t('Cancel'),
                 'href' => $this->url('team'),
                 'classes' => 'btn btn-secondary',
         ]) ?>

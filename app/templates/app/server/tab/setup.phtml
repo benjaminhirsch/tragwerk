@@ -4,7 +4,7 @@
 /** @var bool $jobActive */
 ?>
 <?php if ($latestJob === null): ?>
-    <p class="text-body-secondary mb-3"><?= _('No setup has been run yet.') ?></p>
+    <p class="text-body-secondary mb-3"><?= $this->t('No setup has been run yet.') ?></p>
 <?php else: ?>
     <?= $this->fetch('page::server/_log_widget', ['server' => $server, 'job' => $latestJob]) ?>
 <?php endif ?>
@@ -14,7 +14,7 @@
     <form action="<?= $this->url('server.setup.start', ['id' => $server->id->toString()]) ?>" method="post">
         <?= $this->fetch('partial::input/csrf') ?>
         <?= $this->fetch('partial::input/button', [
-            'label'   => $latestJob !== null ? _('Run setup again') : _('Run setup'),
+            'label'   => $latestJob !== null ? $this->t('Run setup again') : $this->t('Run setup'),
             'icon'    => 'bi bi-play-circle',
             'classes' => 'btn btn-outline-primary',
         ]) ?>

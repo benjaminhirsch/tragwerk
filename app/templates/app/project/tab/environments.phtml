@@ -11,7 +11,7 @@ $listUrl = $this->url('project.environment.branch-list', ['id' => $project->id->
 <input type="hidden" id="tw-active-branch" value="">
 
 <div class="mb-3">
-    <label class="form-label text-body-secondary small mb-1"><?= _('Git clone URL') ?></label>
+    <label class="form-label text-body-secondary small mb-1"><?= $this->t('Git clone URL') ?></label>
     <div class="input-group input-group-sm">
         <span class="input-group-text"><i class="bi bi-git"></i></span>
         <input type="text" class="form-control font-monospace" value="<?= $this->e($cloneUrl) ?>" readonly

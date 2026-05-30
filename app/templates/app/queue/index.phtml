@@ -1,38 +1,38 @@
 <?php
 /** @var \Tragwerk\Domain\Entity\QueueMessage[] $messages */
-$this->layout('layout::default', ['title' => _('Queue Messages')]);
+$this->layout('layout::default', ['title' => $this->t('Queue Messages')]);
 
 $statusLabel = static function (\Tragwerk\Domain\Entity\QueueMessage $m): string {
     if ($m->isFailed()) {
-        return '<span class="badge bg-danger">' . _('Failed') . '</span>';
+        return '<span class="badge bg-danger">' . $this->t('Failed') . '</span>';
     }
 
     if ($m->isBeingProcessed()) {
-        return '<span class="badge bg-warning text-dark">' . _('Processing') . '</span>';
+        return '<span class="badge bg-warning text-dark">' . $this->t('Processing') . '</span>';
     }
 
-    return '<span class="badge bg-secondary">' . _('Pending') . '</span>';
+    return '<span class="badge bg-secondary">' . $this->t('Pending') . '</span>';
 };
 ?>
 
-<h1><?= _('Queue Messages') ?></h1>
+<h1><?= $this->t('Queue Messages') ?></h1>
 
 <div class="tw-card">
     <table class="table table-striped table-hover">
         <thead>
         <tr>
-            <th><?= _('Type') ?></th>
-            <th><?= _('Queue') ?></th>
-            <th><?= _('Status') ?></th>
-            <th><?= _('Redelivered') ?></th>
-            <th><?= _('Published') ?></th>
-            <th><?= _('Actions') ?></th>
+            <th><?= $this->t('Type') ?></th>
+            <th><?= $this->t('Queue') ?></th>
+            <th><?= $this->t('Status') ?></th>
+            <th><?= $this->t('Redelivered') ?></th>
+            <th><?= $this->t('Published') ?></th>
+            <th><?= $this->t('Actions') ?></th>
         </tr>
         </thead>
         <tbody>
         <?php if ($messages === []): ?>
             <tr>
-                <td colspan="6" class="text-center text-secondary"><?= _('No messages in queue') ?></td>
+                <td colspan="6" class="text-center text-secondary"><?= $this->t('No messages in queue') ?></td>
             </tr>
         <?php else: ?>
             <?php foreach ($messages as $message): ?>
@@ -65,13 +65,13 @@ $statusLabel = static function (\Tragwerk\Domain\Entity\QueueMessage $m): string
                                 <form method="post" action="<?= $this->url('queue.requeue', ['id' => $message->id]) ?>">
                                     <?= $this->fetch('partial::input/csrf') ?>
                                     <?= $this->fetch('partial::input/button', [
-                                        'label'   => _('Requeue'),
+                                        'label'   => $this->t('Requeue'),
                                         'classes' => 'btn btn-sm btn-warning',
                                         'icon'    => 'bi bi-arrow-clockwise',
                                     ]) ?>
                                 </form>
                                 <?= $this->fetch('partial::input/button', [
-                                    'label'        => _('Delete'),
+                                    'label'        => $this->t('Delete'),
                                     'classes'      => 'btn btn-sm btn-outline-danger',
                                     'icon'         => 'bi bi-trash3',
                                     'type'         => 'button',
@@ -94,13 +94,10 @@ $statusLabel = static function (\Tragwerk\Domain\Entity\QueueMessage $m): string
     <?php if ($message->isFailed()): ?>
         <?= $this->fetch('partial::modal', [
             'id'            => 'tw-delete-queue-modal-' . $message->id,
-            'header'        => _('Delete queue message'),
-            'body'          => sprintf(
-                _('Are you sure you want to delete the message %s? This action cannot be undone.'),
-                '<strong>' . $this->e($message->getMessageType()) . '</strong>',
-            ),
+            'header'        => $this->t('Delete queue message'),
+            'body'          => $this->t('Are you sure you want to delete the message {name}? This action cannot be undone.', ['name' => '<strong>' . $this->e($message->getMessageType()) . '</strong>']),
             'actionUrl'     => $this->url('queue.delete', ['id' => $message->id]),
-            'actionLabel'   => _('Delete'),
+            'actionLabel'   => $this->t('Delete'),
             'actionClasses' => 'btn btn-danger',
             'actionIcon'    => 'bi bi-trash3',
         ]) ?>

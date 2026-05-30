@@ -8,7 +8,7 @@ $this->layout('layout::default', ['title' => $project->name]);
         <nav aria-label="breadcrumb" class="mb-1">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item">
-                    <?= $this->fetch('partial::link', ['href' => $this->url('project'), 'label' => _('Projects')]) ?>
+                    <?= $this->fetch('partial::link', ['href' => $this->url('project'), 'label' => $this->t('Projects')]) ?>
                 </li>
                 <li class="breadcrumb-item active"><?= $this->e($project->name) ?></li>
             </ol>
@@ -17,7 +17,7 @@ $this->layout('layout::default', ['title' => $project->name]);
     </div>
     <div class="d-flex gap-2">
         <?= $this->fetch('partial::link', [
-            'label'   => _('Edit'),
+            'label'   => $this->t('Edit'),
             'href'    => $this->url('project.edit', ['id' => $project->id->toString()]),
             'icon'    => 'bi bi-pencil',
             'classes' => 'btn btn-outline-secondary btn-sm',
@@ -35,7 +35,7 @@ $this->layout('layout::default', ['title' => $project->name]);
             'dataBsToggle' => 'tab',
             'dataBsTarget' => '#tab-overview',
             'icon'         => 'bi bi-info-circle me-1',
-            'label'        => _('Overview'),
+            'label'        => $this->t('Overview'),
         ]) ?>
     </li>
     <li class="nav-item" role="presentation">
@@ -51,23 +51,7 @@ $this->layout('layout::default', ['title' => $project->name]);
             'hxSwap'       => 'innerHTML',
             'hxTrigger'    => 'shown.bs.tab once',
             'icon'         => 'bi bi-diagram-2 me-1',
-            'label'        => _('Environments'),
-        ]) ?>
-    </li>
-    <li class="nav-item" role="presentation">
-        <?= $this->fetch('partial::input/button', [
-            'classes'      => 'nav-link',
-            'type'         => 'button',
-            'role'         => 'tab',
-            'id'           => 'tab-domains-btn',
-            'dataBsToggle' => 'tab',
-            'dataBsTarget' => '#tab-domains',
-            'hxGet'        => $this->url('project.show.tab', ['id' => $project->id->toString(), 'tab' => 'domains']),
-            'hxTarget'     => '#tab-domains',
-            'hxSwap'       => 'innerHTML',
-            'hxTrigger'    => 'shown.bs.tab once',
-            'icon'         => 'bi bi-globe me-1',
-            'label'        => _('Domains'),
+            'label'        => $this->t('Environments'),
         ]) ?>
     </li>
 </ul>
@@ -79,39 +63,6 @@ $this->layout('layout::default', ['title' => $project->name]);
          hx-swap="innerHTML">
     </div>
     <div class="tab-pane fade" id="tab-environments" role="tabpanel"></div>
-    <div class="tab-pane fade" id="tab-domains" role="tabpanel"></div>
-</div>
-
-<div class="modal fade" id="tw-domain-delete-modal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><?= _('Domain entfernen') ?></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p class="mb-0"><?= _('Domain') ?> <strong id="tw-domain-delete-host"></strong> <?= _('wirklich entfernen?') ?></p>
-            </div>
-            <div class="modal-footer">
-                <?= $this->fetch('partial::input/button', [
-                    'label'        => _('Abbrechen'),
-                    'classes'      => 'btn btn-secondary',
-                    'type'         => 'button',
-                    'dataBsToggle' => 'modal',
-                ]) ?>
-                <button type="button"
-                        id="tw-domain-delete-confirm"
-                        class="btn btn-danger"
-                        data-bs-dismiss="modal"
-                        hx-post=""
-                        hx-target="#domain-list"
-                        hx-swap="outerHTML"
-                        hx-include="#tw-csrf-token">
-                    <i class="bi bi-trash me-1"></i><?= _('Entfernen') ?>
-                </button>
-            </div>
-        </div>
-    </div>
 </div>
 
 <?php $this->start('javascript') ?>

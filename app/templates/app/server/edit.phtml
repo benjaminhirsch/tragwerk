@@ -1,11 +1,11 @@
-<?php $this->layout('layout::default', ['title' => _('Edit server')]) ?>
+<?php $this->layout('layout::default', ['title' => $this->t('Edit server')]) ?>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="mb-0"><?= _('Edit server') ?></h1>
+    <h1 class="mb-0"><?= $this->t('Edit server') ?></h1>
     <form action="<?= $this->url('server.setup.start', ['id' => $server->id->toString()]) ?>" method="post">
         <?= $this->fetch('partial::input/csrf') ?>
         <?= $this->fetch('partial::input/button', [
-            'label'   => _('Setup server'),
+            'label'   => $this->t('Setup server'),
             'icon'    => 'bi bi-terminal',
             'classes' => 'btn btn-outline-primary',
         ]) ?>
@@ -18,21 +18,21 @@
 
         <?= $this->fetch('partial::input/text', [
             'id'         => 'name',
-            'label'      => _('Server name'),
+            'label'      => $this->t('Server name'),
             'autofocus'  => 'autofocus',
             'validation' => $validationBag,
         ]) ?>
 
         <?= $this->fetch('partial::input/text', [
             'id'         => 'host',
-            'label'      => _('IP address (IPv4 or IPv6)'),
+            'label'      => $this->t('IP address (IPv4 or IPv6)'),
             'validation' => $validationBag,
         ]) ?>
 
         <?= $this->fetch('partial::input/input', [
             'id'         => 'port',
             'type'       => 'number',
-            'label'      => _('SSH port'),
+            'label'      => $this->t('SSH port'),
             'min'        => '1',
             'max'        => '65535',
             'validation' => $validationBag,
@@ -46,23 +46,23 @@
         ?>
         <?= $this->fetch('partial::input/select', [
             'id'                 => 'credentialId',
-            'label'              => _('Credential'),
+            'label'              => $this->t('Credential'),
             'validation'         => $validationBag,
             'options'            => $credentialOptions,
-            'defaultOptionLabel' => _('— no credential —'),
+            'defaultOptionLabel' => $this->t('— no credential —'),
         ]) ?>
 
         <div class="d-flex gap-2">
             <?= $this->fetch('partial::input/button', [
-                'label' => _('Save'),
+                'label' => $this->t('Save'),
             ]) ?>
             <?= $this->fetch('partial::link', [
-                    'label' => _('Cancel'),
+                    'label' => $this->t('Cancel'),
                     'href' => $this->url('server'),
                     'classes' => 'btn btn-secondary',
             ]) ?>
             <?= $this->fetch('partial::input/button', [
-                //'label'        => _('Delete server'),
+                //'label'        => $this->t('Delete server'),
                 'classes'      => 'btn btn-outline-danger',
                 'icon'         => 'bi bi-trash3',
                 'type'         => 'button',
@@ -76,10 +76,10 @@
 
 <?= $this->fetch('partial::modal', [
     'id'            => 'tw-delete-server-modal',
-    'header'        => _('Delete server'),
-    'body'          => sprintf(_('Are you sure you want to delete the server %s? This action cannot be undone.'), '<strong>' . $this->e($server->name) . '</strong>'),
+    'header'        => $this->t('Delete server'),
+    'body'          => $this->t('Are you sure you want to delete the server {name}? This action cannot be undone.', ['name' => '<strong>' . $this->e($server->name) . '</strong>']),
     'actionUrl'     => $this->url('server.delete', ['id' => $server->id->toString()]),
-    'actionLabel'   => _('Delete server'),
+    'actionLabel'   => $this->t('Delete server'),
     'actionClasses' => 'btn btn-danger',
     'actionIcon'    => 'bi bi-trash3',
 ]) ?>

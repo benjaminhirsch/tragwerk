@@ -30,7 +30,7 @@
             <i class="bi bi-moon-fill tw-icon-dark"></i>
         </button>
         <?= $this->fetch('partial::input/button', [
-            'label'      => _('Logout'),
+            'label'      => $this->t('Logout'),
             'formAction' => $this->url('logout'),
             'form'       => 'tw-logout',
             'classes'    => 'tw-logout-btn',

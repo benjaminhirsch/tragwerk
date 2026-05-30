@@ -38,7 +38,6 @@ use Tragwerk\Domain\ValueObject\TimestampImmutable;
 use Tragwerk\Infrastructure\Git\BareRepository;
 use ZipArchive;
 
-use function array_map;
 use function assert;
 use function basename;
 use function chmod;
@@ -98,17 +97,17 @@ final readonly class BuildEnvironment
 
         $outDir = $this->ensureBuildDir($projectId, $branch);
 
-        $projectIdentifier = ProjectIdentifier::fromString($projectId);
-        $domains           = array_map(
-            static fn ($d) => $d->host,
-            $this->domainRepository->findByProject($projectIdentifier),
-        );
+        $projectIdentifier    = ProjectIdentifier::fromString($projectId);
+        $domainsByPlaceholder = [];
+        foreach ($this->domainRepository->findByEnvironment($projectIdentifier, $branch) as $domain) {
+            $domainsByPlaceholder[$domain->placeholder][] = $domain->host;
+        }
 
         $acmeEmail = $this->ownerEmail($projectIdentifier);
         $messages  = ['Build started for commit ' . $commitSha];
 
         try {
-            $compose = Yaml::dump($this->composeGenerator->generate($config, $domains, $acmeEmail), 10, 2);
+            $compose = Yaml::dump($this->composeGenerator->generate($config, $domainsByPlaceholder, $acmeEmail), 10, 2);
             file_put_contents($outDir . '/docker-compose.yml', $compose);
             $messages[] = 'Generated docker-compose.yml';
         } catch (RuntimeException $e) {
