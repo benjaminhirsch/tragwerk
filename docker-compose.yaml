@@ -39,7 +39,6 @@ services:
       - ./app/app.dev.ini:/usr/local/etc/php/conf.d/app.ini:ro
     ports:
       - "80:80"
-      - "8080:8080"
 
   db:
     <<: *default-service
