@@ -78,6 +78,18 @@ final readonly class Server
         );
 
         $routes->get(
+            '/servers/{id}/metrics/live',
+            $this->middlewareFactory->prepare([Handler\Server\MetricsLiveHandler::class]),
+            'server.metrics.live',
+        );
+
+        $routes->get(
+            '/servers/{id}/metrics/data',
+            $this->middlewareFactory->prepare([Handler\Server\MetricsDataHandler::class]),
+            'server.metrics.data',
+        );
+
+        $routes->get(
             '/servers/{id}',
             $this->middlewareFactory->prepare([Handler\Server\ShowHandler::class]),
             'server.show',

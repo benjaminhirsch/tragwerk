@@ -183,6 +183,11 @@ final readonly class DockerfileGenerator
         }
 
         $lines[] = '    order php_server before file_server';
+        // Enable Caddy/FrankenPHP Prometheus metrics on the container-internal admin endpoint
+        // (localhost:2019/metrics) — scraped per-environment by Tragwerk, no external exposure.
+        $lines[] = '    servers {';
+        $lines[] = '        metrics';
+        $lines[] = '    }';
         $lines[] = '}';
 
         foreach ($app->web->locations as $location) {

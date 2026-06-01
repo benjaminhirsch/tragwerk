@@ -425,6 +425,16 @@ final class DockerfileGeneratorTest extends TestCase
     }
 
     #[Test]
+    public function caddyfileEnablesPrometheusMetrics(): void
+    {
+        $output = $this->generator->generate(self::app());
+
+        self::assertNotNull($output->caddyfileContent);
+        self::assertStringContainsString('servers {', $output->caddyfileContent);
+        self::assertStringContainsString('metrics', $output->caddyfileContent);
+    }
+
+    #[Test]
     public function caddyfileHasNoWorkerBlockByDefault(): void
     {
         $output = $this->generator->generate(self::app());
