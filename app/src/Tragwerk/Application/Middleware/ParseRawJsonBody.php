@@ -27,7 +27,13 @@ final readonly class ParseRawJsonBody implements MiddlewareInterface
         $contentType = $request->getHeaderLine('Content-Type');
         $isJson      = $contentType === 'application/json' || str_starts_with($contentType, 'application/json;');
 
-        if (! $isJson || $request->getParsedBody() !== null) {
+        // FrankenPHP/SAPI populates the parsed body from $_POST, which is an empty array
+        // for JSON requests (PHP only fills $_POST for form data). Treat that as "unparsed"
+        // so the JSON body still gets decoded; only skip when a real body is already present.
+        $parsedBody    = $request->getParsedBody();
+        $alreadyParsed = $parsedBody !== null && $parsedBody !== [];
+
+        if (! $isJson || $alreadyParsed) {
             return $handler->handle($request);
         }
 
