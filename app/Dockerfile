@@ -15,6 +15,7 @@ RUN install-php-extensions \
         gettext \
         pdo_pgsql \
         zip \
+        pcntl \
         opcache \
         xdebug \
         pcov
