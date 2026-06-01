@@ -54,6 +54,22 @@ $this->layout('layout::default', ['title' => $server->name]);
             'label'        => $this->t('Setup Log'),
         ]) ?>
     </li>
+    <li class="nav-item" role="presentation">
+        <?= $this->fetch('partial::input/button', [
+            'classes'      => 'nav-link',
+            'type'         => 'button',
+            'role'         => 'tab',
+            'id'           => 'tab-metrics-btn',
+            'dataBsToggle' => 'tab',
+            'dataBsTarget' => '#tab-metrics',
+            'hxGet'        => $this->url('server.show.tab', ['id' => $server->id->toString(), 'tab' => 'metrics']),
+            'hxTarget'     => '#tab-metrics',
+            'hxSwap'       => 'innerHTML',
+            'hxTrigger'    => 'shown.bs.tab once',
+            'icon'         => 'bi bi-graph-up me-1',
+            'label'        => $this->t('Metrics'),
+        ]) ?>
+    </li>
 </ul>
 
 <div class="tab-content tw-card tw-card-tabs">
@@ -64,8 +80,13 @@ $this->layout('layout::default', ['title' => $server->name]);
     </div>
 
     <div class="tab-pane fade" id="tab-setup" role="tabpanel"></div>
+
+    <div class="tab-pane fade" id="tab-metrics" role="tabpanel"></div>
 </div>
 
 <?php $this->start('javascript') ?>
+<link rel="stylesheet" href="/css/uPlot.min.css">
 <script src="/js/detail-tabs.js"></script>
+<script src="/js/uPlot.iife.min.js"></script>
+<script src="/js/server-metrics.js"></script>
 <?php $this->stop() ?>

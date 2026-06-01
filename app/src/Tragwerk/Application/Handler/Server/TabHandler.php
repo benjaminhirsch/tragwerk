@@ -47,8 +47,14 @@ final readonly class TabHandler implements RequestHandlerInterface
         return match ($request->getAttribute('tab')) {
             'overview' => $this->renderOverview($request, $server),
             'setup'    => $this->renderSetup($request, $server),
+            'metrics'  => $this->renderMetrics($request, $server),
             default    => new EmptyResponse(404),
         };
+    }
+
+    private function renderMetrics(ServerRequestInterface $request, Server $server): ResponseInterface
+    {
+        return $this->renderer->render($request, 'page::server/tab/metrics', ['server' => $server]);
     }
 
     private function renderOverview(ServerRequestInterface $request, Server $server): ResponseInterface
