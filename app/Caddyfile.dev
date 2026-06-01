@@ -1,0 +1,20 @@
+{
+	frankenphp {
+		worker {
+			file ./public/index.php
+			watch ./src/**/*.php
+			watch ./config/**/*.php
+			watch ./public/index.php
+		}
+	}
+	auto_https off
+	log {
+		level DEBUG
+	}
+}
+
+:80 {
+	root * public/
+	encode zstd br gzip
+	php_server
+}
