@@ -6,6 +6,7 @@
             <web>
                 <location path="/" root="public" index="index.php" passthru="/index.php"/>
             </web>
+            <worker count="4" max-requests="1000"/>
             <hooks>
                 <hook type="build"><![CDATA[
                   composer install --no-dev --optimize-autoloader
@@ -46,9 +47,7 @@
         <service name="redis" type="redis:8"/>
     </services>
     <routes>
-        <route pattern="https://{default}" type="upstream" upstream="My Test Project:http"/>
-        <route pattern="http://{default}" type="redirect" to="https://{default}"/>
-        <route pattern="https://foobar.{default}" type="upstream" upstream="Foobar:http"/>
-        <route pattern="http://foobar.{default}" type="redirect" to="https://foobar.{default}"/>
+        <route pattern="https://{default}" upstream="My Test Project:http"/>
+        <route pattern="https://foobar.{default}" upstream="Foobar:http"/>
     </routes>
 </project>

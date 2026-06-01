@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TragwerkTest\Unit\Domain\Docker;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Tragwerk\Domain\Docker\DockerfileGenerator;
@@ -15,6 +16,7 @@ use Tragwerk\Domain\Model\ExtensionConfig;
 use Tragwerk\Domain\Model\HookConfig;
 use Tragwerk\Domain\Model\LocationConfig;
 use Tragwerk\Domain\Model\WebConfig;
+use Tragwerk\Domain\Model\WorkerConfig;
 
 use function strpos;
 use function substr_count;
@@ -420,5 +422,82 @@ final class DockerfileGeneratorTest extends TestCase
 
         self::assertNotNull($output->caddyfileContent);
         self::assertStringContainsString('encode zstd br gzip', $output->caddyfileContent);
+    }
+
+    #[Test]
+    public function caddyfileHasNoWorkerBlockByDefault(): void
+    {
+        $output = $this->generator->generate(self::app());
+
+        self::assertNotNull($output->caddyfileContent);
+        self::assertStringNotContainsString('worker {', $output->caddyfileContent);
+    }
+
+    #[Test]
+    public function caddyfileWorkerBlockDerivesFileFromPassthruLocation(): void
+    {
+        $output = $this->generator->generate(self::workerApp(new WorkerConfig(count: 4)));
+
+        self::assertNotNull($output->caddyfileContent);
+        self::assertStringContainsString('worker {', $output->caddyfileContent);
+        self::assertStringContainsString('file /app/public/index.php', $output->caddyfileContent);
+        self::assertStringContainsString('num 4', $output->caddyfileContent);
+    }
+
+    #[Test]
+    public function caddyfileWorkerBlockOmitsNumWhenCountAbsent(): void
+    {
+        $output = $this->generator->generate(self::workerApp(new WorkerConfig()));
+
+        self::assertNotNull($output->caddyfileContent);
+        self::assertStringContainsString('worker {', $output->caddyfileContent);
+        self::assertStringNotContainsString('num ', $output->caddyfileContent);
+    }
+
+    #[Test]
+    public function workerModeWithoutPassthruLocationThrows(): void
+    {
+        $app = new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([new LocationConfig(path: '/', root: 'public')]),
+            worker: new WorkerConfig(count: 2),
+        );
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('exactly one');
+
+        $this->generator->generate($app);
+    }
+
+    #[Test]
+    public function workerModeWithMultiplePassthruLocationsThrows(): void
+    {
+        $app = new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([
+                new LocationConfig(path: '/', root: 'public', passthru: '/index.php'),
+                new LocationConfig(path: '/api', root: 'api', passthru: '/api.php'),
+            ]),
+            worker: new WorkerConfig(count: 2),
+        );
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $this->generator->generate($app);
+    }
+
+    private static function workerApp(WorkerConfig $worker): ApplicationConfig
+    {
+        return new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([new LocationConfig(path: '/', root: 'public', passthru: '/index.php')]),
+            worker: $worker,
+        );
     }
 }

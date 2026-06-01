@@ -67,6 +67,11 @@ final readonly class DockerComposeGenerator
             $dependsOn   = [];
             $environment = ['SERVER_NAME' => ':80'];
 
+            // Worker scripts honour MAX_REQUESTS to restart after N requests (memory-leak guard).
+            if ($app->worker !== null && $app->worker->maxRequests > 0) {
+                $environment['MAX_REQUESTS'] = (string) $app->worker->maxRequests;
+            }
+
             foreach ($app->relationships as $rel) {
                 $targetSlug             = $this->slugify($rel->target);
                 $dependsOn[$targetSlug] = ['condition' => 'service_healthy'];
