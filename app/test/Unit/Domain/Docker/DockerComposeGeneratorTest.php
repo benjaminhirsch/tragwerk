@@ -22,6 +22,7 @@ use Tragwerk\Domain\Model\RelationshipConfig;
 use Tragwerk\Domain\Model\RouteConfig;
 use Tragwerk\Domain\Model\ServiceConfig;
 use Tragwerk\Domain\Model\WebConfig;
+use Tragwerk\Domain\Model\WorkerConfig;
 
 final class DockerComposeGeneratorTest extends TestCase
 {
@@ -58,6 +59,17 @@ final class DockerComposeGeneratorTest extends TestCase
     private static function upstream(string $pattern, string $upstream): RouteConfig
     {
         return new RouteConfig(pattern: $pattern, upstream: $upstream);
+    }
+
+    private static function workerApp(string $name, WorkerConfig $worker): ApplicationConfig
+    {
+        return new ApplicationConfig(
+            name: $name,
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([new LocationConfig(path: '/', root: 'public', passthru: '/index.php')]),
+            worker: $worker,
+        );
     }
 
     /**
@@ -127,6 +139,39 @@ final class DockerComposeGeneratorTest extends TestCase
         self::assertIsArray($env, 'Service \'' . $name . '\' has no environment');
 
         return $env;
+    }
+
+    #[Test]
+    public function workerMaxRequestsBecomesEnvVar(): void
+    {
+        $config  = self::project(
+            [self::workerApp('app', new WorkerConfig(count: 4, maxRequests: 1000))],
+            [self::upstream('https://{default}', 'app:http')],
+        );
+        $compose = $this->generator->generate($config, 'main');
+
+        self::assertSame('1000', $this->environment($compose, 'app')['MAX_REQUESTS']);
+    }
+
+    #[Test]
+    public function workerWithoutMaxRequestsHasNoEnvVar(): void
+    {
+        $config  = self::project(
+            [self::workerApp('app', new WorkerConfig(count: 4))],
+            [self::upstream('https://{default}', 'app:http')],
+        );
+        $compose = $this->generator->generate($config, 'main');
+
+        self::assertArrayNotHasKey('MAX_REQUESTS', $this->environment($compose, 'app'));
+    }
+
+    #[Test]
+    public function nonWorkerAppHasNoMaxRequestsEnvVar(): void
+    {
+        $config  = self::project([self::app('app')], [self::upstream('https://{default}', 'app:http')]);
+        $compose = $this->generator->generate($config, 'main');
+
+        self::assertArrayNotHasKey('MAX_REQUESTS', $this->environment($compose, 'app'));
     }
 
     #[Test]

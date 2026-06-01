@@ -81,6 +81,9 @@ final class ProjectConfigMappingTest extends TestCase
         self::assertCount(2, $config->applications[0]->hooks);
         self::assertCount(1, $config->applications[0]->mounts);
         self::assertCount(2, $config->applications[0]->relationships);
+        self::assertNotNull($config->applications[0]->worker);
+        self::assertSame(4, $config->applications[0]->worker->count);
+        self::assertSame(1000, $config->applications[0]->worker->maxRequests);
 
         self::assertSame('Foobar', $config->applications[1]->name);
         self::assertSame(ApplicationRuntime::PHP82, $config->applications[1]->type);
@@ -88,9 +91,10 @@ final class ProjectConfigMappingTest extends TestCase
         self::assertCount(1, $config->applications[1]->hooks);
         self::assertCount(1, $config->applications[1]->mounts);
         self::assertCount(1, $config->applications[1]->relationships);
+        self::assertNull($config->applications[1]->worker);
 
         self::assertCount(2, $config->services);
-        self::assertCount(4, $config->routes);
+        self::assertCount(2, $config->routes);
     }
 
     public static function applicationRuntimeProvider(): Generator
@@ -306,6 +310,34 @@ final class ProjectConfigMappingTest extends TestCase
         self::assertSame([], $config->applications[0]->hooks);
         self::assertSame([], $config->applications[0]->mounts);
         self::assertSame([], $config->applications[0]->relationships);
+    }
+
+    #[Test]
+    public function workerIsNullWhenAbsent(): void
+    {
+        $config = $this->map(self::projectXml());
+
+        self::assertNull($config->applications[0]->worker);
+    }
+
+    #[Test]
+    public function workerCountAndMaxRequestsAreMapped(): void
+    {
+        $config = $this->map(self::projectXml(appExtras: '<worker count="4" max-requests="1000"/>'));
+
+        self::assertNotNull($config->applications[0]->worker);
+        self::assertSame(4, $config->applications[0]->worker->count);
+        self::assertSame(1000, $config->applications[0]->worker->maxRequests);
+    }
+
+    #[Test]
+    public function workerCountIsNullAndMaxRequestsDefaultsToZeroWhenOmitted(): void
+    {
+        $config = $this->map(self::projectXml(appExtras: '<worker/>'));
+
+        self::assertNotNull($config->applications[0]->worker);
+        self::assertNull($config->applications[0]->worker->count);
+        self::assertSame(0, $config->applications[0]->worker->maxRequests);
     }
 
     #[Test]

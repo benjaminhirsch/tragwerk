@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Tragwerk\Domain\Docker;
 
+use InvalidArgumentException;
 use Tragwerk\Domain\Enum\HookType;
 use Tragwerk\Domain\Model\ApplicationConfig;
 use Tragwerk\Domain\Model\ExtensionConfig;
 use Tragwerk\Domain\Model\HookConfig;
+use Tragwerk\Domain\Model\LocationConfig;
 
 use function array_filter;
 use function array_map;
@@ -20,6 +22,7 @@ use function implode;
 use function ltrim;
 use function preg_replace;
 use function rtrim;
+use function sprintf;
 use function str_starts_with;
 use function strtolower;
 use function trim;
@@ -163,7 +166,22 @@ final readonly class DockerfileGenerator
     {
         $lines   = [];
         $lines[] = '{';
-        $lines[] = '    frankenphp';
+
+        if ($app->worker !== null) {
+            $lines[] = '    frankenphp {';
+            $lines[] = '        worker {';
+            $lines[] = '            file ' . $this->workerFile($app);
+
+            if ($app->worker->count !== null) {
+                $lines[] = '            num ' . $app->worker->count;
+            }
+
+            $lines[] = '        }';
+            $lines[] = '    }';
+        } else {
+            $lines[] = '    frankenphp';
+        }
+
         $lines[] = '    order php_server before file_server';
         $lines[] = '}';
 
@@ -189,6 +207,32 @@ final readonly class DockerfileGenerator
         }
 
         return implode("\n", $lines) . "\n";
+    }
+
+    /**
+     * Resolves the worker front controller from the single passthru location.
+     * Worker mode is meaningless without a PHP entry point, and ambiguous with
+     * more than one, so exactly one passthru location is required.
+     */
+    private function workerFile(ApplicationConfig $app): string
+    {
+        $passthruLocations = array_values(array_filter(
+            $app->web->locations,
+            static fn (LocationConfig $location): bool => $location->passthru !== null,
+        ));
+
+        if (count($passthruLocations) !== 1) {
+            throw new InvalidArgumentException(sprintf(
+                'Worker mode for application "%s" requires exactly one <location> with a '
+                . 'passthru front controller, found %d.',
+                $app->name,
+                count($passthruLocations),
+            ));
+        }
+
+        $location = $passthruLocations[0];
+
+        return '/app/' . ltrim($location->root, '/') . '/' . ltrim((string) $location->passthru, '/');
     }
 
     /** @param list<ExtensionConfig> $extensions */

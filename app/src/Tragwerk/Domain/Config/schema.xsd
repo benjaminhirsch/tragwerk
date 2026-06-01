@@ -61,6 +61,7 @@
         <xs:all>
             <xs:element name="web"           type="WebType"/>
             <xs:element name="extensions"    type="ExtensionsType"     minOccurs="0"/>
+            <xs:element name="worker"        type="WorkerType"         minOccurs="0"/>
             <xs:element name="hooks"         type="HooksType"          minOccurs="0"/>
             <xs:element name="mounts"        type="MountsType"         minOccurs="0"/>
             <xs:element name="relationships" type="RelationshipsType"  minOccurs="0"/>
@@ -115,6 +116,39 @@
                 </xs:complexType>
             </xs:element>
         </xs:sequence>
+    </xs:complexType>
+
+    <!-- ============================================================ -->
+    <!-- Worker                                                       -->
+    <!-- ============================================================ -->
+    <xs:complexType name="WorkerType">
+        <xs:annotation>
+            <xs:documentation>
+                Run the application in FrankenPHP worker mode: the front controller
+                is bootstrapped once and kept warm between requests, instead of the
+                default per-request model. The application must ship a worker-safe
+                front controller; the worker script is derived from the &lt;web&gt;
+                location that declares a passthru (exactly one is required).
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="count" type="xs:positiveInteger">
+            <xs:annotation>
+                <xs:documentation>
+                    Number of worker threads. Defaults to FrankenPHP's automatic
+                    sizing (roughly 2x the CPU cores). Set explicitly on shared
+                    hosts to avoid oversubscription.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="max-requests" type="xs:nonNegativeInteger" default="0">
+            <xs:annotation>
+                <xs:documentation>
+                    Restart each worker after handling this many requests, to
+                    mitigate memory leaks in long-running processes. 0 (the default)
+                    means unlimited.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
     </xs:complexType>
 
     <!-- ============================================================ -->
