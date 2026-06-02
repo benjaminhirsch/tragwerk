@@ -11,6 +11,7 @@ use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\DeployJobRepository;
+use Tragwerk\Domain\Repository\DomainRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
@@ -35,6 +36,7 @@ final readonly class DeployEnvironmentCommandFactory
         $credentials = $container->get(CredentialRepository::class);
         $deployJobs  = $container->get(DeployJobRepository::class);
         $registries  = $container->get(RegistryRepository::class);
+        $domains     = $container->get(DomainRepository::class);
         $bareRepo    = $container->get(BareRepository::class);
         $xmlConv     = $container->get(XmlToArrayConverter::class);
         $mapper      = $container->get(TreeMapper::class);
@@ -45,6 +47,7 @@ final readonly class DeployEnvironmentCommandFactory
         assert($credentials instanceof CredentialRepository);
         assert($deployJobs instanceof DeployJobRepository);
         assert($registries instanceof RegistryRepository);
+        assert($domains instanceof DomainRepository);
         assert($bareRepo instanceof BareRepository);
         assert($xmlConv instanceof XmlToArrayConverter);
         assert($mapper instanceof TreeMapper);
@@ -56,6 +59,7 @@ final readonly class DeployEnvironmentCommandFactory
             $credentials,
             $deployJobs,
             $registries,
+            $domains,
             $bareRepo,
             $xmlConv,
             $mapper,

@@ -24,6 +24,11 @@ $this->layout('layout::default', ['title' => $this->t('Edit registry')]);
             'validation' => $validationBag,
         ]) ?>
         <?= $this->fetch('partial::input/text', [
+            'id'         => 'repository',
+            'label'      => $this->t('Repository'),
+            'validation' => $validationBag,
+        ]) ?>
+        <?= $this->fetch('partial::input/text', [
             'id'         => 'username',
             'label'      => $this->t('Username'),
             'validation' => $validationBag,

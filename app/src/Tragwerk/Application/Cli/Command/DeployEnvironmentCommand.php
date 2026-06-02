@@ -31,6 +31,7 @@ use Tragwerk\Domain\Enum\MountSource;
 use Tragwerk\Domain\Model\ProjectConfig;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\DeployJobRepository;
+use Tragwerk\Domain\Repository\DomainRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
@@ -73,6 +74,7 @@ final class DeployEnvironmentCommand extends Command
         private readonly CredentialRepository $credentialRepository,
         private readonly DeployJobRepository $deployJobRepository,
         private readonly RegistryRepository $registryRepository,
+        private readonly DomainRepository $domainRepository,
         private readonly BareRepository $bareRepository,
         private readonly XmlToArrayConverter $xmlConverter,
         private readonly TreeMapper $treeMapper,
@@ -407,13 +409,21 @@ final class DeployEnvironmentCommand extends Command
         }
 
         // 3. docker login on local host
+        $dockerConfigDir = sys_get_temp_dir() . '/tw-docker-' . uniqid();
+        mkdir($dockerConfigDir, 0700, true);
+        $dockerEnv = ['DOCKER_CONFIG' => $dockerConfigDir];
+
         $this->log($jobId, '[Deploy] Logging in to registry ' . $registry->url . '...');
-        $login = new Process(['docker', 'login', $registry->url, '-u', $registry->username, '--password-stdin']);
+        $login = new Process(
+            ['docker', 'login', $registry->url, '-u', $registry->username, '--password-stdin'],
+            env: $dockerEnv,
+        );
         $login->setInput($registry->password);
         $login->run();
 
         if (! $login->isSuccessful()) {
             $this->removeDirectory($buildDir);
+            $this->removeDirectory($dockerConfigDir);
             $this->log($jobId, '[Deploy] Registry login failed: ' . $login->getErrorOutput());
             $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
 
@@ -426,8 +436,8 @@ final class DeployEnvironmentCommand extends Command
 
         foreach ($config->applications as $app) {
             $appSlug    = $this->slugify($app->name);
-            $imageTag   = $registry->url . '/' . $projectSlug . '/' . $appSlug
-                . ':' . $branchSlug . '-' . $shortSha;
+            $imageTag   = $registry->url . '/' . $registry->repository
+                . ':' . $appSlug . '-' . $branchSlug . '-' . $shortSha;
             $dockerfile = $buildDir . '/Dockerfile.' . $appSlug;
 
             $this->log($jobId, '[Deploy] Building image: ' . $imageTag);
@@ -435,6 +445,7 @@ final class DeployEnvironmentCommand extends Command
             $build = new Process(
                 ['docker', 'build', '-f', $dockerfile, '-t', $imageTag, '.'],
                 $buildDir,
+                $dockerEnv,
                 timeout: null,
             );
 
@@ -453,14 +464,15 @@ final class DeployEnvironmentCommand extends Command
 
             if (! $build->isSuccessful()) {
                 $this->removeDirectory($buildDir);
-                (new Process(['docker', 'logout', $registry->url]))->run();
+                (new Process(['docker', 'logout', $registry->url], env: $dockerEnv))->run();
+                $this->removeDirectory($dockerConfigDir);
                 $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
 
                 return Command::FAILURE;
             }
 
             $this->log($jobId, '[Deploy] Pushing image: ' . $imageTag);
-            $push = new Process(['docker', 'push', $imageTag], timeout: null);
+            $push = new Process(['docker', 'push', $imageTag], env: $dockerEnv, timeout: null);
             $push->run(function (string $type, string $buf) use ($jobId): void {
                 foreach (explode("\n", trim($buf)) as $line) {
                     if (trim($line) === '') {
@@ -473,18 +485,20 @@ final class DeployEnvironmentCommand extends Command
 
             if (! $push->isSuccessful()) {
                 $this->removeDirectory($buildDir);
-                (new Process(['docker', 'logout', $registry->url]))->run();
+                (new Process(['docker', 'logout', $registry->url], env: $dockerEnv))->run();
+                $this->removeDirectory($dockerConfigDir);
                 $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
 
                 return Command::FAILURE;
             }
 
-            (new Process(['docker', 'rmi', $imageTag]))->run();
+            (new Process(['docker', 'rmi', $imageTag], env: $dockerEnv))->run();
             $imageTags[$appSlug] = $imageTag;
         }
 
         $this->removeDirectory($buildDir);
-        (new Process(['docker', 'logout', $registry->url]))->run();
+        (new Process(['docker', 'logout', $registry->url], env: $dockerEnv))->run();
+        $this->removeDirectory($dockerConfigDir);
 
         // 5. SSH to VPS — login + pull + swap
         $sftp = new SFTP($server->host, $server->port, 30);
@@ -501,7 +515,13 @@ final class DeployEnvironmentCommand extends Command
         $sftp->mkdir($remoteDir, -1, true);
 
         // Upload docker-compose.yml (with image: refs) + Caddyfiles
-        $compose = $this->composeGenerator->generate($config, $branch, [], $imageTags);
+        $domainsByPlaceholder = [];
+        $projectIdentifier    = ProjectIdentifier::fromString($projectId);
+        foreach ($this->domainRepository->findByEnvironment($projectIdentifier, $branch) as $domain) {
+            $domainsByPlaceholder[$domain->placeholder][] = $domain->host;
+        }
+
+        $compose = $this->composeGenerator->generate($config, $branch, $domainsByPlaceholder, $imageTags);
         $sftp->put(
             $remoteDir . '/docker-compose.yml',
             Yaml::dump($compose, 8, 2, Yaml::DUMP_NULL_AS_TILDE),

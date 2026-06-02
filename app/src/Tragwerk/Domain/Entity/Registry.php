@@ -15,6 +15,7 @@ final class Registry implements Entity
         public RegistryIdentifier $id,
         public string $name,
         public string $url,
+        public string $repository,
         public string $username,
         public string $password,
         public TeamIdentifier $teamId,

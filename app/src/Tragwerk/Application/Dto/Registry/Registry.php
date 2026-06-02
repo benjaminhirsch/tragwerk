@@ -25,6 +25,8 @@ final readonly class Registry implements DtoInterface
         #[FromBody]
         public string $url,
         #[FromBody]
+        public string $repository,
+        #[FromBody]
         public string $username,
         #[FromBody]
         public string $password,
@@ -38,6 +40,10 @@ final readonly class Registry implements DtoInterface
 
         if (trim($this->url) === '') {
             $errors[] = ValidationError::make('url', $empty);
+        }
+
+        if (trim($this->repository) === '') {
+            $errors[] = ValidationError::make('repository', $empty);
         }
 
         if (trim($this->username) === '') {
@@ -64,6 +70,7 @@ final readonly class Registry implements DtoInterface
             $id,
             $this->name,
             $this->url,
+            $this->repository,
             $this->username,
             $this->password,
             $teamId,

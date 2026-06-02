@@ -14,7 +14,13 @@
         <?= $this->fetch('partial::input/text', [
             'id'          => 'url',
             'label'       => $this->t('Registry URL'),
-            'placeholder' => 'ghcr.io',
+            'placeholder' => 'docker.io',
+            'validation'  => $validationBag ?? null,
+        ]) ?>
+        <?= $this->fetch('partial::input/text', [
+            'id'          => 'repository',
+            'label'       => $this->t('Repository'),
+            'placeholder' => 'benjaminhirsch/myapp',
             'validation'  => $validationBag ?? null,
         ]) ?>
         <?= $this->fetch('partial::input/text', [
