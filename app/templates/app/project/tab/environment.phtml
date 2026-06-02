@@ -17,6 +17,8 @@ $containerStatusUrl = $this->url('project.environment.container-status', ['id' =
     . '?branch=' . urlencode($branch);
 $metricsLiveUrl = $this->url('project.environment.metrics-live', ['id' => $project->id->toString()])
     . '?branch=' . urlencode($branch);
+$logsUrl = $this->url('project.environment.logs', ['id' => $project->id->toString()])
+    . '?branch=' . urlencode($branch);
 $metricsDataUrl = $this->url('project.environment.metrics-data', ['id' => $project->id->toString()])
     . '?branch=' . urlencode($branch);
 $slugify    = static function (string $name): string {
@@ -95,6 +97,17 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
                 hx-target="#tw-app-metrics"
                 hx-swap="innerHTML">
             <?= $this->t('Metrics') ?>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="<?= $tabId ?>-logs-tab"
+                data-bs-toggle="tab" data-bs-target="#<?= $tabId ?>-logs"
+                type="button" role="tab"
+                hx-get="<?= $this->e($logsUrl) ?>"
+                hx-trigger="shown.bs.tab once"
+                hx-target="#tw-environment-logs"
+                hx-swap="outerHTML">
+            <?= $this->t('Logs') ?>
         </button>
     </li>
 </ul>
@@ -263,6 +276,15 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
 
             <div data-chart-empty class="text-body-secondary small d-none">
                 <i class="bi bi-info-circle me-1"></i><?= $this->t('No data yet — history appears as the metrics ticker runs.') ?>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="<?= $tabId ?>-logs" role="tabpanel">
+        <div id="tw-environment-logs">
+            <div class="text-body-secondary small">
+                <span class="spinner-border spinner-border-sm me-1"></span>
+                <?= $this->t('Loading logs...') ?>
             </div>
         </div>
     </div>
