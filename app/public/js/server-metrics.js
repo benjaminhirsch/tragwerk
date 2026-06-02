@@ -4,6 +4,14 @@
 
     var REFRESH_MS = 30000;
 
+    function axisColor() {
+        return getComputedStyle(document.documentElement).getPropertyValue('--bs-body-color').trim() || '#212529';
+    }
+
+    function axisConfig(extra) {
+        return Object.assign({ stroke: axisColor(), ticks: { stroke: axisColor() }, grid: { stroke: axisColor(), width: 0.5, dash: [4, 4] } }, extra || {});
+    }
+
     function usageOpts(width) {
         return {
             width: width,
@@ -11,11 +19,11 @@
             scales: { y: { range: [0, 100] } },
             series: [
                 {},
-                { label: 'CPU', stroke: '#0d6efd', width: 1.5 },
-                { label: 'Mem', stroke: '#198754', width: 1.5 },
+                { label: 'CPU',  stroke: '#0d6efd', width: 1.5 },
+                { label: 'Mem',  stroke: '#198754', width: 1.5 },
                 { label: 'Disk', stroke: '#fd7e14', width: 1.5 }
             ],
-            axes: [{}, { values: function (u, vals) { return vals.map(function (v) { return v + '%'; }); } }]
+            axes: [axisConfig(), axisConfig({ values: function (u, vals) { return vals.map(function (v) { return v + '%'; }); } })]
         };
     }
 
@@ -23,7 +31,8 @@
         return {
             width: width,
             height: 140,
-            series: [{}, { label: 'Load', stroke: '#6f42c1', width: 1.5 }]
+            series: [{}, { label: 'Load', stroke: '#6f42c1', width: 1.5 }],
+            axes: [axisConfig(), axisConfig()]
         };
     }
 
@@ -38,12 +47,22 @@
         var usageEl = root.querySelector('[data-chart="usage"]');
         var loadEl = root.querySelector('[data-chart="load"]');
         var emptyEl = root.querySelector('[data-chart-empty]');
+        var labelEls = root.querySelectorAll('[data-chart-label]');
         var usage = null;
         var load = null;
         var timer = null;
 
         function width() {
             return Math.max(240, root.clientWidth);
+        }
+
+        function resize() {
+            if (usage) { usage.setSize({ width: width(), height: 180 }); }
+            if (load) { load.setSize({ width: width(), height: 140 }); }
+        }
+
+        if (typeof ResizeObserver !== 'undefined') {
+            new ResizeObserver(function () { if (root.clientWidth > 0) { resize(); } }).observe(root);
         }
 
         function render(d) {
@@ -55,6 +74,7 @@
             }
             usageEl.classList.toggle('d-none', empty);
             loadEl.classList.toggle('d-none', empty);
+            labelEls.forEach(function (el) { el.classList.toggle('d-none', empty); });
             if (empty) {
                 return;
             }
@@ -92,10 +112,18 @@
             });
         });
 
-        window.addEventListener('resize', function () {
-            if (usage) { usage.setSize({ width: width(), height: 180 }); }
-            if (load) { load.setSize({ width: width(), height: 140 }); }
-        });
+        window.addEventListener('resize', resize);
+
+        var lastTheme = document.documentElement.getAttribute('data-bs-theme');
+        new MutationObserver(function () {
+            var t = document.documentElement.getAttribute('data-bs-theme');
+            if (t !== lastTheme) {
+                lastTheme = t;
+                if (usage) { usage.destroy(); usage = null; }
+                if (load)  { load.destroy();  load  = null; }
+                fetchData();
+            }
+        }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
 
         if (timer) { clearInterval(timer); }
         timer = setInterval(fetchData, REFRESH_MS);

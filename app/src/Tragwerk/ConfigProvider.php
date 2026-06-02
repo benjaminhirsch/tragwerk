@@ -293,6 +293,8 @@ final readonly class ConfigProvider
                         Infrastructure\Repository\DomainRepository::class,
                     Domain\Repository\ServerMetricRepository::class =>
                         Infrastructure\Repository\ServerMetricRepository::class,
+                    Domain\Repository\AppMetricRepository::class =>
+                        Infrastructure\Repository\AppMetricRepository::class,
                 ],
             ],
         ];
@@ -358,6 +360,7 @@ final readonly class ConfigProvider
                     EventListener\SetupJob\ScheduleSetupJob::class,
                 ],
                 Event\ServerMetricsSampled::class => [EventListener\ServerMetrics\PersistServerMetrics::class],
+                Event\AppMetricsSampled::class    => [EventListener\AppMetrics\PersistAppMetrics::class],
                 Event\TeamCreated::class         => [EventListener\Team\CreateTeam::class],
                 Event\TeamUpdated::class         => [EventListener\Team\UpdateTeam::class],
                 Event\TeamDeleted::class         => [EventListener\Team\DeleteTeam::class],

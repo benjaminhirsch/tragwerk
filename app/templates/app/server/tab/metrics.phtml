@@ -22,7 +22,7 @@ $dataUrl = $this->url('server.metrics.data', ['id' => $server->id->toString()]);
 
     <div class="col-12">
         <div id="tw-metrics-charts" data-url="<?= $this->e($dataUrl) ?>" data-range="1h">
-            <div class="d-flex justify-content-between align-items-center mb-2">
+            <div data-chart-label class="d-flex justify-content-between align-items-center mb-2">
                 <h6 class="text-body-secondary mb-0"><?= $this->t('History') ?></h6>
                 <div class="btn-group btn-group-sm" role="group">
                     <button type="button" class="btn btn-outline-secondary active" data-range="1h">1h</button>
@@ -31,10 +31,10 @@ $dataUrl = $this->url('server.metrics.data', ['id' => $server->id->toString()]);
                 </div>
             </div>
 
-            <div class="small text-body-secondary mb-1"><?= $this->t('Utilization (%)') ?></div>
+            <div data-chart-label class="small text-body-secondary mb-1"><?= $this->t('Utilization (%)') ?></div>
             <div data-chart="usage" class="mb-3"></div>
 
-            <div class="small text-body-secondary mb-1"><?= $this->t('Load (1m)') ?></div>
+            <div data-chart-label class="small text-body-secondary mb-1"><?= $this->t('Load (1m)') ?></div>
             <div data-chart="load"></div>
 
             <div data-chart-empty class="text-body-secondary small d-none">
