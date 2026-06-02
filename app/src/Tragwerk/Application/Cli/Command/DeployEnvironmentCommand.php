@@ -669,9 +669,11 @@ final class DeployEnvironmentCommand extends Command
 
         // Use docker create + network connect + start so both networks are attached
         // before the entrypoint runs — otherwise DB hostname 'db' is unresolvable.
-        $cmd = 'docker create --restart unless-stopped'
+        $workingDir = '/root/' . $remoteDir;
+        $cmd        = 'docker create --restart unless-stopped'
             . ' --name ' . escapeshellarg($newContainer)
-            . ' --network tragwerk-net';
+            . ' --network tragwerk-net'
+            . ' --label ' . escapeshellarg('tragwerk.working_dir=' . $workingDir);
 
         /** @var array<string, string> $environment */
         $environment = is_array($svc['environment'] ?? null) ? $svc['environment'] : [];

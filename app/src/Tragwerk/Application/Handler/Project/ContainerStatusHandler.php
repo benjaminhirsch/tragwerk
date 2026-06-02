@@ -25,6 +25,7 @@ use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 
 use function assert;
+use function escapeshellarg;
 use function explode;
 use function is_array;
 use function is_string;
@@ -105,9 +106,13 @@ final readonly class ContainerStatusHandler implements RequestHandlerInterface
 
         $sftp->setTimeout(30);
 
-        $remoteDir = 'tragwerk/' . $project->id->toString() . '/' . $branch;
-        $raw       = $sftp->exec('cd ~/' . $remoteDir . ' && docker compose ps --format json 2>&1');
-        $output    = trim(is_string($raw) ? $raw : '');
+        $remoteDir   = 'tragwerk/' . $project->id->toString() . '/' . $branch;
+        $labelFilter = escapeshellarg('label=tragwerk.working_dir=/root/' . $remoteDir);
+        $raw         = $sftp->exec(
+            'cd ~/' . $remoteDir . ' && docker compose ps --format json 2>&1; '
+            . 'docker ps --filter ' . $labelFilter . ' --format json 2>/dev/null',
+        );
+        $output      = trim(is_string($raw) ? $raw : '');
 
         return $this->parseContainers($output);
     }
@@ -131,7 +136,16 @@ final readonly class ContainerStatusHandler implements RequestHandlerInterface
             /** @var array<string, mixed>|null $obj */
             $obj = json_decode($line, true);
 
-            if (! is_array($obj) || ! isset($obj['Name'])) {
+            if (! is_array($obj)) {
+                continue;
+            }
+
+            // docker compose ps uses "Name"; docker ps uses "Names"
+            if (! isset($obj['Name']) && isset($obj['Names'])) {
+                $obj['Name'] = $obj['Names'];
+            }
+
+            if (! isset($obj['Name'])) {
                 continue;
             }
 

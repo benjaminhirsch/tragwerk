@@ -56,10 +56,17 @@ final readonly class EnvironmentMetricsCollector
         $script = sprintf(
             <<<'SH'
             cd ~/%s 2>/dev/null || exit 0
+            seen=""
             for c in $(docker compose ps -q 2>/dev/null); do
+              seen="$seen $c"
+              docker exec "$c" php -r 'echo @file_get_contents("http://127.0.0.1:2019/metrics");' 2>/dev/null
+            done
+            for c in $(docker ps -q --filter "label=tragwerk.working_dir=/root/%s" 2>/dev/null); do
+              case "$seen" in *$c*) continue ;; esac
               docker exec "$c" php -r 'echo @file_get_contents("http://127.0.0.1:2019/metrics");' 2>/dev/null
             done
             SH,
+            $dir,
             $dir,
         );
 
@@ -75,9 +82,13 @@ final readonly class EnvironmentMetricsCollector
     public function collectServer(Server $server, Credential $credential): array
     {
         $script = <<<'SH'
-            L=com.docker.compose.project.working_dir
+            CL=com.docker.compose.project.working_dir
+            TL=tragwerk.working_dir
             for c in $(docker ps -q 2>/dev/null); do
-              wd=$(docker inspect -f "{{ index .Config.Labels \"$L\" }}" "$c" 2>/dev/null)
+              wd=$(docker inspect -f "{{ index .Config.Labels \"$CL\" }}" "$c" 2>/dev/null)
+              if [ -z "$wd" ]; then
+                wd=$(docker inspect -f "{{ index .Config.Labels \"$TL\" }}" "$c" 2>/dev/null)
+              fi
               case "$wd" in
                 */tragwerk/*/*) ;;
                 *) continue ;;
