@@ -597,7 +597,7 @@ final class DeployEnvironmentCommand extends Command
         foreach ($newContainers as $containerName) {
             $this->streamExec(
                 $sftp,
-                'docker logs --no-color --tail 500 ' . escapeshellarg($containerName) . ' 2>&1',
+                'docker logs --tail 500 ' . escapeshellarg($containerName) . ' 2>&1',
                 $jobId,
             );
         }
