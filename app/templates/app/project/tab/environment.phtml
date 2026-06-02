@@ -17,6 +17,8 @@ $containerStatusUrl = $this->url('project.environment.container-status', ['id' =
     . '?branch=' . urlencode($branch);
 $metricsLiveUrl = $this->url('project.environment.metrics-live', ['id' => $project->id->toString()])
     . '?branch=' . urlencode($branch);
+$metricsDataUrl = $this->url('project.environment.metrics-data', ['id' => $project->id->toString()])
+    . '?branch=' . urlencode($branch);
 $slugify    = static function (string $name): string {
     $slug = preg_replace('/[\s_]+/', '-', strtolower($name)) ?? '';
     return preg_replace('/[^a-z0-9-]/', '', $slug) ?? '';
@@ -235,6 +237,32 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
             <div class="text-body-secondary small">
                 <span class="spinner-border spinner-border-sm me-2" role="status"></span>
                 <?= $this->t('Loading...') ?>
+            </div>
+        </div>
+
+        <div id="tw-app-metrics-charts" class="mt-4" data-url="<?= $this->e($metricsDataUrl) ?>" data-range="1h">
+            <div data-chart-label class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="text-body-secondary mb-0"><?= $this->t('History') ?></h6>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-secondary active" data-range="1h">1h</button>
+                    <button type="button" class="btn btn-outline-secondary" data-range="6h">6h</button>
+                    <button type="button" class="btn btn-outline-secondary" data-range="24h">24h</button>
+                    <button type="button" class="btn btn-outline-secondary" data-range="7d">7d</button>
+                    <button type="button" class="btn btn-outline-secondary" data-range="30d">30d</button>
+                </div>
+            </div>
+
+            <div data-chart-label class="small text-body-secondary mb-1"><?= $this->t('Workers') ?></div>
+            <div data-chart="workers" class="mb-3"></div>
+
+            <div data-chart-label class="small text-body-secondary mb-1"><?= $this->t('HTTP requests/s & error %') ?></div>
+            <div data-chart="http" class="mb-3"></div>
+
+            <div data-chart-label class="small text-body-secondary mb-1"><?= $this->t('Avg latency (ms)') ?></div>
+            <div data-chart="latency"></div>
+
+            <div data-chart-empty class="text-body-secondary small d-none">
+                <i class="bi bi-info-circle me-1"></i><?= $this->t('No data yet — history appears as the metrics ticker runs.') ?>
             </div>
         </div>
     </div>

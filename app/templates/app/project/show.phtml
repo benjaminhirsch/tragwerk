@@ -68,6 +68,9 @@ $this->layout('layout::default', ['title' => $project->name]);
 <div id="tw-env-modal-container"></div>
 
 <?php $this->start('javascript') ?>
+<link rel="stylesheet" href="/css/uPlot.min.css">
 <script src="/js/detail-tabs.js"></script>
 <script src="/js/domain-delete-modal.js"></script>
+<script src="/js/uPlot.iife.min.js"></script>
+<script src="/js/app-metrics.js"></script>
 <?php $this->stop() ?>

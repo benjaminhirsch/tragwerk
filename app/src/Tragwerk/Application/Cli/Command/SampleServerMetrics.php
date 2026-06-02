@@ -15,13 +15,17 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Throwable;
 use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Server;
+use Tragwerk\Domain\Event\AppMetricsSampled;
 use Tragwerk\Domain\Event\ServerMetricsSampled;
+use Tragwerk\Domain\Repository\AppMetricRepository;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\ServerMetricRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
+use Tragwerk\Infrastructure\Metrics\EnvironmentMetricsCollector;
 use Tragwerk\Infrastructure\Metrics\MetricsCollector;
 
 use function assert;
+use function count;
 use function is_numeric;
 use function max;
 use function pcntl_async_signals;
@@ -32,17 +36,20 @@ use function sprintf;
 use const SIGINT;
 use const SIGTERM;
 
-#[AsCommand(name: 'metrics:sample', description: 'Sample host metrics from all servers (ticker)')]
+#[AsCommand(name: 'metrics:sample', description: 'Sample host + per-environment app metrics (ticker)')]
 final class SampleServerMetrics extends Command
 {
     public function __construct(
         private readonly ServerRepository $servers,
         private readonly CredentialRepository $credentials,
         private readonly MetricsCollector $collector,
+        private readonly EnvironmentMetricsCollector $appCollector,
         private readonly ServerMetricRepository $metrics,
+        private readonly AppMetricRepository $appMetrics,
         private readonly EventDispatcherInterface $dispatcher,
         private readonly LoggerInterface $logger,
         private readonly int $retentionDays = 7,
+        private readonly int $appRetentionDays = 30,
     ) {
         parent::__construct();
     }
@@ -107,38 +114,98 @@ final class SampleServerMetrics extends Command
             try {
                 $credential = $this->credentials->getById($server->credentialId);
                 assert($credential instanceof Credential);
-
-                $sample = $this->collector->collect($server, $credential);
-                $this->dispatcher->dispatch(new ServerMetricsSampled($sample));
-
-                $output->writeln(sprintf(
-                    '<info>[metrics] %s: cpu=%.1f%% mem=%d/%d disk=%d/%d load=%.2f</info>',
-                    $server->name,
-                    $sample->cpuPercent,
-                    $sample->memUsedBytes,
-                    $sample->memTotalBytes,
-                    $sample->diskUsedBytes,
-                    $sample->diskTotalBytes,
-                    $sample->load1,
-                ));
             } catch (Throwable $e) {
-                $this->logger->error('Metrics sampling failed for server ' . $server->name, [
+                $this->logger->error('Could not load credential for server ' . $server->name, [
                     'server_id' => $server->id->toString(),
                     'exception' => $e->getMessage(),
                 ]);
-                $output->writeln(sprintf('<error>[metrics] %s: %s</error>', $server->name, $e->getMessage()));
+
+                continue;
+            }
+
+            $this->sampleHost($server, $credential, $output);
+            $this->sampleApps($server, $credential, $output);
+        }
+    }
+
+    private function sampleHost(Server $server, Credential $credential, OutputInterface $output): void
+    {
+        try {
+            $sample = $this->collector->collect($server, $credential);
+            $this->dispatcher->dispatch(new ServerMetricsSampled($sample));
+
+            $output->writeln(sprintf(
+                '<info>[metrics] %s: cpu=%.1f%% mem=%d/%d disk=%d/%d load=%.2f</info>',
+                $server->name,
+                $sample->cpuPercent,
+                $sample->memUsedBytes,
+                $sample->memTotalBytes,
+                $sample->diskUsedBytes,
+                $sample->diskTotalBytes,
+                $sample->load1,
+            ));
+        } catch (Throwable $e) {
+            $this->logger->error('Host metrics sampling failed for server ' . $server->name, [
+                'server_id' => $server->id->toString(),
+                'exception' => $e->getMessage(),
+            ]);
+            $output->writeln(sprintf('<error>[metrics] %s (host): %s</error>', $server->name, $e->getMessage()));
+        }
+    }
+
+    private function sampleApps(Server $server, Credential $credential, OutputInterface $output): void
+    {
+        try {
+            $envs = $this->appCollector->collectServer($server, $credential);
+        } catch (Throwable $e) {
+            $this->logger->error('App metrics sampling failed for server ' . $server->name, [
+                'server_id' => $server->id->toString(),
+                'exception' => $e->getMessage(),
+            ]);
+            $output->writeln(sprintf('<error>[metrics] %s (apps): %s</error>', $server->name, $e->getMessage()));
+
+            return;
+        }
+
+        foreach ($envs as $env) {
+            try {
+                $this->dispatcher->dispatch(new AppMetricsSampled($env['projectId'], $env['branch'], $env['metrics']));
+            } catch (Throwable $e) {
+                $this->logger->error('Storing app metrics failed', [
+                    'project_id' => $env['projectId'],
+                    'branch'     => $env['branch'],
+                    'exception'  => $e->getMessage(),
+                ]);
             }
         }
+
+        if ($envs === []) {
+            return;
+        }
+
+        $output->writeln(sprintf(
+            '<info>[metrics] %s: %d environment(s) sampled</info>',
+            $server->name,
+            count($envs),
+        ));
     }
 
     private function prune(OutputInterface $output): void
     {
         try {
-            $threshold = new DateTimeImmutable(sprintf('-%d days', $this->retentionDays));
-            $deleted   = $this->metrics->pruneOlderThan($threshold);
+            $hostDeleted = $this->metrics->pruneOlderThan(
+                new DateTimeImmutable(sprintf('-%d days', $this->retentionDays)),
+            );
+            $appDeleted  = $this->appMetrics->pruneOlderThan(
+                new DateTimeImmutable(sprintf('-%d days', $this->appRetentionDays)),
+            );
 
-            if ($deleted > 0) {
-                $output->writeln(sprintf('<comment>[metrics] pruned %d old sample(s)</comment>', $deleted));
+            if ($hostDeleted + $appDeleted > 0) {
+                $output->writeln(sprintf(
+                    '<comment>[metrics] pruned %d host + %d app sample(s)</comment>',
+                    $hostDeleted,
+                    $appDeleted,
+                ));
             }
         } catch (Throwable $e) {
             $this->logger->error('Metrics pruning failed', ['exception' => $e->getMessage()]);

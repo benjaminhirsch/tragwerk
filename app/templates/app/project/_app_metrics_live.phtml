@@ -3,10 +3,10 @@
 declare(strict_types=1);
 
 /**
- * @var \Tragwerk\Domain\Entity\Project           $project
- * @var string                                    $branch
- * @var \Tragwerk\Domain\Model\WorkerMetrics|null $metrics
- * @var string|null                               $error
+ * @var \Tragwerk\Domain\Entity\Project                $project
+ * @var string                                         $branch
+ * @var \Tragwerk\Domain\Model\EnvironmentMetrics|null $metrics
+ * @var string|null                                    $error
  */
 
 $liveUrl = $this->url('project.environment.metrics-live', ['id' => $project->id->toString()])
@@ -51,7 +51,8 @@ $stat = function (int $value, string $label) {
         <div class="row g-2">
             <?= $stat($metrics->readyWorkers, $this->t('Ready workers')) ?>
             <?= $stat($metrics->queueDepth, $this->t('Queue depth')) ?>
-            <?= $stat($metrics->requestCount, $this->t('Requests')) ?>
+            <?= $stat($metrics->inFlight, $this->t('In-flight requests')) ?>
+            <?= $stat($metrics->requestsTotal, $this->t('HTTP requests')) ?>
             <?= $stat($metrics->crashes, $this->t('Crashes')) ?>
             <?= $stat($metrics->restarts, $this->t('Restarts')) ?>
         </div>
