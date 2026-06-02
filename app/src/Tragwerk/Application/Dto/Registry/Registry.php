@@ -55,10 +55,6 @@ final readonly class Registry implements DtoInterface
             $errors[] = ValidationError::make('username', $empty);
         }
 
-        if (trim($this->password) === '') {
-            $errors[] = ValidationError::make('password', $empty);
-        }
-
         if ($errors !== []) {
             throw ValidationCollection::fromValidations(...$errors);
         }

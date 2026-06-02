@@ -21,7 +21,9 @@ use Tragwerk\Domain\Event\RegistryCreated;
 use Tragwerk\Domain\ValueObject\RegistryIdentifier;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
+use function _;
 use function assert;
+use function trim;
 
 final readonly class CreateHandler implements RequestHandlerInterface
 {
@@ -40,6 +42,15 @@ final readonly class CreateHandler implements RequestHandlerInterface
 
         if ($request->getMethod() === RequestMethodInterface::METHOD_POST) {
             $validationBag = $this->mapper->mapAndValidate($request, RegistryDto::class);
+
+            if (! $validationBag->hasErrors()) {
+                $dto = $validationBag->getDto();
+                assert($dto instanceof RegistryDto);
+
+                if (trim($dto->password) === '') {
+                    $validationBag = $validationBag->withError('password', _('Field can\'t be empty'));
+                }
+            }
 
             if (! $validationBag->hasErrors()) {
                 $dto = $validationBag->getDto();
