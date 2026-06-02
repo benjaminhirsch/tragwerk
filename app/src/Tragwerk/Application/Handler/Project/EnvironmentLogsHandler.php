@@ -151,38 +151,28 @@ final readonly class EnvironmentLogsHandler implements RequestHandlerInterface
             /** @var array<string, mixed>|null $obj */
             $obj = json_decode($line, true);
 
-            if (is_array($obj)) {
-                $entryLevel = strtolower(is_string($obj['level'] ?? null) ? $obj['level'] : 'info');
-
-                if ($level !== 'all' && $entryLevel !== $level) {
-                    continue;
-                }
-
-                $ts     = $obj['ts'] ?? null;
-                $time   = is_numeric($ts) ? date('H:i:s', (int) $ts) : '';
-                $logger = is_string($obj['logger'] ?? null) ? $obj['logger'] : '';
-                $msg    = is_string($obj['msg'] ?? null) ? $obj['msg'] : $line;
-
-                $entries[] = [
-                    'time'   => $time,
-                    'level'  => $entryLevel,
-                    'logger' => $logger,
-                    'msg'    => $msg,
-                    'raw'    => $line,
-                ];
-            } else {
-                if ($level !== 'all') {
-                    continue;
-                }
-
-                $entries[] = [
-                    'time'   => '',
-                    'level'  => 'plain',
-                    'logger' => '',
-                    'msg'    => $line,
-                    'raw'    => $line,
-                ];
+            if (! is_array($obj)) {
+                continue;
             }
+
+            $entryLevel = strtolower(is_string($obj['level'] ?? null) ? $obj['level'] : 'info');
+
+            if ($level !== 'all' && $entryLevel !== $level) {
+                continue;
+            }
+
+            $ts     = $obj['ts'] ?? null;
+            $time   = is_numeric($ts) ? date('H:i:s', (int) $ts) : '';
+            $logger = is_string($obj['logger'] ?? null) ? $obj['logger'] : '';
+            $msg    = is_string($obj['msg'] ?? null) ? $obj['msg'] : $line;
+
+            $entries[] = [
+                'time'   => $time,
+                'level'  => $entryLevel,
+                'logger' => $logger,
+                'msg'    => $msg,
+                'raw'    => $line,
+            ];
         }
 
         return $entries;
