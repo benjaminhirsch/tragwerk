@@ -18,6 +18,14 @@ $nextOffset = $offset + count($jobs);
     ]);
     $isActive = $job->status->value === 'pending' || $job->status->value === 'running';
     ?>
+    <?php
+    $diff    = $job->createdAt->toDateTime()->diff($job->updatedAt->toDateTime());
+    $seconds = $diff->days * 86400 + $diff->h * 3600 + $diff->i * 60 + $diff->s;
+    $duration = $seconds >= 60
+        ? sprintf('%dm %ds', intdiv($seconds, 60), $seconds % 60)
+        : $seconds . 's';
+    $showDuration = $job->status->value === 'completed' || $job->status->value === 'failed';
+    ?>
     <div class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-2"
          style="cursor:pointer"
          hx-get="<?= $this->e($outputUrl) ?>"
@@ -46,6 +54,9 @@ $nextOffset = $offset + count($jobs);
             </div>
             <div class="text-body-secondary" style="font-size:.75rem">
                 <?= $this->e($job->createdAt->format('Y-m-d H:i')) ?>
+                <?php if ($showDuration): ?>
+                    &middot; <?= $this->e($duration) ?>
+                <?php endif ?>
             </div>
         </div>
         <div class="flex-shrink-0">
