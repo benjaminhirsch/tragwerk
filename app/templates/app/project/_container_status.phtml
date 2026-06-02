@@ -27,8 +27,11 @@ $statusUrl = $this->url('project.environment.container-status', ['id' => $projec
             <?php foreach ($containers as $container): ?>
                 <?php
                 $state   = (string) ($container['State'] ?? '');
-                $health  = (string) ($container['Health'] ?? '');
                 $status  = (string) ($container['Status'] ?? '');
+                $health  = (string) ($container['Health'] ?? '');
+                if ($health === '' && preg_match('/\((\w+)\)/', $status, $m)) {
+                    $health = $m[1];
+                }
                 $service = (string) ($container['Service'] ?? '');
                 $name    = (string) ($container['Name'] ?? '');
 
