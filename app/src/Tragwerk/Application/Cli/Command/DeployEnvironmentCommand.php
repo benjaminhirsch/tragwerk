@@ -49,12 +49,15 @@ use function file_exists;
 use function file_get_contents;
 use function glob;
 use function implode;
+use function is_array;
 use function is_dir;
+use function is_int;
 use function is_string;
 use function mkdir;
 use function preg_replace;
 use function rmdir;
 use function rtrim;
+use function sleep;
 use function sprintf;
 use function str_starts_with;
 use function strpos;
@@ -552,42 +555,194 @@ final class DeployEnvironmentCommand extends Command
 
         $dc = 'NO_COLOR=1 docker compose -f docker-compose.yml';
 
+        $sftp->exec('docker network create tragwerk-net 2>/dev/null; true');
+
         $this->log($jobId, '[Deploy] Pulling image on VPS...');
         $sftp->exec('cd ~/' . $remoteDir . ' && ' . $dc . ' pull 2>&1');
 
-        $this->log($jobId, '[Deploy] Swapping containers...');
-        $sftp->exec('docker network create tragwerk-net 2>/dev/null; true');
+        $this->log($jobId, '[Deploy] Ensuring DB is running...');
+        $sftp->exec('cd ~/' . $remoteDir . ' && ' . $dc . ' up db --wait --no-deps -d 2>&1');
 
-        try {
-            $this->streamExec(
+        // Blue/green swap: start new container alongside old, wait for healthy, then stop old.
+        $composeDefaultNetwork = $branchSlug . '_default';
+        $newContainers         = [];
+
+        foreach ($config->applications as $app) {
+            $appSlug         = $this->slugify($app->name);
+            $svcRawUnchecked = $compose['services'][$appSlug] ?? [];
+            assert(is_array($svcRawUnchecked));
+            /** @var array<string, mixed> $svcRaw */
+            $svcRaw       = $svcRawUnchecked;
+            $newContainer = $this->blueGreenSwap(
                 $sftp,
-                'cd ~/' . $remoteDir . ' && ' . $dc . ' up --pull always --no-build --wait 2>&1',
+                $remoteDir,
+                $branchSlug,
+                $appSlug,
+                $imageTags[$appSlug],
+                $svcRaw,
+                $composeDefaultNetwork,
                 $jobId,
             );
-        } catch (Throwable $e) {
-            $this->log($jobId, '[Deploy] SSH error: ' . $e->getMessage());
-            $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
 
-            return Command::FAILURE;
+            if ($newContainer === null) {
+                $sftp->exec('docker logout ' . escapeshellarg($registry->url) . ' 2>/dev/null; true');
+                $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+                return Command::FAILURE;
+            }
+
+            $newContainers[] = $newContainer;
         }
 
-        $exitStatus = $sftp->getExitStatus();
-        $this->streamExec($sftp, 'cd ~/' . $remoteDir . ' && ' . $dc . ' logs --no-color --tail 500 2>&1', $jobId);
+        foreach ($newContainers as $containerName) {
+            $this->streamExec(
+                $sftp,
+                'docker logs --no-color --tail 500 ' . escapeshellarg($containerName) . ' 2>&1',
+                $jobId,
+            );
+        }
+
         $sftp->exec('docker logout ' . escapeshellarg($registry->url) . ' 2>/dev/null; true');
         $this->ensureServerTraefik($sftp, $acmeEmail, $jobId);
-
-        if ($exitStatus !== 0) {
-            $this->streamExec($sftp, 'cd ~/' . $remoteDir . ' && ' . $dc . ' ps 2>&1', $jobId);
-            $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
-
-            return Command::FAILURE;
-        }
 
         $this->syncFromParentIfFirstDeploy($sftp, $projectId, $branch, $commitSha, $jobId);
         $this->log($jobId, '[Deploy] Registry-based deploy completed.');
         $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Completed);
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Start a new container alongside the currently running one, wait for it to become healthy,
+     * then stop and remove the old container. Returns the new container name, or null on failure.
+     *
+     * @param array<string, mixed> $svc
+     */
+    private function blueGreenSwap(
+        SFTP $sftp,
+        string $remoteDir,
+        string $branchSlug,
+        string $appSlug,
+        string $imageTag,
+        array $svc,
+        string $composeDefaultNetwork,
+        DeployJobIdentifier $jobId,
+    ): string|null {
+        $slotFile    = escapeshellarg('~/' . $remoteDir . '/.slot-' . $appSlug);
+        $currentSlot = trim((string) $sftp->exec('cat ' . $slotFile . ' 2>/dev/null'));
+        $newSlot     = $currentSlot === 'a' ? 'b' : 'a';
+
+        $newContainer = $branchSlug . '-' . $appSlug . '-' . $newSlot;
+
+        if ($currentSlot === 'a' || $currentSlot === 'b') {
+            $oldContainer = $branchSlug . '-' . $appSlug . '-' . $currentSlot;
+        } else {
+            // First blue/green deploy or migration from compose-managed container.
+            $oldContainer = trim((string) $sftp->exec(
+                'docker ps --filter ' . escapeshellarg('name=' . $branchSlug . '-' . $appSlug)
+                . ' --format "{{.Names}}" | head -1 2>/dev/null',
+            ));
+        }
+
+        // Remove stale container from a previous failed deploy.
+        $sftp->exec('docker rm -f ' . escapeshellarg($newContainer) . ' 2>/dev/null; true');
+
+        $cmd = 'docker run -d --restart unless-stopped'
+            . ' --name ' . escapeshellarg($newContainer)
+            . ' --network tragwerk-net';
+
+        /** @var array<string, string> $environment */
+        $environment = is_array($svc['environment'] ?? null) ? $svc['environment'] : [];
+        foreach ($environment as $key => $value) {
+            $cmd .= ' --env ' . escapeshellarg($key . '=' . $value);
+        }
+
+        /** @var list<string> $labels */
+        $labels = is_array($svc['labels'] ?? null) ? $svc['labels'] : [];
+        foreach ($labels as $label) {
+            $cmd .= ' --label ' . escapeshellarg($label);
+        }
+
+        /** @var list<string> $volumes */
+        $volumes = is_array($svc['volumes'] ?? null) ? $svc['volumes'] : [];
+        foreach ($volumes as $volume) {
+            $cmd .= ' -v ' . escapeshellarg($volume);
+        }
+
+        /** @var list<string> $tmpfs */
+        $tmpfs = is_array($svc['tmpfs'] ?? null) ? $svc['tmpfs'] : [];
+        foreach ($tmpfs as $path) {
+            $cmd .= ' --tmpfs ' . escapeshellarg($path);
+        }
+
+        /** @var array<string, mixed> $hc */
+        $hc = is_array($svc['healthcheck'] ?? null) ? $svc['healthcheck'] : [];
+        if ($hc !== [] && isset($hc['test'][1]) && is_string($hc['test'][1])) {
+            $interval    = is_string($hc['interval'] ?? null) ? $hc['interval'] : '5s';
+            $timeout     = is_string($hc['timeout'] ?? null) ? $hc['timeout'] : '6s';
+            $retries     = is_int($hc['retries'] ?? null) ? (string) $hc['retries'] : '12';
+            $startPeriod = is_string($hc['start_period'] ?? null) ? $hc['start_period'] : '30s';
+            $cmd        .= ' --health-cmd ' . escapeshellarg($hc['test'][1])
+                . ' --health-interval ' . escapeshellarg($interval)
+                . ' --health-timeout ' . escapeshellarg($timeout)
+                . ' --health-retries ' . escapeshellarg($retries)
+                . ' --health-start-period ' . escapeshellarg($startPeriod);
+        }
+
+        if ($svc['read_only'] === true) {
+            $cmd .= ' --read-only';
+        }
+
+        $cmd .= ' ' . escapeshellarg($imageTag) . ' 2>&1';
+
+        $this->log($jobId, '[Deploy] Starting ' . $newContainer . '...');
+        $runResult = (string) $sftp->exec($cmd);
+
+        if ($sftp->getExitStatus() !== 0) {
+            $this->log($jobId, '[Deploy] Failed to start ' . $newContainer . ': ' . $runResult);
+
+            return null;
+        }
+
+        // Connect to compose default network so the container can reach DB by service name.
+        $sftp->exec(
+            'docker network connect ' . escapeshellarg($composeDefaultNetwork)
+            . ' ' . escapeshellarg($newContainer) . ' 2>/dev/null; true',
+        );
+
+        $this->log($jobId, '[Deploy] Waiting for ' . $newContainer . ' to be healthy...');
+
+        $status = '';
+        for ($i = 0; $i < 120; $i++) {
+            sleep(5);
+            $status = trim((string) $sftp->exec(
+                'docker inspect --format "{{.State.Health.Status}}" '
+                . escapeshellarg($newContainer) . ' 2>/dev/null',
+            ));
+
+            if ($status === 'healthy' || $status === 'unhealthy') {
+                break;
+            }
+        }
+
+        if ($status !== 'healthy') {
+            $this->log($jobId, '[Deploy] ' . $newContainer . ' did not become healthy (status: ' . $status . ').');
+            $sftp->exec('docker rm -f ' . escapeshellarg($newContainer) . ' 2>/dev/null; true');
+
+            return null;
+        }
+
+        $stopping = $oldContainer !== '' ? $oldContainer : 'no prior container';
+        $this->log($jobId, '[Deploy] ' . $newContainer . ' is healthy. Stopping ' . $stopping . '...');
+
+        if ($oldContainer !== '') {
+            $sftp->exec('docker stop ' . escapeshellarg($oldContainer) . ' 2>/dev/null; true');
+            $sftp->exec('docker rm ' . escapeshellarg($oldContainer) . ' 2>/dev/null; true');
+        }
+
+        $sftp->exec('echo ' . escapeshellarg($newSlot) . ' > ' . $slotFile);
+
+        return $newContainer;
     }
 
     private function syncFromParentIfFirstDeploy(
