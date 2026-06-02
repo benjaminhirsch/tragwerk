@@ -86,7 +86,9 @@ final readonly class DockerfileGenerator
         $lines[] = '';
         $lines[] = 'WORKDIR /app';
 
-        if (str_starts_with($app->type->value, 'php:')) {
+        $isPhp = str_starts_with($app->type->value, 'php:');
+
+        if ($isPhp) {
             $lines[] = '';
             $lines[] = $this->buildExtensionRun($app->extensions);
             $lines[] = '';
@@ -94,16 +96,37 @@ final readonly class DockerfileGenerator
             $lines[] = '';
         }
 
-        $lines[] = 'COPY ' . $copySource . ' .';
+        if ($isPhp && $buildHooks !== []) {
+            // Copy composer manifest first so the install layer is cached independently
+            // of source code changes. vendor/ is not in the git archive so it survives
+            // the subsequent COPY of the full source.
+            $composerPrefix = $copySource === '.' ? '' : $copySource . '/';
+            $lines[]        = 'COPY ' . $composerPrefix . 'composer.json ' . $composerPrefix . 'composer.lock ./';
 
-        foreach ($buildHooks as $hook) {
-            $scriptLines = $this->parseScriptLines($hook->value);
-            if ($scriptLines === []) {
-                continue;
+            foreach ($buildHooks as $hook) {
+                $scriptLines = $this->parseScriptLines($hook->value);
+                if ($scriptLines === []) {
+                    continue;
+                }
+
+                $lines[] = '';
+                $lines[] = 'RUN ' . implode(" \\\n    && ", $scriptLines);
             }
 
             $lines[] = '';
-            $lines[] = 'RUN ' . implode(" \\\n    && ", $scriptLines);
+            $lines[] = 'COPY ' . $copySource . ' .';
+        } else {
+            $lines[] = 'COPY ' . $copySource . ' .';
+
+            foreach ($buildHooks as $hook) {
+                $scriptLines = $this->parseScriptLines($hook->value);
+                if ($scriptLines === []) {
+                    continue;
+                }
+
+                $lines[] = '';
+                $lines[] = 'RUN ' . implode(" \\\n    && ", $scriptLines);
+            }
         }
 
         if ($hasCaddyfile) {
