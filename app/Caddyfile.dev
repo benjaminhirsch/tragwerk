@@ -5,6 +5,7 @@
 			watch ./src/**/*.php
 			watch ./config/**/*.php
 			watch ./public/index.php
+			watch ./templates/**/*.phtml
 		}
 	}
 	auto_https off
