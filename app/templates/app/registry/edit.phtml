@@ -34,10 +34,11 @@ $this->layout('layout::default', ['title' => $this->t('Edit registry')]);
             'validation' => $validationBag,
         ]) ?>
         <?= $this->fetch('partial::input/text', [
-            'id'         => 'password',
-            'label'      => $this->t('Password / Token'),
-            'type'       => 'password',
-            'validation' => $validationBag,
+            'id'          => 'password',
+            'label'       => $this->t('Password / Token'),
+            'type'        => 'password',
+            'placeholder' => $this->t('Leave empty to keep existing'),
+            'validation'  => $validationBag,
         ]) ?>
 
         <hr>
@@ -52,10 +53,11 @@ $this->layout('layout::default', ['title' => $this->t('Edit registry')]);
             </label>
         </div>
         <?= $this->fetch('partial::input/text', [
-            'id'         => 'keepTags',
-            'name'       => 'keepTags',
-            'label'      => $this->t('Tags to keep'),
-            'validation' => $validationBag,
+            'id'          => 'keepTags',
+            'name'        => 'keepTags',
+            'label'       => $this->t('Tags to keep'),
+            'placeholder' => '10',
+            'validation'  => $validationBag,
         ]) ?>
 
         <?php if ($isAssigned): ?>

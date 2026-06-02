@@ -45,11 +45,12 @@
             </label>
         </div>
         <?= $this->fetch('partial::input/text', [
-            'id'    => 'keepTags',
-            'name'  => 'keepTags',
-            'label' => $this->t('Tags to keep'),
-            'value' => '10',
-            'validation' => $validationBag ?? null,
+            'id'          => 'keepTags',
+            'name'        => 'keepTags',
+            'label'       => $this->t('Tags to keep'),
+            'placeholder' => '10',
+            'value'       => '10',
+            'validation'  => $validationBag ?? null,
         ]) ?>
         <div class="d-flex gap-2">
             <?= $this->fetch('partial::input/button', ['label' => $this->t('Save')]) ?>
