@@ -78,7 +78,7 @@ final readonly class EditHandler implements RequestHandlerInterface
                 'username'        => $registry->username,
                 'password'        => $registry->password,
                 'pruning_enabled' => $registry->pruningEnabled ? '1' : '',
-                'keep_tags'       => (string) $registry->keepTags,
+                'keepTags'        => (string) $registry->keepTags,
             ]);
         }
 
