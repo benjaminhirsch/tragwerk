@@ -18,6 +18,8 @@ final class Registry implements Entity
         public string $repository,
         public string $username,
         public string $password,
+        public bool $pruningEnabled,
+        public int $keepTags,
         public TeamIdentifier $teamId,
         public TimestampImmutable $createdAt,
         public UserIdentifier $createdBy,

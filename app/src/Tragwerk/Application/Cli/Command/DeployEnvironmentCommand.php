@@ -20,6 +20,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Yaml\Yaml;
 use Throwable;
+use Tragwerk\Application\Queue\Message\PruneRegistryImages;
+use Tragwerk\Application\Queue\Producer;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
 use Tragwerk\Domain\Entity\Credential;
@@ -42,6 +44,7 @@ use Tragwerk\Infrastructure\Git\BareRepository;
 use function assert;
 use function basename;
 use function copy;
+use function date;
 use function escapeshellarg;
 use function exec;
 use function explode;
@@ -83,6 +86,7 @@ final class DeployEnvironmentCommand extends Command
         private readonly XmlToArrayConverter $xmlConverter,
         private readonly TreeMapper $treeMapper,
         private readonly DockerComposeGenerator $composeGenerator,
+        private readonly Producer $producer,
         private readonly string $projectDataPath,
     ) {
         parent::__construct();
@@ -369,6 +373,7 @@ final class DeployEnvironmentCommand extends Command
         $branchSlug  = $this->slugify(basename($branch));
         $projectSlug = $this->slugify($project->name);
         $shortSha    = substr($commitSha, 0, 8);
+        $timestamp   = date('YmdHis');
         $repoPath    = $this->bareRepository->getPath($projectId);
 
         // 1. Export source from git into a temp directory
@@ -450,7 +455,7 @@ final class DeployEnvironmentCommand extends Command
         foreach ($config->applications as $app) {
             $appSlug    = $this->slugify($app->name);
             $imageTag   = $registry->url . '/' . $registry->repository
-                . ':' . $appSlug . '-' . $branchSlug . '-' . $shortSha;
+                . ':' . $appSlug . '-' . $branchSlug . '-' . $timestamp . '-' . $shortSha;
             $cacheTag   = $registry->url . '/' . $registry->repository
                 . ':' . $appSlug . '-' . $branchSlug . '-cache';
             $dockerfile = $buildDir . '/Dockerfile.' . $appSlug;
@@ -628,6 +633,16 @@ final class DeployEnvironmentCommand extends Command
         $this->syncFromParentIfFirstDeploy($sftp, $projectId, $branch, $commitSha, $jobId);
         $this->log($jobId, '[Deploy] Registry-based deploy completed.');
         $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Completed);
+
+        if ($registry->pruningEnabled) {
+            foreach ($config->applications as $app) {
+                $this->producer->sendMessage(new PruneRegistryImages(
+                    $registry->id->toString(),
+                    $this->slugify($app->name),
+                    $branchSlug,
+                ));
+            }
+        }
 
         return Command::SUCCESS;
     }

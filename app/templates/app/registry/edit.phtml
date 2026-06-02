@@ -40,6 +40,24 @@ $this->layout('layout::default', ['title' => $this->t('Edit registry')]);
             'validation' => $validationBag,
         ]) ?>
 
+        <hr>
+        <p class="text-body-secondary small mb-2">
+            <?= $this->t('Image pruning is supported for Docker Hub (<code>docker.io</code>) and OCI-compatible registries. AWS ECR, Azure ACR and Quay.io are not supported.') ?>
+        </p>
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="pruningEnabled" name="pruningEnabled" value="1"
+                <?= $validationBag->getValueByName('pruning_enabled') ? 'checked' : '' ?>>
+            <label class="form-check-label" for="pruningEnabled">
+                <?= $this->t('Enable image pruning after deploy') ?>
+            </label>
+        </div>
+        <?= $this->fetch('partial::input/text', [
+            'id'         => 'keepTags',
+            'name'       => 'keepTags',
+            'label'      => $this->t('Tags to keep'),
+            'validation' => $validationBag,
+        ]) ?>
+
         <?php if ($isAssigned): ?>
             <div class="alert alert-warning" role="alert">
                 <?= $this->t('This registry is assigned to one or more projects. Remove the assignment before deleting.') ?>

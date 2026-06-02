@@ -7,6 +7,7 @@ namespace Tragwerk\Factory\Cli;
 use CuyZ\Valinor\Mapper\TreeMapper;
 use Psr\Container\ContainerInterface;
 use Tragwerk\Application\Cli\Command\DeployEnvironmentCommand;
+use Tragwerk\Application\Queue\Producer;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
 use Tragwerk\Domain\Repository\CredentialRepository;
@@ -41,6 +42,7 @@ final readonly class DeployEnvironmentCommandFactory
         $xmlConv     = $container->get(XmlToArrayConverter::class);
         $mapper      = $container->get(TreeMapper::class);
         $compose     = $container->get(DockerComposeGenerator::class);
+        $producer    = $container->get(Producer::class);
 
         assert($projects instanceof ProjectRepository);
         assert($servers instanceof ServerRepository);
@@ -52,6 +54,7 @@ final readonly class DeployEnvironmentCommandFactory
         assert($xmlConv instanceof XmlToArrayConverter);
         assert($mapper instanceof TreeMapper);
         assert($compose instanceof DockerComposeGenerator);
+        assert($producer instanceof Producer);
 
         return new DeployEnvironmentCommand(
             $projects,
@@ -64,6 +67,7 @@ final readonly class DeployEnvironmentCommandFactory
             $xmlConv,
             $mapper,
             $compose,
+            $producer,
             $dataPath,
         );
     }

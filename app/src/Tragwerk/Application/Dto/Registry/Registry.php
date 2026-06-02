@@ -15,6 +15,7 @@ use Tragwerk\Domain\ValueObject\TimestampImmutable;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
 use function _;
+use function max;
 use function trim;
 
 final readonly class Registry implements DtoInterface
@@ -30,6 +31,10 @@ final readonly class Registry implements DtoInterface
         public string $username,
         #[FromBody]
         public string $password,
+        #[FromBody]
+        public bool $pruningEnabled = false,
+        #[FromBody]
+        public int $keepTags = 10,
     ) {
         $errors = [];
         $empty  = _('Field can\'t be empty');
@@ -73,6 +78,8 @@ final readonly class Registry implements DtoInterface
             $this->repository,
             $this->username,
             $this->password,
+            $this->pruningEnabled,
+            max(1, $this->keepTags),
             $teamId,
             $now,
             $createdBy,

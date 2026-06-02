@@ -32,6 +32,7 @@ final readonly class MessageProcessor implements Processor
         private Handler\BuildEnvironment $buildEnvironment,
         private Handler\RunDeployEnvironment $runDeployEnvironment,
         private Handler\RunSyncEnvironmentData $runSyncEnvironmentData,
+        private Handler\PruneRegistryImages $pruneRegistryImages,
     ) {
     }
 
@@ -55,7 +56,8 @@ final readonly class MessageProcessor implements Processor
             Message\SendMail::class            => $this->sendMail->handle($parsedMessage),
             Message\BuildEnvironment::class    => $this->buildEnvironment->handle($parsedMessage),
             Message\DeployEnvironment::class   => $this->runDeployEnvironment->handle($parsedMessage),
-            Message\SyncEnvironmentData::class => $this->runSyncEnvironmentData->handle($parsedMessage),
+            Message\SyncEnvironmentData::class   => $this->runSyncEnvironmentData->handle($parsedMessage),
+            Message\PruneRegistryImages::class   => $this->pruneRegistryImages->handle($parsedMessage),
             default => throw new InvalidArgumentException('Unknown message class: ' . $parsedMessage::class),
         };
 

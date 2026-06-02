@@ -34,6 +34,23 @@
             'type'       => 'password',
             'validation' => $validationBag ?? null,
         ]) ?>
+        <hr>
+        <p class="text-body-secondary small mb-2">
+            <?= $this->t('Image pruning is supported for Docker Hub (<code>docker.io</code>) and OCI-compatible registries. AWS ECR, Azure ACR and Quay.io are not supported.') ?>
+        </p>
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="pruningEnabled" name="pruningEnabled" value="1">
+            <label class="form-check-label" for="pruningEnabled">
+                <?= $this->t('Enable image pruning after deploy') ?>
+            </label>
+        </div>
+        <?= $this->fetch('partial::input/text', [
+            'id'    => 'keepTags',
+            'name'  => 'keepTags',
+            'label' => $this->t('Tags to keep'),
+            'value' => '10',
+            'validation' => $validationBag ?? null,
+        ]) ?>
         <div class="d-flex gap-2">
             <?= $this->fetch('partial::input/button', ['label' => $this->t('Save')]) ?>
             <?= $this->fetch('partial::link', [
