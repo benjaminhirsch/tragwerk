@@ -674,7 +674,9 @@ final class DeployEnvironmentCommand extends Command
         // Remove stale container from a previous failed deploy.
         $sftp->exec('docker rm -f ' . escapeshellarg($newContainer) . ' 2>/dev/null; true');
 
-        $cmd = 'docker run -d --restart unless-stopped'
+        // Use docker create + network connect + start so both networks are attached
+        // before the entrypoint runs — otherwise DB hostname 'db' is unresolvable.
+        $cmd = 'docker create --restart unless-stopped'
             . ' --name ' . escapeshellarg($newContainer)
             . ' --network tragwerk-net';
 
@@ -723,19 +725,21 @@ final class DeployEnvironmentCommand extends Command
         $cmd .= ' ' . escapeshellarg($imageTag) . ' 2>&1';
 
         $this->log($jobId, '[Deploy] Starting ' . $newContainer . '...');
-        $runResult = (string) $sftp->exec($cmd);
+        $createResult = (string) $sftp->exec($cmd);
 
         if ($sftp->getExitStatus() !== 0) {
-            $this->log($jobId, '[Deploy] Failed to start ' . $newContainer . ': ' . $runResult);
+            $this->log($jobId, '[Deploy] Failed to create ' . $newContainer . ': ' . $createResult);
 
             return null;
         }
 
-        // Connect to compose default network so the container can reach DB by service name.
+        // Connect to compose default network before starting so DB hostname resolves on boot.
         $sftp->exec(
             'docker network connect ' . escapeshellarg($composeDefaultNetwork)
             . ' ' . escapeshellarg($newContainer) . ' 2>/dev/null; true',
         );
+
+        $sftp->exec('docker start ' . escapeshellarg($newContainer) . ' 2>&1');
 
         $this->log($jobId, '[Deploy] Waiting for ' . $newContainer . ' to be healthy...');
 
