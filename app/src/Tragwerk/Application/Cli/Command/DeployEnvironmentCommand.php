@@ -333,6 +333,15 @@ final class DeployEnvironmentCommand extends Command
             return Command::FAILURE;
         }
 
+        // Remove any leftover blue/green containers from a previous registry-based deploy.
+        $phase1BranchSlug = $this->slugify(basename($branch));
+        $sftp->exec(
+            'docker ps -a --filter ' . escapeshellarg('name=' . $phase1BranchSlug)
+            . ' --format "{{.Names}}"'
+            . ' | grep -E -- \'-[ab]$\''
+            . ' | xargs -r docker rm -f 2>/dev/null; true',
+        );
+
         $this->syncFromParentIfFirstDeploy($sftp, $projectId, $branch, $commitSha, $jobId);
 
         $this->log($jobId, '[Deploy] Deploy completed successfully.');
@@ -646,7 +655,7 @@ final class DeployEnvironmentCommand extends Command
         string $composeDefaultNetwork,
         DeployJobIdentifier $jobId,
     ): string|null {
-        $slotFile    = escapeshellarg('~/' . $remoteDir . '/.slot-' . $appSlug);
+        $slotFile    = '~/' . $remoteDir . '/.slot-' . $appSlug;
         $currentSlot = trim((string) $sftp->exec('cat ' . $slotFile . ' 2>/dev/null'));
         $newSlot     = $currentSlot === 'a' ? 'b' : 'a';
 
