@@ -72,10 +72,11 @@ final readonly class EditHandler implements RequestHandlerInterface
 
         if ($validationBag === null) {
             $validationBag = new ValidationBag([
-                'name'     => $registry->name,
-                'url'      => $registry->url,
-                'username' => $registry->username,
-                'password' => $registry->password,
+                'name'       => $registry->name,
+                'url'        => $registry->url,
+                'repository' => $registry->repository,
+                'username'   => $registry->username,
+                'password'   => $registry->password,
             ]);
         }
 
