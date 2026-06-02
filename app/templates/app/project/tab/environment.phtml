@@ -398,12 +398,12 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
                     </button>
                     <button type="button"
                             class="btn btn-warning"
-                            data-bs-dismiss="modal"
                             hx-post="<?= $this->e($syncDataUrl) ?>"
                             hx-vals='{"branch": "<?= $this->e($branch) ?>"}'
                             hx-include="#tw-csrf-token"
                             hx-target="#tw-deploy-log"
-                            hx-swap="outerHTML">
+                            hx-swap="outerHTML"
+                            hx-on:htmx:after-request="bootstrap.Modal.getOrCreateInstance(document.getElementById('tw-sync-data-modal')).hide()">
                         <i class="bi bi-arrow-down-circle me-1"></i><?= $this->t('Sync') ?>
                     </button>
                 </div>
@@ -428,12 +428,12 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
                     </button>
                     <button type="button"
                             class="btn btn-primary"
-                            data-bs-dismiss="modal"
                             hx-post="<?= $this->e($redeployUrl) ?>"
                             hx-vals='{"branch": "<?= $this->e($branch) ?>"}'
                             hx-include="#tw-csrf-token"
                             hx-target="#tw-deploy-log"
-                            hx-swap="outerHTML">
+                            hx-swap="outerHTML"
+                            hx-on:htmx:after-request="bootstrap.Modal.getOrCreateInstance(document.getElementById('tw-redeploy-modal')).hide()">
                         <i class="bi bi-arrow-clockwise me-1"></i><?= $this->t('Redeploy') ?>
                     </button>
                 </div>
