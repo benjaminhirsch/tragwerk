@@ -93,6 +93,12 @@ final readonly class Project
         );
 
         $routes->get(
+            '/projects/{id}/environments/logs',
+            $this->middlewareFactory->prepare([Handler\Project\EnvironmentLogsHandler::class]),
+            'project.environment.logs',
+        );
+
+        $routes->get(
             '/projects/{id}/environments/metrics-live',
             $this->middlewareFactory->prepare([Handler\Project\EnvironmentMetricsLiveHandler::class]),
             'project.environment.metrics-live',
