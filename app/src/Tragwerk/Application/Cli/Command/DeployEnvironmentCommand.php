@@ -772,13 +772,17 @@ final class DeployEnvironmentCommand extends Command
             return null;
         }
 
-        $stopping = $oldContainer !== '' ? $oldContainer : 'no prior container';
-        $this->log($jobId, '[Deploy] ' . $newContainer . ' is healthy. Stopping ' . $stopping . '...');
+        $this->log($jobId, '[Deploy] ' . $newContainer . ' is healthy. Removing old containers...');
 
-        if ($oldContainer !== '') {
-            $sftp->exec('docker stop ' . escapeshellarg($oldContainer) . ' 2>/dev/null; true');
-            $sftp->exec('docker rm ' . escapeshellarg($oldContainer) . ' 2>/dev/null; true');
-        }
+        // Remove ALL containers matching this app's name pattern except the new one.
+        // Catches both compose-managed (e.g. main-tragwerk-1) and previous blue/green
+        // containers that survived strategy switches.
+        $newId = '$(docker inspect --format "{{.Id}}" ' . escapeshellarg($newContainer) . ' 2>/dev/null | cut -c1-12)';
+        $sftp->exec(
+            'docker ps -aq --filter ' . escapeshellarg('name=' . $branchSlug . '-' . $appSlug)
+            . ' | grep -v ' . $newId
+            . ' | xargs -r docker rm -f 2>/dev/null; true',
+        );
 
         $sftp->exec('echo ' . escapeshellarg($newSlot) . ' > ' . $slotFile);
 
