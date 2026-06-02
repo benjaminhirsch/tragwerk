@@ -9,6 +9,8 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends git unzip gettext docker-cli \
     && rm -rf /var/lib/apt/lists/*
 
+COPY --from=docker/buildx-bin:latest /buildx /usr/lib/docker/cli-plugins/docker-buildx
+
 # PHP extensions: intl/gettext/pdo_pgsql are required by composer.json + Doctrine/Postgres.
 # xdebug/pcov are dev/test tooling. install-php-extensions resolves the apt deps automatically.
 RUN install-php-extensions \
