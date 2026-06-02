@@ -1,0 +1,47 @@
+<?php
+/** @var list<\Tragwerk\Domain\Entity\Registry> $registries */
+$this->layout('layout::default', ['title' => $this->t('Registries')]);
+?>
+
+<h1><?= $this->t('Registries') ?></h1>
+
+<div class="tw-card">
+    <?= $this->fetch('partial::link', [
+        'label'   => $this->t('Add registry'),
+        'icon'    => 'bi bi-plus-circle',
+        'classes' => 'btn btn-primary',
+        'href'    => $this->url('registry.create'),
+    ]) ?>
+
+    <hr />
+
+    <?php if ($registries === []): ?>
+        <p class="text-body-secondary">
+            <?= $this->t('No registries configured yet. Add a container registry to enable image-based deployments.') ?>
+        </p>
+    <?php else: ?>
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th><?= $this->t('Name') ?></th>
+                    <th><?= $this->t('URL') ?></th>
+                    <th><?= $this->t('Username') ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($registries as $registry): ?>
+                    <tr>
+                        <td>
+                            <?= $this->fetch('partial::link', [
+                                'href'  => $this->url('registry.edit', ['id' => $registry->id->toString()]),
+                                'label' => $registry->name,
+                            ]) ?>
+                        </td>
+                        <td><?= $this->e($registry->url) ?></td>
+                        <td><?= $this->e($registry->username) ?></td>
+                    </tr>
+                <?php endforeach ?>
+            </tbody>
+        </table>
+    <?php endif ?>
+</div>

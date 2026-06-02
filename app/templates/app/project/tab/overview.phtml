@@ -1,9 +1,10 @@
 <?php
 /**
- * @var \Tragwerk\Domain\Entity\Project $project
- * @var \Tragwerk\Domain\Entity\Server  $server
- * @var \Tragwerk\Domain\Entity\Team    $team
- * @var string                          $cloneUrl
+ * @var \Tragwerk\Domain\Entity\Project        $project
+ * @var \Tragwerk\Domain\Entity\Server         $server
+ * @var \Tragwerk\Domain\Entity\Team           $team
+ * @var \Tragwerk\Domain\Entity\Registry|null  $registry
+ * @var string                                 $cloneUrl
  */
 ?>
 <table class="table table-borderless mb-0">
@@ -19,6 +20,20 @@
                     'href'  => $this->url('server.show', ['id' => $server->id->toString()]),
                     'label' => $server->name,
                 ]) ?>
+            </td>
+        </tr>
+        <tr>
+            <th class="text-body-secondary fw-normal"><?= $this->t('Container registry') ?></th>
+            <td>
+                <?php if ($registry !== null): ?>
+                    <?= $this->fetch('partial::link', [
+                        'href'  => $this->url('registry.edit', ['id' => $registry->id->toString()]),
+                        'label' => $registry->name,
+                    ]) ?>
+                    <span class="text-body-secondary small ms-1">(<?= $this->e($registry->url) ?>)</span>
+                <?php else: ?>
+                    <span class="text-body-secondary"><?= $this->t('None — builds on server') ?></span>
+                <?php endif ?>
             </td>
         </tr>
         <tr>

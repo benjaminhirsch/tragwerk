@@ -1,0 +1,72 @@
+<?php
+/**
+ * @var \Tragwerk\Domain\Entity\Registry          $registry
+ * @var \Tragwerk\Application\Validation\ValidationBag $validationBag
+ * @var bool                                      $isAssigned
+ */
+$this->layout('layout::default', ['title' => $this->t('Edit registry')]);
+?>
+
+<h1><?= $this->e($registry->name) ?></h1>
+
+<?php $this->start('card-content') ?>
+    <form action="<?= $this->url('registry.edit', ['id' => $registry->id->toString()]) ?>" method="post">
+        <?= $this->fetch('partial::input/csrf') ?>
+        <?= $this->fetch('partial::input/text', [
+            'id'        => 'name',
+            'label'     => $this->t('Name'),
+            'autofocus' => 'autofocus',
+            'validation' => $validationBag,
+        ]) ?>
+        <?= $this->fetch('partial::input/text', [
+            'id'         => 'url',
+            'label'      => $this->t('Registry URL'),
+            'validation' => $validationBag,
+        ]) ?>
+        <?= $this->fetch('partial::input/text', [
+            'id'         => 'username',
+            'label'      => $this->t('Username'),
+            'validation' => $validationBag,
+        ]) ?>
+        <?= $this->fetch('partial::input/text', [
+            'id'         => 'password',
+            'label'      => $this->t('Password / Token'),
+            'type'       => 'password',
+            'validation' => $validationBag,
+        ]) ?>
+
+        <?php if ($isAssigned): ?>
+            <div class="alert alert-warning" role="alert">
+                <?= $this->t('This registry is assigned to one or more projects. Remove the assignment before deleting.') ?>
+            </div>
+        <?php endif ?>
+
+        <div class="d-flex gap-2">
+            <?= $this->fetch('partial::input/button', ['label' => $this->t('Save')]) ?>
+            <?= $this->fetch('partial::link', [
+                'label'   => $this->t('Cancel'),
+                'href'    => $this->url('registry'),
+                'classes' => 'btn btn-secondary',
+            ]) ?>
+            <?php if (! $isAssigned): ?>
+                <?= $this->fetch('partial::input/button', [
+                    'classes'      => 'btn btn-outline-danger',
+                    'icon'         => 'bi bi-trash3',
+                    'type'         => 'button',
+                    'dataBsToggle' => 'modal',
+                    'dataBsTarget' => '#tw-delete-registry-modal',
+                ]) ?>
+            <?php endif ?>
+        </div>
+    </form>
+<?php $this->stop() ?>
+
+<?= $this->fetch('partial::modal', [
+    'id'            => 'tw-delete-registry-modal',
+    'header'        => $this->t('Delete registry'),
+    'body'          => $this->t('Are you sure you want to delete {name}? This action cannot be undone.', ['name' => '<strong>' . $this->e($registry->name) . '</strong>']),
+    'actionUrl'     => $this->url('registry.delete', ['id' => $registry->id->toString()]),
+    'actionLabel'   => $this->t('Delete registry'),
+    'actionClasses' => 'btn btn-danger',
+    'actionIcon'    => 'bi bi-trash3',
+]) ?>

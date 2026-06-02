@@ -23,6 +23,7 @@ use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Event\ProjectUpdated;
 use Tragwerk\Domain\Repository\ProjectRepository;
+use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
@@ -44,6 +45,7 @@ final readonly class EditHandler implements RequestHandlerInterface
         private UrlHelper $urlHelper,
         private ProjectRepository $projectRepository,
         private ServerRepository $serverRepository,
+        private RegistryRepository $registryRepository,
     ) {
     }
 
@@ -96,8 +98,9 @@ final readonly class EditHandler implements RequestHandlerInterface
 
         if ($validationBag === null) {
             $validationBag = new ValidationBag([
-                'name'     => $project->name,
-                'serverId' => $project->serverId->toString(),
+                'name'       => $project->name,
+                'serverId'   => $project->serverId->toString(),
+                'registryId' => $project->registryId?->toString() ?? '',
             ]);
         }
 
@@ -109,10 +112,13 @@ final readonly class EditHandler implements RequestHandlerInterface
             static fn (Server $s): bool => ! isset($usedServerIds[$s->id->toString()]),
         );
 
+        $registries = iterator_to_array($this->registryRepository->getAll($activeTeam->id), false);
+
         return $this->renderer->render($request, 'page::project/edit', [
             'project'       => $project,
             'validationBag' => $validationBag,
             'servers'       => $servers,
+            'registries'    => $registries,
         ]);
     }
 

@@ -552,6 +552,30 @@ final class DockerComposeGeneratorTest extends TestCase
         self::assertArrayNotHasKey('read_only', $db);
     }
 
+    #[Test]
+    public function imageTagsReplacesBuildWithImageKey(): void
+    {
+        $config = self::project([self::app('app')], [self::upstream('https://{default}', 'app:http')]);
+        $tags   = ['app' => 'ghcr.io/myorg/myapp/app:main-abc12345'];
+
+        $compose = $this->generator->generate($config, 'main', [], $tags);
+        $svc     = $this->service($compose, 'app');
+
+        self::assertSame('ghcr.io/myorg/myapp/app:main-abc12345', $svc['image']);
+        self::assertArrayNotHasKey('build', $svc);
+    }
+
+    #[Test]
+    public function noImageTagsUsesBuildKey(): void
+    {
+        $config  = self::project([self::app('app')], [self::upstream('https://{default}', 'app:http')]);
+        $compose = $this->generator->generate($config, 'main');
+        $svc     = $this->service($compose, 'app');
+
+        self::assertArrayHasKey('build', $svc);
+        self::assertArrayNotHasKey('image', $svc);
+    }
+
     public static function slugifyProvider(): Generator
     {
         yield 'spaces to dashes'       => ['My Test Project', 'my-test-project'];

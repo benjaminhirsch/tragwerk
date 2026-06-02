@@ -21,6 +21,8 @@ services:
     <<:
       - *default-service
       - *as-current-user
+    group_add:
+      - "${DOCKER_GID:-984}"
     image: tragwerk/app
     ipc: host
     build:
@@ -37,6 +39,7 @@ services:
     volumes:
       - ./app:/app
       - ./app/app.dev.ini:/usr/local/etc/php/conf.d/app.ini:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "80:80"
 

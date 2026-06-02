@@ -1,5 +1,9 @@
 <?php
-/** @var \Tragwerk\Domain\Entity\Project $project */
+/**
+ * @var \Tragwerk\Domain\Entity\Project        $project
+ * @var list<\Tragwerk\Domain\Entity\Server>   $servers
+ * @var list<\Tragwerk\Domain\Entity\Registry> $registries
+ */
 $this->layout('layout::default', ['title' => $this->t('Edit project')]);
 ?>
 
@@ -28,6 +32,20 @@ $this->layout('layout::default', ['title' => $this->t('Edit project')]);
             'validation'   => $validationBag,
             'options'      => $serverOptions,
             'defaultValue' => $validationBag->getValueByName('serverId'),
+        ]) ?>
+
+        <?php
+            $registryOptions = ['' => $this->t('— None (build on server) —')];
+            foreach ($registries as $registry) {
+                $registryOptions[$registry->id->toString()] = $registry->name . ' (' . $registry->url . ')';
+            }
+        ?>
+        <?= $this->fetch('partial::input/select', [
+            'id'           => 'registryId',
+            'label'        => $this->t('Container registry'),
+            'validation'   => $validationBag,
+            'options'      => $registryOptions,
+            'defaultValue' => $validationBag->getValueByName('registryId'),
         ]) ?>
 
         <div class="d-flex gap-2">

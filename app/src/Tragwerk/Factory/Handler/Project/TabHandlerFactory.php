@@ -8,6 +8,7 @@ use Psr\Container\ContainerInterface;
 use Tragwerk\Application\Handler\Project\TabHandler;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Repository\ProjectRepository;
+use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
 
@@ -27,16 +28,18 @@ final readonly class TabHandlerFactory
         assert(is_string($sshHost));
         assert(is_string($sshRepoBase));
 
-        $renderer = $container->get(ResponseRenderer::class);
-        $projects = $container->get(ProjectRepository::class);
-        $servers  = $container->get(ServerRepository::class);
-        $teams    = $container->get(TeamRepository::class);
+        $renderer   = $container->get(ResponseRenderer::class);
+        $projects   = $container->get(ProjectRepository::class);
+        $servers    = $container->get(ServerRepository::class);
+        $teams      = $container->get(TeamRepository::class);
+        $registries = $container->get(RegistryRepository::class);
 
         assert($renderer instanceof ResponseRenderer);
         assert($projects instanceof ProjectRepository);
         assert($servers instanceof ServerRepository);
         assert($teams instanceof TeamRepository);
+        assert($registries instanceof RegistryRepository);
 
-        return new TabHandler($renderer, $projects, $servers, $teams, $sshHost, $sshRepoBase);
+        return new TabHandler($renderer, $projects, $servers, $teams, $registries, $sshHost, $sshRepoBase);
     }
 }

@@ -7,10 +7,12 @@ namespace Tragwerk\Application\EventListener\Project;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Event;
 use Tragwerk\Domain\Repository\ProjectRepository;
+use Tragwerk\Domain\ValueObject\RegistryIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
 
 use function assert;
+use function trim;
 
 final readonly class UpdateProject
 {
@@ -28,6 +30,11 @@ final readonly class UpdateProject
         $project->serverId  = ServerIdentifier::fromString($event->dto->serverId);
         $project->updatedAt = TimestampImmutable::now();
         $project->updatedBy = $event->updatedBy;
+
+        $rid                 = $event->dto->registryId;
+        $project->registryId = $rid !== null && trim($rid) !== '' && RegistryIdentifier::isValid($rid)
+            ? RegistryIdentifier::fromString($rid)
+            : null;
 
         $this->projectRepository->update($project);
     }

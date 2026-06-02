@@ -12,12 +12,15 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Throwable;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Entity\Project;
+use Tragwerk\Domain\Entity\Registry;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Repository\ProjectRepository;
+use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Domain\ValueObject\RegistryIdentifier;
 
 use function assert;
 use function is_string;
@@ -29,6 +32,7 @@ final readonly class TabHandler implements RequestHandlerInterface
         private ProjectRepository $projectRepository,
         private ServerRepository $serverRepository,
         private TeamRepository $teamRepository,
+        private RegistryRepository $registryRepository,
         private string $gitSshHost,
         private string $gitSshRepoBase,
     ) {
@@ -61,10 +65,22 @@ final readonly class TabHandler implements RequestHandlerInterface
         assert($server instanceof Server);
         assert($team instanceof Team);
 
+        $registry = null;
+        if ($project->registryId instanceof RegistryIdentifier) {
+            try {
+                $r = $this->registryRepository->getById($project->registryId);
+                if ($r instanceof Registry) {
+                    $registry = $r;
+                }
+            } catch (Throwable) {
+            }
+        }
+
         return $this->renderer->render($request, 'page::project/tab/overview', [
             'project'  => $project,
             'server'   => $server,
             'team'     => $team,
+            'registry' => $registry,
             'cloneUrl' => $cloneUrl,
         ]);
     }

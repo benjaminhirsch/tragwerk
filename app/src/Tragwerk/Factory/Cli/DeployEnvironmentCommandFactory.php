@@ -8,9 +8,11 @@ use CuyZ\Valinor\Mapper\TreeMapper;
 use Psr\Container\ContainerInterface;
 use Tragwerk\Application\Cli\Command\DeployEnvironmentCommand;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
+use Tragwerk\Domain\Docker\DockerComposeGenerator;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\DeployJobRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
+use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Infrastructure\Git\BareRepository;
 
@@ -32,26 +34,32 @@ final readonly class DeployEnvironmentCommandFactory
         $servers     = $container->get(ServerRepository::class);
         $credentials = $container->get(CredentialRepository::class);
         $deployJobs  = $container->get(DeployJobRepository::class);
+        $registries  = $container->get(RegistryRepository::class);
         $bareRepo    = $container->get(BareRepository::class);
         $xmlConv     = $container->get(XmlToArrayConverter::class);
         $mapper      = $container->get(TreeMapper::class);
+        $compose     = $container->get(DockerComposeGenerator::class);
 
         assert($projects instanceof ProjectRepository);
         assert($servers instanceof ServerRepository);
         assert($credentials instanceof CredentialRepository);
         assert($deployJobs instanceof DeployJobRepository);
+        assert($registries instanceof RegistryRepository);
         assert($bareRepo instanceof BareRepository);
         assert($xmlConv instanceof XmlToArrayConverter);
         assert($mapper instanceof TreeMapper);
+        assert($compose instanceof DockerComposeGenerator);
 
         return new DeployEnvironmentCommand(
             $projects,
             $servers,
             $credentials,
             $deployJobs,
+            $registries,
             $bareRepo,
             $xmlConv,
             $mapper,
+            $compose,
             $dataPath,
         );
     }

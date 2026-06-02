@@ -7,6 +7,7 @@ namespace Tragwerk\Application\Cli\Command;
 use CuyZ\Valinor\Mapper\MappingError;
 use CuyZ\Valinor\Mapper\TreeMapper;
 use DOMDocument;
+use phpseclib3\Crypt\Common\PrivateKey;
 use phpseclib3\Crypt\PublicKeyLoader;
 use phpseclib3\Exception\NoKeyLoadedException;
 use phpseclib3\Net\SFTP;
@@ -16,14 +17,22 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Process\Process;
+use Symfony\Component\Yaml\Yaml;
 use Throwable;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
+use Tragwerk\Domain\Docker\DockerComposeGenerator;
+use Tragwerk\Domain\Entity\Credential;
+use Tragwerk\Domain\Entity\Project;
+use Tragwerk\Domain\Entity\Registry;
+use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Enum\DeployJobStatus;
 use Tragwerk\Domain\Enum\MountSource;
 use Tragwerk\Domain\Model\ProjectConfig;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\DeployJobRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
+use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\ValueObject\DeployJobIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
@@ -34,6 +43,9 @@ use function basename;
 use function copy;
 use function escapeshellarg;
 use function exec;
+use function explode;
+use function file_exists;
+use function file_get_contents;
 use function glob;
 use function implode;
 use function is_dir;
@@ -60,9 +72,11 @@ final class DeployEnvironmentCommand extends Command
         private readonly ServerRepository $serverRepository,
         private readonly CredentialRepository $credentialRepository,
         private readonly DeployJobRepository $deployJobRepository,
+        private readonly RegistryRepository $registryRepository,
         private readonly BareRepository $bareRepository,
         private readonly XmlToArrayConverter $xmlConverter,
         private readonly TreeMapper $treeMapper,
+        private readonly DockerComposeGenerator $composeGenerator,
         private readonly string $projectDataPath,
     ) {
         parent::__construct();
@@ -147,9 +161,32 @@ final class DeployEnvironmentCommand extends Command
             return Command::FAILURE;
         }
 
-        // Phase 2 hook: if project has a registry assigned, branch here for registry-based deploy.
-        // For now, always use Mode A: build on target server.
+        // Phase 2: project has a registry → build image locally, push, then pull on VPS.
+        if ($project->registryId !== null) {
+            try {
+                $registry = $this->registryRepository->getById($project->registryId);
+            } catch (Throwable $e) {
+                $this->log($jobId, '[Deploy] Registry not found: ' . $e->getMessage());
+                $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
 
+                return Command::FAILURE;
+            }
+
+            return $this->deployViaRegistry(
+                $projectId,
+                $branch,
+                $commitSha,
+                $jobId,
+                $acmeEmail,
+                $project,
+                $server,
+                $credential,
+                $key,
+                $registry,
+            );
+        }
+
+        // Phase 1 (no registry): build on target server.
         $tempDir = sys_get_temp_dir() . '/tw-deploy-src-' . uniqid();
         mkdir($tempDir, 0755, true);
 
@@ -294,6 +331,240 @@ final class DeployEnvironmentCommand extends Command
         $this->syncFromParentIfFirstDeploy($sftp, $projectId, $branch, $commitSha, $jobId);
 
         $this->log($jobId, '[Deploy] Deploy completed successfully.');
+        $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Completed);
+
+        return Command::SUCCESS;
+    }
+
+    /**
+     * Phase-2 deploy: build the Docker image locally, push to registry, then pull+swap on VPS.
+     */
+    private function deployViaRegistry(
+        string $projectId,
+        string $branch,
+        string $commitSha,
+        DeployJobIdentifier $jobId,
+        string $acmeEmail,
+        Project $project,
+        Server $server,
+        Credential $credential,
+        PrivateKey $key,
+        Registry $registry,
+    ): int {
+        $branchSlug  = $this->slugify(basename($branch));
+        $projectSlug = $this->slugify($project->name);
+        $shortSha    = substr($commitSha, 0, 8);
+        $repoPath    = $this->bareRepository->getPath($projectId);
+
+        // 1. Export source from git into a temp directory
+        $buildDir = sys_get_temp_dir() . '/tw-build-' . uniqid();
+        mkdir($buildDir, 0755, true);
+
+        exec(
+            'git -C ' . escapeshellarg($repoPath)
+            . ' archive ' . escapeshellarg($commitSha)
+            . ' | tar xf - -C ' . escapeshellarg($buildDir) . ' 2>&1',
+            $archiveOut,
+            $archiveExit,
+        );
+
+        if ($archiveExit !== 0) {
+            $this->removeDirectory($buildDir);
+            $this->log($jobId, '[Deploy] Failed to export source: ' . implode("\n", $archiveOut));
+            $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+            return Command::FAILURE;
+        }
+
+        // Copy generated Dockerfiles/Caddyfiles from build artifacts
+        $artifactsDir = rtrim($this->projectDataPath, '/') . '/' . $projectId . '/' . $branch;
+        foreach (glob($artifactsDir . '/*') ?: [] as $file) {
+            if (basename($file) === 'build.zip') {
+                continue;
+            }
+
+            copy($file, $buildDir . '/' . basename($file));
+        }
+
+        // 2. Parse config to find applications
+        $xmlContent = $this->bareRepository->getFileContent($projectId, $commitSha, '.tragwerk/config.xml');
+        if ($xmlContent === null || $xmlContent === '') {
+            $this->removeDirectory($buildDir);
+            $this->log($jobId, '[Deploy] No .tragwerk/config.xml found.');
+            $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+            return Command::FAILURE;
+        }
+
+        try {
+            $config = $this->parseProjectConfig($xmlContent);
+        } catch (Throwable $e) {
+            $this->removeDirectory($buildDir);
+            $this->log($jobId, '[Deploy] Config parse error: ' . $e->getMessage());
+            $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+            return Command::FAILURE;
+        }
+
+        // 3. docker login on local host
+        $this->log($jobId, '[Deploy] Logging in to registry ' . $registry->url . '...');
+        $login = new Process(['docker', 'login', $registry->url, '-u', $registry->username, '--password-stdin']);
+        $login->setInput($registry->password);
+        $login->run();
+
+        if (! $login->isSuccessful()) {
+            $this->removeDirectory($buildDir);
+            $this->log($jobId, '[Deploy] Registry login failed: ' . $login->getErrorOutput());
+            $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+            return Command::FAILURE;
+        }
+
+        // 4. Build + push each application image
+        /** @var array<string, string> $imageTags appSlug → full image ref */
+        $imageTags = [];
+
+        foreach ($config->applications as $app) {
+            $appSlug    = $this->slugify($app->name);
+            $imageTag   = $registry->url . '/' . $projectSlug . '/' . $appSlug
+                . ':' . $branchSlug . '-' . $shortSha;
+            $dockerfile = $buildDir . '/Dockerfile.' . $appSlug;
+
+            $this->log($jobId, '[Deploy] Building image: ' . $imageTag);
+
+            $build = new Process(
+                ['docker', 'build', '-f', $dockerfile, '-t', $imageTag, '.'],
+                $buildDir,
+                timeout: null,
+            );
+
+            $buildOutput = '';
+            $build->run(static function (string $type, string $buf) use (&$buildOutput): void {
+                $buildOutput .= $buf;
+            });
+
+            foreach (explode("\n", trim($buildOutput)) as $line) {
+                if (trim($line) === '') {
+                    continue;
+                }
+
+                $this->log($jobId, $line);
+            }
+
+            if (! $build->isSuccessful()) {
+                $this->removeDirectory($buildDir);
+                (new Process(['docker', 'logout', $registry->url]))->run();
+                $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+                return Command::FAILURE;
+            }
+
+            $this->log($jobId, '[Deploy] Pushing image: ' . $imageTag);
+            $push = new Process(['docker', 'push', $imageTag], timeout: null);
+            $push->run(function (string $type, string $buf) use ($jobId): void {
+                foreach (explode("\n", trim($buf)) as $line) {
+                    if (trim($line) === '') {
+                        continue;
+                    }
+
+                    $this->log($jobId, $line);
+                }
+            });
+
+            if (! $push->isSuccessful()) {
+                $this->removeDirectory($buildDir);
+                (new Process(['docker', 'logout', $registry->url]))->run();
+                $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+                return Command::FAILURE;
+            }
+
+            (new Process(['docker', 'rmi', $imageTag]))->run();
+            $imageTags[$appSlug] = $imageTag;
+        }
+
+        $this->removeDirectory($buildDir);
+        (new Process(['docker', 'logout', $registry->url]))->run();
+
+        // 5. SSH to VPS — login + pull + swap
+        $sftp = new SFTP($server->host, $server->port, 30);
+
+        if (! $sftp->login($credential->username, $key)) {
+            $this->log($jobId, '[Deploy] SSH login failed.');
+            $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+            return Command::FAILURE;
+        }
+
+        $sftp->setTimeout(0);
+        $remoteDir = 'tragwerk/' . $projectId . '/' . $branch;
+        $sftp->mkdir($remoteDir, -1, true);
+
+        // Upload docker-compose.yml (with image: refs) + Caddyfiles
+        $compose = $this->composeGenerator->generate($config, $branch, [], $imageTags);
+        $sftp->put(
+            $remoteDir . '/docker-compose.yml',
+            Yaml::dump($compose, 8, 2, Yaml::DUMP_NULL_AS_TILDE),
+        );
+
+        foreach ($config->applications as $app) {
+            $appSlug   = $this->slugify($app->name);
+            $caddyFile = $artifactsDir . '/Caddyfile.' . $appSlug;
+            if (! file_exists($caddyFile)) {
+                continue;
+            }
+
+            $content = file_get_contents($caddyFile);
+            if ($content === false) {
+                continue;
+            }
+
+            $sftp->put($remoteDir . '/Caddyfile.' . $appSlug, $content);
+        }
+
+        $this->log($jobId, '[Deploy] Logging in to registry on VPS...');
+        $sftp->exec(
+            'echo ' . escapeshellarg($registry->password)
+            . ' | docker login ' . escapeshellarg($registry->url)
+            . ' -u ' . escapeshellarg($registry->username)
+            . ' --password-stdin 2>&1',
+        );
+
+        $dc = 'NO_COLOR=1 docker compose -f docker-compose.yml';
+
+        $this->log($jobId, '[Deploy] Pulling image on VPS...');
+        $sftp->exec('cd ~/' . $remoteDir . ' && ' . $dc . ' pull 2>&1');
+
+        $this->log($jobId, '[Deploy] Swapping containers...');
+        $sftp->exec('docker network create tragwerk-net 2>/dev/null; true');
+
+        try {
+            $this->streamExec(
+                $sftp,
+                'cd ~/' . $remoteDir . ' && ' . $dc . ' up --pull always --no-build --wait 2>&1',
+                $jobId,
+            );
+        } catch (Throwable $e) {
+            $this->log($jobId, '[Deploy] SSH error: ' . $e->getMessage());
+            $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+            return Command::FAILURE;
+        }
+
+        $exitStatus = $sftp->getExitStatus();
+        $this->streamExec($sftp, 'cd ~/' . $remoteDir . ' && ' . $dc . ' logs --no-color --tail 500 2>&1', $jobId);
+        $sftp->exec('docker logout ' . escapeshellarg($registry->url) . ' 2>/dev/null; true');
+        $this->ensureServerTraefik($sftp, $acmeEmail, $jobId);
+
+        if ($exitStatus !== 0) {
+            $this->streamExec($sftp, 'cd ~/' . $remoteDir . ' && ' . $dc . ' ps 2>&1', $jobId);
+            $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+            return Command::FAILURE;
+        }
+
+        $this->syncFromParentIfFirstDeploy($sftp, $projectId, $branch, $commitSha, $jobId);
+        $this->log($jobId, '[Deploy] Registry-based deploy completed.');
         $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Completed);
 
         return Command::SUCCESS;
