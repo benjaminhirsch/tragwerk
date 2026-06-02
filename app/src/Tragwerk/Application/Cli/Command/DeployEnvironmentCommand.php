@@ -414,7 +414,7 @@ final class DeployEnvironmentCommand extends Command
         // 3. docker login on local host
         $dockerConfigDir = sys_get_temp_dir() . '/tw-docker-' . uniqid();
         mkdir($dockerConfigDir, 0700, true);
-        $dockerEnv = ['DOCKER_CONFIG' => $dockerConfigDir];
+        $dockerEnv = ['DOCKER_CONFIG' => $dockerConfigDir, 'DOCKER_BUILDKIT' => '1'];
 
         $this->log($jobId, '[Deploy] Logging in to registry ' . $registry->url . '...');
         $login = new Process(
@@ -457,6 +457,8 @@ final class DeployEnvironmentCommand extends Command
                     $imageTag,
                     '--cache-from',
                     $cacheTag,
+                    '--build-arg',
+                    'BUILDKIT_INLINE_CACHE=1',
                     '.',
                 ],
                 $buildDir,
