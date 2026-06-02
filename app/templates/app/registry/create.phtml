@@ -1,0 +1,40 @@
+<?php $this->layout('layout::default', ['title' => $this->t('Add registry')]) ?>
+
+<h1><?= $this->t('Add registry') ?></h1>
+
+<?php $this->start('card-content') ?>
+    <form action="<?= $this->url('registry.create') ?>" method="post">
+        <?= $this->fetch('partial::input/csrf') ?>
+        <?= $this->fetch('partial::input/text', [
+            'id'        => 'name',
+            'label'     => $this->t('Name'),
+            'autofocus' => 'autofocus',
+            'validation' => $validationBag ?? null,
+        ]) ?>
+        <?= $this->fetch('partial::input/text', [
+            'id'          => 'url',
+            'label'       => $this->t('Registry URL'),
+            'placeholder' => 'ghcr.io',
+            'validation'  => $validationBag ?? null,
+        ]) ?>
+        <?= $this->fetch('partial::input/text', [
+            'id'         => 'username',
+            'label'      => $this->t('Username'),
+            'validation' => $validationBag ?? null,
+        ]) ?>
+        <?= $this->fetch('partial::input/text', [
+            'id'         => 'password',
+            'label'      => $this->t('Password / Token'),
+            'type'       => 'password',
+            'validation' => $validationBag ?? null,
+        ]) ?>
+        <div class="d-flex gap-2">
+            <?= $this->fetch('partial::input/button', ['label' => $this->t('Save')]) ?>
+            <?= $this->fetch('partial::link', [
+                'label'   => $this->t('Cancel'),
+                'href'    => $this->url('registry'),
+                'classes' => 'btn btn-secondary',
+            ]) ?>
+        </div>
+    </form>
+<?php $this->stop() ?>

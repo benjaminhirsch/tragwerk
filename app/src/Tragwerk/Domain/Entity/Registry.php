@@ -4,25 +4,24 @@ declare(strict_types=1);
 
 namespace Tragwerk\Domain\Entity;
 
-use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Domain\ValueObject\RegistryIdentifier;
-use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
-final class Project implements Entity
+final class Registry implements Entity
 {
     public function __construct(
-        public ProjectIdentifier $id,
+        public RegistryIdentifier $id,
         public string $name,
-        public ServerIdentifier $serverId,
+        public string $url,
+        public string $username,
+        public string $password,
         public TeamIdentifier $teamId,
         public TimestampImmutable $createdAt,
         public UserIdentifier $createdBy,
         public TimestampImmutable $updatedAt,
         public UserIdentifier $updatedBy,
-        public RegistryIdentifier|null $registryId = null,
     ) {
     }
 }

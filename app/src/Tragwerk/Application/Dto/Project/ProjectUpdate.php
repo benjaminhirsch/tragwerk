@@ -8,6 +8,7 @@ use CuyZ\Valinor\Mapper\Http\FromBody;
 use Tragwerk\Application\Dto\DtoInterface;
 use Tragwerk\Application\Exception\ValidationCollection;
 use Tragwerk\Application\Exception\ValidationError;
+use Tragwerk\Domain\ValueObject\RegistryIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
 
 use function _;
@@ -20,6 +21,8 @@ final readonly class ProjectUpdate implements DtoInterface
         public string $name,
         #[FromBody]
         public string $serverId,
+        #[FromBody]
+        public string|null $registryId = null,
     ) {
         $errors = [];
         if (trim($this->name) === '') {
@@ -28,6 +31,14 @@ final readonly class ProjectUpdate implements DtoInterface
 
         if (trim($this->serverId) === '' || ! ServerIdentifier::isValid($this->serverId)) {
             $errors[] = ValidationError::make('serverId', _('Please select a server'));
+        }
+
+        if (
+            $this->registryId !== null
+            && trim($this->registryId) !== ''
+            && ! RegistryIdentifier::isValid($this->registryId)
+        ) {
+            $errors[] = ValidationError::make('registryId', _('Invalid registry'));
         }
 
         if ($errors !== []) {

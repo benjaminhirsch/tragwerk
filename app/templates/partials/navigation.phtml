@@ -16,6 +16,12 @@ $links = [
         ],
         [
                 'include' => 'partial::link',
+                'label' => $this->t('Registries'),
+                'href' => $this->url('registry'),
+                'classes' => 'nav-link bi bi-box-seam',
+        ],
+        [
+                'include' => 'partial::link',
                 'label' => $this->t('Teams'),
                 'href' => $this->url('team'),
                 'classes' => 'nav-link bi bi-people',

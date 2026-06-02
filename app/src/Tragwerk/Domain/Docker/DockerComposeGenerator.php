@@ -31,11 +31,18 @@ final readonly class DockerComposeGenerator
 
     /**
      * @param array<string, list<string>> $domainsByPlaceholder
+     * @param array<string, string>       $imageTags            Map of appSlug → fully-qualified image tag.
+     *                                                          When provided the service uses `image:` instead
+     *                                                          of `build:` (Phase-2 registry-based deploy).
      *
      * @return array<string, mixed>
      */
-    public function generate(ProjectConfig $config, string $branch = '', array $domainsByPlaceholder = []): array
-    {
+    public function generate(
+        ProjectConfig $config,
+        string $branch = '',
+        array $domainsByPlaceholder = [],
+        array $imageTags = [],
+    ): array {
         /** @var array<string, mixed> $services */
         $services = [];
         /** @var array<string, null> $volumes */
@@ -88,12 +95,13 @@ final readonly class DockerComposeGenerator
 
             $labels = $this->buildTraefikLabels($app, $config, $domainsByPlaceholder, $branchSlug);
 
-            /** @var array<string, mixed> $svcConfig */
-            $svcConfig = [
-                'build'       => ['context' => '.', 'dockerfile' => 'Dockerfile.' . $appSlug],
-                'read_only'   => true,
-                'environment' => $environment,
-            ];
+            $svcConfig = isset($imageTags[$appSlug])
+                ? ['image' => $imageTags[$appSlug], 'read_only' => true, 'environment' => $environment]
+                : [
+                    'build'       => ['context' => '.', 'dockerfile' => 'Dockerfile.' . $appSlug],
+                    'read_only'   => true,
+                    'environment' => $environment,
+                ];
 
             if (str_starts_with($app->type->value, 'php:')) {
                 // PHP and Caddy need writable scratch space even in a read-only container

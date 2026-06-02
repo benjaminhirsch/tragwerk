@@ -3,9 +3,10 @@ FROM dunglas/frankenphp:1.12.3-php8.5-trixie
 WORKDIR /app
 
 # System tools: git (BareRepository shells out to it), unzip (composer package extraction),
-# gettext CLI (msgfmt etc.); the PHP ext-gettext is added below.
+# gettext CLI (msgfmt etc.); docker-ce-cli for Phase-2 registry-based builds (socket-mounted).
+# The PHP ext-gettext is added below.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git unzip gettext \
+    && apt-get install -y --no-install-recommends git unzip gettext docker-cli \
     && rm -rf /var/lib/apt/lists/*
 
 # PHP extensions: intl/gettext/pdo_pgsql are required by composer.json + Doctrine/Postgres.

@@ -22,6 +22,7 @@ enum EntityType: string implements Translatable
     case BUILD_LOG       = 'BUILD_LOG';
     case DEPLOY_JOB      = 'DEPLOY_JOB';
     case DOMAIN          = 'DOMAIN';
+    case REGISTRY        = 'REGISTRY';
 
     /** @phpstan-pure  */
     #[Override]
@@ -39,6 +40,7 @@ enum EntityType: string implements Translatable
             self::BUILD_LOG       => _('Build Log'),
             self::DEPLOY_JOB      => _('Deploy Job'),
             self::DOMAIN          => _('Domain'),
+            self::REGISTRY        => _('Registry'),
         };
     }
 
@@ -61,6 +63,7 @@ enum EntityType: string implements Translatable
             self::BUILD_LOG       => Entity\BuildLog::class,
             self::DEPLOY_JOB      => Entity\DeployJob::class,
             self::DOMAIN          => Entity\Domain::class,
+            self::REGISTRY        => Entity\Registry::class,
         };
     }
 }
