@@ -414,7 +414,7 @@ final class DeployEnvironmentCommand extends Command
         // 3. docker login on local host
         $dockerConfigDir = sys_get_temp_dir() . '/tw-docker-' . uniqid();
         mkdir($dockerConfigDir, 0700, true);
-        $dockerEnv = ['DOCKER_CONFIG' => $dockerConfigDir];
+        $dockerEnv = ['DOCKER_CONFIG' => $dockerConfigDir, 'DOCKER_BUILDKIT' => '1'];
 
         $this->log($jobId, '[Deploy] Logging in to registry ' . $registry->url . '...');
         $login = new Process(
@@ -441,12 +441,26 @@ final class DeployEnvironmentCommand extends Command
             $appSlug    = $this->slugify($app->name);
             $imageTag   = $registry->url . '/' . $registry->repository
                 . ':' . $appSlug . '-' . $branchSlug . '-' . $shortSha;
+            $cacheTag   = $registry->url . '/' . $registry->repository
+                . ':' . $appSlug . '-' . $branchSlug . '-cache';
             $dockerfile = $buildDir . '/Dockerfile.' . $appSlug;
 
             $this->log($jobId, '[Deploy] Building image: ' . $imageTag);
 
             $build = new Process(
-                ['docker', 'build', '-f', $dockerfile, '-t', $imageTag, '.'],
+                [
+                    'docker',
+                    'build',
+                    '-f',
+                    $dockerfile,
+                    '-t',
+                    $imageTag,
+                    '--cache-from',
+                    $cacheTag,
+                    '--build-arg',
+                    'BUILDKIT_INLINE_CACHE=1',
+                    '.',
+                ],
                 $buildDir,
                 $dockerEnv,
                 timeout: null,
@@ -495,7 +509,11 @@ final class DeployEnvironmentCommand extends Command
                 return Command::FAILURE;
             }
 
-            (new Process(['docker', 'rmi', $imageTag], env: $dockerEnv))->run();
+            // Push cache tag so the next build can reuse layers via --cache-from.
+            (new Process(['docker', 'tag', $imageTag, $cacheTag], env: $dockerEnv))->run();
+            (new Process(['docker', 'push', $cacheTag], env: $dockerEnv, timeout: null))->run();
+
+            (new Process(['docker', 'rmi', $imageTag, $cacheTag], env: $dockerEnv))->run();
             $imageTags[$appSlug] = $imageTag;
         }
 
