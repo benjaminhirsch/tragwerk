@@ -64,6 +64,17 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
         </button>
     </li>
     <li class="nav-item" role="presentation">
+        <button class="nav-link" id="<?= $tabId ?>-logs-tab"
+                data-bs-toggle="tab" data-bs-target="#<?= $tabId ?>-logs"
+                type="button" role="tab"
+                hx-get="<?= $this->e($logsUrl) ?>"
+                hx-trigger="shown.bs.tab once"
+                hx-target="#tw-environment-logs"
+                hx-swap="outerHTML">
+            <?= $this->t('Logs') ?>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
         <button class="nav-link" id="<?= $tabId ?>-domains-tab"
                 data-bs-toggle="tab" data-bs-target="#<?= $tabId ?>-domains"
                 type="button" role="tab">
@@ -97,17 +108,6 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
                 hx-target="#tw-app-metrics"
                 hx-swap="innerHTML">
             <?= $this->t('Metrics') ?>
-        </button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link" id="<?= $tabId ?>-logs-tab"
-                data-bs-toggle="tab" data-bs-target="#<?= $tabId ?>-logs"
-                type="button" role="tab"
-                hx-get="<?= $this->e($logsUrl) ?>"
-                hx-trigger="shown.bs.tab once"
-                hx-target="#tw-environment-logs"
-                hx-swap="outerHTML">
-            <?= $this->t('Logs') ?>
         </button>
     </li>
 </ul>
