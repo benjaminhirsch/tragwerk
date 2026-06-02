@@ -54,6 +54,7 @@ use function is_dir;
 use function is_int;
 use function is_string;
 use function mkdir;
+use function preg_match;
 use function preg_replace;
 use function rmdir;
 use function rtrim;
@@ -621,14 +622,6 @@ final class DeployEnvironmentCommand extends Command
             $newContainers[] = $newContainer;
         }
 
-        foreach ($newContainers as $containerName) {
-            $this->streamExec(
-                $sftp,
-                'docker logs --tail 500 ' . escapeshellarg($containerName) . ' 2>&1',
-                $jobId,
-            );
-        }
-
         $sftp->exec('docker logout ' . escapeshellarg($registry->url) . ' 2>/dev/null; true');
         $this->ensureServerTraefik($sftp, $acmeEmail, $jobId);
 
@@ -758,6 +751,20 @@ final class DeployEnvironmentCommand extends Command
 
         if ($status !== 'healthy') {
             $this->log($jobId, '[Deploy] ' . $newContainer . ' did not become healthy (status: ' . $status . ').');
+            $this->streamExec($sftp, 'docker logs --tail 100 ' . escapeshellarg($newContainer) . ' 2>&1', $jobId);
+            $sftp->exec('docker rm -f ' . escapeshellarg($newContainer) . ' 2>/dev/null; true');
+
+            return null;
+        }
+
+        // Collect startup logs and check for critical errors before cutting over.
+        $startupLogs = (string) $sftp->exec(
+            'docker logs --tail 500 ' . escapeshellarg($newContainer) . ' 2>&1',
+        );
+        $this->log($jobId, $startupLogs);
+
+        if ($this->logsContainError($startupLogs)) {
+            $this->log($jobId, '[Deploy] Errors detected in startup logs — rolling back.');
             $sftp->exec('docker rm -f ' . escapeshellarg($newContainer) . ' 2>/dev/null; true');
 
             return null;
@@ -774,6 +781,26 @@ final class DeployEnvironmentCommand extends Command
         $sftp->exec('echo ' . escapeshellarg($newSlot) . ' > ' . $slotFile);
 
         return $newContainer;
+    }
+
+    private function logsContainError(string $logs): bool
+    {
+        $errorPatterns = [
+            '/^In .+\.php line \d+:/m',   // PHP/Doctrine exception header
+            '/Uncaught .+Exception/i',
+            '/PHP Fatal error/i',
+            '/\[CRITICAL\]/i',
+            '/returned with error code \d+/i',
+            '/"level":"error"/i',
+        ];
+
+        foreach ($errorPatterns as $pattern) {
+            if (preg_match($pattern, $logs) === 1) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function syncFromParentIfFirstDeploy(
