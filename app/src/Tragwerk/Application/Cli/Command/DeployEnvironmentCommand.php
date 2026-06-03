@@ -1710,6 +1710,15 @@ final class DeployEnvironmentCommand extends Command
         Credential $credential,
         PrivateKey $key,
     ): void {
+        // Bail early if no swarm stack is running — nothing to migrate or remove.
+        $stackRunning = trim((string) $primarySftp->exec(
+            'docker stack ls --format "{{.Name}}" 2>/dev/null | grep -Fx ' . escapeshellarg($stackName),
+        )) !== '';
+
+        if (! $stackRunning) {
+            return;
+        }
+
         $dbServices = [];
 
         foreach ($config->services as $service) {
@@ -1726,11 +1735,10 @@ final class DeployEnvironmentCommand extends Command
             $dbServices[] = $service;
         }
 
-        if ($dbServices === []) {
-            return;
-        }
-
         // Swarm DB volumes may live on a dedicated storage node due to placement constraints.
+        // NOTE: swarm nodes may already be cleared from DB by the time this deploy runs
+        // (ProjectUpdated listener removes them synchronously). We query the DB first, then
+        // fall back to asking the running swarm where the service is scheduled.
         $storageServer = null;
         $swarmNodes    = $this->projectRepository->getSwarmNodes(ProjectIdentifier::fromString($projectId));
 
@@ -1784,6 +1792,32 @@ final class DeployEnvironmentCommand extends Command
             }
 
             if ($sourceSftp === null) {
+                // DB-stored swarm nodes may be cleared already — ask the running swarm
+                // directly which node is hosting this service and SSH there.
+                $nodeAddr = trim((string) $primarySftp->exec(
+                    'docker service ps ' . escapeshellarg($stackName . '_' . $serviceSlug)
+                    . ' --filter desired-state=running --format "{{.Node}}" 2>/dev/null | head -1'
+                    . ' | xargs -r docker node inspect --format "{{.Status.Addr}}" 2>/dev/null',
+                ));
+
+                if ($nodeAddr !== '') {
+                    $dynSftp = new SFTP($nodeAddr, 22, 30);
+
+                    if ($dynSftp->login($credential->username, $key)) {
+                        $dynSftp->setTimeout(0);
+                        $found = trim((string) $dynSftp->exec(
+                            'docker volume inspect ' . escapeshellarg($srcVol) . ' --format "{{.Name}}" 2>/dev/null',
+                        ));
+
+                        if ($found === $srcVol) {
+                            $sourceSftp = $dynSftp;
+                            $this->log($jobId, '[Deploy] Found swarm DB volume on node ' . $nodeAddr . '.');
+                        }
+                    }
+                }
+            }
+
+            if ($sourceSftp === null) {
                 continue;
             }
 
@@ -1828,14 +1862,9 @@ final class DeployEnvironmentCommand extends Command
             }
 
             $this->log($jobId, '[Deploy] Volume "' . $serviceSlug . '-data" migrated.');
-            $anyMigrated = true;
         }
 
-        if (! $anyMigrated) {
-            return;
-        }
-
-        // Remove old swarm stack to free ports and network resources
+        // Always remove the swarm stack — it was confirmed running above.
         $rmOut = trim((string) $primarySftp->exec('docker stack rm ' . escapeshellarg($stackName) . ' 2>&1'));
         if ($rmOut !== '') {
             $this->log($jobId, '[Deploy] Swarm stack removal: ' . $rmOut);
