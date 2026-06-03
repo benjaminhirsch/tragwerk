@@ -16,6 +16,8 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Throwable;
 use Tragwerk\Application\Dto\Project\ProjectUpdate;
 use Tragwerk\Application\Mapper\GenericMapper;
+use Tragwerk\Application\Queue\Message\BuildEnvironment;
+use Tragwerk\Application\Queue\Producer;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Application\Validation\ValidationBag;
 use Tragwerk\Domain\Entity\Project;
@@ -23,6 +25,7 @@ use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Enum\SwarmNodeRole;
 use Tragwerk\Domain\Event\ProjectUpdated;
+use Tragwerk\Domain\Repository\DeployJobRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
@@ -30,6 +33,7 @@ use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
+use Tragwerk\Infrastructure\Git\BareRepository;
 
 use function _;
 use function array_filter;
@@ -52,6 +56,9 @@ final readonly class EditHandler implements RequestHandlerInterface
         private ProjectRepository $projectRepository,
         private ServerRepository $serverRepository,
         private RegistryRepository $registryRepository,
+        private DeployJobRepository $deployJobRepository,
+        private BareRepository $bareRepository,
+        private Producer $producer,
     ) {
     }
 
@@ -113,12 +120,18 @@ final readonly class EditHandler implements RequestHandlerInterface
                     $user = $request->getAttribute(UserInterface::class);
                     assert($user instanceof UserInterface);
 
+                    $swarmJustEnabled = ! $project->swarmEnabled && $dto->swarmEnabled;
+
                     $this->eventDispatcher->dispatch(new ProjectUpdated(
                         $project->id,
                         $dto,
                         UserIdentifier::fromString($user->getIdentity()),
                         $swarmNodes,
                     ));
+
+                    if ($swarmJustEnabled) {
+                        $this->triggerSwarmRedeploy($project->id);
+                    }
 
                     return new RedirectResponse(
                         $this->urlHelper->generate('project.show', ['id' => $project->id->toString()]),
@@ -155,6 +168,28 @@ final readonly class EditHandler implements RequestHandlerInterface
             'registries'    => $registries,
             'existingNodes' => $existingNodes,
         ]);
+    }
+
+    private function triggerSwarmRedeploy(ProjectIdentifier $projectId): void
+    {
+        $branches = $this->deployJobRepository->getDeployedBranches($projectId);
+
+        foreach ($branches as $branch) {
+            try {
+                $commits = $this->bareRepository->getCommits($projectId->toString(), $branch, 1);
+                if ($commits === []) {
+                    continue;
+                }
+
+                $this->producer->sendMessage(new BuildEnvironment(
+                    projectId: $projectId->toString(),
+                    branch:    $branch,
+                    commitSha: $commits[0]->hash,
+                ));
+            } catch (Throwable) {
+                // skip branch if commits unavailable
+            }
+        }
     }
 
     /** @return array{0: ValidationBag, 1: list<array{serverId: string, role: string, isStorage: bool}>} */

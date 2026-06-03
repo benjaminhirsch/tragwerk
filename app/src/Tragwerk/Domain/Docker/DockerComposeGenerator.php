@@ -139,11 +139,7 @@ final readonly class DockerComposeGenerator
                 $svcConfig['volumes'] = $appVolumes;
             }
 
-            if ($labels !== []) {
-                $svcConfig['labels'] = $labels;
-            }
-
-            if ($dependsOn !== []) {
+            if ($dependsOn !== [] && ! $swarmMode) {
                 $svcConfig['depends_on'] = $dependsOn;
             }
 
@@ -151,6 +147,7 @@ final readonly class DockerComposeGenerator
             $svcConfig['networks'] = ['default', 'tragwerk-net'];
 
             if ($swarmMode) {
+                // In Swarm mode Traefik reads labels from deploy.labels, not service labels
                 $svcConfig['deploy'] = [
                     'mode'           => 'global',
                     'update_config'  => [
@@ -159,7 +156,10 @@ final readonly class DockerComposeGenerator
                         'order'       => 'start-first',
                     ],
                     'restart_policy' => ['condition' => 'any'],
+                    'labels'         => $labels,
                 ];
+            } elseif ($labels !== []) {
+                $svcConfig['labels'] = $labels;
             }
 
             $services[$appSlug] = $svcConfig;

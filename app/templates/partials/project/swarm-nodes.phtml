@@ -2,33 +2,24 @@
 /**
  * @var \Tragwerk\Domain\Entity\Project            $project
  * @var list<\Tragwerk\Domain\Entity\SwarmNode>    $nodes
- * @var bool                                       $deployed
- * @var list<\Tragwerk\Domain\Entity\Server>       $available
  * @var array<string, string>                      $serverNames  serverId → server name
- * @var string|null                                $error
  */
 $primaryName = $serverNames[$project->serverId->toString()] ?? $project->serverId->toString();
 ?>
 <div id="tw-swarm-nodes">
-    <?php if ($error !== null): ?>
-        <div class="alert alert-danger alert-sm py-2"><?= $this->e($error) ?></div>
-    <?php endif ?>
-
-    <table class="table table-sm mb-2">
+    <table class="table table-sm mb-0">
         <thead>
             <tr>
                 <th><?= $this->t('Server') ?></th>
                 <th><?= $this->t('Role') ?></th>
                 <th><?= $this->t('Storage') ?></th>
-                <?php if ($deployed): ?><th></th><?php endif ?>
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td><?= $this->e($primaryName) ?></td>
                 <td><span class="badge bg-primary"><?= $this->t('Manager') ?></span></td>
-                <td><span class="text-body-secondary small"><?= $this->t('primary') ?></span></td>
-                <?php if ($deployed): ?><td></td><?php endif ?>
+                <td></td>
             </tr>
             <?php foreach ($nodes as $node): ?>
                 <?php $nodeName = $serverNames[$node->serverId->toString()] ?? $node->serverId->toString() ?>
@@ -44,44 +35,8 @@ $primaryName = $serverNames[$project->serverId->toString()] ?? $project->serverI
                             <i class="bi bi-hdd-fill text-warning" title="<?= $this->t('Storage node') ?>"></i>
                         <?php endif ?>
                     </td>
-                    <?php if ($deployed): ?>
-                        <td>
-                            <?php if (! $node->isStorage && $node->role->value === 'worker'): ?>
-                                <form hx-post="<?= $this->url('project.swarm.node.remove', ['id' => $project->id->toString(), 'serverId' => $node->serverId->toString()]) ?>"
-                                      hx-target="#tw-swarm-nodes"
-                                      hx-swap="outerHTML">
-                                    <?= $this->fetch('partial::input/csrf') ?>
-                                    <button type="submit" class="btn btn-sm btn-outline-danger py-0">
-                                        <i class="bi bi-dash-circle"></i>
-                                    </button>
-                                </form>
-                            <?php endif ?>
-                        </td>
-                    <?php endif ?>
                 </tr>
             <?php endforeach ?>
         </tbody>
     </table>
-
-    <?php if ($deployed && $available !== []): ?>
-        <form hx-post="<?= $this->url('project.swarm.node.add', ['id' => $project->id->toString()]) ?>"
-              hx-target="#tw-swarm-nodes"
-              hx-swap="outerHTML"
-              class="d-flex gap-2 align-items-end">
-            <?= $this->fetch('partial::input/csrf') ?>
-            <div class="mb-0 flex-grow-1">
-                <select class="form-select form-select-sm" name="serverId">
-                    <option value=""><?= $this->t('— select worker server —') ?></option>
-                    <?php foreach ($available as $server): ?>
-                        <option value="<?= $this->e($server->id->toString()) ?>"><?= $this->e($server->name) ?></option>
-                    <?php endforeach ?>
-                </select>
-            </div>
-            <button type="submit" class="btn btn-sm btn-outline-success mb-0">
-                <i class="bi bi-plus-circle"></i> <?= $this->t('Add worker') ?>
-            </button>
-        </form>
-    <?php elseif (! $deployed): ?>
-        <p class="text-muted small mb-0"><?= $this->t('Deploy the project first to manage cluster workers.') ?></p>
-    <?php endif ?>
 </div>

@@ -90,31 +90,44 @@ foreach ($existingNodes as $node) {
                         <?php foreach ($allServers as $server): ?>
                             <?php
                                 $sid          = $server->id->toString();
+                                $isPrimary    = $sid === $project->serverId->toString();
                                 $existingNode = $existingNodeMap[$sid] ?? null;
                                 $isChecked    = $existingNode !== null;
                                 $currentRole  = $existingNode?->role->value ?? 'worker';
                                 $isStorage    = $existingNode?->isStorage ?? false;
                             ?>
-                            <tr>
+                            <tr <?php if ($isPrimary): ?>style="background-color: var(--bs-primary-bg-subtle);"<?php endif; ?>>
                                 <td>
                                     <input type="checkbox" class="form-check-input"
-                                           name="swarmNodes[<?= $this->e($sid) ?>]"
+                                           <?php if (!$isPrimary): ?>name="swarmNodes[<?= $this->e($sid) ?>]"<?php endif; ?>
                                            value="1"
-                                           <?php if ($isChecked): ?>checked<?php endif; ?>>
-                                </td>
-                                <td><?= $this->e($server->name) ?></td>
-                                <td>
-                                    <select class="form-select form-select-sm"
-                                            name="swarmNodeRoles[<?= $this->e($sid) ?>]">
-                                        <option value="worker" <?php if ($currentRole === 'worker'): ?>selected<?php endif; ?>><?= $this->t('Worker') ?></option>
-                                        <option value="manager" <?php if ($currentRole === 'manager'): ?>selected<?php endif; ?>><?= $this->t('Manager') ?></option>
-                                    </select>
+                                           <?php if ($isPrimary || $isChecked): ?>checked<?php endif; ?>
+                                           <?php if ($isPrimary): ?>disabled<?php endif; ?>>
                                 </td>
                                 <td>
-                                    <input type="radio" class="form-check-input"
-                                           name="swarmStorageNodeId"
-                                           value="<?= $this->e($sid) ?>"
-                                           <?php if ($isStorage): ?>checked<?php endif; ?>>
+                                    <?= $this->e($server->name) ?>
+                                    <?php if ($isPrimary): ?>
+                                        <i class="bi bi-lock-fill text-primary ms-1" style="opacity: 0.6;" title="<?= $this->t('Primary server (Swarm Manager)') ?>"></i>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if ($isPrimary): ?>
+                                        <span class="text-muted small"><?= $this->t('Manager') ?></span>
+                                    <?php else: ?>
+                                        <select class="form-select form-select-sm"
+                                                name="swarmNodeRoles[<?= $this->e($sid) ?>]">
+                                            <option value="worker" <?php if ($currentRole === 'worker'): ?>selected<?php endif; ?>><?= $this->t('Worker') ?></option>
+                                            <option value="manager" <?php if ($currentRole === 'manager'): ?>selected<?php endif; ?>><?= $this->t('Manager') ?></option>
+                                        </select>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if (!$isPrimary): ?>
+                                        <input type="radio" class="form-check-input"
+                                               name="swarmStorageNodeId"
+                                               value="<?= $this->e($sid) ?>"
+                                               <?php if ($isStorage): ?>checked<?php endif; ?>>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

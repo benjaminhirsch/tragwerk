@@ -5,8 +5,6 @@
  * @var \Tragwerk\Domain\Entity\Team               $team
  * @var \Tragwerk\Domain\Entity\Registry|null      $registry
  * @var list<\Tragwerk\Domain\Entity\SwarmNode>    $swarmNodes
- * @var bool                                       $swarmDeployed
- * @var list<\Tragwerk\Domain\Entity\Server>       $swarmAvailable
  * @var array<string, string>                      $swarmServerNames
  * @var string                                     $cloneUrl
  */
@@ -81,9 +79,6 @@
     <?= $this->fetch('partial::project/swarm-nodes', [
         'project'     => $project,
         'nodes'       => $swarmNodes,
-        'deployed'    => $swarmDeployed,
-        'available'   => $swarmAvailable,
         'serverNames' => $swarmServerNames,
-        'error'       => null,
     ]) ?>
 <?php endif ?>
