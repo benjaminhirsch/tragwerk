@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tragwerk\Application\Middleware;
 
+use Laminas\Diactoros\Response\EmptyResponse;
 use Laminas\Diactoros\Response\JsonResponse;
 use Mezzio\Authentication\AuthenticationInterface;
 use Mezzio\Authentication\UserInterface;
@@ -71,6 +72,14 @@ final readonly class AuthenticationMiddleware implements MiddlewareInterface
             return new JsonResponse(['error' => 'Unauthenticated'], 401);
         }
 
-        return $this->auth->unauthorizedResponse($request);
+        $unauthorizedResponse = $this->auth->unauthorizedResponse($request);
+
+        // HTMX polling requests follow 302 redirects silently, injecting the
+        // login page HTML into the swap target. Signal a full-page redirect instead.
+        if ($request->getHeaderLine('HX-Request') === 'true') {
+            return new EmptyResponse(200, ['HX-Redirect' => $unauthorizedResponse->getHeaderLine('Location')]);
+        }
+
+        return $unauthorizedResponse;
     }
 }
