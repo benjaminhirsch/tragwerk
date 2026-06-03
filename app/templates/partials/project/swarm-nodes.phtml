@@ -4,8 +4,10 @@
  * @var list<\Tragwerk\Domain\Entity\SwarmNode>    $nodes
  * @var bool                                       $deployed
  * @var list<\Tragwerk\Domain\Entity\Server>       $available
+ * @var array<string, string>                      $serverNames  serverId → server name
  * @var string|null                                $error
  */
+$primaryName = $serverNames[$project->serverId->toString()] ?? $project->serverId->toString();
 ?>
 <div id="tw-swarm-nodes">
     <?php if ($error !== null): ?>
@@ -23,14 +25,15 @@
         </thead>
         <tbody>
             <tr>
-                <td><?= $this->t('Primary Manager') ?></td>
+                <td><?= $this->e($primaryName) ?></td>
                 <td><span class="badge bg-primary"><?= $this->t('Manager') ?></span></td>
-                <td></td>
+                <td><span class="text-body-secondary small"><?= $this->t('primary') ?></span></td>
                 <?php if ($deployed): ?><td></td><?php endif ?>
             </tr>
             <?php foreach ($nodes as $node): ?>
+                <?php $nodeName = $serverNames[$node->serverId->toString()] ?? $node->serverId->toString() ?>
                 <tr>
-                    <td><?= $this->e($node->serverId->toString()) ?></td>
+                    <td><?= $this->e($nodeName) ?></td>
                     <td>
                         <span class="badge <?= $node->role->value === 'manager' ? 'bg-primary' : 'bg-secondary' ?>">
                             <?= $this->t($node->role->value === 'manager' ? 'Manager' : 'Worker') ?>

@@ -14,6 +14,7 @@ use Throwable;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Server;
+use Tragwerk\Domain\Entity\SwarmNode;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Event\SwarmNodeAdded;
 use Tragwerk\Domain\Repository\DeployJobRepository;
@@ -106,12 +107,39 @@ final readonly class AddNodeHandler implements RequestHandlerInterface
         $available = $this->getAvailableServers($team->id, $project);
 
         return $this->renderer->render($request, 'partial::project/swarm-nodes', [
-            'project'   => $project,
-            'nodes'     => $nodes,
-            'deployed'  => $deployed,
-            'available' => $available,
-            'error'     => $error,
+            'project'     => $project,
+            'nodes'       => $nodes,
+            'deployed'    => $deployed,
+            'available'   => $available,
+            'serverNames' => $this->buildServerNames($project, $nodes),
+            'error'       => $error,
         ]);
+    }
+
+    /**
+     * @param list<SwarmNode> $nodes
+     *
+     * @return array<string, string>
+     */
+    private function buildServerNames(Project $project, array $nodes): array
+    {
+        $names = [];
+        $ids   = [$project->serverId];
+        foreach ($nodes as $node) {
+            $ids[] = $node->serverId;
+        }
+
+        foreach ($ids as $serverId) {
+            try {
+                $s = $this->serverRepository->getById($serverId);
+                if ($s instanceof Server) {
+                    $names[$serverId->toString()] = $s->name;
+                }
+            } catch (Throwable) {
+            }
+        }
+
+        return $names;
     }
 
     /** @return list<Server> */
