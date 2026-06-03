@@ -10,6 +10,7 @@ use Tragwerk\Application\Exception\ValidationCollection;
 use Tragwerk\Application\Exception\ValidationError;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Domain\ValueObject\RegistryIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
@@ -27,6 +28,8 @@ final readonly class ProjectCreation implements DtoInterface
         public string $serverId,
         #[FromBody]
         public bool $swarmEnabled = false,
+        #[FromBody]
+        public string|null $registryId = null,
     ) {
         $errors = [];
         if (trim($this->name) === '') {
@@ -35,6 +38,14 @@ final readonly class ProjectCreation implements DtoInterface
 
         if (trim($this->serverId) === '' || ! ServerIdentifier::isValid($this->serverId)) {
             $errors[] = ValidationError::make('serverId', _('Please select a server'));
+        }
+
+        if (
+            $this->registryId !== null
+            && trim($this->registryId) !== ''
+            && ! RegistryIdentifier::isValid($this->registryId)
+        ) {
+            $errors[] = ValidationError::make('registryId', _('Invalid registry'));
         }
 
         if ($errors !== []) {
@@ -49,6 +60,11 @@ final readonly class ProjectCreation implements DtoInterface
     ): Project {
         $now = TimestampImmutable::now();
 
+        $rid                = $this->registryId;
+        $registryIdentifier = $rid !== null && trim($rid) !== '' && RegistryIdentifier::isValid($rid)
+            ? RegistryIdentifier::fromString($rid)
+            : null;
+
         return new Project(
             $id,
             $this->name,
@@ -58,6 +74,7 @@ final readonly class ProjectCreation implements DtoInterface
             $createdBy,
             $now,
             $createdBy,
+            registryId: $registryIdentifier,
             swarmEnabled: $this->swarmEnabled,
         );
     }

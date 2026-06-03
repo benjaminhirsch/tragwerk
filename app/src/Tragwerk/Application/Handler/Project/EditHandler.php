@@ -40,6 +40,7 @@ use function in_array;
 use function is_array;
 use function is_string;
 use function iterator_to_array;
+use function trim;
 
 final readonly class EditHandler implements RequestHandlerInterface
 {
@@ -79,6 +80,18 @@ final readonly class EditHandler implements RequestHandlerInterface
                 if ($this->projectRepository->isServerInUse($serverId, excludeProjectId: $project->id)) {
                     $message       = _('This server is already assigned to another project');
                     $validationBag = $validationBag->withError('serverId', $message);
+                }
+            }
+
+            if (! $validationBag->hasErrors()) {
+                $dto = $validationBag->getDto();
+                assert($dto instanceof ProjectUpdate);
+
+                if ($dto->swarmEnabled && ($dto->registryId === null || trim($dto->registryId) === '')) {
+                    $validationBag = $validationBag->withError(
+                        'registryId',
+                        _('Docker Swarm requires a container registry'),
+                    );
                 }
             }
 
