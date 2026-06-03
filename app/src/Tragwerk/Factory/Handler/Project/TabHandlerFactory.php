@@ -7,6 +7,7 @@ namespace Tragwerk\Factory\Handler\Project;
 use Psr\Container\ContainerInterface;
 use Tragwerk\Application\Handler\Project\TabHandler;
 use Tragwerk\Application\Response\ResponseRenderer;
+use Tragwerk\Domain\Repository\DeployJobRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
@@ -33,13 +34,15 @@ final readonly class TabHandlerFactory
         $servers    = $container->get(ServerRepository::class);
         $teams      = $container->get(TeamRepository::class);
         $registries = $container->get(RegistryRepository::class);
+        $deployJobs = $container->get(DeployJobRepository::class);
 
         assert($renderer instanceof ResponseRenderer);
         assert($projects instanceof ProjectRepository);
         assert($servers instanceof ServerRepository);
         assert($teams instanceof TeamRepository);
         assert($registries instanceof RegistryRepository);
+        assert($deployJobs instanceof DeployJobRepository);
 
-        return new TabHandler($renderer, $projects, $servers, $teams, $registries, $sshHost, $sshRepoBase);
+        return new TabHandler($renderer, $projects, $servers, $teams, $registries, $deployJobs, $sshHost, $sshRepoBase);
     }
 }
