@@ -30,8 +30,10 @@ use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
 use function _;
+use function array_diff;
 use function array_filter;
 use function array_keys;
+use function array_values;
 use function assert;
 use function count;
 use function in_array;
@@ -96,6 +98,7 @@ final readonly class CreateHandler implements RequestHandlerInterface
                         $request,
                         $activeTeam->id,
                         $validationBag,
+                        $dto->serverId,
                     );
                 }
 
@@ -143,10 +146,11 @@ final readonly class CreateHandler implements RequestHandlerInterface
         ServerRequestInterface $request,
         TeamIdentifier $teamId,
         ValidationBag $validationBag,
+        string $primaryServerId = '',
     ): array {
         $body          = $request->getParsedBody();
         $rawNodes      = is_array($body) && is_array($body['swarmNodes'] ?? null) ? $body['swarmNodes'] : [];
-        $selectedIds   = array_keys($rawNodes);
+        $selectedIds   = array_values(array_diff(array_keys($rawNodes), [$primaryServerId]));
         $roles         = is_array($body) && is_array($body['swarmNodeRoles'] ?? null) ? $body['swarmNodeRoles'] : [];
         $storageNodeId = is_array($body) && is_string($body['swarmStorageNodeId'] ?? null)
             ? $body['swarmStorageNodeId']

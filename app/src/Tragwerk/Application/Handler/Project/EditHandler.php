@@ -36,8 +36,10 @@ use Tragwerk\Domain\ValueObject\UserIdentifier;
 use Tragwerk\Infrastructure\Git\BareRepository;
 
 use function _;
+use function array_diff;
 use function array_filter;
 use function array_keys;
+use function array_values;
 use function assert;
 use function count;
 use function in_array;
@@ -113,6 +115,7 @@ final readonly class EditHandler implements RequestHandlerInterface
                         $activeTeam->id,
                         $project->id,
                         $validationBag,
+                        $dto->serverId,
                     );
                 }
 
@@ -199,10 +202,11 @@ final readonly class EditHandler implements RequestHandlerInterface
         TeamIdentifier $teamId,
         ProjectIdentifier $currentProjectId,
         ValidationBag $validationBag,
+        string $primaryServerId = '',
     ): array {
         $body          = $request->getParsedBody();
         $rawNodes      = is_array($body) && is_array($body['swarmNodes'] ?? null) ? $body['swarmNodes'] : [];
-        $selectedIds   = array_keys($rawNodes);
+        $selectedIds   = array_values(array_diff(array_keys($rawNodes), [$primaryServerId]));
         $roles         = is_array($body) && is_array($body['swarmNodeRoles'] ?? null) ? $body['swarmNodeRoles'] : [];
         $storageNodeId = is_array($body) && is_string($body['swarmStorageNodeId'] ?? null)
             ? $body['swarmStorageNodeId']

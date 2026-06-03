@@ -82,7 +82,7 @@ $this->layout('layout::default', ['title' => $this->t('Create project')]);
                     </thead>
                     <tbody>
                         <?php foreach ($allServers as $server): ?>
-                            <tr>
+                            <tr data-server-id="<?= $this->e($server->id->toString()) ?>">
                                 <td>
                                     <input type="checkbox" class="form-check-input"
                                            name="swarmNodes[<?= $this->e($server->id->toString()) ?>]"
@@ -124,3 +124,4 @@ $this->layout('layout::default', ['title' => $this->t('Create project')]);
 
     </form>
 <?php $this->stop() ?>
+<script src="/js/project-form.js"></script>
