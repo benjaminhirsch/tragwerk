@@ -23,6 +23,7 @@ final class Project implements Entity
         public TimestampImmutable $updatedAt,
         public UserIdentifier $updatedBy,
         public RegistryIdentifier|null $registryId = null,
+        public bool $swarmEnabled = false,
     ) {
     }
 }
