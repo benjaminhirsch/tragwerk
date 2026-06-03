@@ -110,6 +110,17 @@ final readonly class TabHandler implements RequestHandlerInterface
             }
         }
 
+        $swarmServerNames = [$server->id->toString() => $server->name];
+        foreach ($swarmNodes as $node) {
+            try {
+                $nodeServer = $this->serverRepository->getById($node->serverId);
+                if ($nodeServer instanceof Server) {
+                    $swarmServerNames[$node->serverId->toString()] = $nodeServer->name;
+                }
+            } catch (Throwable) {
+            }
+        }
+
         return $this->renderer->render($request, 'page::project/tab/overview', [
             'project'          => $project,
             'server'           => $server,
@@ -119,6 +130,7 @@ final readonly class TabHandler implements RequestHandlerInterface
             'swarmNodes'       => $swarmNodes,
             'swarmDeployed'    => $deployed,
             'swarmAvailable'   => $availableServers,
+            'swarmServerNames' => $swarmServerNames,
         ]);
     }
 
