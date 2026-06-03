@@ -578,6 +578,18 @@ final class DeployEnvironmentCommand extends Command
         $remoteDir = 'tragwerk/' . $projectId . '/' . $branch;
         $sftp->mkdir($remoteDir, -1, true);
 
+        // Migrate volumes from any prior swarm stack (handles swarm → compose mode switch).
+        $this->migrateSwarmVolumesToCompose(
+            $sftp,
+            $projectId,
+            $branchSlug,
+            $projectSlug . '-' . $branchSlug,
+            $config,
+            $jobId,
+            $credential,
+            $key,
+        );
+
         // Upload docker-compose.yml (with image: refs) + Caddyfiles
         $domainsByPlaceholder = [];
         $projectIdentifier    = ProjectIdentifier::fromString($projectId);
@@ -915,6 +927,7 @@ final class DeployEnvironmentCommand extends Command
         $storageNodeIp = null;
         $storageServer = null;
         $storageNodeId = null;
+        $storageSftp   = null;
 
         foreach ($swarmNodes as $swarmNode) {
             try {
@@ -970,6 +983,7 @@ final class DeployEnvironmentCommand extends Command
                 $storageNodeId = trim((string) $nodeSftp->exec(
                     'docker info --format "{{.Swarm.NodeID}}" 2>/dev/null',
                 ));
+                $storageSftp   = $nodeSftp;
             }
 
             // Install NFS client on all additional nodes
@@ -1014,6 +1028,18 @@ final class DeployEnvironmentCommand extends Command
                 $storageSftp->exec('exportfs -ra 2>/dev/null; true');
             }
         }
+
+        // Migrate volumes from any prior non-swarm compose deployment (no-op if none).
+        $this->migrateComposevolumesToSwarm(
+            $sftp,
+            $storageSftp,
+            $projectId,
+            $branch,
+            $branchSlug,
+            $stackName,
+            $config,
+            $jobId,
+        );
 
         // 7. Generate swarm-compatible compose and upload
         $remoteDir = 'tragwerk/' . $projectId . '/' . $branch;
@@ -1571,6 +1597,251 @@ final class DeployEnvironmentCommand extends Command
                 $this->log($jobId, '[Sync] Volume "' . $volName . '" synced.');
             }
         }
+    }
+
+    /**
+     * Copy DB volumes from compose naming ({branchSlug}_{svc}-data) to swarm stack naming ({stackName}_{svc}-data).
+     * Stops the old compose deployment before copying to avoid data corruption.
+     * Always tears down compose containers at the end to free ports and network resources.
+     */
+    private function migrateComposevolumesToSwarm(
+        SFTP $primarySftp,
+        SFTP|null $storageSftp,
+        string $projectId,
+        string $branch,
+        string $branchSlug,
+        string $stackName,
+        ProjectConfig $config,
+        DeployJobIdentifier $jobId,
+    ): void {
+        $remoteDir = 'tragwerk/' . $projectId . '/' . $branch;
+        $toMigrate = [];
+
+        foreach ($config->services as $service) {
+            $type = $service->type->value;
+
+            if (
+                ! str_starts_with($type, 'postgresql:')
+                && ! str_starts_with($type, 'mysql:')
+                && ! str_starts_with($type, 'mariadb:')
+            ) {
+                continue;
+            }
+
+            $serviceSlug = $this->slugify($service->name);
+            $srcVol      = $branchSlug . '_' . $serviceSlug . '-data';
+
+            $found = trim((string) $primarySftp->exec(
+                'docker volume inspect ' . escapeshellarg($srcVol) . ' --format "{{.Name}}" 2>/dev/null',
+            ));
+
+            if ($found !== $srcVol) {
+                continue;
+            }
+
+            $toMigrate[] = $serviceSlug;
+        }
+
+        if ($toMigrate !== []) {
+            $this->log($jobId, '[Swarm] Stopping compose deployment for volume migration...');
+            $primarySftp->exec('cd ~/' . $remoteDir . ' && NO_COLOR=1 docker compose stop 2>&1');
+        }
+
+        foreach ($toMigrate as $serviceSlug) {
+            $srcVol = $branchSlug . '_' . $serviceSlug . '-data';
+            $dstVol = $stackName . '_' . $serviceSlug . '-data';
+
+            $this->log($jobId, '[Swarm] Migrating volume "' . $srcVol . '" → "' . $dstVol . '"...');
+
+            if ($storageSftp === null) {
+                // Storage is on primary — simple local copy
+                $primarySftp->exec('docker volume create ' . escapeshellarg($dstVol) . ' 2>/dev/null; true');
+                $primarySftp->exec(
+                    'docker run --rm'
+                    . ' -v ' . escapeshellarg($srcVol) . ':/src:ro'
+                    . ' -v ' . escapeshellarg($dstVol) . ':/dst'
+                    . ' alpine sh -c "cp -a /src/. /dst/" 2>&1',
+                );
+            } else {
+                // Cross-server: tar on primary, stream via Tragwerk host, restore on storage node
+                $this->log($jobId, '[Swarm] Cross-server migration: primary → storage node...');
+                $tarData = $primarySftp->exec(
+                    'docker run --rm'
+                    . ' -v ' . escapeshellarg($srcVol) . ':/src:ro'
+                    . ' alpine tar -czC /src . 2>/dev/null',
+                );
+
+                if (is_string($tarData) && $tarData !== '') {
+                    $tmpPath = '/tmp/tw-vol-' . uniqid() . '.tar.gz';
+                    $storageSftp->put($tmpPath, $tarData);
+                    $storageSftp->exec('docker volume create ' . escapeshellarg($dstVol) . ' 2>/dev/null; true');
+                    $storageSftp->exec(
+                        'docker run --rm'
+                        . ' -v ' . escapeshellarg($dstVol) . ':/dst'
+                        . ' -v ' . escapeshellarg($tmpPath) . ':/bak.tar.gz:ro'
+                        . ' alpine tar -xzf /bak.tar.gz -C /dst 2>&1',
+                    );
+                    $storageSftp->exec('rm -f ' . escapeshellarg($tmpPath) . ' 2>/dev/null; true');
+                } else {
+                    $this->log($jobId, '[Swarm] Warning: could not read source volume "' . $srcVol . '".');
+                }
+            }
+
+            $this->log($jobId, '[Swarm] Volume "' . $serviceSlug . '-data" migrated.');
+        }
+
+        // Always remove old compose deployment (no-op if nothing is running).
+        $primarySftp->exec('cd ~/' . $remoteDir . ' && NO_COLOR=1 docker compose down --remove-orphans 2>&1');
+        $this->log($jobId, '[Swarm] Old compose deployment removed.');
+    }
+
+    /**
+     * Copy DB volumes from swarm stack naming ({stackName}_{svc}-data) back to
+     * compose naming ({branchSlug}_{svc}-data).
+     * Scales down the swarm DB service before copying, then removes the old stack.
+     */
+    private function migrateSwarmVolumesToCompose(
+        SFTP $primarySftp,
+        string $projectId,
+        string $branchSlug,
+        string $stackName,
+        ProjectConfig $config,
+        DeployJobIdentifier $jobId,
+        Credential $credential,
+        PrivateKey $key,
+    ): void {
+        $dbServices = [];
+
+        foreach ($config->services as $service) {
+            $type = $service->type->value;
+
+            if (
+                ! str_starts_with($type, 'postgresql:')
+                && ! str_starts_with($type, 'mysql:')
+                && ! str_starts_with($type, 'mariadb:')
+            ) {
+                continue;
+            }
+
+            $dbServices[] = $service;
+        }
+
+        if ($dbServices === []) {
+            return;
+        }
+
+        // Swarm DB volumes may live on a dedicated storage node due to placement constraints.
+        $storageServer = null;
+        $swarmNodes    = $this->projectRepository->getSwarmNodes(ProjectIdentifier::fromString($projectId));
+
+        foreach ($swarmNodes as $node) {
+            if (! $node->isStorage) {
+                continue;
+            }
+
+            try {
+                $storageServer = $this->serverRepository->getById($node->serverId);
+            } catch (Throwable) {
+                // storage server not found — fall back to primary
+            }
+
+            break;
+        }
+
+        $storageSftp = null;
+
+        if ($storageServer !== null) {
+            $storageSftp = new SFTP($storageServer->host, $storageServer->port, 30);
+
+            if (! $storageSftp->login($credential->username, $key)) {
+                $this->log($jobId, '[Deploy] Warning: cannot connect to storage node for volume migration.');
+                $storageSftp = null;
+            } else {
+                $storageSftp->setTimeout(0);
+            }
+        }
+
+        $anyMigrated = false;
+
+        foreach ($dbServices as $service) {
+            $serviceSlug = $this->slugify($service->name);
+            $srcVol      = $stackName . '_' . $serviceSlug . '-data';
+            $dstVol      = $branchSlug . '_' . $serviceSlug . '-data';
+
+            // Check where the swarm volume lives (storage node first, then fall back to primary)
+            $checkSftp  = $storageSftp ?? $primarySftp;
+            $found      = trim((string) $checkSftp->exec(
+                'docker volume inspect ' . escapeshellarg($srcVol) . ' --format "{{.Name}}" 2>/dev/null',
+            ));
+            $sourceSftp = $found === $srcVol ? $checkSftp : null;
+
+            if ($sourceSftp === null && $storageSftp !== null) {
+                // Volume may be on primary if it has a manual storage label
+                $found      = trim((string) $primarySftp->exec(
+                    'docker volume inspect ' . escapeshellarg($srcVol) . ' --format "{{.Name}}" 2>/dev/null',
+                ));
+                $sourceSftp = $found === $srcVol ? $primarySftp : null;
+            }
+
+            if ($sourceSftp === null) {
+                continue;
+            }
+
+            $this->log($jobId, '[Deploy] Migrating volume "' . $srcVol . '" → "' . $dstVol . '"...');
+
+            // Scale down swarm DB service before copying to avoid data corruption
+            $primarySftp->exec(
+                'docker service scale ' . escapeshellarg($stackName . '_' . $serviceSlug) . '=0 2>&1',
+            );
+
+            $primarySftp->exec('docker volume create ' . escapeshellarg($dstVol) . ' 2>/dev/null; true');
+
+            if ($sourceSftp === $primarySftp) {
+                // Source is on primary — local copy
+                $primarySftp->exec(
+                    'docker run --rm'
+                    . ' -v ' . escapeshellarg($srcVol) . ':/src:ro'
+                    . ' -v ' . escapeshellarg($dstVol) . ':/dst'
+                    . ' alpine sh -c "cp -a /src/. /dst/" 2>&1',
+                );
+            } else {
+                // Source is on storage node — tar from storage, restore on primary
+                $tarData = $sourceSftp->exec(
+                    'docker run --rm'
+                    . ' -v ' . escapeshellarg($srcVol) . ':/src:ro'
+                    . ' alpine tar -czC /src . 2>/dev/null',
+                );
+
+                if (is_string($tarData) && $tarData !== '') {
+                    $tmpPath = '/tmp/tw-vol-' . uniqid() . '.tar.gz';
+                    $primarySftp->put($tmpPath, $tarData);
+                    $primarySftp->exec(
+                        'docker run --rm'
+                        . ' -v ' . escapeshellarg($dstVol) . ':/dst'
+                        . ' -v ' . escapeshellarg($tmpPath) . ':/bak.tar.gz:ro'
+                        . ' alpine tar -xzf /bak.tar.gz -C /dst 2>&1',
+                    );
+                    $primarySftp->exec('rm -f ' . escapeshellarg($tmpPath) . ' 2>/dev/null; true');
+                } else {
+                    $this->log($jobId, '[Deploy] Warning: could not read swarm volume "' . $srcVol . '".');
+                }
+            }
+
+            $this->log($jobId, '[Deploy] Volume "' . $serviceSlug . '-data" migrated.');
+            $anyMigrated = true;
+        }
+
+        if (! $anyMigrated) {
+            return;
+        }
+
+        // Remove old swarm stack to free ports and network resources
+        $rmOut = trim((string) $primarySftp->exec('docker stack rm ' . escapeshellarg($stackName) . ' 2>&1'));
+        if ($rmOut !== '') {
+            $this->log($jobId, '[Deploy] Swarm stack removal: ' . $rmOut);
+        }
+
+        $this->log($jobId, '[Deploy] Old swarm stack removed.');
     }
 
     private function parseProjectConfig(string $xmlContent): ProjectConfig

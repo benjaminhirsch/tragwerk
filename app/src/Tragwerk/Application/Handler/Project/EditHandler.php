@@ -120,7 +120,8 @@ final readonly class EditHandler implements RequestHandlerInterface
                     $user = $request->getAttribute(UserInterface::class);
                     assert($user instanceof UserInterface);
 
-                    $swarmJustEnabled = ! $project->swarmEnabled && $dto->swarmEnabled;
+                    $swarmJustEnabled  = ! $project->swarmEnabled && $dto->swarmEnabled;
+                    $swarmJustDisabled = $project->swarmEnabled && ! $dto->swarmEnabled;
 
                     $this->eventDispatcher->dispatch(new ProjectUpdated(
                         $project->id,
@@ -129,7 +130,7 @@ final readonly class EditHandler implements RequestHandlerInterface
                         $swarmNodes,
                     ));
 
-                    if ($swarmJustEnabled) {
+                    if ($swarmJustEnabled || $swarmJustDisabled) {
                         $this->triggerSwarmRedeploy($project->id);
                     }
 
