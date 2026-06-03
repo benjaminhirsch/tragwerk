@@ -23,6 +23,8 @@ final readonly class ProjectUpdate implements DtoInterface
         public string $serverId,
         #[FromBody]
         public string|null $registryId = null,
+        #[FromBody]
+        public bool $swarmEnabled = false,
     ) {
         $errors = [];
         if (trim($this->name) === '') {

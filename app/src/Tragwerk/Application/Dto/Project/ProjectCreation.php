@@ -25,6 +25,8 @@ final readonly class ProjectCreation implements DtoInterface
         public string $name,
         #[FromBody]
         public string $serverId,
+        #[FromBody]
+        public bool $swarmEnabled = false,
     ) {
         $errors = [];
         if (trim($this->name) === '') {
@@ -56,6 +58,7 @@ final readonly class ProjectCreation implements DtoInterface
             $createdBy,
             $now,
             $createdBy,
+            swarmEnabled: $this->swarmEnabled,
         );
     }
 }

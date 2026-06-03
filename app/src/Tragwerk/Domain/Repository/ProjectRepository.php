@@ -54,4 +54,9 @@ interface ProjectRepository
     public function getSwarmStorageNode(ProjectIdentifier $projectId): SwarmNode|null;
 
     public function swarmNodeExists(ProjectIdentifier $projectId, ServerIdentifier $serverId): bool;
+
+    public function isServerInSwarmCluster(
+        ServerIdentifier $serverId,
+        ProjectIdentifier|null $excludeProjectId = null,
+    ): bool;
 }

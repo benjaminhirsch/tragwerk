@@ -2,12 +2,24 @@
 /**
  * @var \Tragwerk\Domain\Entity\Project        $project
  * @var list<\Tragwerk\Domain\Entity\Server>   $servers
+ * @var list<\Tragwerk\Domain\Entity\Server>   $allServers
  * @var list<\Tragwerk\Domain\Entity\Registry> $registries
+ * @var list<\Tragwerk\Domain\Entity\SwarmNode> $existingNodes
  */
 $this->layout('layout::default', ['title' => $this->t('Edit project')]);
+
+$existingNodeMap = [];
+foreach ($existingNodes as $node) {
+    $existingNodeMap[$node->serverId->toString()] = $node;
+}
 ?>
 
 <h1><?= $this->t('Edit project') ?></h1>
+
+<style>
+    #tw-swarm-section { display: none; }
+    form:has(#swarmEnabled:checked) #tw-swarm-section { display: block; }
+</style>
 
 <?php $this->start('card-content') ?>
     <form action="<?= $this->url('project.edit', ['id' => $project->id->toString()]) ?>" method="post">
@@ -28,7 +40,7 @@ $this->layout('layout::default', ['title' => $this->t('Edit project')]);
         ?>
         <?= $this->fetch('partial::input/select', [
             'id'           => 'serverId',
-            'label'        => $this->t('Server'),
+            'label'        => $this->t('Primary server (Swarm Manager)'),
             'validation'   => $validationBag,
             'options'      => $serverOptions,
             'defaultValue' => $validationBag->getValueByName('serverId'),
@@ -47,6 +59,71 @@ $this->layout('layout::default', ['title' => $this->t('Edit project')]);
             'options'      => $registryOptions,
             'defaultValue' => $validationBag->getValueByName('registryId'),
         ]) ?>
+
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="swarmEnabled" name="swarmEnabled" value="1"
+                   <?php if ($validationBag->getValueByName('swarmEnabled') === '1'): ?>checked<?php endif; ?>>
+            <label class="form-check-label" for="swarmEnabled"><?= $this->t('Enable Docker Swarm') ?></label>
+        </div>
+
+        <div id="tw-swarm-section">
+            <?php if (($validationBag->getErrorByName('swarmNodes') ?? null) !== null): ?>
+                <div class="alert alert-danger"><?= $this->e($validationBag->getErrorByName('swarmNodes')) ?></div>
+            <?php endif; ?>
+            <?php if (($validationBag->getErrorByName('swarmStorageNodeId') ?? null) !== null): ?>
+                <div class="alert alert-danger"><?= $this->e($validationBag->getErrorByName('swarmStorageNodeId')) ?></div>
+            <?php endif; ?>
+
+            <p class="text-muted small"><?= $this->t('Select at least 2 additional servers. Total manager count must be odd (1, 3, 5, …).') ?></p>
+
+            <?php if (count($allServers) > 1): ?>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th><?= $this->t('Include') ?></th>
+                            <th><?= $this->t('Server') ?></th>
+                            <th><?= $this->t('Role') ?></th>
+                            <th><?= $this->t('Storage node') ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($allServers as $server): ?>
+                            <?php
+                                $sid          = $server->id->toString();
+                                $existingNode = $existingNodeMap[$sid] ?? null;
+                                $isChecked    = $existingNode !== null;
+                                $currentRole  = $existingNode?->role->value ?? 'worker';
+                                $isStorage    = $existingNode?->isStorage ?? false;
+                            ?>
+                            <tr>
+                                <td>
+                                    <input type="checkbox" class="form-check-input"
+                                           name="swarmNodes[<?= $this->e($sid) ?>]"
+                                           value="1"
+                                           <?php if ($isChecked): ?>checked<?php endif; ?>>
+                                </td>
+                                <td><?= $this->e($server->name) ?></td>
+                                <td>
+                                    <select class="form-select form-select-sm"
+                                            name="swarmNodeRoles[<?= $this->e($sid) ?>]">
+                                        <option value="worker" <?php if ($currentRole === 'worker'): ?>selected<?php endif; ?>><?= $this->t('Worker') ?></option>
+                                        <option value="manager" <?php if ($currentRole === 'manager'): ?>selected<?php endif; ?>><?= $this->t('Manager') ?></option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="radio" class="form-check-input"
+                                           name="swarmStorageNodeId"
+                                           value="<?= $this->e($sid) ?>"
+                                           <?php if ($isStorage): ?>checked<?php endif; ?>>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php else: ?>
+                <p class="text-warning"><?= $this->t('No additional servers available. Add more servers to your team to enable Swarm mode.') ?></p>
+            <?php endif; ?>
+        </div>
 
         <div class="d-flex gap-2">
             <?= $this->fetch('partial::input/button', [
