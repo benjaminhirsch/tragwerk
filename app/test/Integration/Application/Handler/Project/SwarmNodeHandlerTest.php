@@ -239,7 +239,7 @@ final class SwarmNodeHandlerTest extends AppIntegrationTestCase
     }
 
     #[Test]
-    public function overviewTabShowsAddWorkerButtonAfterDeploy(): void
+    public function overviewTabShowsSwarmTableAfterDeploy(): void
     {
         $project = $this->seedSwarmProject();
         $this->seedCompletedDeploy($project);
@@ -252,7 +252,8 @@ final class SwarmNodeHandlerTest extends AppIntegrationTestCase
         );
 
         self::assertSame(200, $response->getStatusCode());
-        self::assertStringContainsString('Add worker', (string) $response->getBody());
+        self::assertStringContainsString('Docker Swarm Cluster', (string) $response->getBody());
+        self::assertStringNotContainsString('Add worker', (string) $response->getBody());
     }
 
     private function seedUser(): User

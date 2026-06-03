@@ -21,6 +21,7 @@ use Tragwerk\Domain\ValueObject\TimestampImmutable;
 use Tragwerk\Infrastructure\Helper\EntityHelper;
 
 use function array_map;
+use function is_string;
 
 final class DeployJobRepository extends GenericRepository implements DeployJobRepositoryInterface
 {
@@ -149,6 +150,27 @@ final class DeployJobRepository extends GenericRepository implements DeployJobRe
             return $qb->executeQuery()->fetchOne() !== false;
         } catch (Exception) {
             return false;
+        }
+    }
+
+    /** @return list<string> */
+    #[Override]
+    public function getDeployedBranches(ProjectIdentifier $projectId): array
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb->select('DISTINCT branch')
+            ->from(EntityHelper::getDbTableName(EntityType::DEPLOY_JOB))
+            ->where($qb->expr()->eq('project_id', ':project_id'))
+            ->andWhere($qb->expr()->eq('status', ':status'))
+            ->setParameter('project_id', $projectId->toString())
+            ->setParameter('status', DeployJobStatus::Completed->value);
+
+        try {
+            $rows = $qb->executeQuery()->fetchFirstColumn();
+
+            return array_map(static fn (mixed $v): string => is_string($v) ? $v : '', $rows);
+        } catch (Exception) {
+            return [];
         }
     }
 

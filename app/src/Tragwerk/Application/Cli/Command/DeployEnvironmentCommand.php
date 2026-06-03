@@ -890,7 +890,23 @@ final class DeployEnvironmentCommand extends Command
         $workerToken  = trim((string) $sftp->exec('docker swarm join-token worker -q 2>/dev/null'));
         $managerToken = trim((string) $sftp->exec('docker swarm join-token manager -q 2>/dev/null'));
 
-        // Create overlay network if not exists
+        // Create overlay network with swarm scope — remove if it exists in local scope (leftover from non-swarm deploy)
+        $netScope = trim((string) $sftp->exec(
+            'docker network inspect tragwerk-net --format "{{.Scope}}" 2>/dev/null',
+        ));
+        if ($netScope === 'local') {
+            $this->log($jobId, '[Swarm] Removing local-scope tragwerk-net to recreate as swarm overlay...');
+            // Disconnect all containers before removal (running containers block rm)
+            $sftp->exec(
+                'docker ps -q --filter network=tragwerk-net 2>/dev/null'
+                . ' | xargs -r -I{} docker network disconnect -f tragwerk-net {} 2>/dev/null; true',
+            );
+            $rmResult = trim((string) $sftp->exec('docker network rm tragwerk-net 2>&1'));
+            if ($rmResult !== '') {
+                $this->log($jobId, '[Swarm] network rm: ' . $rmResult);
+            }
+        }
+
         $sftp->exec(
             'docker network create --driver overlay --attachable tragwerk-net 2>/dev/null; true',
         );
@@ -898,6 +914,7 @@ final class DeployEnvironmentCommand extends Command
         // 5. Join additional nodes + identify storage node
         $storageNodeIp = null;
         $storageServer = null;
+        $storageNodeId = null;
 
         foreach ($swarmNodes as $swarmNode) {
             try {
@@ -924,11 +941,14 @@ final class DeployEnvironmentCommand extends Command
             }
 
             $nodeSftp->setTimeout(0);
+
             $nodeSwarmState = trim((string) $nodeSftp->exec(
                 'docker info --format "{{.Swarm.LocalNodeState}}" 2>/dev/null',
             ));
 
             if ($nodeSwarmState !== 'active') {
+                $nodeSftp->exec('docker swarm leave --force 2>/dev/null; true');
+
                 $token      = $swarmNode->role === SwarmNodeRole::Manager ? $managerToken : $workerToken;
                 $joinResult = (string) $nodeSftp->exec(
                     'docker swarm join --token ' . escapeshellarg($token)
@@ -945,23 +965,23 @@ final class DeployEnvironmentCommand extends Command
                 $this->log($jobId, '[Swarm] Node ' . $nodeServer->host . ' joined swarm.');
             }
 
+            // Grab the swarm node ID directly from the node itself
+            if ($swarmNode->isStorage) {
+                $storageNodeId = trim((string) $nodeSftp->exec(
+                    'docker info --format "{{.Swarm.NodeID}}" 2>/dev/null',
+                ));
+            }
+
             // Install NFS client on all additional nodes
             $nodeSftp->exec('apt-get install -y nfs-common 2>/dev/null; true');
         }
 
         // 6. Label storage node + set up NFS server on it
         if ($storageNodeIp !== null) {
-            // Find node ID for the storage node's hostname in the swarm
-            $nodeId = trim((string) $sftp->exec(
-                'docker node ls --filter ' . escapeshellarg('role=worker')
-                . ' --format "{{.ID}} {{.Hostname}}" 2>/dev/null'
-                . ' | grep ' . escapeshellarg($storageNodeIp)
-                . ' | awk \'{print $1}\'',
-            ));
-
-            if ($nodeId !== '') {
+            if ($storageNodeId !== null && $storageNodeId !== '') {
                 $sftp->exec(
-                    'docker node update --label-add storage=true ' . escapeshellarg($nodeId) . ' 2>/dev/null; true',
+                    'docker node update --label-add storage=true '
+                    . escapeshellarg($storageNodeId) . ' 2>/dev/null; true',
                 );
             }
 
@@ -1642,26 +1662,16 @@ final class DeployEnvironmentCommand extends Command
 
     private function ensureSwarmTraefik(SFTP $sftp, string $acmeEmail, DeployJobIdentifier $jobId): void
     {
-        $running = trim((string) $sftp->exec(
-            'docker service ls --filter name=tragwerk-infra_traefik --format "{{.Name}}" 2>/dev/null',
-        ));
-
-        if ($running !== '') {
-            return;
-        }
-
         $this->log($jobId, '[Swarm] Deploying Traefik as Swarm service...');
-
-        $emailFlag = escapeshellarg('--certificatesresolvers.letsencrypt.acme.email=' . $acmeEmail);
 
         $traefikCompose = [
             'services' => [
                 'traefik' => [
                     'image'   => 'traefik:v3',
                     'command' => [
-                        '--providers.docker.swarmMode=true',
-                        '--providers.docker.exposedByDefault=false',
-                        '--providers.docker.network=tragwerk-net',
+                        '--providers.swarm.endpoint=unix:///var/run/docker.sock',
+                        '--providers.swarm.exposedByDefault=false',
+                        '--providers.swarm.network=tragwerk-net',
                         '--entrypoints.web.address=:80',
                         '--entrypoints.web.http.redirections.entrypoint.to=websecure',
                         '--entrypoints.web.http.redirections.entrypoint.scheme=https',
@@ -1689,14 +1699,15 @@ final class DeployEnvironmentCommand extends Command
             'networks' => ['tragwerk-net' => ['external' => true]],
         ];
 
-        $composePath = '~/tragwerk-infra-compose.yml';
+        $homeDir     = trim((string) $sftp->exec('echo $HOME'));
+        $composePath = $homeDir . '/tragwerk-infra-compose.yml';
         $sftp->put(
-            'tragwerk-infra-compose.yml',
+            $composePath,
             Yaml::dump($traefikCompose, 8, 2, Yaml::DUMP_NULL_AS_TILDE),
         );
 
         $result = (string) $sftp->exec(
-            'docker stack deploy -c ' . escapeshellarg($composePath) . ' tragwerk-infra 2>&1',
+            'docker stack deploy --detach=true -c ' . escapeshellarg($composePath) . ' tragwerk-infra 2>&1',
         );
 
         if ($sftp->getExitStatus() !== 0) {

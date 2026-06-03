@@ -15,7 +15,6 @@ use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Registry;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
-use Tragwerk\Domain\Repository\DeployJobRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
@@ -34,7 +33,6 @@ final readonly class TabHandler implements RequestHandlerInterface
         private ServerRepository $serverRepository,
         private TeamRepository $teamRepository,
         private RegistryRepository $registryRepository,
-        private DeployJobRepository $deployJobRepository,
         private string $gitSshHost,
         private string $gitSshRepoBase,
     ) {
@@ -82,34 +80,6 @@ final readonly class TabHandler implements RequestHandlerInterface
             ? $this->projectRepository->getSwarmNodes($project->id)
             : [];
 
-        $deployed = $project->swarmEnabled
-            ? $this->deployJobRepository->hasAnyCompletedDeploy($project->id)
-            : false;
-
-        $availableServers = [];
-        if ($project->swarmEnabled && $deployed) {
-            $teamId = $project->teamId;
-            foreach ($this->serverRepository->getAll(teamId: $teamId) as $s) {
-                if (! $s instanceof Server) {
-                    continue;
-                }
-
-                if ($s->id->toString() === $project->serverId->toString()) {
-                    continue;
-                }
-
-                if ($this->projectRepository->swarmNodeExists($project->id, $s->id)) {
-                    continue;
-                }
-
-                if ($this->projectRepository->isServerInSwarmCluster($s->id, $project->id)) {
-                    continue;
-                }
-
-                $availableServers[] = $s;
-            }
-        }
-
         $swarmServerNames = [$server->id->toString() => $server->name];
         foreach ($swarmNodes as $node) {
             try {
@@ -128,8 +98,6 @@ final readonly class TabHandler implements RequestHandlerInterface
             'registry'         => $registry,
             'cloneUrl'         => $cloneUrl,
             'swarmNodes'       => $swarmNodes,
-            'swarmDeployed'    => $deployed,
-            'swarmAvailable'   => $availableServers,
             'swarmServerNames' => $swarmServerNames,
         ]);
     }
