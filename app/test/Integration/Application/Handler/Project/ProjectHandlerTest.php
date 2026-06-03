@@ -6,17 +6,20 @@ namespace TragwerkTest\Integration\Application\Handler\Project;
 
 use PHPUnit\Framework\Attributes\Test;
 use Tragwerk\Domain\Entity\Project;
+use Tragwerk\Domain\Entity\Registry;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\SwarmNode;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\Enum\SwarmNodeRole;
 use Tragwerk\Domain\Repository\ProjectRepository;
+use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\Repository\UserRepository;
 use Tragwerk\Domain\ValueObject\PasswordHash;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Domain\ValueObject\RegistryIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
@@ -407,8 +410,9 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
     #[Test]
     public function createPostWithValidSwarmConfigPersistsNodes(): void
     {
-        $node1 = $this->seedExtraServer('Node1', '10.0.0.2');
-        $node2 = $this->seedExtraServer('Node2', '10.0.0.3');
+        $registry = $this->seedRegistry();
+        $node1    = $this->seedExtraServer('Node1', '10.0.0.2');
+        $node2    = $this->seedExtraServer('Node2', '10.0.0.3');
 
         $this->dispatch(
             'POST',
@@ -416,6 +420,7 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
             [
                 'name'               => 'Swarm Project',
                 'serverId'           => $this->server->id->toString(),
+                'registryId'         => $registry->id->toString(),
                 'swarmEnabled'       => '1',
                 'swarmNodes'         => [
                     $node1->id->toString() => '1',
@@ -450,9 +455,10 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
     #[Test]
     public function editPostEnablingSwarmPersistsNodes(): void
     {
-        $project = $this->seedProject('Swarm Project');
-        $node1   = $this->seedExtraServer('Node1', '10.0.0.2');
-        $node2   = $this->seedExtraServer('Node2', '10.0.0.3');
+        $registry = $this->seedRegistry();
+        $project  = $this->seedProject('Swarm Project');
+        $node1    = $this->seedExtraServer('Node1', '10.0.0.2');
+        $node2    = $this->seedExtraServer('Node2', '10.0.0.3');
 
         $this->dispatch(
             'POST',
@@ -460,6 +466,7 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
             [
                 'name'               => 'Swarm Project',
                 'serverId'           => $this->server->id->toString(),
+                'registryId'         => $registry->id->toString(),
                 'swarmEnabled'       => '1',
                 'swarmNodes'         => [
                     $node1->id->toString() => '1',
@@ -526,6 +533,32 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
 
         $still = $repository->getById($foreign->id);
         self::assertInstanceOf(Project::class, $still);
+    }
+
+    private function seedRegistry(): Registry
+    {
+        $now      = TimestampImmutable::now();
+        $registry = new Registry(
+            RegistryIdentifier::create(),
+            'Test Registry',
+            'registry.example.com',
+            'my-repo',
+            'user',
+            'pass',
+            false,
+            10,
+            $this->team->id,
+            $now,
+            $this->user->id,
+            $now,
+            $this->user->id,
+        );
+
+        $repository = $this->container->get(RegistryRepository::class);
+        assert($repository instanceof RegistryRepository);
+        $repository->create($registry);
+
+        return $registry;
     }
 
     private function seedUser(): User

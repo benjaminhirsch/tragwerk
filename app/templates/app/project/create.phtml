@@ -2,6 +2,7 @@
 /**
  * @var list<\Tragwerk\Domain\Entity\Server>                        $servers
  * @var list<\Tragwerk\Domain\Entity\Server>                        $allServers
+ * @var list<\Tragwerk\Domain\Entity\Registry>                      $registries
  * @var \Tragwerk\Application\Validation\ValidationBag|null         $validationBag
  */
 $this->layout('layout::default', ['title' => $this->t('Create project')]);
@@ -37,6 +38,20 @@ $this->layout('layout::default', ['title' => $this->t('Create project')]);
             'validation'         => $validationBag ?? null,
             'options'            => $serverOptions,
             'defaultOptionLabel' => $this->t('— select a server —'),
+        ]) ?>
+
+        <?php
+            $registryOptions = ['' => $this->t('— None (build on server) —')];
+            foreach ($registries as $registry) {
+                $registryOptions[$registry->id->toString()] = $registry->name . ' (' . $registry->url . ')';
+            }
+        ?>
+        <?= $this->fetch('partial::input/select', [
+            'id'           => 'registryId',
+            'label'        => $this->t('Container registry'),
+            'validation'   => $validationBag ?? null,
+            'options'      => $registryOptions,
+            'defaultValue' => ($validationBag?->getValueByName('registryId') ?? ''),
         ]) ?>
 
         <div class="mb-3 form-check">

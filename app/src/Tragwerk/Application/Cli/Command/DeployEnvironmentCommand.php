@@ -173,6 +173,13 @@ final class DeployEnvironmentCommand extends Command
             return Command::FAILURE;
         }
 
+        if ($project->swarmEnabled && $project->registryId === null) {
+            $this->log($jobId, '[Deploy] Swarm mode requires a container registry. Assign one in project settings.');
+            $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+            return Command::FAILURE;
+        }
+
         // Phase 2 / Phase 3: project has a registry → build image locally, push, then pull on VPS.
         // Phase 3 additionally uses Docker Swarm stack deploy instead of blue/green.
         if ($project->registryId !== null) {
