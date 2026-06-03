@@ -7,6 +7,7 @@ namespace Tragwerk\Domain\Repository;
 use Generator;
 use Tragwerk\Domain\Entity\Entity;
 use Tragwerk\Domain\Entity\Project;
+use Tragwerk\Domain\Entity\SwarmNode;
 use Tragwerk\Domain\Exception\Repository\EntityCreationFailed;
 use Tragwerk\Domain\Exception\Repository\EntityDeletionFailed;
 use Tragwerk\Domain\Exception\Repository\EntityHydrationFailed;
@@ -40,4 +41,17 @@ interface ProjectRepository
     public function getAll(TeamIdentifier|null $teamId = null): Generator;
 
     public function isServerInUse(ServerIdentifier $serverId, ProjectIdentifier|null $excludeProjectId = null): bool;
+
+    /** @throws EntityCreationFailed */
+    public function addSwarmNode(SwarmNode $node): void;
+
+    /** @throws EntityDeletionFailed */
+    public function removeSwarmNode(ProjectIdentifier $projectId, ServerIdentifier $serverId): void;
+
+    /** @return SwarmNode[] */
+    public function getSwarmNodes(ProjectIdentifier $projectId): array;
+
+    public function getSwarmStorageNode(ProjectIdentifier $projectId): SwarmNode|null;
+
+    public function swarmNodeExists(ProjectIdentifier $projectId, ServerIdentifier $serverId): bool;
 }
