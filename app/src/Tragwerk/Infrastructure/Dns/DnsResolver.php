@@ -20,7 +20,7 @@ use function strlen;
 use function substr;
 use function unpack;
 
-final readonly class DnsResolver
+readonly class DnsResolver
 {
     private const string NAMESERVER = '1.1.1.1';
     private const int PORT          = 53;
