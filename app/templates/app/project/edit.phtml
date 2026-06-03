@@ -96,7 +96,7 @@ foreach ($existingNodes as $node) {
                                 $currentRole  = $existingNode?->role->value ?? 'worker';
                                 $isStorage    = $existingNode?->isStorage ?? false;
                             ?>
-                            <tr <?php if ($isPrimary): ?>style="background-color: var(--bs-primary-bg-subtle);"<?php endif; ?>>
+                            <tr data-server-id="<?= $this->e($sid) ?>"<?php if ($isPrimary): ?> style="background-color: var(--bs-primary-bg-subtle);"<?php endif; ?>>
                                 <td>
                                     <input type="checkbox" class="form-check-input"
                                            <?php if (!$isPrimary): ?>name="swarmNodes[<?= $this->e($sid) ?>]"<?php endif; ?>
@@ -160,6 +160,7 @@ foreach ($existingNodes as $node) {
 
     </form>
 <?php $this->stop() ?>
+<script src="/js/project-form.js"></script>
 
 <?= $this->fetch('partial::modal', [
     'id'            => 'tw-delete-project-modal',
