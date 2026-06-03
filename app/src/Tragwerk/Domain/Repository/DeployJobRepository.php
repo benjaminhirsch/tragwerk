@@ -40,6 +40,8 @@ interface DeployJobRepository
 
     public function hasCompletedDeploy(ProjectIdentifier $projectId, string $branch): bool;
 
+    public function hasAnyCompletedDeploy(ProjectIdentifier $projectId): bool;
+
     /** @return list<DeployJob> */
     public function getPagedByProjectAndBranch(
         ProjectIdentifier $projectId,

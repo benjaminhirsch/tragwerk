@@ -1,0 +1,84 @@
+<?php
+/**
+ * @var \Tragwerk\Domain\Entity\Project            $project
+ * @var list<\Tragwerk\Domain\Entity\SwarmNode>    $nodes
+ * @var bool                                       $deployed
+ * @var list<\Tragwerk\Domain\Entity\Server>       $available
+ * @var string|null                                $error
+ */
+?>
+<div id="tw-swarm-nodes">
+    <?php if ($error !== null): ?>
+        <div class="alert alert-danger alert-sm py-2"><?= $this->e($error) ?></div>
+    <?php endif ?>
+
+    <table class="table table-sm mb-2">
+        <thead>
+            <tr>
+                <th><?= $this->t('Server') ?></th>
+                <th><?= $this->t('Role') ?></th>
+                <th><?= $this->t('Storage') ?></th>
+                <?php if ($deployed): ?><th></th><?php endif ?>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><?= $this->t('Primary Manager') ?></td>
+                <td><span class="badge bg-primary"><?= $this->t('Manager') ?></span></td>
+                <td></td>
+                <?php if ($deployed): ?><td></td><?php endif ?>
+            </tr>
+            <?php foreach ($nodes as $node): ?>
+                <tr>
+                    <td><?= $this->e($node->serverId->toString()) ?></td>
+                    <td>
+                        <span class="badge <?= $node->role->value === 'manager' ? 'bg-primary' : 'bg-secondary' ?>">
+                            <?= $this->t($node->role->value === 'manager' ? 'Manager' : 'Worker') ?>
+                        </span>
+                    </td>
+                    <td>
+                        <?php if ($node->isStorage): ?>
+                            <i class="bi bi-hdd-fill text-warning" title="<?= $this->t('Storage node') ?>"></i>
+                        <?php endif ?>
+                    </td>
+                    <?php if ($deployed): ?>
+                        <td>
+                            <?php if (! $node->isStorage && $node->role->value === 'worker'): ?>
+                                <form hx-post="<?= $this->url('project.swarm.node.remove', ['id' => $project->id->toString(), 'serverId' => $node->serverId->toString()]) ?>"
+                                      hx-target="#tw-swarm-nodes"
+                                      hx-swap="outerHTML">
+                                    <?= $this->fetch('partial::input/csrf') ?>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger py-0">
+                                        <i class="bi bi-dash-circle"></i>
+                                    </button>
+                                </form>
+                            <?php endif ?>
+                        </td>
+                    <?php endif ?>
+                </tr>
+            <?php endforeach ?>
+        </tbody>
+    </table>
+
+    <?php if ($deployed && $available !== []): ?>
+        <form hx-post="<?= $this->url('project.swarm.node.add', ['id' => $project->id->toString()]) ?>"
+              hx-target="#tw-swarm-nodes"
+              hx-swap="outerHTML"
+              class="d-flex gap-2 align-items-end">
+            <?= $this->fetch('partial::input/csrf') ?>
+            <div class="mb-0 flex-grow-1">
+                <select class="form-select form-select-sm" name="serverId">
+                    <option value=""><?= $this->t('— select worker server —') ?></option>
+                    <?php foreach ($available as $server): ?>
+                        <option value="<?= $this->e($server->id->toString()) ?>"><?= $this->e($server->name) ?></option>
+                    <?php endforeach ?>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-sm btn-outline-success mb-0">
+                <i class="bi bi-plus-circle"></i> <?= $this->t('Add worker') ?>
+            </button>
+        </form>
+    <?php elseif (! $deployed): ?>
+        <p class="text-muted small mb-0"><?= $this->t('Deploy the project first to manage cluster workers.') ?></p>
+    <?php endif ?>
+</div>

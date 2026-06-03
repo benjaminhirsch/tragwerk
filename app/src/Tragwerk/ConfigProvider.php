@@ -374,6 +374,8 @@ final readonly class ConfigProvider
                     EventListener\Project\CreateGitRepository::class,
                 ],
                 Event\ProjectUpdated::class      => [EventListener\Project\UpdateProject::class],
+                Event\SwarmNodeAdded::class      => [EventListener\Project\AddSwarmNode::class],
+                Event\SwarmNodeRemoved::class    => [EventListener\Project\RemoveSwarmNode::class],
                 Event\ProjectDeleted::class      => [
                     EventListener\Project\DeleteProject::class,
                     EventListener\Project\DeleteGitRepository::class,

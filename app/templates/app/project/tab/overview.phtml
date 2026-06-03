@@ -1,10 +1,13 @@
 <?php
 /**
- * @var \Tragwerk\Domain\Entity\Project        $project
- * @var \Tragwerk\Domain\Entity\Server         $server
- * @var \Tragwerk\Domain\Entity\Team           $team
- * @var \Tragwerk\Domain\Entity\Registry|null  $registry
- * @var string                                 $cloneUrl
+ * @var \Tragwerk\Domain\Entity\Project            $project
+ * @var \Tragwerk\Domain\Entity\Server             $server
+ * @var \Tragwerk\Domain\Entity\Team               $team
+ * @var \Tragwerk\Domain\Entity\Registry|null      $registry
+ * @var list<\Tragwerk\Domain\Entity\SwarmNode>    $swarmNodes
+ * @var bool                                       $swarmDeployed
+ * @var list<\Tragwerk\Domain\Entity\Server>       $swarmAvailable
+ * @var string                                     $cloneUrl
  */
 ?>
 <table class="table table-borderless mb-0">
@@ -20,6 +23,9 @@
                     'href'  => $this->url('server.show', ['id' => $server->id->toString()]),
                     'label' => $server->name,
                 ]) ?>
+                <?php if ($project->swarmEnabled): ?>
+                    <span class="badge bg-info ms-1"><?= $this->t('Swarm Manager') ?></span>
+                <?php endif ?>
             </td>
         </tr>
         <tr>
@@ -65,3 +71,17 @@
         </tr>
     </tbody>
 </table>
+
+<?php if ($project->swarmEnabled): ?>
+    <hr>
+    <h6 class="text-body-secondary mb-2">
+        <i class="bi bi-diagram-3"></i> <?= $this->t('Docker Swarm Cluster') ?>
+    </h6>
+    <?= $this->fetch('partial::project/swarm-nodes', [
+        'project'   => $project,
+        'nodes'     => $swarmNodes,
+        'deployed'  => $swarmDeployed,
+        'available' => $swarmAvailable,
+        'error'     => null,
+    ]) ?>
+<?php endif ?>
