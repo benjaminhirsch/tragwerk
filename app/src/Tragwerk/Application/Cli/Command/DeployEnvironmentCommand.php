@@ -897,6 +897,7 @@ final class DeployEnvironmentCommand extends Command
 
         // 5. Join additional nodes + identify storage node
         $storageNodeIp = null;
+        $storageServer = null;
 
         foreach ($swarmNodes as $swarmNode) {
             try {
@@ -910,6 +911,7 @@ final class DeployEnvironmentCommand extends Command
 
             if ($swarmNode->isStorage) {
                 $storageNodeIp = $nodeServer->host;
+                $storageServer = $nodeServer;
             }
 
             // SSH to this node, join swarm if not already joined
@@ -1070,6 +1072,20 @@ final class DeployEnvironmentCommand extends Command
         }
 
         $sftp->exec('docker logout ' . escapeshellarg($registry->url) . ' 2>/dev/null; true');
+
+        $this->syncFromParentIfFirstSwarmDeploy(
+            $sftp,
+            $storageServer,
+            $stackName,
+            $projectSlug,
+            $config,
+            $projectId,
+            $branch,
+            $commitSha,
+            $jobId,
+            $credential,
+            $key,
+        );
 
         $this->log($jobId, '[Swarm] Stack deploy completed.');
         $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Completed);
@@ -1262,6 +1278,150 @@ final class DeployEnvironmentCommand extends Command
         }
 
         return false;
+    }
+
+    private function syncFromParentIfFirstSwarmDeploy(
+        SFTP $managerSftp,
+        Server|null $storageServer,
+        string $stackName,
+        string $projectSlug,
+        ProjectConfig $config,
+        string $projectId,
+        string $branch,
+        string $commitSha,
+        DeployJobIdentifier $jobId,
+        Credential $credential,
+        PrivateKey $key,
+    ): void {
+        $id = ProjectIdentifier::fromString($projectId);
+
+        if ($this->deployJobRepository->hasCompletedDeploy($id, $branch)) {
+            return;
+        }
+
+        $parents      = $this->bareRepository->getBranchParents($projectId);
+        $parentBranch = $parents[$branch] ?? null;
+
+        if ($parentBranch === null) {
+            return;
+        }
+
+        if (! $this->deployJobRepository->hasCompletedDeploy($id, $parentBranch)) {
+            return;
+        }
+
+        $xmlContent = $this->bareRepository->getFileContent($projectId, $commitSha, '.tragwerk/config.xml');
+
+        if ($xmlContent === null || $xmlContent === '') {
+            return;
+        }
+
+        try {
+            $config = $this->parseProjectConfig($xmlContent);
+        } catch (Throwable) {
+            return;
+        }
+
+        $parentStackName = $projectSlug . '-' . $this->slugify(basename($parentBranch));
+
+        $this->log($jobId, '[Sync] Syncing data volumes from parent stack "' . $parentStackName . '"...');
+
+        // Copy volumes on the storage node (where local volumes reside due to placement constraints).
+        // If no dedicated storage node was set, copy directly on the manager.
+        if ($storageServer !== null) {
+            $storageSftp = new SFTP($storageServer->host, $storageServer->port, 30);
+            if ($storageSftp->login($credential->username, $key)) {
+                $storageSftp->setTimeout(0);
+                $this->syncVolumesForSwarm($managerSftp, $storageSftp, $stackName, $parentStackName, $config, $jobId);
+            } else {
+                $this->log($jobId, '[Sync] Warning: could not connect to storage node for volume sync.');
+            }
+        } else {
+            $this->syncVolumesForSwarm($managerSftp, $managerSftp, $stackName, $parentStackName, $config, $jobId);
+        }
+
+        $this->log($jobId, '[Sync] Data sync completed.');
+    }
+
+    private function syncVolumesForSwarm(
+        SFTP $managerSftp,
+        SFTP $volumeSftp,
+        string $stackName,
+        string $parentStackName,
+        ProjectConfig $config,
+        DeployJobIdentifier $jobId,
+    ): void {
+        foreach ($config->services as $service) {
+            $type = $service->type->value;
+
+            if (
+                ! str_starts_with($type, 'postgresql:')
+                && ! str_starts_with($type, 'mysql:')
+                && ! str_starts_with($type, 'mariadb:')
+            ) {
+                continue;
+            }
+
+            $serviceSlug = $this->slugify($service->name);
+            $volName     = $serviceSlug . '-data';
+            $src         = $parentStackName . '_' . $volName;
+            $dst         = $stackName . '_' . $volName;
+
+            $this->log($jobId, '[Sync] Syncing Swarm DB volume "' . $volName . '"...');
+
+            // Scale down both stacks' DB service on the manager
+            $managerSftp->exec(
+                'docker service scale ' . escapeshellarg($parentStackName . '_' . $serviceSlug) . '=0 2>&1',
+            );
+            $managerSftp->exec(
+                'docker service scale ' . escapeshellarg($stackName . '_' . $serviceSlug) . '=0 2>&1',
+            );
+
+            // Copy data on the node that holds the volumes (storage node or manager)
+            $volumeSftp->exec(
+                'docker run --rm'
+                . ' -v ' . escapeshellarg($src) . ':/src:ro'
+                . ' -v ' . escapeshellarg($dst) . ':/dst'
+                . ' alpine sh -c "cp -a /src/. /dst/" 2>&1',
+            );
+
+            // Scale back up
+            $managerSftp->exec(
+                'docker service scale ' . escapeshellarg($parentStackName . '_' . $serviceSlug) . '=1 2>&1',
+            );
+            $managerSftp->exec(
+                'docker service scale ' . escapeshellarg($stackName . '_' . $serviceSlug) . '=1 2>&1',
+            );
+
+            $this->log($jobId, '[Sync] Volume "' . $volName . '" synced.');
+        }
+
+        // Sync local app mounts (cloneFromParent) via NFS path or direct volume
+        foreach ($config->applications as $app) {
+            $appSlug = $this->slugify($app->name);
+
+            foreach ($app->mounts as $mount) {
+                if ($mount->source !== MountSource::LOCAL || ! $mount->cloneFromParent) {
+                    continue;
+                }
+
+                $mountSlug = $this->slugify($mount->name);
+                $volName   = $appSlug . '-' . $mountSlug;
+                $src       = $parentStackName . '_' . $volName;
+                $dst       = $stackName . '_' . $volName;
+
+                $this->log($jobId, '[Sync] Syncing Swarm mount volume "' . $volName . '"...');
+
+                $volumeSftp->exec(
+                    'docker run --rm'
+                    . ' -v ' . escapeshellarg($src) . ':/src:ro'
+                    . ' -v ' . escapeshellarg($dst) . ':/dst'
+                    . ' alpine sh -c "cp -a /src/. /dst/" 2>&1',
+                );
+
+                $this->log($jobId, '[Sync] Volume "' . $volName . '" synced.');
+            }
+        }
     }
 
     private function syncFromParentIfFirstDeploy(
