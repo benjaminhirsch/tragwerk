@@ -188,6 +188,13 @@ final class BuildEnvironmentTest extends TestCase
             {
                 return false;
             }
+
+            public function isServerInSwarmCluster(
+                ServerIdentifier $serverId,
+                ProjectIdentifier|null $excludeProjectId = null,
+            ): bool {
+                return false;
+            }
         };
 
         $nullTeamRepo = new class implements TeamRepository {

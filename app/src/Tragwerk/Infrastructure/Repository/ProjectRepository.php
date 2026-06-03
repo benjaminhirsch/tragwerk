@@ -153,6 +153,30 @@ final class ProjectRepository extends GenericRepository implements ProjectReposi
         return (is_string($result) || is_int($result)) && (int) $result > 0;
     }
 
+    #[Override]
+    public function isServerInSwarmCluster(
+        ServerIdentifier $serverId,
+        ProjectIdentifier|null $excludeProjectId = null,
+    ): bool {
+        $qb = $this->connection->createQueryBuilder();
+        $qb->select('COUNT(*)')
+            ->from('project_swarm_nodes')
+            ->where($qb->expr()->eq('server_id', ':server_id'))
+            ->setParameter('server_id', $serverId->toString());
+
+        if ($excludeProjectId !== null) {
+            $qb->andWhere($qb->expr()->neq('project_id', ':exclude_id'))
+                ->setParameter('exclude_id', $excludeProjectId->toString());
+        }
+
+        $result = $qb->executeQuery()->fetchOne();
+        if ((is_string($result) || is_int($result)) && (int) $result > 0) {
+            return true;
+        }
+
+        return $this->isServerInUse($serverId, $excludeProjectId);
+    }
+
     /** @param array<string, mixed> $row */
     private function hydrateSwarmNode(array $row): SwarmNode
     {

@@ -7,8 +7,10 @@ namespace TragwerkTest\Integration\Application\Handler\Project;
 use PHPUnit\Framework\Attributes\Test;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Server;
+use Tragwerk\Domain\Entity\SwarmNode;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Entity\User;
+use Tragwerk\Domain\Enum\SwarmNodeRole;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
@@ -354,6 +356,161 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
     }
 
     #[Test]
+    public function createPostWithSwarmEnabledButTooFewNodesReRendersForm(): void
+    {
+        $extra = $this->seedExtraServer();
+
+        $response = $this->dispatch(
+            'POST',
+            $this->url('project.create'),
+            [
+                'name'         => 'Swarm Project',
+                'serverId'     => $this->server->id->toString(),
+                'swarmEnabled' => '1',
+                'swarmNodes'   => [$extra->id->toString() => '1'],
+            ],
+            $this->sessionCookie,
+        );
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function createPostWithSwarmEnabledAndEvenManagerCountReRendersForm(): void
+    {
+        $node1 = $this->seedExtraServer('Node1', '10.0.0.2');
+        $node2 = $this->seedExtraServer('Node2', '10.0.0.3');
+
+        $response = $this->dispatch(
+            'POST',
+            $this->url('project.create'),
+            [
+                'name'             => 'Swarm Project',
+                'serverId'         => $this->server->id->toString(),
+                'swarmEnabled'     => '1',
+                'swarmNodes'       => [
+                    $node1->id->toString() => '1',
+                    $node2->id->toString() => '1',
+                ],
+                'swarmNodeRoles'   => [
+                    $node1->id->toString() => 'manager',
+                    $node2->id->toString() => 'worker',
+                ],
+                'swarmStorageNodeId' => $node1->id->toString(),
+            ],
+            $this->sessionCookie,
+        );
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function createPostWithValidSwarmConfigPersistsNodes(): void
+    {
+        $node1 = $this->seedExtraServer('Node1', '10.0.0.2');
+        $node2 = $this->seedExtraServer('Node2', '10.0.0.3');
+
+        $this->dispatch(
+            'POST',
+            $this->url('project.create'),
+            [
+                'name'               => 'Swarm Project',
+                'serverId'           => $this->server->id->toString(),
+                'swarmEnabled'       => '1',
+                'swarmNodes'         => [
+                    $node1->id->toString() => '1',
+                    $node2->id->toString() => '1',
+                ],
+                'swarmNodeRoles'     => [
+                    $node1->id->toString() => 'worker',
+                    $node2->id->toString() => 'worker',
+                ],
+                'swarmStorageNodeId' => $node1->id->toString(),
+            ],
+            $this->sessionCookie,
+        );
+
+        $repository = $this->container->get(ProjectRepository::class);
+        assert($repository instanceof ProjectRepository);
+
+        $projects = [...$repository->getAll(teamId: $this->team->id)];
+        self::assertCount(1, $projects);
+        assert($projects[0] instanceof Project);
+        self::assertTrue($projects[0]->swarmEnabled);
+
+        $nodes = $repository->getSwarmNodes($projects[0]->id);
+        self::assertCount(2, $nodes);
+
+        $storageNode = $repository->getSwarmStorageNode($projects[0]->id);
+        self::assertInstanceOf(SwarmNode::class, $storageNode);
+        self::assertTrue($node1->id->isEqualTo($storageNode->serverId));
+        self::assertSame(SwarmNodeRole::Worker, $storageNode->role);
+    }
+
+    #[Test]
+    public function editPostEnablingSwarmPersistsNodes(): void
+    {
+        $project = $this->seedProject('Swarm Project');
+        $node1   = $this->seedExtraServer('Node1', '10.0.0.2');
+        $node2   = $this->seedExtraServer('Node2', '10.0.0.3');
+
+        $this->dispatch(
+            'POST',
+            $this->url('project.edit', ['id' => $project->id->toString()]),
+            [
+                'name'               => 'Swarm Project',
+                'serverId'           => $this->server->id->toString(),
+                'swarmEnabled'       => '1',
+                'swarmNodes'         => [
+                    $node1->id->toString() => '1',
+                    $node2->id->toString() => '1',
+                ],
+                'swarmNodeRoles'     => [
+                    $node1->id->toString() => 'manager',
+                    $node2->id->toString() => 'manager',
+                ],
+                'swarmStorageNodeId' => $node2->id->toString(),
+            ],
+            $this->sessionCookie,
+        );
+
+        $repository = $this->container->get(ProjectRepository::class);
+        assert($repository instanceof ProjectRepository);
+
+        $updated = $repository->getById($project->id);
+        assert($updated instanceof Project);
+        self::assertTrue($updated->swarmEnabled);
+
+        $nodes = $repository->getSwarmNodes($project->id);
+        self::assertCount(2, $nodes);
+    }
+
+    #[Test]
+    public function editPostDisablingSwarmClearsExistingNodes(): void
+    {
+        $node1   = $this->seedExtraServer('Node1', '10.0.0.2');
+        $node2   = $this->seedExtraServer('Node2', '10.0.0.3');
+        $project = $this->seedProject('Swarm Project');
+
+        $projectRepo = $this->container->get(ProjectRepository::class);
+        assert($projectRepo instanceof ProjectRepository);
+        $projectRepo->addSwarmNode(new SwarmNode($project->id, $node1->id, SwarmNodeRole::Worker, false));
+        $projectRepo->addSwarmNode(new SwarmNode($project->id, $node2->id, SwarmNodeRole::Worker, true));
+
+        $this->dispatch(
+            'POST',
+            $this->url('project.edit', ['id' => $project->id->toString()]),
+            ['name' => 'Swarm Project', 'serverId' => $this->server->id->toString()],
+            $this->sessionCookie,
+        );
+
+        $updated = $projectRepo->getById($project->id);
+        assert($updated instanceof Project);
+        self::assertFalse($updated->swarmEnabled);
+        self::assertSame([], $projectRepo->getSwarmNodes($project->id));
+    }
+
+    #[Test]
     public function deletePostWithProjectFromOtherTeamDoesNotDelete(): void
     {
         $foreign = $this->seedProjectForTeam($this->seedOtherTeam()->id);
@@ -459,13 +616,13 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
         return $this->seedProjectForTeam($this->team->id, $name);
     }
 
-    private function seedExtraServer(): Server
+    private function seedExtraServer(string $name = 'Extra Test Server', string $host = '10.0.0.2'): Server
     {
         $now    = TimestampImmutable::now();
         $server = new Server(
             ServerIdentifier::create(),
-            'Extra Test Server',
-            '10.0.0.2',
+            $name,
+            $host,
             null,
             $this->team->id,
             $now,

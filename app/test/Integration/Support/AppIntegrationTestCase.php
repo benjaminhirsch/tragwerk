@@ -115,7 +115,7 @@ abstract class AppIntegrationTestCase extends IntegrationTestCase
     }
 
     /**
-     * @param array<string, string> $body
+     * @param array<string, mixed>  $body
      * @param array<string, string> $headers
      */
     protected function dispatch(

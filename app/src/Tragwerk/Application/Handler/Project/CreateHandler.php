@@ -15,9 +15,11 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Tragwerk\Application\Dto\Project\ProjectCreation;
 use Tragwerk\Application\Mapper\GenericMapper;
 use Tragwerk\Application\Response\ResponseRenderer;
+use Tragwerk\Application\Validation\ValidationBag;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
+use Tragwerk\Domain\Enum\SwarmNodeRole;
 use Tragwerk\Domain\Event\ProjectCreated;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
@@ -28,7 +30,12 @@ use Tragwerk\Domain\ValueObject\UserIdentifier;
 
 use function _;
 use function array_filter;
+use function array_keys;
 use function assert;
+use function count;
+use function in_array;
+use function is_array;
+use function is_string;
 use function iterator_to_array;
 
 final readonly class CreateHandler implements RequestHandlerInterface
@@ -68,21 +75,33 @@ final readonly class CreateHandler implements RequestHandlerInterface
                 $dto = $validationBag->getDto();
                 assert($dto instanceof ProjectCreation);
 
-                $user = $request->getAttribute(UserInterface::class);
-                assert($user instanceof UserInterface);
+                $swarmNodes = [];
+                if ($dto->swarmEnabled) {
+                    [$validationBag, $swarmNodes] = $this->validateSwarmNodes(
+                        $request,
+                        $activeTeam->id,
+                        $validationBag,
+                    );
+                }
 
-                $projectId = ProjectIdentifier::create();
+                if (! $validationBag->hasErrors()) {
+                    $user = $request->getAttribute(UserInterface::class);
+                    assert($user instanceof UserInterface);
 
-                $this->eventDispatcher->dispatch(new ProjectCreated(
-                    $dto,
-                    $projectId,
-                    $activeTeam->id,
-                    UserIdentifier::fromString($user->getIdentity()),
-                ));
+                    $projectId = ProjectIdentifier::create();
 
-                return new RedirectResponse(
-                    $this->urlHelper->generate('project.show', ['id' => $projectId->toString()]),
-                );
+                    $this->eventDispatcher->dispatch(new ProjectCreated(
+                        $dto,
+                        $projectId,
+                        $activeTeam->id,
+                        UserIdentifier::fromString($user->getIdentity()),
+                        $swarmNodes,
+                    ));
+
+                    return new RedirectResponse(
+                        $this->urlHelper->generate('project.show', ['id' => $projectId->toString()]),
+                    );
+                }
             }
         }
 
@@ -97,7 +116,81 @@ final readonly class CreateHandler implements RequestHandlerInterface
         return $this->renderer->render($request, 'page::project/create', [
             'validationBag' => $validationBag,
             'servers'       => $servers,
+            'allServers'    => $allServers,
         ]);
+    }
+
+    /** @return array{0: ValidationBag, 1: list<array{serverId: string, role: string, isStorage: bool}>} */
+    private function validateSwarmNodes(
+        ServerRequestInterface $request,
+        TeamIdentifier $teamId,
+        ValidationBag $validationBag,
+    ): array {
+        $body          = $request->getParsedBody();
+        $rawNodes      = is_array($body) && is_array($body['swarmNodes'] ?? null) ? $body['swarmNodes'] : [];
+        $selectedIds   = array_keys($rawNodes);
+        $roles         = is_array($body) && is_array($body['swarmNodeRoles'] ?? null) ? $body['swarmNodeRoles'] : [];
+        $storageNodeId = is_array($body) && is_string($body['swarmStorageNodeId'] ?? null)
+            ? $body['swarmStorageNodeId']
+            : null;
+
+        if (count($selectedIds) < 2) {
+            $msg = _('Swarm mode requires at least 2 additional nodes (3 servers total)');
+
+            return [$validationBag->withError('swarmNodes', $msg), []];
+        }
+
+        $managerCount  = 1; // primary server is always manager
+        $swarmNodes    = [];
+        $teamServerIds = $this->getTeamServerIds($teamId);
+
+        foreach ($selectedIds as $serverId) {
+            if (! is_string($serverId) || ! ServerIdentifier::isValid($serverId)) {
+                return [$validationBag->withError('swarmNodes', _('Invalid server selection')), []];
+            }
+
+            if (! isset($teamServerIds[$serverId])) {
+                $msg = _('Selected server does not belong to your team');
+
+                return [$validationBag->withError('swarmNodes', $msg), []];
+            }
+
+            if ($this->projectRepository->isServerInSwarmCluster(ServerIdentifier::fromString($serverId))) {
+                $msg = _('One of the selected servers is already in use');
+
+                return [$validationBag->withError('swarmNodes', $msg), []];
+            }
+
+            $role = is_string($roles[$serverId] ?? null) ? $roles[$serverId] : SwarmNodeRole::Worker->value;
+            if (! in_array($role, [SwarmNodeRole::Manager->value, SwarmNodeRole::Worker->value], true)) {
+                $role = SwarmNodeRole::Worker->value;
+            }
+
+            if ($role === SwarmNodeRole::Manager->value) {
+                $managerCount++;
+            }
+
+            $swarmNodes[] = [
+                'serverId'  => $serverId,
+                'role'      => $role,
+                'isStorage' => $serverId === $storageNodeId,
+            ];
+        }
+
+        if ($managerCount % 2 === 0) {
+            $msg = _('Total manager count must be odd (1, 3, 5, …) for Raft quorum');
+
+            return [$validationBag->withError('swarmNodes', $msg), []];
+        }
+
+        $storageNodes = array_filter($swarmNodes, static fn (array $n): bool => $n['isStorage']);
+        if (count($storageNodes) !== 1) {
+            $msg = _('Exactly one storage node must be selected');
+
+            return [$validationBag->withError('swarmStorageNodeId', $msg), []];
+        }
+
+        return [$validationBag, $swarmNodes];
     }
 
     /** @return array<string, true> */
@@ -111,5 +204,18 @@ final readonly class CreateHandler implements RequestHandlerInterface
         }
 
         return $used;
+    }
+
+    /** @return array<string, true> */
+    private function getTeamServerIds(TeamIdentifier $teamId): array
+    {
+        $ids = [];
+
+        foreach ($this->serverRepository->getAll(teamId: $teamId) as $server) {
+            assert($server instanceof Server);
+            $ids[$server->id->toString()] = true;
+        }
+
+        return $ids;
     }
 }
