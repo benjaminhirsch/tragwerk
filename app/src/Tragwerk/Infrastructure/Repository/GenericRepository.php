@@ -23,6 +23,7 @@ use Tragwerk\Infrastructure\Helper\EntityHelper;
 
 use function assert;
 use function is_array;
+use function is_bool;
 use function is_string;
 
 abstract class GenericRepository
@@ -69,7 +70,7 @@ abstract class GenericRepository
             $this->connection->insert(
                 EntityHelper::getDbTableName($entity->id::getEntityType()),
                 // @phpstan-ignore argument.type
-                CaseConverter::camelToSnakeCase($data),
+                CaseConverter::camelToSnakeCase($this->normalizeBooleans($data)),
             );
         } catch (DBAL\Exception $e) {
             throw EntityCreationFailed::create($entity::class, $entity->id, $e);
@@ -87,7 +88,7 @@ abstract class GenericRepository
         $normalizedData = $this->normalizerBuilder->normalizer(Format::array())->normalize($entity);
 
         assert(is_array($normalizedData));
-        $data = CaseConverter::camelToSnakeCase($normalizedData);
+        $data = CaseConverter::camelToSnakeCase($this->normalizeBooleans($normalizedData));
 
         foreach ($data as $key => $value) {
             assert(is_string($key));
@@ -137,5 +138,23 @@ abstract class GenericRepository
     protected function map(array $data, string $className): object
     {
         return $this->mapperBuilder->mapper()->map($className, $data);
+    }
+
+    /**
+     * @param mixed[] $data
+     *
+     * @return mixed[]
+     */
+    private function normalizeBooleans(array $data): array
+    {
+        foreach ($data as $key => $value) {
+            if (is_bool($value)) {
+                $data[$key] = (int) $value;
+            } elseif (is_array($value)) {
+                $data[$key] = $this->normalizeBooleans($value);
+            }
+        }
+
+        return $data;
     }
 }
