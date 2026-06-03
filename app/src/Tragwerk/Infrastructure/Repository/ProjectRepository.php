@@ -23,6 +23,7 @@ use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Infrastructure\Helper\EntityHelper;
 
 use function array_map;
+use function array_values;
 use function assert;
 use function is_int;
 use function is_string;
@@ -112,7 +113,7 @@ final class ProjectRepository extends GenericRepository implements ProjectReposi
             ->executeQuery()
             ->fetchAllAssociative();
 
-        return array_map($this->hydrateSwarmNode(...), $rows);
+        return array_values(array_map($this->hydrateSwarmNode(...), $rows));
     }
 
     #[Override]

@@ -173,7 +173,7 @@ final class BuildEnvironmentTest extends TestCase
             {
             }
 
-            /** @return SwarmNode[] */
+            /** @return list<SwarmNode> */
             public function getSwarmNodes(ProjectIdentifier $projectId): array
             {
                 return [];

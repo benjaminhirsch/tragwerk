@@ -48,7 +48,7 @@ interface ProjectRepository
     /** @throws EntityDeletionFailed */
     public function removeSwarmNode(ProjectIdentifier $projectId, ServerIdentifier $serverId): void;
 
-    /** @return SwarmNode[] */
+    /** @return list<SwarmNode> */
     public function getSwarmNodes(ProjectIdentifier $projectId): array;
 
     public function getSwarmStorageNode(ProjectIdentifier $projectId): SwarmNode|null;

@@ -34,6 +34,8 @@ final readonly class DockerComposeGenerator
      * @param array<string, string>       $imageTags            Map of appSlug → fully-qualified image tag.
      *                                                          When provided the service uses `image:` instead
      *                                                          of `build:` (Phase-2 registry-based deploy).
+     * @param bool                        $swarmMode            Swarm-compatible output (deploy sections, NFS volumes).
+     * @param string|null                 $storageNodeIp        Storage node IP for NFS volume addresses.
      *
      * @return array<string, mixed>
      */
@@ -42,10 +44,12 @@ final readonly class DockerComposeGenerator
         string $branch = '',
         array $domainsByPlaceholder = [],
         array $imageTags = [],
+        bool $swarmMode = false,
+        string|null $storageNodeIp = null,
     ): array {
         /** @var array<string, mixed> $services */
         $services = [];
-        /** @var array<string, null> $volumes */
+        /** @var array<string, mixed> $volumes */
         $volumes = [];
 
         $branchSlug = $this->slugify($branch);
@@ -61,11 +65,27 @@ final readonly class DockerComposeGenerator
             $appVolumes = [];
 
             foreach ($app->mounts as $mount) {
-                if ($mount->source !== MountSource::LOCAL) {
+                $mountSlug = $this->slugify($mount->name);
+                $volName   = $appSlug . '-' . $mountSlug;
+
+                if ($mount->source === MountSource::SERVICE) {
+                    if (! $swarmMode || $storageNodeIp === null) {
+                        continue;
+                    }
+
+                    $appVolumes[]      = $volName . ':/app/' . ltrim($mount->path, '/');
+                    $volumes[$volName] = [
+                        'driver'      => 'local',
+                        'driver_opts' => [
+                            'type'   => 'nfs',
+                            'o'      => 'nfsvers=4,addr=' . $storageNodeIp,
+                            'device' => ':/var/tragwerk/volumes/' . $branchSlug . '/' . $volName,
+                        ],
+                    ];
+
                     continue;
                 }
 
-                $volName           = $appSlug . '-' . $this->slugify($mount->name);
                 $appVolumes[]      = $volName . ':/app/' . ltrim($mount->path, '/');
                 $volumes[$volName] = null;
             }
@@ -130,6 +150,18 @@ final readonly class DockerComposeGenerator
             // App containers join the shared Traefik network so the server-level Traefik can route to them
             $svcConfig['networks'] = ['default', 'tragwerk-net'];
 
+            if ($swarmMode) {
+                $svcConfig['deploy'] = [
+                    'mode'           => 'global',
+                    'update_config'  => [
+                        'parallelism' => 1,
+                        'delay'       => '10s',
+                        'order'       => 'start-first',
+                    ],
+                    'restart_policy' => ['condition' => 'any'],
+                ];
+            }
+
             $services[$appSlug] = $svcConfig;
         }
 
@@ -153,6 +185,15 @@ final readonly class DockerComposeGenerator
 
             $svcConfig['healthcheck']       = $this->serviceHealthcheck($service->type);
             $svcConfig['stop_grace_period'] = $this->serviceStopGracePeriod($service->type);
+
+            if ($swarmMode) {
+                $svcConfig['deploy'] = [
+                    'placement'      => [
+                        'constraints' => ['node.labels.storage == true'],
+                    ],
+                    'restart_policy' => ['condition' => 'any'],
+                ];
+            }
 
             $services[$slug] = $svcConfig;
         }
