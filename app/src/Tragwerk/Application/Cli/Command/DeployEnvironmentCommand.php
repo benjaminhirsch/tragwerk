@@ -28,8 +28,10 @@ use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Registry;
 use Tragwerk\Domain\Entity\Server;
+use Tragwerk\Domain\Entity\SwarmNode;
 use Tragwerk\Domain\Enum\DeployJobStatus;
 use Tragwerk\Domain\Enum\MountSource;
+use Tragwerk\Domain\Enum\SwarmNodeRole;
 use Tragwerk\Domain\Model\ProjectConfig;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\DeployJobRepository;
@@ -171,7 +173,8 @@ final class DeployEnvironmentCommand extends Command
             return Command::FAILURE;
         }
 
-        // Phase 2: project has a registry → build image locally, push, then pull on VPS.
+        // Phase 2 / Phase 3: project has a registry → build image locally, push, then pull on VPS.
+        // Phase 3 additionally uses Docker Swarm stack deploy instead of blue/green.
         if ($project->registryId !== null) {
             try {
                 $registry = $this->registryRepository->getById($project->registryId);
@@ -180,6 +183,24 @@ final class DeployEnvironmentCommand extends Command
                 $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
 
                 return Command::FAILURE;
+            }
+
+            if ($project->swarmEnabled) {
+                $swarmNodes = $this->projectRepository->getSwarmNodes($id);
+
+                return $this->deployViaSwarm(
+                    $projectId,
+                    $branch,
+                    $commitSha,
+                    $jobId,
+                    $acmeEmail,
+                    $project,
+                    $server,
+                    $credential,
+                    $key,
+                    $registry,
+                    $swarmNodes,
+                );
             }
 
             return $this->deployViaRegistry(
@@ -648,6 +669,418 @@ final class DeployEnvironmentCommand extends Command
     }
 
     /**
+     * Phase-3 deploy: Docker Swarm stack deploy.
+     * Builds and pushes image like Phase 2, then initializes/joins Swarm nodes and deploys via stack.
+     *
+     * @param list<SwarmNode> $swarmNodes
+     */
+    private function deployViaSwarm(
+        string $projectId,
+        string $branch,
+        string $commitSha,
+        DeployJobIdentifier $jobId,
+        string $acmeEmail,
+        Project $project,
+        Server $primaryServer,
+        Credential $credential,
+        PrivateKey $key,
+        Registry $registry,
+        array $swarmNodes,
+    ): int {
+        $branchSlug  = $this->slugify(basename($branch));
+        $projectSlug = $this->slugify($project->name);
+        $stackName   = $projectSlug . '-' . $branchSlug;
+        $shortSha    = substr($commitSha, 0, 8);
+        $timestamp   = date('YmdHis');
+        $repoPath    = $this->bareRepository->getPath($projectId);
+
+        // 1. Export source + build config
+        $buildDir = sys_get_temp_dir() . '/tw-build-' . uniqid();
+        mkdir($buildDir, 0755, true);
+
+        exec(
+            'git -C ' . escapeshellarg($repoPath)
+            . ' archive ' . escapeshellarg($commitSha)
+            . ' | tar xf - -C ' . escapeshellarg($buildDir) . ' 2>&1',
+            $archiveOut,
+            $archiveExit,
+        );
+
+        if ($archiveExit !== 0) {
+            $this->removeDirectory($buildDir);
+            $this->log($jobId, '[Swarm] Failed to export source: ' . implode("\n", $archiveOut));
+            $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+            return Command::FAILURE;
+        }
+
+        $artifactsDir = rtrim($this->projectDataPath, '/') . '/' . $projectId . '/' . $branch;
+        foreach (glob($artifactsDir . '/*') ?: [] as $file) {
+            if (basename($file) === 'build.zip') {
+                continue;
+            }
+
+            copy($file, $buildDir . '/' . basename($file));
+        }
+
+        // 2. Parse config
+        $xmlContent = $this->bareRepository->getFileContent($projectId, $commitSha, '.tragwerk/config.xml');
+        if ($xmlContent === null || $xmlContent === '') {
+            $this->removeDirectory($buildDir);
+            $this->log($jobId, '[Swarm] No .tragwerk/config.xml found.');
+            $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+            return Command::FAILURE;
+        }
+
+        try {
+            $config = $this->parseProjectConfig($xmlContent);
+        } catch (Throwable $e) {
+            $this->removeDirectory($buildDir);
+            $this->log($jobId, '[Swarm] Config parse error: ' . $e->getMessage());
+            $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+            return Command::FAILURE;
+        }
+
+        // 3. Build + push images (identical to Phase 2)
+        $dockerConfigDir = sys_get_temp_dir() . '/tw-docker-' . uniqid();
+        mkdir($dockerConfigDir, 0700, true);
+        $dockerEnv = ['DOCKER_CONFIG' => $dockerConfigDir, 'DOCKER_BUILDKIT' => '1'];
+
+        $this->log($jobId, '[Swarm] Logging in to registry ' . $registry->url . '...');
+        $login = new Process(
+            ['docker', 'login', $registry->url, '-u', $registry->username, '--password-stdin'],
+            env: $dockerEnv,
+        );
+        $login->setInput($registry->password);
+        $login->run();
+
+        if (! $login->isSuccessful()) {
+            $this->removeDirectory($buildDir);
+            $this->removeDirectory($dockerConfigDir);
+            $this->log($jobId, '[Swarm] Registry login failed: ' . $login->getErrorOutput());
+            $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+            return Command::FAILURE;
+        }
+
+        /** @var array<string, string> $imageTags */
+        $imageTags = [];
+
+        foreach ($config->applications as $app) {
+            $appSlug    = $this->slugify($app->name);
+            $imageTag   = $registry->url . '/' . $registry->repository
+                . ':' . $appSlug . '-' . $branchSlug . '-' . $timestamp . '-' . $shortSha;
+            $cacheTag   = $registry->url . '/' . $registry->repository
+                . ':' . $appSlug . '-' . $branchSlug . '-cache';
+            $dockerfile = $buildDir . '/Dockerfile.' . $appSlug;
+
+            $this->log($jobId, '[Swarm] Building image: ' . $imageTag);
+
+            $build = new Process(
+                [
+                    'docker',
+                    'build',
+                    '-f',
+                    $dockerfile,
+                    '-t',
+                    $imageTag,
+                    '--cache-from',
+                    $cacheTag,
+                    '--build-arg',
+                    'BUILDKIT_INLINE_CACHE=1',
+                    '.',
+                ],
+                $buildDir,
+                $dockerEnv,
+                timeout: null,
+            );
+
+            $buildOutput = '';
+            $build->run(static function (string $type, string $buf) use (&$buildOutput): void {
+                $buildOutput .= $buf;
+            });
+
+            foreach (explode("\n", trim($buildOutput)) as $line) {
+                if (trim($line) === '') {
+                    continue;
+                }
+
+                $this->log($jobId, $line);
+            }
+
+            if (! $build->isSuccessful()) {
+                $this->removeDirectory($buildDir);
+                (new Process(['docker', 'logout', $registry->url], env: $dockerEnv))->run();
+                $this->removeDirectory($dockerConfigDir);
+                $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+                return Command::FAILURE;
+            }
+
+            $this->log($jobId, '[Swarm] Pushing image: ' . $imageTag);
+            $push = new Process(['docker', 'push', $imageTag], env: $dockerEnv, timeout: null);
+            $push->run(function (string $type, string $buf) use ($jobId): void {
+                foreach (explode("\n", trim($buf)) as $line) {
+                    if (trim($line) === '') {
+                        continue;
+                    }
+
+                    $this->log($jobId, $line);
+                }
+            });
+
+            if (! $push->isSuccessful()) {
+                $this->removeDirectory($buildDir);
+                (new Process(['docker', 'logout', $registry->url], env: $dockerEnv))->run();
+                $this->removeDirectory($dockerConfigDir);
+                $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+                return Command::FAILURE;
+            }
+
+            (new Process(['docker', 'tag', $imageTag, $cacheTag], env: $dockerEnv))->run();
+            (new Process(['docker', 'push', $cacheTag], env: $dockerEnv, timeout: null))->run();
+            (new Process(['docker', 'rmi', $imageTag, $cacheTag], env: $dockerEnv))->run();
+            $imageTags[$appSlug] = $imageTag;
+        }
+
+        $this->removeDirectory($buildDir);
+        (new Process(['docker', 'logout', $registry->url], env: $dockerEnv))->run();
+        $this->removeDirectory($dockerConfigDir);
+
+        // 4. SSH to primary manager — init Swarm and set up cluster
+        $sftp = new SFTP($primaryServer->host, $primaryServer->port, 30);
+        if (! $sftp->login($credential->username, $key)) {
+            $this->log($jobId, '[Swarm] SSH login to primary manager failed.');
+            $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+            return Command::FAILURE;
+        }
+
+        $sftp->setTimeout(0);
+
+        // Init swarm if not already active
+        $swarmState = trim((string) $sftp->exec('docker info --format "{{.Swarm.LocalNodeState}}" 2>/dev/null'));
+        if ($swarmState !== 'active') {
+            $this->log($jobId, '[Swarm] Initializing Docker Swarm on primary manager...');
+            $initResult = (string) $sftp->exec(
+                'docker swarm init --advertise-addr ' . escapeshellarg($primaryServer->host) . ' 2>&1',
+            );
+
+            if ($sftp->getExitStatus() !== 0) {
+                $this->log($jobId, '[Swarm] Swarm init failed: ' . $initResult);
+                $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+                return Command::FAILURE;
+            }
+
+            $this->log($jobId, '[Swarm] Swarm initialized.');
+        }
+
+        // Get join tokens
+        $workerToken  = trim((string) $sftp->exec('docker swarm join-token worker -q 2>/dev/null'));
+        $managerToken = trim((string) $sftp->exec('docker swarm join-token manager -q 2>/dev/null'));
+
+        // Create overlay network if not exists
+        $sftp->exec(
+            'docker network create --driver overlay --attachable tragwerk-net 2>/dev/null; true',
+        );
+
+        // 5. Join additional nodes + identify storage node
+        $storageNodeIp = null;
+
+        foreach ($swarmNodes as $swarmNode) {
+            try {
+                $nodeServer = $this->serverRepository->getById($swarmNode->serverId);
+            } catch (Throwable $e) {
+                $this->log($jobId, '[Swarm] Could not load server for node: ' . $e->getMessage());
+                $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+                return Command::FAILURE;
+            }
+
+            if ($swarmNode->isStorage) {
+                $storageNodeIp = $nodeServer->host;
+            }
+
+            // SSH to this node, join swarm if not already joined
+            $nodeSftp = new SFTP($nodeServer->host, $nodeServer->port, 30);
+            if (! $nodeSftp->login($credential->username, $key)) {
+                $this->log($jobId, '[Swarm] SSH login to node ' . $nodeServer->host . ' failed.');
+                $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+                return Command::FAILURE;
+            }
+
+            $nodeSftp->setTimeout(0);
+            $nodeSwarmState = trim((string) $nodeSftp->exec(
+                'docker info --format "{{.Swarm.LocalNodeState}}" 2>/dev/null',
+            ));
+
+            if ($nodeSwarmState !== 'active') {
+                $token      = $swarmNode->role === SwarmNodeRole::Manager ? $managerToken : $workerToken;
+                $joinResult = (string) $nodeSftp->exec(
+                    'docker swarm join --token ' . escapeshellarg($token)
+                    . ' ' . escapeshellarg($primaryServer->host) . ':2377 2>&1',
+                );
+
+                if ($nodeSftp->getExitStatus() !== 0) {
+                    $this->log($jobId, '[Swarm] Node ' . $nodeServer->host . ' join failed: ' . $joinResult);
+                    $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+                    return Command::FAILURE;
+                }
+
+                $this->log($jobId, '[Swarm] Node ' . $nodeServer->host . ' joined swarm.');
+            }
+
+            // Install NFS client on all additional nodes
+            $nodeSftp->exec('apt-get install -y nfs-common 2>/dev/null; true');
+        }
+
+        // 6. Label storage node + set up NFS server on it
+        if ($storageNodeIp !== null) {
+            // Find node ID for the storage node's hostname in the swarm
+            $nodeId = trim((string) $sftp->exec(
+                'docker node ls --filter ' . escapeshellarg('role=worker')
+                . ' --format "{{.ID}} {{.Hostname}}" 2>/dev/null'
+                . ' | grep ' . escapeshellarg($storageNodeIp)
+                . ' | awk \'{print $1}\'',
+            ));
+
+            if ($nodeId !== '') {
+                $sftp->exec(
+                    'docker node update --label-add storage=true ' . escapeshellarg($nodeId) . ' 2>/dev/null; true',
+                );
+            }
+
+            // Set up NFS server on storage node
+            foreach ($swarmNodes as $swarmNode) {
+                if (! $swarmNode->isStorage) {
+                    continue;
+                }
+
+                try {
+                    $storageServer = $this->serverRepository->getById($swarmNode->serverId);
+                } catch (Throwable) {
+                    continue;
+                }
+
+                $storageSftp = new SFTP($storageServer->host, $storageServer->port, 30);
+                if (! $storageSftp->login($credential->username, $key)) {
+                    continue;
+                }
+
+                $storageSftp->setTimeout(0);
+                $exportPath = '/var/tragwerk/volumes/' . $branchSlug;
+                $storageSftp->exec('apt-get install -y nfs-kernel-server 2>/dev/null; true');
+                $storageSftp->exec('mkdir -p ' . escapeshellarg($exportPath));
+                $storageSftp->exec(
+                    'grep -qF ' . escapeshellarg($exportPath) . ' /etc/exports'
+                    . ' || echo ' . escapeshellarg($exportPath . ' *(rw,sync,no_subtree_check,no_root_squash)')
+                    . ' >> /etc/exports',
+                );
+                $storageSftp->exec('exportfs -ra 2>/dev/null; true');
+            }
+        }
+
+        // 7. Generate swarm-compatible compose and upload
+        $remoteDir = 'tragwerk/' . $projectId . '/' . $branch;
+        $sftp->mkdir($remoteDir, -1, true);
+
+        $projectIdentifier    = ProjectIdentifier::fromString($projectId);
+        $domainsByPlaceholder = [];
+        foreach ($this->domainRepository->findByEnvironment($projectIdentifier, $branch) as $domain) {
+            $domainsByPlaceholder[$domain->placeholder][] = $domain->host;
+        }
+
+        $compose = $this->composeGenerator->generate(
+            $config,
+            $branch,
+            $domainsByPlaceholder,
+            $imageTags,
+            swarmMode: true,
+            storageNodeIp: $storageNodeIp,
+        );
+
+        $sftp->put(
+            $remoteDir . '/docker-compose.yml',
+            Yaml::dump($compose, 8, 2, Yaml::DUMP_NULL_AS_TILDE),
+        );
+
+        foreach ($config->applications as $app) {
+            $appSlug   = $this->slugify($app->name);
+            $caddyFile = $artifactsDir . '/Caddyfile.' . $appSlug;
+            if (! file_exists($caddyFile)) {
+                continue;
+            }
+
+            $content = file_get_contents($caddyFile);
+            if ($content === false) {
+                continue;
+            }
+
+            $sftp->put($remoteDir . '/Caddyfile.' . $appSlug, $content);
+        }
+
+        // 8. Registry login on primary manager + deploy stack
+        $this->log($jobId, '[Swarm] Logging in to registry on primary manager...');
+        $sftp->exec(
+            'echo ' . escapeshellarg($registry->password)
+            . ' | docker login ' . escapeshellarg($registry->url)
+            . ' -u ' . escapeshellarg($registry->username)
+            . ' --password-stdin 2>&1',
+        );
+
+        // 9. Ensure Traefik runs as a Swarm service on manager nodes
+        $this->ensureSwarmTraefik($sftp, $acmeEmail, $jobId);
+
+        // 10. Deploy stack
+        $this->log($jobId, '[Swarm] Deploying stack ' . $stackName . '...');
+
+        try {
+            $this->streamExec(
+                $sftp,
+                'cd ~/' . $remoteDir
+                . ' && docker stack deploy --with-registry-auth --prune'
+                . ' -c docker-compose.yml ' . escapeshellarg($stackName) . ' 2>&1',
+                $jobId,
+            );
+        } catch (Throwable $e) {
+            $this->log($jobId, '[Swarm] SSH error during stack deploy: ' . $e->getMessage());
+            $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+            return Command::FAILURE;
+        }
+
+        if ($sftp->getExitStatus() !== 0) {
+            $this->log($jobId, '[Swarm] Stack deploy failed.');
+            $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+            return Command::FAILURE;
+        }
+
+        $sftp->exec('docker logout ' . escapeshellarg($registry->url) . ' 2>/dev/null; true');
+
+        $this->log($jobId, '[Swarm] Stack deploy completed.');
+        $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Completed);
+
+        if ($registry->pruningEnabled) {
+            foreach ($config->applications as $app) {
+                $this->producer->sendMessage(new PruneRegistryImages(
+                    $registry->id->toString(),
+                    $this->slugify($app->name),
+                    $branchSlug,
+                ));
+            }
+        }
+
+        return Command::SUCCESS;
+    }
+
+    /**
      * Start a new container alongside the currently running one, wait for it to become healthy,
      * then stop and remove the old container. Returns the new container name, or null on failure.
      *
@@ -1038,6 +1471,74 @@ final class DeployEnvironmentCommand extends Command
         }
 
         $this->log($jobId, '[Deploy] Server-level Traefik started.');
+    }
+
+    private function ensureSwarmTraefik(SFTP $sftp, string $acmeEmail, DeployJobIdentifier $jobId): void
+    {
+        $running = trim((string) $sftp->exec(
+            'docker service ls --filter name=tragwerk-infra_traefik --format "{{.Name}}" 2>/dev/null',
+        ));
+
+        if ($running !== '') {
+            return;
+        }
+
+        $this->log($jobId, '[Swarm] Deploying Traefik as Swarm service...');
+
+        $emailFlag = escapeshellarg('--certificatesresolvers.letsencrypt.acme.email=' . $acmeEmail);
+
+        $traefikCompose = [
+            'services' => [
+                'traefik' => [
+                    'image'   => 'traefik:v3',
+                    'command' => [
+                        '--providers.docker.swarmMode=true',
+                        '--providers.docker.exposedByDefault=false',
+                        '--providers.docker.network=tragwerk-net',
+                        '--entrypoints.web.address=:80',
+                        '--entrypoints.web.http.redirections.entrypoint.to=websecure',
+                        '--entrypoints.web.http.redirections.entrypoint.scheme=https',
+                        '--entrypoints.web.http.redirections.entrypoint.permanent=true',
+                        '--entrypoints.websecure.address=:443',
+                        '--certificatesresolvers.letsencrypt.acme.tlschallenge=true',
+                        '--certificatesresolvers.letsencrypt.acme.email=' . $acmeEmail,
+                        '--certificatesresolvers.letsencrypt.acme.storage=/certs/acme.json',
+                    ],
+                    'volumes'  => [
+                        '/var/run/docker.sock:/var/run/docker.sock:ro',
+                        'traefik-certs:/certs',
+                    ],
+                    'ports'    => ['80:80', '443:443'],
+                    'networks' => ['tragwerk-net'],
+                    'deploy'   => [
+                        'mode'      => 'global',
+                        'placement' => [
+                            'constraints' => ['node.role == manager'],
+                        ],
+                    ],
+                ],
+            ],
+            'volumes'  => ['traefik-certs' => null],
+            'networks' => ['tragwerk-net' => ['external' => true]],
+        ];
+
+        $composePath = '~/tragwerk-infra-compose.yml';
+        $sftp->put(
+            'tragwerk-infra-compose.yml',
+            Yaml::dump($traefikCompose, 8, 2, Yaml::DUMP_NULL_AS_TILDE),
+        );
+
+        $result = (string) $sftp->exec(
+            'docker stack deploy -c ' . escapeshellarg($composePath) . ' tragwerk-infra 2>&1',
+        );
+
+        if ($sftp->getExitStatus() !== 0) {
+            $this->log($jobId, '[Swarm] Warning: Could not deploy Traefik stack: ' . $result);
+
+            return;
+        }
+
+        $this->log($jobId, '[Swarm] Traefik stack deployed.');
     }
 
     private function streamExec(SFTP $sftp, string $cmd, DeployJobIdentifier $jobId): void

@@ -207,7 +207,6 @@ final class ProjectRepositoryTest extends IntegrationTestCase
 
         $nodes = $this->repository->getSwarmNodes($project->id);
         self::assertCount(1, $nodes);
-        self::assertInstanceOf(SwarmNode::class, $nodes[0]);
         self::assertTrue($server->id->isEqualTo($nodes[0]->serverId));
         self::assertSame(SwarmNodeRole::Worker, $nodes[0]->role);
         self::assertFalse($nodes[0]->isStorage);

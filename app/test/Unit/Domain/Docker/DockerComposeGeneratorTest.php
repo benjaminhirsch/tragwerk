@@ -576,6 +576,100 @@ final class DockerComposeGeneratorTest extends TestCase
         self::assertArrayNotHasKey('image', $svc);
     }
 
+    #[Test]
+    public function swarmModeAddsDeployBlockToAppService(): void
+    {
+        $config  = self::project([self::app('app')], []);
+        $compose = $this->generator->generate($config, swarmMode: true);
+        $svc     = $this->service($compose, 'app');
+
+        self::assertArrayHasKey('deploy', $svc);
+        /** @var array<string, mixed> $deploy */
+        $deploy = $svc['deploy'];
+        self::assertSame('global', $deploy['mode']);
+        self::assertArrayHasKey('update_config', $deploy);
+        /** @var array<string, mixed> $updateConfig */
+        $updateConfig = $deploy['update_config'];
+        self::assertSame('start-first', $updateConfig['order']);
+    }
+
+    #[Test]
+    public function swarmModeAddsDeployBlockToStatefulService(): void
+    {
+        $config  = self::project(
+            [self::app('app')],
+            [],
+            [new ServiceConfig('db', ServiceRuntime::from('postgresql:17'))],
+        );
+        $compose = $this->generator->generate($config, swarmMode: true);
+        $svc     = $this->service($compose, 'db');
+
+        self::assertArrayHasKey('deploy', $svc);
+        /** @var array<string, mixed> $deploy */
+        $deploy = $svc['deploy'];
+        /** @var array<string, mixed> $placement */
+        $placement = $deploy['placement'];
+        self::assertSame(['node.labels.storage == true'], $placement['constraints']);
+    }
+
+    #[Test]
+    public function swarmModeServiceMountBecomesNfsVolume(): void
+    {
+        $mount  = new MountConfig(name: 'uploads', source: MountSource::SERVICE, path: 'data/uploads');
+        $config = self::project([self::app('app', mounts: [$mount])], []);
+
+        $compose = $this->generator->generate($config, swarmMode: true, storageNodeIp: '10.0.0.2');
+        $svc     = $this->service($compose, 'app');
+
+        /** @var array<string, mixed> $volumes */
+        $volumes = $compose['volumes'];
+        self::assertArrayHasKey('app-uploads', $volumes);
+        /** @var array<string, mixed> $vol */
+        $vol = $volumes['app-uploads'];
+        self::assertSame('local', $vol['driver']);
+        /** @var array<string, string> $driverOpts */
+        $driverOpts = $vol['driver_opts'];
+        self::assertSame('nfs', $driverOpts['type']);
+        self::assertSame('nfsvers=4,addr=10.0.0.2', $driverOpts['o']);
+        /** @var list<string> $svcVolumes */
+        $svcVolumes = $svc['volumes'];
+        self::assertContains('app-uploads:/app/data/uploads', $svcVolumes);
+    }
+
+    #[Test]
+    public function swarmModeServiceMountSkippedWithoutStorageIp(): void
+    {
+        $mount   = new MountConfig(name: 'uploads', path: 'data/uploads', source: MountSource::SERVICE);
+        $config  = self::project([self::app('app', mounts: [$mount])], []);
+        $compose = $this->generator->generate($config, swarmMode: true);
+
+        /** @var array<string, mixed> $volumes */
+        $volumes = $compose['volumes'] ?? [];
+        self::assertArrayNotHasKey('app-uploads', $volumes);
+    }
+
+    #[Test]
+    public function nonSwarmModeServiceMountIsSkipped(): void
+    {
+        $mount   = new MountConfig(name: 'uploads', source: MountSource::SERVICE, path: 'data/uploads');
+        $config  = self::project([self::app('app', mounts: [$mount])], []);
+        $compose = $this->generator->generate($config);
+
+        /** @var array<string, mixed> $volumes */
+        $volumes = $compose['volumes'] ?? [];
+        self::assertArrayNotHasKey('app-uploads', $volumes);
+    }
+
+    #[Test]
+    public function nonSwarmModeHasNoDeployBlock(): void
+    {
+        $config  = self::project([self::app('app')], []);
+        $compose = $this->generator->generate($config);
+        $svc     = $this->service($compose, 'app');
+
+        self::assertArrayNotHasKey('deploy', $svc);
+    }
+
     public static function slugifyProvider(): Generator
     {
         yield 'spaces to dashes'       => ['My Test Project', 'my-test-project'];
