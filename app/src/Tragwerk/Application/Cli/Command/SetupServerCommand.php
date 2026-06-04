@@ -25,6 +25,7 @@ use Tragwerk\Domain\Repository\SetupJobRepository;
 use Tragwerk\Domain\ValueObject\SetupJobIdentifier;
 
 use function assert;
+use function filter_var;
 use function in_array;
 use function is_string;
 use function sprintf;
@@ -32,6 +33,9 @@ use function str_contains;
 use function strlen;
 use function strtolower;
 use function trim;
+
+use const FILTER_FLAG_IPV6;
+use const FILTER_VALIDATE_IP;
 
 #[AsCommand(name: 'server:setup', description: 'Run server setup for a given setup job')]
 final class SetupServerCommand extends Command
@@ -110,7 +114,8 @@ final class SetupServerCommand extends Command
                 return Command::FAILURE;
             }
 
-            $ssh = new SSH2($server->host, $server->port, 30);
+            $formattedHost = $this->formatHost($server->host);
+            $ssh           = new SSH2($formattedHost, $server->port, 30);
 
             try {
                 $key = PublicKeyLoader::loadPrivateKey($credential->privateKey);
@@ -368,7 +373,7 @@ final class SetupServerCommand extends Command
 
     private function reconnect(string $host, int $port, string $username, PrivateKey $key, SetupJob $job): SSH2|null
     {
-        $ssh = new SSH2($host, $port, 30);
+        $ssh = new SSH2($this->formatHost($host), $port, 30);
         if (! $ssh->login($username, $key)) {
             $this->fail($job, "Reconnect failed after install.\n");
 
@@ -387,5 +392,12 @@ final class SetupServerCommand extends Command
     {
         $this->setupJobRepository->appendOutput($job->id, $message);
         $this->setupJobRepository->updateStatus($job->id, SetupJobStatus::Failed);
+    }
+
+    private function formatHost(string $host): string
+    {
+        return filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false
+            ? '[' . $host . ']'
+            : $host;
     }
 }

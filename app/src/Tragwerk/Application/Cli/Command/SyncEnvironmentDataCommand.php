@@ -35,12 +35,16 @@ use Tragwerk\Infrastructure\Git\BareRepository;
 use function assert;
 use function basename;
 use function escapeshellarg;
+use function filter_var;
 use function implode;
 use function is_string;
 use function preg_replace;
 use function sprintf;
 use function str_starts_with;
 use function strtolower;
+
+use const FILTER_FLAG_IPV6;
+use const FILTER_VALIDATE_IP;
 
 #[AsCommand(name: 'project:sync-data', description: 'Sync data volumes from parent branch to a child environment')]
 final class SyncEnvironmentDataCommand extends Command
@@ -191,7 +195,10 @@ final class SyncEnvironmentDataCommand extends Command
             return Command::FAILURE;
         }
 
-        $sftp = new SFTP($server->host, $server->port, 30);
+        $host = filter_var($server->host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false
+            ? '[' . $server->host . ']'
+            : $server->host;
+        $sftp = new SFTP($host, $server->port, 30);
 
         if (! $sftp->login($credential->username, $key)) {
             $this->log($jobId, sprintf('[Sync] SSH login failed for user \'%s\'.', $credential->username));

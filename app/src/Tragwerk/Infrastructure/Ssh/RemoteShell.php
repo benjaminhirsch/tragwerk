@@ -11,7 +11,11 @@ use RuntimeException;
 use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Server;
 
+use function filter_var;
 use function is_string;
+
+use const FILTER_FLAG_IPV6;
+use const FILTER_VALIDATE_IP;
 
 /**
  * Runs a single shell command on a remote server over SSH and returns its output.
@@ -36,7 +40,11 @@ final class RemoteShell
             throw new RuntimeException('Failed to load SSH key: ' . $e->getMessage(), previous: $e);
         }
 
-        $sftp = new SFTP($server->host, $server->port, self::TIMEOUT);
+        $host = filter_var($server->host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false
+            ? '[' . $server->host . ']'
+            : $server->host;
+
+        $sftp = new SFTP($host, $server->port, self::TIMEOUT);
 
         if (! $sftp->login($credential->username, $key)) {
             throw new RuntimeException('SSH login failed.');

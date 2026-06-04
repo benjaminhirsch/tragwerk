@@ -19,10 +19,14 @@ use Tragwerk\Domain\ValueObject\CredentialIdentifier;
 use function assert;
 use function escapeshellarg;
 use function explode;
+use function filter_var;
 use function is_string;
 use function preg_replace;
 use function strtolower;
 use function trim;
+
+use const FILTER_FLAG_IPV6;
+use const FILTER_VALIDATE_IP;
 
 #[AsCommand(name: 'project:docker-cleanup')]
 final class CleanupProjectDockerCommand extends Command
@@ -81,7 +85,10 @@ final class CleanupProjectDockerCommand extends Command
             return Command::FAILURE;
         }
 
-        $sftp = new SFTP($host, $port, 30);
+        $formattedHost = filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false
+            ? '[' . $host . ']'
+            : $host;
+        $sftp          = new SFTP($formattedHost, $port, 30);
         $sftp->setTimeout(0);
 
         if (! $sftp->login($credential->username, $key)) {
