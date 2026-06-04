@@ -1879,6 +1879,29 @@ final class DeployEnvironmentCommand extends Command
         }
 
         $this->log($jobId, '[Deploy] Old swarm stack removed.');
+
+        // Tear down the shared swarm infrastructure so the next deploy can recreate
+        // tragwerk-net as a plain bridge and connect tragwerk-traefik to it.
+        // Without this, tragwerk-net stays as a swarm overlay and the standalone
+        // Traefik container ends up with no network, causing 404 for all routes.
+        $this->log($jobId, '[Deploy] Removing swarm infrastructure (tragwerk-infra)...');
+        $primarySftp->exec('docker stack rm tragwerk-infra 2>/dev/null; true');
+
+        // Wait until tragwerk-infra services are fully removed (up to 40 s).
+        $primarySftp->exec(
+            'for i in $(seq 1 20); do'
+            . ' docker stack ls 2>/dev/null | grep -q "^tragwerk-infra" || break;'
+            . ' sleep 2;'
+            . ' done',
+        );
+
+        $primarySftp->exec('docker swarm leave --force 2>/dev/null; true');
+
+        // Remove stale tragwerk-traefik so ensureServerTraefik recreates it
+        // connected to the fresh bridge tragwerk-net (created in deployViaRegistry).
+        $primarySftp->exec('docker rm -f tragwerk-traefik 2>/dev/null; true');
+
+        $this->log($jobId, '[Deploy] Swarm infrastructure removed. Traefik will be recreated on bridge.');
     }
 
     private function parseProjectConfig(string $xmlContent): ProjectConfig
