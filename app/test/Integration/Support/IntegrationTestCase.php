@@ -9,6 +9,8 @@ use Laminas\ServiceManager\ServiceManager;
 use PHPUnit\Framework\TestCase;
 
 use function assert;
+use function sys_get_temp_dir;
+use function uniqid;
 
 abstract class IntegrationTestCase extends TestCase
 {
@@ -49,6 +51,10 @@ abstract class IntegrationTestCase extends TestCase
             'username' => $dbParams['user'],
             'password' => $dbParams['password'],
         ];
+
+        // Redirect authorized_keys writes to a temp file so test runs never
+        // overwrite the real file used by the local git SSHD container.
+        $config['git']['authorized_keys_path'] = sys_get_temp_dir() . '/tw-test-authorized-keys-' . uniqid();
 
         $dependencies                       = $config['dependencies'];
         $dependencies['services']['config'] = $config;
