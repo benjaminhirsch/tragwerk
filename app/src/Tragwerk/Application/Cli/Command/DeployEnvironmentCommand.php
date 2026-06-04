@@ -65,6 +65,7 @@ use function rmdir;
 use function rtrim;
 use function sleep;
 use function sprintf;
+use function str_contains;
 use function str_starts_with;
 use function strpos;
 use function strtolower;
@@ -1254,10 +1255,13 @@ final class DeployEnvironmentCommand extends Command
         }
 
         // Connect to compose default network before starting so DB hostname resolves on boot.
-        $sftp->exec(
+        $netConnectOut = trim((string) $sftp->exec(
             'docker network connect ' . escapeshellarg($composeDefaultNetwork)
-            . ' ' . escapeshellarg($newContainer) . ' 2>/dev/null; true',
-        );
+            . ' ' . escapeshellarg($newContainer) . ' 2>&1 || true',
+        ));
+        if ($netConnectOut !== '' && ! str_contains($netConnectOut, 'already exists')) {
+            $this->log($jobId, '[Deploy] Warning: network connect failed: ' . $netConnectOut);
+        }
 
         $sftp->exec('docker start ' . escapeshellarg($newContainer) . ' 2>&1');
 
@@ -1896,6 +1900,11 @@ final class DeployEnvironmentCommand extends Command
         );
 
         $primarySftp->exec('docker swarm leave --force 2>/dev/null; true');
+
+        // Wait for Docker's internal networking and DNS to stabilize after swarm leave.
+        // Without this pause, docker network create and DNS resolution inside new
+        // containers can fail with "Temporary failure in name resolution".
+        $primarySftp->exec('sleep 5');
 
         // Remove stale tragwerk-traefik so ensureServerTraefik recreates it
         // connected to the fresh bridge tragwerk-net (created in deployViaRegistry).
