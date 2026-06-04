@@ -70,6 +70,8 @@ final readonly class SetupHandler implements RequestHandlerInterface
             );
         }
 
+        $this->serverRepository->updateVersions($server->id, null, null);
+
         $now = TimestampImmutable::now();
         $job = new SetupJob(
             SetupJobIdentifier::create(),
