@@ -50,6 +50,7 @@ use function exec;
 use function explode;
 use function file_exists;
 use function file_get_contents;
+use function filter_var;
 use function glob;
 use function implode;
 use function is_array;
@@ -71,6 +72,9 @@ use function sys_get_temp_dir;
 use function trim;
 use function uniqid;
 use function unlink;
+
+use const FILTER_FLAG_IPV6;
+use const FILTER_VALIDATE_IP;
 
 #[AsCommand(name: 'project:deploy', description: 'Deploy a built environment to the target server')]
 final class DeployEnvironmentCommand extends Command
@@ -376,7 +380,10 @@ final class DeployEnvironmentCommand extends Command
         $this->removeDirectory($dockerConfigDir);
 
         // 5. SSH to VPS — login + pull + swap
-        $sftp = new SFTP($server->host, $server->port, 30);
+        $sftpHost = filter_var($server->host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false
+            ? '[' . $server->host . ']'
+            : $server->host;
+        $sftp     = new SFTP($sftpHost, $server->port, 30);
 
         if (! $sftp->login($credential->username, $key)) {
             $this->log($jobId, '[Deploy] SSH login failed.');
