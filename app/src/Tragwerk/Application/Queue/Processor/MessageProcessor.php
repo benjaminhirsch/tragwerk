@@ -33,6 +33,7 @@ final readonly class MessageProcessor implements Processor
         private Handler\RunDeployEnvironment $runDeployEnvironment,
         private Handler\RunSyncEnvironmentData $runSyncEnvironmentData,
         private Handler\PruneRegistryImages $pruneRegistryImages,
+        private Handler\RunCleanupProjectDocker $runCleanupProjectDocker,
     ) {
     }
 
@@ -52,12 +53,13 @@ final readonly class MessageProcessor implements Processor
         }
 
         match ($parsedMessage::class) {
-            Message\RunSetupJob::class         => $this->runSetupJob->handle($parsedMessage),
-            Message\SendMail::class            => $this->sendMail->handle($parsedMessage),
-            Message\BuildEnvironment::class    => $this->buildEnvironment->handle($parsedMessage),
-            Message\DeployEnvironment::class   => $this->runDeployEnvironment->handle($parsedMessage),
-            Message\SyncEnvironmentData::class   => $this->runSyncEnvironmentData->handle($parsedMessage),
-            Message\PruneRegistryImages::class   => $this->pruneRegistryImages->handle($parsedMessage),
+            Message\RunSetupJob::class             => $this->runSetupJob->handle($parsedMessage),
+            Message\SendMail::class                => $this->sendMail->handle($parsedMessage),
+            Message\BuildEnvironment::class        => $this->buildEnvironment->handle($parsedMessage),
+            Message\DeployEnvironment::class       => $this->runDeployEnvironment->handle($parsedMessage),
+            Message\SyncEnvironmentData::class     => $this->runSyncEnvironmentData->handle($parsedMessage),
+            Message\PruneRegistryImages::class     => $this->pruneRegistryImages->handle($parsedMessage),
+            Message\CleanupProjectDocker::class    => $this->runCleanupProjectDocker->handle($parsedMessage),
             default => throw new InvalidArgumentException('Unknown message class: ' . $parsedMessage::class),
         };
 
