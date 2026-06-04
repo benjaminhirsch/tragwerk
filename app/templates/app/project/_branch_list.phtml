@@ -65,10 +65,22 @@ $renderBranches = function (array $nodes) use (
     hx-on:htmx:load="var b=document.getElementById('tw-active-branch')?.value;if(b){document.querySelectorAll('.tw-branch-item').forEach(function(e){e.classList.toggle('active',e.dataset.branch===b)})}"
 >
     <?php if ($branchParents === []): ?>
-        <div class="text-body-secondary small">
-            <i class="bi bi-info-circle me-1"></i>
-            <?= $this->t('No branches yet. Push your first commit to get started.') ?>
-        </div>
+        <p class="text-body-secondary small mb-2"><?= $this->t('No commits yet — you can already configure domains for your main environment.') ?></p>
+        <ul class="tw-branch-tree">
+            <li>
+                <div class="tw-branch-row">
+                    <button class="tw-branch-item"
+                            data-branch="main"
+                            hx-get="<?= $this->url('project.environment', ['id' => $projectId]) ?>?branch=main"
+                            hx-target="#environment-activities"
+                            hx-swap="innerHTML"
+                            hx-on:click="document.getElementById('tw-active-branch').value=this.dataset.branch;document.querySelectorAll('.tw-branch-item').forEach(function(e){e.classList.remove('active')});this.classList.add('active')">
+                        <i class="bi-subtract tw-branch-icon"></i>
+                        main
+                    </button>
+                </div>
+            </li>
+        </ul>
     <?php else: ?>
         <p class="text-body-secondary small mb-2"><?= $this->t('Select a branch to view its activity.') ?></p>
         <ul class="tw-branch-tree">

@@ -880,9 +880,17 @@ final class DeployEnvironmentCommand extends Command
 
         $sftp->setTimeout(0);
 
-        // Init swarm if not already active
+        // Init swarm if not active as manager.
+        // Node may be in swarm as worker (e.g. left a cluster and joined another) — must leave and re-init.
         $swarmState = trim((string) $sftp->exec('docker info --format "{{.Swarm.LocalNodeState}}" 2>/dev/null'));
-        if ($swarmState !== 'active') {
+        $isManager  = trim((string) $sftp->exec('docker info --format "{{.Swarm.ControlAvailable}}" 2>/dev/null'));
+
+        if ($swarmState !== 'active' || $isManager !== 'true') {
+            if ($swarmState === 'active') {
+                $this->log($jobId, '[Swarm] Node is active in swarm but not as manager — leaving to re-init...');
+                $sftp->exec('docker swarm leave --force 2>/dev/null; true');
+            }
+
             $this->log($jobId, '[Swarm] Initializing Docker Swarm on primary manager...');
             $initResult = (string) $sftp->exec(
                 'docker swarm init --advertise-addr ' . escapeshellarg($primaryServer->host) . ' 2>&1',
