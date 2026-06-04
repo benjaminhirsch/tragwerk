@@ -7,15 +7,18 @@ namespace TragwerkTest\Integration\Application\Handler\Project;
 use PHPUnit\Framework\Attributes\Test;
 use Tragwerk\Application\Handler\Project\DownloadBuildHandler;
 use Tragwerk\Domain\Entity\Project;
+use Tragwerk\Domain\Entity\Registry;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\Repository\ProjectRepository;
+use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\Repository\UserRepository;
 use Tragwerk\Domain\ValueObject\PasswordHash;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Domain\ValueObject\RegistryIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
@@ -248,6 +251,32 @@ final class DownloadBuildHandlerTest extends AppIntegrationTestCase
         return $this->seedProjectForTeam($user, $server, $team);
     }
 
+    private function seedRegistry(User $user, Team $team): RegistryIdentifier
+    {
+        $now      = TimestampImmutable::now();
+        $registry = new Registry(
+            RegistryIdentifier::create(),
+            'Test Registry',
+            'registry.example.com',
+            'test-repo',
+            'user',
+            'pass',
+            false,
+            10,
+            $team->id,
+            $now,
+            $user->id,
+            $now,
+            $user->id,
+        );
+
+        $repository = $this->container->get(RegistryRepository::class);
+        assert($repository instanceof RegistryRepository);
+        $repository->create($registry);
+
+        return $registry->id;
+    }
+
     private function seedProjectForTeam(
         User $user,
         Server $server,
@@ -264,6 +293,7 @@ final class DownloadBuildHandlerTest extends AppIntegrationTestCase
             $user->id,
             $now,
             $user->id,
+            $this->seedRegistry($user, $team),
         );
 
         $repository = $this->container->get(ProjectRepository::class);

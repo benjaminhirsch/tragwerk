@@ -6,18 +6,17 @@ namespace TragwerkTest\Integration\Domain\Repository;
 
 use PHPUnit\Framework\Attributes\Test;
 use Tragwerk\Domain\Entity\Project;
-use Tragwerk\Domain\Entity\Server;
-use Tragwerk\Domain\Entity\SwarmNode;
+use Tragwerk\Domain\Entity\Registry;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Entity\User;
-use Tragwerk\Domain\Enum\SwarmNodeRole;
 use Tragwerk\Domain\Exception\Repository\EntityNotFound;
 use Tragwerk\Domain\Repository\ProjectRepository;
-use Tragwerk\Domain\Repository\ServerRepository;
+use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\Repository\UserRepository;
 use Tragwerk\Domain\ValueObject\PasswordHash;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Domain\ValueObject\RegistryIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
@@ -30,9 +29,9 @@ use function iterator_to_array;
 final class ProjectRepositoryTest extends IntegrationTestCase
 {
     private ProjectRepository $repository;
-    private ServerRepository $serverRepository;
     private TeamIdentifier $teamId;
     private UserIdentifier $userId;
+    private RegistryIdentifier $registryId;
 
     protected function setUp(): void
     {
@@ -42,28 +41,25 @@ final class ProjectRepositoryTest extends IntegrationTestCase
         assert($repository instanceof ProjectRepository);
         $this->repository = $repository;
 
-        $serverRepository = $this->container->get(ServerRepository::class);
-        assert($serverRepository instanceof ServerRepository);
-        $this->serverRepository = $serverRepository;
-
         $this->userId = UserIdentifier::create();
         $this->teamId = TeamIdentifier::create();
 
-        $now            = TimestampImmutable::now();
-        $user           = new User(
+        $now  = TimestampImmutable::now();
+        $user = new User(
             $this->userId,
-            'swarm-test@example.com',
-            'Swarm',
+            'repo-test@example.com',
+            'Repo',
             'Tester',
             PasswordHash::create('password'),
             $now,
             $now,
         );
+
         $userRepository = $this->container->get(UserRepository::class);
         assert($userRepository instanceof UserRepository);
         $userRepository->create($user);
 
-        $team           = new Team(
+        $team = new Team(
             $this->teamId,
             'Test Team',
             $this->userId,
@@ -72,9 +68,38 @@ final class ProjectRepositoryTest extends IntegrationTestCase
             $now,
             $this->userId,
         );
+
         $teamRepository = $this->container->get(TeamRepository::class);
         assert($teamRepository instanceof TeamRepository);
         $teamRepository->create($team);
+
+        $this->registryId = $this->seedRegistry();
+    }
+
+    private function seedRegistry(): RegistryIdentifier
+    {
+        $now      = TimestampImmutable::now();
+        $registry = new Registry(
+            RegistryIdentifier::create(),
+            'Test Registry',
+            'registry.example.com',
+            'test-repo',
+            'user',
+            'pass',
+            false,
+            10,
+            $this->teamId,
+            $now,
+            $this->userId,
+            $now,
+            $this->userId,
+        );
+
+        $repo = $this->container->get(RegistryRepository::class);
+        assert($repo instanceof RegistryRepository);
+        $repo->create($registry);
+
+        return $registry->id;
     }
 
     #[Test]
@@ -190,146 +215,7 @@ final class ProjectRepositoryTest extends IntegrationTestCase
         $this->repository->create($projectOnServer);
         $this->repository->create($unrelated);
 
-        // Excluding $unrelated should not affect the result — $projectOnServer still uses the server
         self::assertTrue($this->repository->isServerInUse($serverId, excludeProjectId: $unrelated->id));
-    }
-
-    #[Test]
-    public function addSwarmNodePersistsToDatabase(): void
-    {
-        $project = $this->makeProject();
-        $this->repository->create($project);
-        $server = $this->makeServer();
-        $this->serverRepository->create($server);
-
-        $node = new SwarmNode($project->id, $server->id, SwarmNodeRole::Worker, false);
-        $this->repository->addSwarmNode($node);
-
-        $nodes = $this->repository->getSwarmNodes($project->id);
-        self::assertCount(1, $nodes);
-        self::assertTrue($server->id->isEqualTo($nodes[0]->serverId));
-        self::assertSame(SwarmNodeRole::Worker, $nodes[0]->role);
-        self::assertFalse($nodes[0]->isStorage);
-    }
-
-    #[Test]
-    public function getSwarmNodesReturnsEmptyArrayWhenNoneExist(): void
-    {
-        $project = $this->makeProject();
-        $this->repository->create($project);
-
-        self::assertSame([], $this->repository->getSwarmNodes($project->id));
-    }
-
-    #[Test]
-    public function removeSwarmNodeDeletesFromDatabase(): void
-    {
-        $project = $this->makeProject();
-        $this->repository->create($project);
-        $server = $this->makeServer();
-        $this->serverRepository->create($server);
-
-        $this->repository->addSwarmNode(new SwarmNode($project->id, $server->id, SwarmNodeRole::Worker, false));
-        $this->repository->removeSwarmNode($project->id, $server->id);
-
-        self::assertSame([], $this->repository->getSwarmNodes($project->id));
-    }
-
-    #[Test]
-    public function removeSwarmNodeThrowsForUnknownNode(): void
-    {
-        $project = $this->makeProject();
-        $this->repository->create($project);
-
-        $this->expectException(EntityNotFound::class);
-        $this->repository->removeSwarmNode($project->id, ServerIdentifier::create());
-    }
-
-    #[Test]
-    public function getSwarmStorageNodeReturnsStorageNode(): void
-    {
-        $project = $this->makeProject();
-        $this->repository->create($project);
-        $server = $this->makeServer();
-        $this->serverRepository->create($server);
-
-        $this->repository->addSwarmNode(new SwarmNode($project->id, $server->id, SwarmNodeRole::Manager, true));
-
-        $storageNode = $this->repository->getSwarmStorageNode($project->id);
-        self::assertInstanceOf(SwarmNode::class, $storageNode);
-        self::assertTrue($server->id->isEqualTo($storageNode->serverId));
-        self::assertTrue($storageNode->isStorage);
-    }
-
-    #[Test]
-    public function getSwarmStorageNodeReturnsNullWhenNoStorageNodeSet(): void
-    {
-        $project = $this->makeProject();
-        $this->repository->create($project);
-
-        self::assertNull($this->repository->getSwarmStorageNode($project->id));
-    }
-
-    #[Test]
-    public function swarmNodeExistsReturnsTrueForExistingNode(): void
-    {
-        $project = $this->makeProject();
-        $this->repository->create($project);
-        $server = $this->makeServer();
-        $this->serverRepository->create($server);
-
-        $this->repository->addSwarmNode(new SwarmNode($project->id, $server->id, SwarmNodeRole::Worker, false));
-
-        self::assertTrue($this->repository->swarmNodeExists($project->id, $server->id));
-    }
-
-    #[Test]
-    public function swarmNodeExistsReturnsFalseForMissingNode(): void
-    {
-        $project = $this->makeProject();
-        $this->repository->create($project);
-
-        self::assertFalse($this->repository->swarmNodeExists($project->id, ServerIdentifier::create()));
-    }
-
-    #[Test]
-    public function swarmEnabledDefaultsToFalse(): void
-    {
-        $project = $this->makeProject();
-        $this->repository->create($project);
-
-        $found = $this->repository->getById($project->id);
-        assert($found instanceof Project);
-        self::assertFalse($found->swarmEnabled);
-    }
-
-    #[Test]
-    public function swarmEnabledPersistsTrueValue(): void
-    {
-        $project               = $this->makeProject();
-        $project->swarmEnabled = true;
-        $this->repository->create($project);
-
-        $found = $this->repository->getById($project->id);
-        assert($found instanceof Project);
-        self::assertTrue($found->swarmEnabled);
-    }
-
-    private function makeServer(): Server
-    {
-        $now = TimestampImmutable::now();
-
-        return new Server(
-            ServerIdentifier::create(),
-            'Test Server',
-            '10.0.0.1',
-            null,
-            $this->teamId,
-            $now,
-            $this->userId,
-            $now,
-            $this->userId,
-        );
     }
 
     private function makeProject(
@@ -348,6 +234,7 @@ final class ProjectRepositoryTest extends IntegrationTestCase
             UserIdentifier::create(),
             $now,
             UserIdentifier::create(),
+            $this->registryId,
         );
     }
 }

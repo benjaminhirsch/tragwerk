@@ -25,7 +25,6 @@ use Tragwerk\Domain\Docker\ServiceImageResolver;
 use Tragwerk\Domain\Entity\Domain;
 use Tragwerk\Domain\Entity\Entity;
 use Tragwerk\Domain\Entity\Project;
-use Tragwerk\Domain\Entity\SwarmNode;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\Repository\DomainRepository;
@@ -159,37 +158,6 @@ final class BuildEnvironmentTest extends TestCase
             }
 
             public function isServerInUse(
-                ServerIdentifier $serverId,
-                ProjectIdentifier|null $excludeProjectId = null,
-            ): bool {
-                return false;
-            }
-
-            public function addSwarmNode(SwarmNode $node): void
-            {
-            }
-
-            public function removeSwarmNode(ProjectIdentifier $projectId, ServerIdentifier $serverId): void
-            {
-            }
-
-            /** @return list<SwarmNode> */
-            public function getSwarmNodes(ProjectIdentifier $projectId): array
-            {
-                return [];
-            }
-
-            public function getSwarmStorageNode(ProjectIdentifier $projectId): SwarmNode|null
-            {
-                return null;
-            }
-
-            public function swarmNodeExists(ProjectIdentifier $projectId, ServerIdentifier $serverId): bool
-            {
-                return false;
-            }
-
-            public function isServerInSwarmCluster(
                 ServerIdentifier $serverId,
                 ProjectIdentifier|null $excludeProjectId = null,
             ): bool {

@@ -22,9 +22,7 @@ final readonly class ProjectUpdate implements DtoInterface
         #[FromBody]
         public string $serverId,
         #[FromBody]
-        public string|null $registryId = null,
-        #[FromBody]
-        public bool $swarmEnabled = false,
+        public string $registryId,
     ) {
         $errors = [];
         if (trim($this->name) === '') {
@@ -35,12 +33,8 @@ final readonly class ProjectUpdate implements DtoInterface
             $errors[] = ValidationError::make('serverId', _('Please select a server'));
         }
 
-        if (
-            $this->registryId !== null
-            && trim($this->registryId) !== ''
-            && ! RegistryIdentifier::isValid($this->registryId)
-        ) {
-            $errors[] = ValidationError::make('registryId', _('Invalid registry'));
+        if (trim($this->registryId) === '' || ! RegistryIdentifier::isValid($this->registryId)) {
+            $errors[] = ValidationError::make('registryId', _('Please select a registry'));
         }
 
         if ($errors !== []) {

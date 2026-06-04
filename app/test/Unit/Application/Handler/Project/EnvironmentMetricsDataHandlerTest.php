@@ -14,6 +14,7 @@ use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Repository\AppMetricRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Domain\ValueObject\RegistryIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
@@ -41,6 +42,7 @@ final class EnvironmentMetricsDataHandlerTest extends TestCase
             $userId,
             $now,
             $userId,
+            RegistryIdentifier::create(),
         );
         $team    = new Team($teamId, 'Team', $userId, $now, $userId, $now, $userId);
 
@@ -108,6 +110,7 @@ final class EnvironmentMetricsDataHandlerTest extends TestCase
             $userId,
             $now,
             $userId,
+            RegistryIdentifier::create(),
         );
         $team    = new Team($teamId, 'Team', $userId, $now, $userId, $now, $userId);
 

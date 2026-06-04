@@ -20,7 +20,6 @@ use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
-use Tragwerk\Domain\ValueObject\RegistryIdentifier;
 
 use function assert;
 use function is_string;
@@ -66,39 +65,20 @@ final readonly class TabHandler implements RequestHandlerInterface
         assert($team instanceof Team);
 
         $registry = null;
-        if ($project->registryId instanceof RegistryIdentifier) {
-            try {
-                $r = $this->registryRepository->getById($project->registryId);
-                if ($r instanceof Registry) {
-                    $registry = $r;
-                }
-            } catch (Throwable) {
+        try {
+            $r = $this->registryRepository->getById($project->registryId);
+            if ($r instanceof Registry) {
+                $registry = $r;
             }
-        }
-
-        $swarmNodes = $project->swarmEnabled
-            ? $this->projectRepository->getSwarmNodes($project->id)
-            : [];
-
-        $swarmServerNames = [$server->id->toString() => $server->name];
-        foreach ($swarmNodes as $node) {
-            try {
-                $nodeServer = $this->serverRepository->getById($node->serverId);
-                if ($nodeServer instanceof Server) {
-                    $swarmServerNames[$node->serverId->toString()] = $nodeServer->name;
-                }
-            } catch (Throwable) {
-            }
+        } catch (Throwable) {
         }
 
         return $this->renderer->render($request, 'page::project/tab/overview', [
-            'project'          => $project,
-            'server'           => $server,
-            'team'             => $team,
-            'registry'         => $registry,
-            'cloneUrl'         => $cloneUrl,
-            'swarmNodes'       => $swarmNodes,
-            'swarmServerNames' => $swarmServerNames,
+            'project'  => $project,
+            'server'   => $server,
+            'team'     => $team,
+            'registry' => $registry,
+            'cloneUrl' => $cloneUrl,
         ]);
     }
 

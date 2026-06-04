@@ -4,8 +4,6 @@
  * @var \Tragwerk\Domain\Entity\Server             $server
  * @var \Tragwerk\Domain\Entity\Team               $team
  * @var \Tragwerk\Domain\Entity\Registry|null      $registry
- * @var list<\Tragwerk\Domain\Entity\SwarmNode>    $swarmNodes
- * @var array<string, string>                      $swarmServerNames
  * @var string                                     $cloneUrl
  */
 ?>
@@ -22,9 +20,6 @@
                     'href'  => $this->url('server.show', ['id' => $server->id->toString()]),
                     'label' => $server->name,
                 ]) ?>
-                <?php if ($project->swarmEnabled): ?>
-                    <span class="badge bg-info ms-1"><?= $this->t('Swarm Manager') ?></span>
-                <?php endif ?>
             </td>
         </tr>
         <tr>
@@ -37,7 +32,7 @@
                     ]) ?>
                     <span class="text-body-secondary small ms-1">(<?= $this->e($registry->url) ?>)</span>
                 <?php else: ?>
-                    <span class="text-body-secondary"><?= $this->t('None — builds on server') ?></span>
+                    <span class="text-body-secondary"><?= $this->t('None') ?></span>
                 <?php endif ?>
             </td>
         </tr>
@@ -70,15 +65,3 @@
         </tr>
     </tbody>
 </table>
-
-<?php if ($project->swarmEnabled): ?>
-    <hr>
-    <h6 class="text-body-secondary mb-2">
-        <i class="bi bi-diagram-3"></i> <?= $this->t('Docker Swarm Cluster') ?>
-    </h6>
-    <?= $this->fetch('partial::project/swarm-nodes', [
-        'project'     => $project,
-        'nodes'       => $swarmNodes,
-        'serverNames' => $swarmServerNames,
-    ]) ?>
-<?php endif ?>

@@ -33,9 +33,7 @@ final readonly class DockerComposeGenerator
      * @param array<string, list<string>> $domainsByPlaceholder
      * @param array<string, string>       $imageTags            Map of appSlug → fully-qualified image tag.
      *                                                          When provided the service uses `image:` instead
-     *                                                          of `build:` (Phase-2 registry-based deploy).
-     * @param bool                        $swarmMode            Swarm-compatible output (deploy sections, NFS volumes).
-     * @param string|null                 $storageNodeIp        Storage node IP for NFS volume addresses.
+     *                                                          of `build:`.
      *
      * @return array<string, mixed>
      */
@@ -44,8 +42,6 @@ final readonly class DockerComposeGenerator
         string $branch = '',
         array $domainsByPlaceholder = [],
         array $imageTags = [],
-        bool $swarmMode = false,
-        string|null $storageNodeIp = null,
     ): array {
         /** @var array<string, mixed> $services */
         $services = [];
@@ -65,27 +61,12 @@ final readonly class DockerComposeGenerator
             $appVolumes = [];
 
             foreach ($app->mounts as $mount) {
-                $mountSlug = $this->slugify($mount->name);
-                $volName   = $appSlug . '-' . $mountSlug;
-
                 if ($mount->source === MountSource::SERVICE) {
-                    if (! $swarmMode || $storageNodeIp === null) {
-                        continue;
-                    }
-
-                    $appVolumes[]      = $volName . ':/app/' . ltrim($mount->path, '/');
-                    $volumes[$volName] = [
-                        'driver'      => 'local',
-                        'driver_opts' => [
-                            'type'   => 'nfs',
-                            'o'      => 'nfsvers=4,addr=' . $storageNodeIp,
-                            'device' => ':/var/tragwerk/volumes/' . $branchSlug . '/' . $volName,
-                        ],
-                    ];
-
                     continue;
                 }
 
+                $mountSlug         = $this->slugify($mount->name);
+                $volName           = $appSlug . '-' . $mountSlug;
                 $appVolumes[]      = $volName . ':/app/' . ltrim($mount->path, '/');
                 $volumes[$volName] = null;
             }
@@ -139,26 +120,14 @@ final readonly class DockerComposeGenerator
                 $svcConfig['volumes'] = $appVolumes;
             }
 
-            if ($dependsOn !== [] && ! $swarmMode) {
+            if ($dependsOn !== []) {
                 $svcConfig['depends_on'] = $dependsOn;
             }
 
             // App containers join the shared Traefik network so the server-level Traefik can route to them
             $svcConfig['networks'] = ['default', 'tragwerk-net'];
 
-            if ($swarmMode) {
-                // In Swarm mode Traefik reads labels from deploy.labels, not service labels
-                $svcConfig['deploy'] = [
-                    'mode'           => 'global',
-                    'update_config'  => [
-                        'parallelism' => 1,
-                        'delay'       => '10s',
-                        'order'       => 'start-first',
-                    ],
-                    'restart_policy' => ['condition' => 'any'],
-                    'labels'         => $labels,
-                ];
-            } elseif ($labels !== []) {
+            if ($labels !== []) {
                 $svcConfig['labels'] = $labels;
             }
 
@@ -185,15 +154,6 @@ final readonly class DockerComposeGenerator
 
             $svcConfig['healthcheck']       = $this->serviceHealthcheck($service->type);
             $svcConfig['stop_grace_period'] = $this->serviceStopGracePeriod($service->type);
-
-            if ($swarmMode) {
-                $svcConfig['deploy'] = [
-                    'placement'      => [
-                        'constraints' => ['node.labels.storage == true'],
-                    ],
-                    'restart_policy' => ['condition' => 'any'],
-                ];
-            }
 
             $services[$slug] = $svcConfig;
         }

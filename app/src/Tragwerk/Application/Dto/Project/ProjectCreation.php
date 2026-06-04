@@ -27,9 +27,7 @@ final readonly class ProjectCreation implements DtoInterface
         #[FromBody]
         public string $serverId,
         #[FromBody]
-        public bool $swarmEnabled = false,
-        #[FromBody]
-        public string|null $registryId = null,
+        public string $registryId,
     ) {
         $errors = [];
         if (trim($this->name) === '') {
@@ -40,12 +38,8 @@ final readonly class ProjectCreation implements DtoInterface
             $errors[] = ValidationError::make('serverId', _('Please select a server'));
         }
 
-        if (
-            $this->registryId !== null
-            && trim($this->registryId) !== ''
-            && ! RegistryIdentifier::isValid($this->registryId)
-        ) {
-            $errors[] = ValidationError::make('registryId', _('Invalid registry'));
+        if (trim($this->registryId) === '' || ! RegistryIdentifier::isValid($this->registryId)) {
+            $errors[] = ValidationError::make('registryId', _('Please select a registry'));
         }
 
         if ($errors !== []) {
@@ -60,11 +54,6 @@ final readonly class ProjectCreation implements DtoInterface
     ): Project {
         $now = TimestampImmutable::now();
 
-        $rid                = $this->registryId;
-        $registryIdentifier = $rid !== null && trim($rid) !== '' && RegistryIdentifier::isValid($rid)
-            ? RegistryIdentifier::fromString($rid)
-            : null;
-
         return new Project(
             $id,
             $this->name,
@@ -74,8 +63,7 @@ final readonly class ProjectCreation implements DtoInterface
             $createdBy,
             $now,
             $createdBy,
-            registryId: $registryIdentifier,
-            swarmEnabled: $this->swarmEnabled,
+            RegistryIdentifier::fromString($this->registryId),
         );
     }
 }
