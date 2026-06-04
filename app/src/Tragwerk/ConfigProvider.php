@@ -372,6 +372,7 @@ final readonly class ConfigProvider
                 Event\ProjectCreated::class      => [
                     EventListener\Project\CreateProject::class,
                     EventListener\Project\CreateGitRepository::class,
+                    EventListener\SshKey\UpdateAuthorizedKeys::class,
                 ],
                 Event\ProjectUpdated::class      => [EventListener\Project\UpdateProject::class],
                 Event\SwarmNodeAdded::class      => [EventListener\Project\AddSwarmNode::class],
