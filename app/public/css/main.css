@@ -348,9 +348,9 @@ h6 {
 /* ── Tables ─────────────────────────────────────────────── */
 
 .table {
-    --bs-table-bg:              transparent;
-    --bs-table-striped-bg:      rgba(var(--bs-emphasis-color-rgb), 0.05);
-    --bs-table-hover-bg:        rgba(var(--bs-emphasis-color-rgb), 0.09);
+    --bs-table-bg:              var(--bs-body-bg);
+    --bs-table-striped-bg:      rgba(var(--bs-emphasis-color-rgb), 0.04);
+    --bs-table-hover-bg:        rgba(var(--bs-primary-rgb), 0.07);
     --bs-table-border-color:    var(--bs-border-color);
     font-size: 0.875rem;
 }
@@ -361,7 +361,7 @@ h6 {
     letter-spacing: 0.07em;
     text-transform: uppercase;
     color: var(--bs-secondary-color);
-    background: rgba(var(--bs-emphasis-color-rgb), 0.04);
+    background: rgba(var(--bs-emphasis-color-rgb), 0.06);
     border-bottom: 2px solid var(--bs-border-color);
 }
 
