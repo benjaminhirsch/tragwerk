@@ -22,6 +22,7 @@ final class User implements Entity
         public TimestampImmutable $createdAt,
         public TimestampImmutable $updatedAt,
         public TeamIdentifier|null $lastActiveTeamId = null,
+        public TimestampImmutable|null $confirmedAt = null,
     ) {
     }
 

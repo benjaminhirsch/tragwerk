@@ -249,6 +249,14 @@ final class BuildEnvironmentTest extends TestCase
             {
                 return null;
             }
+
+            public function confirm(UserIdentifier $id): void
+            {
+            }
+
+            public function updatePassword(UserIdentifier $id, string $passwordHash): void
+            {
+            }
         };
 
         $this->handler = new BuildEnvironment(

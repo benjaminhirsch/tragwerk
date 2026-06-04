@@ -1,0 +1,27 @@
+<?php $this->layout('layout::default', ['title' => 'Set New Password · Tragwerk']) ?>
+
+<h4 class="card-title mb-1"><?= $this->t('Set new password') ?></h4>
+<p class="text-body-secondary small mb-4"><?= $this->t('Enter and confirm your new password.') ?></p>
+
+<form action="<?= $this->url('passwordReset.apply', ['token' => $token]) ?>" method="post">
+    <?= $this->fetch('partial::input/csrf') ?>
+    <?= $this->fetch('partial::input/password', [
+            'id'         => 'password1',
+            'label'      => $this->t('New password'),
+            'required'   => true,
+            'autofocus'  => true,
+            'validation' => $validationBag ?? null,
+    ]) ?>
+    <?= $this->fetch('partial::input/password', [
+            'id'         => 'password2',
+            'label'      => $this->t('Confirm new password'),
+            'required'   => true,
+            'validation' => $validationBag ?? null,
+    ]) ?>
+    <div class="form-actions d-grid">
+        <?= $this->fetch('partial::input/button', [
+                'label'   => $this->t('Update password'),
+                'classes' => 'btn btn-primary',
+        ]) ?>
+    </div>
+</form>

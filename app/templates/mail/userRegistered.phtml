@@ -1,12 +1,10 @@
-{% extends '@layout/mail.twig' %}
+<?php $this->layout('layout::mail') ?>
+<?= $this->e($user->firstname) ?>,<br /><br />
 
-{% set meta = {title: t('mail.userInvited.subject')} %}
+<?= $this->t('Thank you for registering with Tragwerk. Please confirm your email address by clicking the link below.') ?><br /><br />
 
-{% block content %}
+<a href="<?= $this->serverurl($this->url('email.confirm', ['token' => $confirmation->token])) ?>">
+    <?= $this->t('Confirm email address') ?>
+</a><br /><br />
 
-    {{ t('mail.greeting {name}', {name: user}) }}<br />
-    <br />
-
-    {{ t('mail.userInvited.body') }}<br />
-
-{% endblock %}
+<?= $this->t('This link expires in 24 hours.') ?>

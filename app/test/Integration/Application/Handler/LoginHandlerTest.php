@@ -68,6 +68,19 @@ final class LoginHandlerTest extends AppIntegrationTestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
+    #[Test]
+    public function postWithUnconfirmedAccountReRendersLoginForm(): void
+    {
+        $this->seedUnconfirmedUser('unconfirmed@example.com', 'unconfirmed-pass-123');
+
+        $response = $this->dispatch('POST', '/login', [
+            'email'    => 'unconfirmed@example.com',
+            'password' => 'unconfirmed-pass-123',
+        ]);
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
     private function seedUser(): void
     {
         $now  = TimestampImmutable::now();
@@ -77,6 +90,25 @@ final class LoginHandlerTest extends AppIntegrationTestCase
             'Login',
             'Tester',
             PasswordHash::create(self::PASSWORD),
+            $now,
+            $now,
+        );
+
+        $repository = $this->container->get(UserRepository::class);
+        assert($repository instanceof UserRepository);
+        $repository->create($user);
+        $repository->confirm($user->id);
+    }
+
+    private function seedUnconfirmedUser(string $email, string $password): void
+    {
+        $now  = TimestampImmutable::now();
+        $user = new User(
+            UserIdentifier::create(),
+            $email,
+            'Unconfirmed',
+            'User',
+            PasswordHash::create($password),
             $now,
             $now,
         );

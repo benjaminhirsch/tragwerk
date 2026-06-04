@@ -50,4 +50,8 @@ interface UserRepository extends UserRepositoryInterface
     public function getLastActiveTeamId(UserIdentifier $userId): TeamIdentifier|null;
 
     public function setLastActiveTeam(UserIdentifier $userId, TeamIdentifier $teamId): void;
+
+    public function confirm(UserIdentifier $id): void;
+
+    public function updatePassword(UserIdentifier $id, string $passwordHash): void;
 }

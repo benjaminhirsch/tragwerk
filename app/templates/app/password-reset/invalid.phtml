@@ -1,0 +1,10 @@
+<?php $this->layout('layout::default', ['title' => 'Invalid Link · Tragwerk']) ?>
+
+<h4 class="card-title mb-1"><?= $this->t('Invalid or expired link') ?></h4>
+<p class="text-body-secondary small mb-4">
+    <?= $this->t('This password reset link is invalid or has expired.') ?>
+</p>
+
+<a href="<?= $this->url('passwordReset.request') ?>" class="btn btn-primary d-block w-100">
+    <?= $this->t('Request a new link') ?>
+</a>

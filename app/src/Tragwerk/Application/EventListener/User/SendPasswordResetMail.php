@@ -10,7 +10,7 @@ use Tragwerk\Application\Queue\Message;
 use Tragwerk\Application\Queue\Producer;
 use Tragwerk\Domain\Event;
 
-final readonly class SendRegistrationMail
+final readonly class SendPasswordResetMail
 {
     public function __construct(
         private Producer $producer,
@@ -19,14 +19,14 @@ final readonly class SendRegistrationMail
     ) {
     }
 
-    public function __invoke(Event\EmailConfirmationCreated $event): void
+    public function __invoke(Event\PasswordResetRequested $event): void
     {
         $this->producer->sendMessage(new Message\SendMail(
             to: $event->user->email,
-            subject: $this->translator->translate('mail.emailConfirmation.subject'),
-            html: $this->templateRenderer->render('mail::userRegistered', [
-                'user'         => $event->user,
-                'confirmation' => $event->confirmation,
+            subject: $this->translator->translate('mail.passwordReset.subject'),
+            html: $this->templateRenderer->render('mail::passwordReset', [
+                'user'          => $event->user,
+                'passwordReset' => $event->passwordReset,
             ]),
         ), priority: 6);
     }

@@ -44,6 +44,38 @@ final readonly class App
             ->setOptions([Middleware\AuthenticationMiddleware::OPTION_REQUIRE_AUTHENTICATION => false]);
         $routes->post('/logout', $this->middlewareFactory->prepare([Middleware\Logout::class]), 'logout');
 
+        $routes
+            ->route(
+                '/password-reset',
+                $this->middlewareFactory->prepare([Handler\PasswordResetRequestHandler::class]),
+                [
+                    RequestMethodInterface::METHOD_GET,
+                    RequestMethodInterface::METHOD_POST,
+                ],
+                'passwordReset.request',
+            )
+            ->setOptions([Middleware\AuthenticationMiddleware::OPTION_REQUIRE_AUTHENTICATION => false]);
+
+        $routes
+            ->route(
+                '/password-reset/{token}',
+                $this->middlewareFactory->prepare([Handler\PasswordResetApplyHandler::class]),
+                [
+                    RequestMethodInterface::METHOD_GET,
+                    RequestMethodInterface::METHOD_POST,
+                ],
+                'passwordReset.apply',
+            )
+            ->setOptions([Middleware\AuthenticationMiddleware::OPTION_REQUIRE_AUTHENTICATION => false]);
+
+        $routes
+            ->get(
+                '/confirm-email/{token}',
+                $this->middlewareFactory->prepare([Handler\ConfirmEmailHandler::class]),
+                'email.confirm',
+            )
+            ->setOptions([Middleware\AuthenticationMiddleware::OPTION_REQUIRE_AUTHENTICATION => false]);
+
         $routes->get(
             '/',
             $this->middlewareFactory->prepare([
