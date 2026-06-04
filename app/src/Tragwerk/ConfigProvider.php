@@ -55,6 +55,7 @@ use Tragwerk\Factory\Handler\Project\DownloadBuildHandlerFactory;
 use Tragwerk\Factory\Handler\Project\TabHandlerFactory;
 use Tragwerk\Factory\Middleware\MiddlewareFactory;
 use Tragwerk\Factory\Queue\Handler\BuildEnvironmentFactory;
+use Tragwerk\Factory\Queue\Handler\RunCleanupProjectDockerFactory;
 use Tragwerk\Factory\Queue\Handler\RunDeployEnvironmentFactory;
 use Tragwerk\Factory\Queue\Handler\RunSyncEnvironmentDataFactory;
 use Tragwerk\Factory\Valinor\DefaultMapperBuilderFactory;
@@ -98,7 +99,8 @@ final readonly class ConfigProvider
                     Application\Handler\Project\DownloadBuildHandler::class => DownloadBuildHandlerFactory::class,
                     Application\Queue\Handler\BuildEnvironment::class         => BuildEnvironmentFactory::class,
                     Application\Queue\Handler\RunDeployEnvironment::class     => RunDeployEnvironmentFactory::class,
-                    Application\Queue\Handler\RunSyncEnvironmentData::class   => RunSyncEnvironmentDataFactory::class,
+                    Application\Queue\Handler\RunSyncEnvironmentData::class   => RunSyncEnvironmentDataFactory::class, // phpcs:ignore Generic.Files.LineLength.TooLong
+                    Application\Queue\Handler\RunCleanupProjectDocker::class  => RunCleanupProjectDockerFactory::class, // phpcs:ignore Generic.Files.LineLength.TooLong
                     Application\Cli\Command\DeployEnvironmentCommand::class   => DeployEnvironmentCommandFactory::class,
                     Application\Cli\Command\SyncEnvironmentDataCommand::class => SyncEnvironmentDataCommandFactory::class, // phpcs:ignore Generic.Files.LineLength.TooLong
                     EventListener\SshKey\UpdateAuthorizedKeys::class        => UpdateAuthorizedKeysFactory::class,
@@ -378,6 +380,7 @@ final readonly class ConfigProvider
                 Event\SwarmNodeAdded::class      => [EventListener\Project\AddSwarmNode::class],
                 Event\SwarmNodeRemoved::class    => [EventListener\Project\RemoveSwarmNode::class],
                 Event\ProjectDeleted::class      => [
+                    EventListener\Project\QueueDockerCleanup::class,
                     EventListener\Project\DeleteProject::class,
                     EventListener\Project\DeleteGitRepository::class,
                     EventListener\Project\DeleteProjectData::class,
