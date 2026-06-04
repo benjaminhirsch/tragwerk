@@ -20,6 +20,7 @@ use function is_string;
 use function json_decode;
 use function json_encode;
 use function rsort;
+use function str_ends_with;
 use function str_starts_with;
 use function strpos;
 use function strtolower;
@@ -85,13 +86,14 @@ final readonly class RegistryPruner
             }
 
             $name = is_string($tag['name'] ?? null) ? $tag['name'] : '';
-            if ($name === '' || ! str_starts_with($name, $prefix)) {
+            if ($name === '' || ! str_starts_with($name, $prefix) || str_ends_with($name, '-cache')) {
                 continue;
             }
 
             $matching[] = $name;
         }
 
+        rsort($matching, SORT_STRING);
         $toDelete = array_slice($matching, $registry->keepTags);
         $deleted  = [];
 
@@ -112,10 +114,10 @@ final readonly class RegistryPruner
     /** @return list<string> */
     private function pruneOci(Registry $registry, string $prefix): array
     {
-        $token = $this->ociToken($registry);
-        $repo  = $registry->repository;
-        $base  = 'https://' . $registry->url . '/v2/' . $repo;
-        $auth  = 'Authorization: Bearer ' . $token;
+        [$token, $authType] = $this->ociToken($registry);
+        $repo               = $registry->repository;
+        $base               = 'https://' . $registry->url . '/v2/' . $repo;
+        $auth               = 'Authorization: ' . $authType . ' ' . $token;
 
         $body = $this->httpGet($base . '/tags/list', [$auth]);
 
@@ -128,7 +130,7 @@ final readonly class RegistryPruner
 
         $matching = [];
         foreach ($data['tags'] as $tag) {
-            if (! is_string($tag) || ! str_starts_with($tag, $prefix)) {
+            if (! is_string($tag) || ! str_starts_with($tag, $prefix) || str_ends_with($tag, '-cache')) {
                 continue;
             }
 
@@ -190,7 +192,8 @@ final readonly class RegistryPruner
         return $data['token'];
     }
 
-    private function ociToken(Registry $registry): string
+    /** @return array{0: string, 1: 'Basic'|'Bearer'} token + auth scheme */
+    private function ociToken(Registry $registry): array
     {
         $ch = curl_init();
 
@@ -198,7 +201,8 @@ final readonly class RegistryPruner
             throw new RuntimeException('Failed to initialize curl');
         }
 
-        $basicAuth = 'Authorization: Basic ' . base64_encode($registry->username . ':' . $registry->password);
+        $credentials = base64_encode($registry->username . ':' . $registry->password);
+        $basicAuth   = 'Authorization: Basic ' . $credentials;
 
         curl_setopt($ch, CURLOPT_URL, 'https://' . $registry->url . '/v2/');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -207,7 +211,7 @@ final readonly class RegistryPruner
         $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
         if ($status === 200) {
-            return base64_encode($registry->username . ':' . $registry->password);
+            return [$credentials, 'Basic'];
         }
 
         $repo     = $registry->repository;
@@ -219,11 +223,11 @@ final readonly class RegistryPruner
         $data = json_decode($body, true);
 
         if (is_array($data) && is_string($data['token'] ?? null)) {
-            return $data['token'];
+            return [$data['token'], 'Bearer'];
         }
 
         if (is_array($data) && is_string($data['access_token'] ?? null)) {
-            return $data['access_token'];
+            return [$data['access_token'], 'Bearer'];
         }
 
         throw new RuntimeException('Could not obtain OCI registry token from ' . $registry->url);
