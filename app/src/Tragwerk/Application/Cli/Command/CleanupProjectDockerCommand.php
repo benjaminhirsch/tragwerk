@@ -23,6 +23,8 @@ use function is_array;
 use function is_int;
 use function is_string;
 use function json_decode;
+use function preg_replace;
+use function strtolower;
 use function trim;
 
 #[AsCommand(name: 'project:docker-cleanup')]
@@ -136,7 +138,6 @@ final class CleanupProjectDockerCommand extends Command
     ): void {
         $remoteBase = 'tragwerk/' . $projectId;
 
-        // Find all branch dirs and run compose down for each
         $lsOut = trim((string) $sftp->exec('ls ' . escapeshellarg($remoteBase) . ' 2>/dev/null'));
 
         if ($lsOut !== '') {
@@ -146,12 +147,28 @@ final class CleanupProjectDockerCommand extends Command
                     continue;
                 }
 
-                $branchDir = $remoteBase . '/' . $branch;
+                $branchDir  = $remoteBase . '/' . $branch;
+                $branchSlug = $this->slugify($branch);
+
                 $output->writeln('[Cleanup] Stopping containers for branch: ' . $branch);
+
+                // Remove compose-managed containers + their declared volumes
                 $sftp->exec(
                     'cd ' . escapeshellarg($branchDir)
                     . ' && NO_COLOR=1 docker compose -f docker-compose.yml down --volumes --remove-orphans 2>&1'
                     . '; true',
+                );
+
+                // Remove blue/green standalone containers (docker create, not compose up)
+                $sftp->exec(
+                    'docker ps -aq --filter ' . escapeshellarg('name=' . $branchSlug . '-')
+                    . ' 2>/dev/null | xargs -r docker rm -f 2>/dev/null; true',
+                );
+
+                // Remove any leftover named volumes for this branch
+                $sftp->exec(
+                    'docker volume ls -q --filter ' . escapeshellarg('name=' . $branchSlug . '_')
+                    . ' 2>/dev/null | xargs -r docker volume rm 2>/dev/null; true',
                 );
             }
         }
@@ -159,47 +176,58 @@ final class CleanupProjectDockerCommand extends Command
         $sftp->exec('rm -rf ' . escapeshellarg($remoteBase) . ' 2>/dev/null; true');
         $output->writeln('[Cleanup] Removed project directory.');
 
-        if (! $swarmEnabled) {
-            return;
-        }
+        if ($swarmEnabled) {
+            // Remove any remaining swarm stacks for this project
+            $stacks = trim((string) $sftp->exec(
+                'docker stack ls --format "{{.Name}}" 2>/dev/null | grep "^' . $projectSlug . '-" || true',
+            ));
 
-        // Remove any remaining swarm stacks for this project
-        $stacks = trim((string) $sftp->exec(
-            'docker stack ls --format "{{.Name}}" 2>/dev/null | grep "^' . $projectSlug . '-" || true',
-        ));
+            if ($stacks !== '') {
+                foreach (explode("\n", $stacks) as $stack) {
+                    $stack = trim($stack);
+                    if ($stack === '') {
+                        continue;
+                    }
 
-        if ($stacks !== '') {
-            foreach (explode("\n", $stacks) as $stack) {
-                $stack = trim($stack);
-                if ($stack === '') {
-                    continue;
+                    $sftp->exec('docker stack rm ' . escapeshellarg($stack) . ' 2>/dev/null; true');
+                    $output->writeln('[Cleanup] Removed swarm stack: ' . $stack);
                 }
 
-                $sftp->exec('docker stack rm ' . escapeshellarg($stack) . ' 2>/dev/null; true');
-                $output->writeln('[Cleanup] Removed swarm stack: ' . $stack);
+                $sftp->exec(
+                    'for i in $(seq 1 20); do'
+                    . ' docker stack ls 2>/dev/null | grep -q "^' . $projectSlug . '-" || break;'
+                    . ' sleep 2;'
+                    . ' done',
+                );
             }
 
-            // Wait for stack removal
+            $sftp->exec('docker stack rm tragwerk-infra 2>/dev/null; true');
             $sftp->exec(
                 'for i in $(seq 1 20); do'
-                . ' docker stack ls 2>/dev/null | grep -q "^' . $projectSlug . '-" || break;'
+                . ' docker stack ls 2>/dev/null | grep -q "^tragwerk-infra" || break;'
                 . ' sleep 2;'
                 . ' done',
             );
+
+            $sftp->exec('docker swarm leave --force 2>/dev/null; true');
+
+            $output->writeln('[Cleanup] Swarm infrastructure removed.');
         }
 
-        // Remove swarm infra stack and leave swarm
-        $sftp->exec('docker stack rm tragwerk-infra 2>/dev/null; true');
-        $sftp->exec(
-            'for i in $(seq 1 20); do'
-            . ' docker stack ls 2>/dev/null | grep -q "^tragwerk-infra" || break;'
-            . ' sleep 2;'
-            . ' done',
-        );
-
-        $sftp->exec('docker swarm leave --force 2>/dev/null; true');
+        // Remove Traefik container + certs volume — this server is now fully free
         $sftp->exec('docker rm -f tragwerk-traefik 2>/dev/null; true');
+        $sftp->exec('docker volume rm tragwerk-traefik-certs 2>/dev/null; true');
 
-        $output->writeln('[Cleanup] Swarm infrastructure removed.');
+        // Remove shared network — safe since this server had exactly one project
+        $sftp->exec('docker network rm tragwerk-net 2>/dev/null; true');
+
+        $output->writeln('[Cleanup] Traefik and shared network removed.');
+    }
+
+    private function slugify(string $name): string
+    {
+        $slug = preg_replace('/[\s_]+/', '-', strtolower($name)) ?? '';
+
+        return preg_replace('/[^a-z0-9-]/', '', $slug) ?? '';
     }
 }
