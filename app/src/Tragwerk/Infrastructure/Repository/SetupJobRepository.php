@@ -56,22 +56,22 @@ final class SetupJobRepository extends GenericRepository implements SetupJobRepo
 
         $ids = array_map(static fn (ServerIdentifier $id) => $id->toString(), $serverIds);
 
-        $qb = $this->connection->createQueryBuilder();
-        $qb->select('DISTINCT server_id')
-            ->from(EntityHelper::getDbTableName(EntityType::SETUP_JOB))
-            ->where($qb->expr()->in('server_id', ':ids'))
-            ->andWhere($qb->expr()->eq('status', ':status'))
-            ->setParameter('ids', $ids, ArrayParameterType::STRING)
-            ->setParameter('status', SetupJobStatus::Completed->value);
-
         try {
-            return array_map(
-                static function (array $row): string {
-                    /** @var array<string, string> $row */
-                    return $row['server_id'];
-                },
-                $qb->executeQuery()->fetchAllAssociative(),
-            );
+            $rows = $this->connection->executeQuery(
+                'SELECT server_id FROM (
+                    SELECT DISTINCT ON (server_id) server_id, status
+                    FROM setup_jobs
+                    WHERE server_id IN (:ids)
+                    ORDER BY server_id, created_at DESC
+                ) latest WHERE status = :status',
+                ['ids' => $ids, 'status' => SetupJobStatus::Completed->value],
+                ['ids' => ArrayParameterType::STRING],
+            )->fetchAllAssociative();
+
+            return array_map(static function (array $row): string {
+                /** @var array<string, string> $row */
+                return $row['server_id'];
+            }, $rows);
         } catch (Exception) {
             return [];
         }
