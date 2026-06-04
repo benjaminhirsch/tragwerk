@@ -1,7 +1,6 @@
 <?php
 /**
  * @var list<\Tragwerk\Domain\Entity\Server>                        $servers
- * @var list<\Tragwerk\Domain\Entity\Server>                        $allServers
  * @var list<\Tragwerk\Domain\Entity\Registry>                      $registries
  * @var \Tragwerk\Application\Validation\ValidationBag|null         $validationBag
  */
@@ -9,11 +8,6 @@ $this->layout('layout::default', ['title' => $this->t('Create project')]);
 ?>
 
 <h1><?= $this->t('Create project') ?></h1>
-
-<style>
-    #tw-swarm-section { display: none; }
-    form:has(#swarmEnabled:checked) #tw-swarm-section { display: block; }
-</style>
 
 <?php $this->start('card-content') ?>
     <form action="<?= $this->url('project.create') ?>" method="post">
@@ -34,81 +28,26 @@ $this->layout('layout::default', ['title' => $this->t('Create project')]);
         ?>
         <?= $this->fetch('partial::input/select', [
             'id'                 => 'serverId',
-            'label'              => $this->t('Primary server (Swarm Manager)'),
+            'label'              => $this->t('Server'),
             'validation'         => $validationBag ?? null,
             'options'            => $serverOptions,
             'defaultOptionLabel' => $this->t('— select a server —'),
         ]) ?>
 
         <?php
-            $registryOptions = ['' => $this->t('— None (build on server) —')];
+            $registryOptions = [];
             foreach ($registries as $registry) {
                 $registryOptions[$registry->id->toString()] = $registry->name . ' (' . $registry->url . ')';
             }
         ?>
         <?= $this->fetch('partial::input/select', [
-            'id'           => 'registryId',
-            'label'        => $this->t('Container registry'),
-            'validation'   => $validationBag ?? null,
-            'options'      => $registryOptions,
-            'defaultValue' => ($validationBag?->getValueByName('registryId') ?? ''),
+            'id'                 => 'registryId',
+            'label'              => $this->t('Container registry'),
+            'validation'         => $validationBag ?? null,
+            'options'            => $registryOptions,
+            'defaultOptionLabel' => $this->t('— select a registry —'),
+            'defaultValue'       => ($validationBag?->getValueByName('registryId') ?? ''),
         ]) ?>
-
-        <div class="mb-3 form-check">
-            <input type="checkbox" class="form-check-input" id="swarmEnabled" name="swarmEnabled" value="1"
-                   <?php if (($validationBag?->getValueByName('swarmEnabled') ?? '') === '1'): ?>checked<?php endif; ?>>
-            <label class="form-check-label" for="swarmEnabled"><?= $this->t('Enable Docker Swarm') ?></label>
-        </div>
-
-        <div id="tw-swarm-section">
-            <?php if (($validationBag?->getErrorByName('swarmNodes') ?? null) !== null): ?>
-                <div class="alert alert-danger"><?= $this->e($validationBag->getErrorByName('swarmNodes')) ?></div>
-            <?php endif; ?>
-            <?php if (($validationBag?->getErrorByName('swarmStorageNodeId') ?? null) !== null): ?>
-                <div class="alert alert-danger"><?= $this->e($validationBag->getErrorByName('swarmStorageNodeId')) ?></div>
-            <?php endif; ?>
-
-            <p class="text-muted small"><?= $this->t('Select at least 2 additional servers. Total manager count must be odd (1, 3, 5, …).') ?></p>
-
-            <?php if (count($allServers) > 1): ?>
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th><?= $this->t('Include') ?></th>
-                            <th><?= $this->t('Server') ?></th>
-                            <th><?= $this->t('Role') ?></th>
-                            <th><?= $this->t('Storage node') ?></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($allServers as $server): ?>
-                            <tr data-server-id="<?= $this->e($server->id->toString()) ?>">
-                                <td>
-                                    <input type="checkbox" class="form-check-input"
-                                           name="swarmNodes[<?= $this->e($server->id->toString()) ?>]"
-                                           value="1">
-                                </td>
-                                <td><?= $this->e($server->name) ?></td>
-                                <td>
-                                    <select class="form-select form-select-sm"
-                                            name="swarmNodeRoles[<?= $this->e($server->id->toString()) ?>]">
-                                        <option value="worker"><?= $this->t('Worker') ?></option>
-                                        <option value="manager"><?= $this->t('Manager') ?></option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <input type="radio" class="form-check-input"
-                                           name="swarmStorageNodeId"
-                                           value="<?= $this->e($server->id->toString()) ?>">
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            <?php else: ?>
-                <p class="text-warning"><?= $this->t('No additional servers available. Add more servers to your team to enable Swarm mode.') ?></p>
-            <?php endif; ?>
-        </div>
 
         <div class="d-flex gap-2">
             <?= $this->fetch('partial::input/button', [
@@ -124,4 +63,3 @@ $this->layout('layout::default', ['title' => $this->t('Create project')]);
 
     </form>
 <?php $this->stop() ?>
-<script src="/js/project-form.js"></script>

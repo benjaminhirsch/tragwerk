@@ -39,26 +39,12 @@ final readonly class QueueDockerCleanup
                 return;
             }
 
-            $swarmNodes = [];
-            if ($project->swarmEnabled) {
-                foreach ($this->projectRepository->getSwarmNodes($event->projectId) as $node) {
-                    try {
-                        $nodeServer   = $this->serverRepository->getById($node->serverId);
-                        $swarmNodes[] = ['host' => (string) $nodeServer->host, 'port' => $nodeServer->port];
-                    } catch (Throwable) {
-                        // skip unavailable node
-                    }
-                }
-            }
-
             $this->producer->sendMessage(new CleanupProjectDocker(
                 projectId:    $event->projectId->toString(),
                 projectSlug:  $this->slugify($project->name),
                 host:         $server->host,
                 port:         $server->port,
                 credentialId: $server->credentialId->toString(),
-                swarmEnabled: $project->swarmEnabled,
-                swarmNodes:   $swarmNodes,
             ));
         } catch (Throwable) {
             // do not block project deletion if cleanup enqueueing fails

@@ -9,7 +9,6 @@ use Symfony\Component\Process\Process;
 use Tragwerk\Application\Queue\Message;
 
 use function dirname;
-use function json_encode;
 
 final readonly class RunCleanupProjectDocker
 {
@@ -36,8 +35,6 @@ final readonly class RunCleanupProjectDocker
                 $message->host,
                 (string) $message->port,
                 $message->credentialId,
-                $message->swarmEnabled ? '1' : '0',
-                json_encode($message->swarmNodes) ?: '[]',
             ],
             $workDir,
             timeout: 300,

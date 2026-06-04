@@ -8,10 +8,8 @@ use PHPUnit\Framework\Attributes\Test;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Registry;
 use Tragwerk\Domain\Entity\Server;
-use Tragwerk\Domain\Entity\SwarmNode;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Entity\User;
-use Tragwerk\Domain\Enum\SwarmNodeRole;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
@@ -36,6 +34,7 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
     private User $user;
     private Team $team;
     private Server $server;
+    private Registry $registry;
     private string $sessionCookie;
 
     protected function setUp(): void
@@ -45,6 +44,7 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
         $this->user          = $this->seedUser();
         $this->team          = $this->seedTeam();
         $this->server        = $this->seedServer();
+        $this->registry      = $this->seedRegistry();
         $this->sessionCookie = $this->loginAndGetCookie();
     }
 
@@ -79,7 +79,11 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
         $response = $this->dispatch(
             'POST',
             $this->url('project.create'),
-            ['name' => 'My Project', 'serverId' => $this->server->id->toString()],
+            [
+                'name'       => 'My Project',
+                'serverId'   => $this->server->id->toString(),
+                'registryId' => $this->registry->id->toString(),
+            ],
             $this->sessionCookie,
         );
 
@@ -96,7 +100,11 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
         $this->dispatch(
             'POST',
             $this->url('project.create'),
-            ['name' => 'My Project', 'serverId' => $this->server->id->toString()],
+            [
+                'name'       => 'My Project',
+                'serverId'   => $this->server->id->toString(),
+                'registryId' => $this->registry->id->toString(),
+            ],
             $this->sessionCookie,
         );
 
@@ -144,7 +152,11 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
         $response = $this->dispatch(
             'POST',
             $this->url('project.create'),
-            ['name' => 'New Project', 'serverId' => $this->server->id->toString()],
+            [
+                'name'       => 'New Project',
+                'serverId'   => $this->server->id->toString(),
+                'registryId' => $this->registry->id->toString(),
+            ],
             $this->sessionCookie,
         );
 
@@ -154,16 +166,18 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
     #[Test]
     public function editPostWithAlreadyUsedServerReRendersForm(): void
     {
-        // $this->server is occupied by $occupyingProject; $editedProject gets a fresh server
         $occupyingProject = $this->seedProject('Occupying Project');
         $secondServer     = $this->seedExtraServer();
         $editedProject    = $this->seedProjectForTeam($this->team->id, 'Edited Project', $secondServer->id);
 
-        // Try to move $editedProject onto the already-occupied $this->server
         $response = $this->dispatch(
             'POST',
             $this->url('project.edit', ['id' => $editedProject->id->toString()]),
-            ['name' => 'Edited Project', 'serverId' => $occupyingProject->serverId->toString()],
+            [
+                'name'       => 'Edited Project',
+                'serverId'   => $occupyingProject->serverId->toString(),
+                'registryId' => $this->registry->id->toString(),
+            ],
             $this->sessionCookie,
         );
 
@@ -270,7 +284,11 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
         $response = $this->dispatch(
             'POST',
             $this->url('project.edit', ['id' => $project->id->toString()]),
-            ['name' => 'Updated Project', 'serverId' => $this->server->id->toString()],
+            [
+                'name'       => 'Updated Project',
+                'serverId'   => $this->server->id->toString(),
+                'registryId' => $this->registry->id->toString(),
+            ],
             $this->sessionCookie,
         );
 
@@ -288,7 +306,11 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
         $this->dispatch(
             'POST',
             $this->url('project.edit', ['id' => $project->id->toString()]),
-            ['name' => 'Updated Name', 'serverId' => $this->server->id->toString()],
+            [
+                'name'       => 'Updated Name',
+                'serverId'   => $this->server->id->toString(),
+                'registryId' => $this->registry->id->toString(),
+            ],
             $this->sessionCookie,
         );
 
@@ -356,165 +378,6 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
 
         self::assertSame(302, $response->getStatusCode());
         self::assertSame($this->url('project'), $response->getHeaderLine('Location'));
-    }
-
-    #[Test]
-    public function createPostWithSwarmEnabledButTooFewNodesReRendersForm(): void
-    {
-        $extra = $this->seedExtraServer();
-
-        $response = $this->dispatch(
-            'POST',
-            $this->url('project.create'),
-            [
-                'name'         => 'Swarm Project',
-                'serverId'     => $this->server->id->toString(),
-                'swarmEnabled' => '1',
-                'swarmNodes'   => [$extra->id->toString() => '1'],
-            ],
-            $this->sessionCookie,
-        );
-
-        self::assertSame(200, $response->getStatusCode());
-    }
-
-    #[Test]
-    public function createPostWithSwarmEnabledAndEvenManagerCountReRendersForm(): void
-    {
-        $node1 = $this->seedExtraServer('Node1', '10.0.0.2');
-        $node2 = $this->seedExtraServer('Node2', '10.0.0.3');
-
-        $response = $this->dispatch(
-            'POST',
-            $this->url('project.create'),
-            [
-                'name'             => 'Swarm Project',
-                'serverId'         => $this->server->id->toString(),
-                'swarmEnabled'     => '1',
-                'swarmNodes'       => [
-                    $node1->id->toString() => '1',
-                    $node2->id->toString() => '1',
-                ],
-                'swarmNodeRoles'   => [
-                    $node1->id->toString() => 'manager',
-                    $node2->id->toString() => 'worker',
-                ],
-                'swarmStorageNodeId' => $node1->id->toString(),
-            ],
-            $this->sessionCookie,
-        );
-
-        self::assertSame(200, $response->getStatusCode());
-    }
-
-    #[Test]
-    public function createPostWithValidSwarmConfigPersistsNodes(): void
-    {
-        $registry = $this->seedRegistry();
-        $node1    = $this->seedExtraServer('Node1', '10.0.0.2');
-        $node2    = $this->seedExtraServer('Node2', '10.0.0.3');
-
-        $this->dispatch(
-            'POST',
-            $this->url('project.create'),
-            [
-                'name'               => 'Swarm Project',
-                'serverId'           => $this->server->id->toString(),
-                'registryId'         => $registry->id->toString(),
-                'swarmEnabled'       => '1',
-                'swarmNodes'         => [
-                    $node1->id->toString() => '1',
-                    $node2->id->toString() => '1',
-                ],
-                'swarmNodeRoles'     => [
-                    $node1->id->toString() => 'worker',
-                    $node2->id->toString() => 'worker',
-                ],
-                'swarmStorageNodeId' => $node1->id->toString(),
-            ],
-            $this->sessionCookie,
-        );
-
-        $repository = $this->container->get(ProjectRepository::class);
-        assert($repository instanceof ProjectRepository);
-
-        $projects = [...$repository->getAll(teamId: $this->team->id)];
-        self::assertCount(1, $projects);
-        assert($projects[0] instanceof Project);
-        self::assertTrue($projects[0]->swarmEnabled);
-
-        $nodes = $repository->getSwarmNodes($projects[0]->id);
-        self::assertCount(2, $nodes);
-
-        $storageNode = $repository->getSwarmStorageNode($projects[0]->id);
-        self::assertInstanceOf(SwarmNode::class, $storageNode);
-        self::assertTrue($node1->id->isEqualTo($storageNode->serverId));
-        self::assertSame(SwarmNodeRole::Worker, $storageNode->role);
-    }
-
-    #[Test]
-    public function editPostEnablingSwarmPersistsNodes(): void
-    {
-        $registry = $this->seedRegistry();
-        $project  = $this->seedProject('Swarm Project');
-        $node1    = $this->seedExtraServer('Node1', '10.0.0.2');
-        $node2    = $this->seedExtraServer('Node2', '10.0.0.3');
-
-        $this->dispatch(
-            'POST',
-            $this->url('project.edit', ['id' => $project->id->toString()]),
-            [
-                'name'               => 'Swarm Project',
-                'serverId'           => $this->server->id->toString(),
-                'registryId'         => $registry->id->toString(),
-                'swarmEnabled'       => '1',
-                'swarmNodes'         => [
-                    $node1->id->toString() => '1',
-                    $node2->id->toString() => '1',
-                ],
-                'swarmNodeRoles'     => [
-                    $node1->id->toString() => 'manager',
-                    $node2->id->toString() => 'manager',
-                ],
-                'swarmStorageNodeId' => $node2->id->toString(),
-            ],
-            $this->sessionCookie,
-        );
-
-        $repository = $this->container->get(ProjectRepository::class);
-        assert($repository instanceof ProjectRepository);
-
-        $updated = $repository->getById($project->id);
-        assert($updated instanceof Project);
-        self::assertTrue($updated->swarmEnabled);
-
-        $nodes = $repository->getSwarmNodes($project->id);
-        self::assertCount(2, $nodes);
-    }
-
-    #[Test]
-    public function editPostDisablingSwarmClearsExistingNodes(): void
-    {
-        $node1   = $this->seedExtraServer('Node1', '10.0.0.2');
-        $node2   = $this->seedExtraServer('Node2', '10.0.0.3');
-        $project = $this->seedProject('Swarm Project');
-
-        $projectRepo = $this->container->get(ProjectRepository::class);
-        assert($projectRepo instanceof ProjectRepository);
-        $projectRepo->addSwarmNode(new SwarmNode($project->id, $node1->id, SwarmNodeRole::Worker, false));
-        $projectRepo->addSwarmNode(new SwarmNode($project->id, $node2->id, SwarmNodeRole::Worker, true));
-
-        $this->dispatch(
-            'POST',
-            $this->url('project.edit', ['id' => $project->id->toString()]),
-            ['name' => 'Swarm Project', 'serverId' => $this->server->id->toString()],
-            $this->sessionCookie,
-        );
-
-        $updated = $projectRepo->getById($project->id);
-        assert($updated instanceof Project);
-        self::assertFalse($updated->swarmEnabled);
-        self::assertSame([], $projectRepo->getSwarmNodes($project->id));
     }
 
     #[Test]
@@ -686,6 +549,7 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
             $this->user->id,
             $now,
             $this->user->id,
+            $this->registry->id,
         );
 
         $repository = $this->container->get(ProjectRepository::class);

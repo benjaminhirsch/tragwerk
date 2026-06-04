@@ -22,8 +22,7 @@ final class Project implements Entity
         public UserIdentifier $createdBy,
         public TimestampImmutable $updatedAt,
         public UserIdentifier $updatedBy,
-        public RegistryIdentifier|null $registryId = null,
-        public bool $swarmEnabled = false,
+        public RegistryIdentifier $registryId,
     ) {
     }
 }

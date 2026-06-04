@@ -7,18 +7,21 @@ namespace TragwerkTest\Integration\Application\Handler\Project;
 use PHPUnit\Framework\Attributes\Test;
 use Tragwerk\Domain\Entity\DeployJob;
 use Tragwerk\Domain\Entity\Project;
+use Tragwerk\Domain\Entity\Registry;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\Enum\DeployJobStatus;
 use Tragwerk\Domain\Repository\DeployJobRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
+use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\Repository\UserRepository;
 use Tragwerk\Domain\ValueObject\DeployJobIdentifier;
 use Tragwerk\Domain\ValueObject\PasswordHash;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Domain\ValueObject\RegistryIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
@@ -435,6 +438,32 @@ final class EnvironmentHandlerTest extends AppIntegrationTestCase
         return $server;
     }
 
+    private function seedRegistry(TeamIdentifier $teamId): RegistryIdentifier
+    {
+        $now      = TimestampImmutable::now();
+        $registry = new Registry(
+            RegistryIdentifier::create(),
+            'Test Registry',
+            'registry.example.com',
+            'test-repo',
+            'user',
+            'pass',
+            false,
+            10,
+            $teamId,
+            $now,
+            $this->user->id,
+            $now,
+            $this->user->id,
+        );
+
+        $repository = $this->container->get(RegistryRepository::class);
+        assert($repository instanceof RegistryRepository);
+        $repository->create($registry);
+
+        return $registry->id;
+    }
+
     private function seedProject(string $name = 'Test Project'): Project
     {
         $now     = TimestampImmutable::now();
@@ -447,6 +476,7 @@ final class EnvironmentHandlerTest extends AppIntegrationTestCase
             $this->user->id,
             $now,
             $this->user->id,
+            $this->seedRegistry($this->team->id),
         );
 
         $repository = $this->container->get(ProjectRepository::class);
@@ -484,6 +514,7 @@ final class EnvironmentHandlerTest extends AppIntegrationTestCase
             $this->user->id,
             $now,
             $this->user->id,
+            $this->seedRegistry($teamId),
         );
 
         $projectRepo = $this->container->get(ProjectRepository::class);

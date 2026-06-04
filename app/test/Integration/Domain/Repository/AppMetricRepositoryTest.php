@@ -7,10 +7,18 @@ namespace TragwerkTest\Integration\Domain\Repository;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\Test;
 use Tragwerk\Domain\Entity\Project;
+use Tragwerk\Domain\Entity\Registry;
+use Tragwerk\Domain\Entity\Team;
+use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\Model\EnvironmentMetrics;
 use Tragwerk\Domain\Repository\AppMetricRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
+use Tragwerk\Domain\Repository\RegistryRepository;
+use Tragwerk\Domain\Repository\TeamRepository;
+use Tragwerk\Domain\Repository\UserRepository;
+use Tragwerk\Domain\ValueObject\PasswordHash;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Domain\ValueObject\RegistryIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
@@ -120,18 +128,58 @@ final class AppMetricRepositoryTest extends IntegrationTestCase
         $this->repository->store($this->projectId, 'main', $metrics, TimestampImmutable::fromDateTime($when));
     }
 
+    private function seedRegistry(TeamIdentifier $teamId, UserIdentifier $userId): RegistryIdentifier
+    {
+        $now      = TimestampImmutable::now();
+        $registry = new Registry(
+            RegistryIdentifier::create(),
+            'Test Registry',
+            'registry.example.com',
+            'test-repo',
+            'user',
+            'pass',
+            false,
+            10,
+            $teamId,
+            $now,
+            $userId,
+            $now,
+            $userId,
+        );
+
+        $repository = $this->container->get(RegistryRepository::class);
+        assert($repository instanceof RegistryRepository);
+        $repository->create($registry);
+
+        return $registry->id;
+    }
+
     private function seedProject(): ProjectIdentifier
     {
-        $now     = TimestampImmutable::now();
+        $now    = TimestampImmutable::now();
+        $userId = UserIdentifier::create();
+        $teamId = TeamIdentifier::create();
+
+        $user     = new User($userId, 'metrics@example.com', 'M', 'T', PasswordHash::create('pw'), $now, $now);
+        $userRepo = $this->container->get(UserRepository::class);
+        assert($userRepo instanceof UserRepository);
+        $userRepo->create($user);
+
+        $team     = new Team($teamId, 'Metrics Team', $userId, $now, $userId, $now, $userId);
+        $teamRepo = $this->container->get(TeamRepository::class);
+        assert($teamRepo instanceof TeamRepository);
+        $teamRepo->create($team);
+
         $project = new Project(
             ProjectIdentifier::create(),
             'Metrics App',
             ServerIdentifier::create(),
-            TeamIdentifier::create(),
+            $teamId,
             $now,
-            UserIdentifier::create(),
+            $userId,
             $now,
-            UserIdentifier::create(),
+            $userId,
+            $this->seedRegistry($teamId, $userId),
         );
 
         $repository = $this->container->get(ProjectRepository::class);

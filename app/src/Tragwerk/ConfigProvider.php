@@ -369,8 +369,6 @@ final readonly class ConfigProvider
                     EventListener\SshKey\UpdateAuthorizedKeys::class,
                 ],
                 Event\ProjectUpdated::class      => [EventListener\Project\UpdateProject::class],
-                Event\SwarmNodeAdded::class      => [EventListener\Project\AddSwarmNode::class],
-                Event\SwarmNodeRemoved::class    => [EventListener\Project\RemoveSwarmNode::class],
                 Event\ProjectDeleted::class      => [
                     EventListener\Project\QueueDockerCleanup::class,
                     EventListener\Project\DeleteProject::class,

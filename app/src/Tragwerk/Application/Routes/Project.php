@@ -145,17 +145,5 @@ final readonly class Project
             $this->middlewareFactory->prepare([Handler\Project\DeleteHandler::class]),
             'project.delete',
         );
-
-        $routes->post(
-            '/projects/{id}/swarm/nodes',
-            $this->middlewareFactory->prepare([Handler\Project\Swarm\AddNodeHandler::class]),
-            'project.swarm.node.add',
-        );
-
-        $routes->post(
-            '/projects/{id}/swarm/nodes/{serverId}/remove',
-            $this->middlewareFactory->prepare([Handler\Project\Swarm\RemoveNodeHandler::class]),
-            'project.swarm.node.remove',
-        );
     }
 }
