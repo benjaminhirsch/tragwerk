@@ -1835,9 +1835,18 @@ final class DeployEnvironmentCommand extends Command
 
             $this->log($jobId, '[Deploy] Migrating volume "' . $srcVol . '" → "' . $dstVol . '"...');
 
-            // Scale down swarm DB service before copying to avoid data corruption
+            // Scale down swarm DB service and wait until fully stopped before copying.
+            // docker service scale is async — copying while PostgreSQL is still
+            // shutting down causes WAL corruption in the migrated volume.
+            $svc = escapeshellarg($stackName . '_' . $serviceSlug);
+            $primarySftp->exec('docker service scale ' . $svc . '=0 2>&1');
             $primarySftp->exec(
-                'docker service scale ' . escapeshellarg($stackName . '_' . $serviceSlug) . '=0 2>&1',
+                'for i in $(seq 1 30); do'
+                . ' n=$(docker service ps ' . $svc
+                . ' --filter desired-state=running --filter "name=' . $stackName . '_' . $serviceSlug . '"'
+                . ' -q 2>/dev/null | wc -l);'
+                . ' [ "$n" -eq 0 ] && break; sleep 2;'
+                . ' done',
             );
 
             $primarySftp->exec('docker volume create ' . escapeshellarg($dstVol) . ' 2>/dev/null; true');
