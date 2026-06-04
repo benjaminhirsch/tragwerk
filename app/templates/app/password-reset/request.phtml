@@ -1,0 +1,26 @@
+<?php $this->layout('layout::default', ['title' => 'Reset Password · Tragwerk']) ?>
+
+<h4 class="card-title mb-1"><?= $this->t('Reset password') ?></h4>
+<p class="text-body-secondary small mb-4"><?= $this->t('Enter your email address and we will send you a reset link.') ?></p>
+
+<form action="<?= $this->url('passwordReset.request') ?>" method="post">
+    <?= $this->fetch('partial::input/csrf') ?>
+    <?= $this->fetch('partial::input/email', [
+            'id'         => 'email',
+            'label'      => $this->t('E-Mail'),
+            'autofocus'  => true,
+            'required'   => true,
+            'validation' => $validationBag ?? null,
+    ]) ?>
+    <div class="form-actions d-grid">
+        <?= $this->fetch('partial::input/button', [
+                'label'   => $this->t('Send reset link'),
+                'classes' => 'btn btn-primary',
+        ]) ?>
+    </div>
+</form>
+
+<hr class="my-3">
+<p class="text-center text-body-secondary small mb-0">
+    <a href="<?= $this->url('login') ?>"><?= $this->t('Back to sign in') ?></a>
+</p>

@@ -1,5 +1,6 @@
-<?php $this->layout('layout::default', ['title' => 'Servers · Tragwerk']) ?>
+<?php $this->layout('layout::mail') ?>
+<?= $this->t('You have been invited to join a team on Tragwerk.') ?><br /><br />
 
-<a href="<?= $this->serverurl($this->url('team.invite', ['token' => $invitation->token])) ?>" target="_blank">
-    Let's go
+<a href="<?= $this->serverurl($this->url('team.invite', ['token' => $invitation->token])) ?>">
+    <?= $this->t('Accept invitation') ?>
 </a>

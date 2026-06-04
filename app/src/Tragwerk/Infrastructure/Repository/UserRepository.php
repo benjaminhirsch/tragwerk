@@ -130,6 +130,31 @@ final class UserRepository extends GenericRepository implements UserRepositoryIn
         }
     }
 
+    public function confirm(UserIdentifier $id): void
+    {
+        try {
+            $this->connection->executeStatement(
+                'UPDATE users SET confirmed_at = NOW() WHERE id = :id',
+                ['id' => $id->toString()],
+            );
+        } catch (Exception $e) {
+            throw EntityUpdateFailed::create($id, $e);
+        }
+    }
+
+    public function updatePassword(UserIdentifier $id, string $passwordHash): void
+    {
+        try {
+            $this->connection->update(
+                'users',
+                ['password' => $passwordHash],
+                ['id' => $id->toString()],
+            );
+        } catch (Exception $e) {
+            throw EntityUpdateFailed::create($id, $e);
+        }
+    }
+
     public function getByEmail(string $email): User
     {
         $qb = $this->connection->createQueryBuilder();

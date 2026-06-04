@@ -291,6 +291,10 @@ final readonly class ConfigProvider
                         Infrastructure\Repository\AppMetricRepository::class,
                     Domain\Repository\RegistryRepository::class =>
                         Infrastructure\Repository\RegistryRepository::class,
+                    Domain\Repository\EmailConfirmationRepository::class =>
+                        Infrastructure\Repository\EmailConfirmationRepository::class,
+                    Domain\Repository\PasswordResetRepository::class =>
+                        Infrastructure\Repository\PasswordResetRepository::class,
                 ],
             ],
         ];
@@ -343,7 +347,14 @@ final readonly class ConfigProvider
                 Event\UserRegistered::class => [
                     EventListener\User\UserRegisteredListener::class,
                     EventListener\User\CreateDefaultTeam::class,
+                    EventListener\User\CreateEmailConfirmation::class,
+                ],
+                Event\EmailConfirmationCreated::class => [
                     EventListener\User\SendRegistrationMail::class,
+                ],
+                Event\PasswordResetRequested::class => [
+                    EventListener\User\CreatePasswordReset::class,
+                    EventListener\User\SendPasswordResetMail::class,
                 ],
                 Event\CredentialCreated::class  => [EventListener\Credential\CreateCredential::class],
                 Event\CredentialUpdated::class  => [EventListener\Credential\UpdateCredential::class],

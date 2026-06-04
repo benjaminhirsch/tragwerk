@@ -435,6 +435,7 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
         $repository = $this->container->get(UserRepository::class);
         assert($repository instanceof UserRepository);
         $repository->create($user);
+        $repository->confirm($user->id);
 
         return $user;
     }

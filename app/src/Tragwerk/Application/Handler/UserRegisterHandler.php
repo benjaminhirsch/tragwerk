@@ -51,7 +51,7 @@ final readonly class UserRegisterHandler implements RequestHandlerInterface
                 if (! $validationBag->hasErrors()) {
                     $this->eventDispatcher->dispatch(new UserRegistered($registration->createUser()));
 
-                    return new RedirectResponse($this->urlHelper->generate('login'));
+                    return new RedirectResponse($this->urlHelper->generate('login') . '?registered=1');
                 }
             }
         }

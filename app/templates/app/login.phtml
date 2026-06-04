@@ -3,6 +3,42 @@
 <h4 class="card-title mb-1"><?= $this->t('Sign in') ?></h4>
 <p class="text-body-secondary small mb-4"><?= $this->t('Enter your credentials to continue') ?></p>
 
+<?php if ($registered ?? false): ?>
+<div class="alert alert-info small mb-3">
+    <?= $this->t('Registration successful. Please check your email to confirm your account.') ?>
+</div>
+<?php endif ?>
+
+<?php if ($confirmed ?? false): ?>
+<div class="alert alert-success small mb-3">
+    <?= $this->t('Your email address has been confirmed. You can now sign in.') ?>
+</div>
+<?php endif ?>
+
+<?php if ($resetRequested ?? false): ?>
+<div class="alert alert-info small mb-3">
+    <?= $this->t('If an account exists for that email, a password reset link has been sent.') ?>
+</div>
+<?php endif ?>
+
+<?php if ($passwordReset ?? false): ?>
+<div class="alert alert-success small mb-3">
+    <?= $this->t('Your password has been updated. You can now sign in with your new password.') ?>
+</div>
+<?php endif ?>
+
+<?php if ($notConfirmed ?? false): ?>
+<div class="alert alert-warning small mb-3">
+    <?= $this->t('Please confirm your email address before signing in. Check your inbox for the confirmation link.') ?>
+</div>
+<?php endif ?>
+
+<?php if ($loginError ?? false): ?>
+<div class="alert alert-danger small mb-3">
+    <?= $this->t('Invalid email address or password.') ?>
+</div>
+<?php endif ?>
+
 <form action="<?= $this->url('login') ?>" method="post">
     <?= $this->fetch('partial::input/csrf') ?>
     <?= $this->fetch('partial::input/email', [
@@ -23,7 +59,10 @@
 </form>
 
 <hr class="my-3">
-<p class="text-center text-body-secondary small mb-0">
+<p class="text-center text-body-secondary small mb-1">
     <?= $this->t("Don't have an account?") ?>
     <a href="<?= $this->url('register') ?>"><?= $this->t('Create one') ?></a>
+</p>
+<p class="text-center text-body-secondary small mb-0">
+    <a href="<?= $this->url('passwordReset.request') ?>"><?= $this->t('Forgot your password?') ?></a>
 </p>

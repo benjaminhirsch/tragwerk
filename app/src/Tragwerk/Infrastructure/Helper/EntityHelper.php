@@ -22,7 +22,9 @@ final readonly class EntityHelper
             EntityType::BUILD_LOG     => 'build_logs',
             EntityType::DEPLOY_JOB    => 'deploy_jobs',
             EntityType::DOMAIN        => 'project_domains',
-            EntityType::REGISTRY      => 'registries',
+            EntityType::REGISTRY           => 'registries',
+            EntityType::EMAIL_CONFIRMATION => 'email_confirmations',
+            EntityType::PASSWORD_RESET     => 'password_resets',
         };
     }
 }
