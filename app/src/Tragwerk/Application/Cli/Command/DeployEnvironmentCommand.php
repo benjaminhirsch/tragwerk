@@ -213,11 +213,12 @@ final class DeployEnvironmentCommand extends Command
         PrivateKey $key,
         Registry $registry,
     ): int {
-        $branchSlug  = $this->slugify(basename($branch));
-        $projectSlug = $this->slugify($project->name);
-        $shortSha    = substr($commitSha, 0, 8);
-        $timestamp   = date('YmdHis');
-        $repoPath    = $this->bareRepository->getPath($projectId);
+        $branchSlug     = $this->slugify(basename($branch));
+        $projectSlug    = $this->slugify($project->name);
+        $shortSha       = substr($commitSha, 0, 8);
+        $timestamp      = date('YmdHis');
+        $repoPath       = $this->bareRepository->getPath($projectId);
+        $composeProject = 'tw-' . substr($projectId, 0, 8) . '-' . $branchSlug;
 
         // 1. Export source from git into a temp directory
         $buildDir = sys_get_temp_dir() . '/tw-build-' . uniqid();
@@ -403,7 +404,7 @@ final class DeployEnvironmentCommand extends Command
             $domainsByPlaceholder[$domain->placeholder][] = $domain->host;
         }
 
-        $compose = $this->composeGenerator->generate($config, $branch, $domainsByPlaceholder, $imageTags);
+        $compose = $this->composeGenerator->generate($config, $branch, $domainsByPlaceholder, $imageTags, $projectSlug);
         $sftp->put(
             $remoteDir . '/docker-compose.yml',
             Yaml::dump($compose, 8, 2, Yaml::DUMP_NULL_AS_TILDE),
@@ -432,7 +433,7 @@ final class DeployEnvironmentCommand extends Command
             . ' --password-stdin 2>&1',
         );
 
-        $dc = 'NO_COLOR=1 docker compose -f docker-compose.yml';
+        $dc = 'NO_COLOR=1 docker compose --project-name ' . escapeshellarg($composeProject) . ' -f docker-compose.yml';
 
         $sftp->exec('docker network create tragwerk-net 2>/dev/null; true');
 
@@ -443,7 +444,7 @@ final class DeployEnvironmentCommand extends Command
         $sftp->exec('cd ~/' . $remoteDir . ' && ' . $dc . ' up db --wait --no-deps -d 2>&1');
 
         // Blue/green swap: start new container alongside old, wait for healthy, then stop old.
-        $composeDefaultNetwork = $branchSlug . '_default';
+        $composeDefaultNetwork = $composeProject . '_default';
         $newContainers         = [];
 
         foreach ($config->applications as $app) {
@@ -455,7 +456,7 @@ final class DeployEnvironmentCommand extends Command
             $newContainer = $this->blueGreenSwap(
                 $sftp,
                 $remoteDir,
-                $branchSlug,
+                $composeProject,
                 $appSlug,
                 $imageTags[$appSlug],
                 $svcRaw,
@@ -502,7 +503,7 @@ final class DeployEnvironmentCommand extends Command
     private function blueGreenSwap(
         SFTP $sftp,
         string $remoteDir,
-        string $branchSlug,
+        string $composeProject,
         string $appSlug,
         string $imageTag,
         array $svc,
@@ -513,14 +514,14 @@ final class DeployEnvironmentCommand extends Command
         $currentSlot = trim((string) $sftp->exec('cat ' . $slotFile . ' 2>/dev/null'));
         $newSlot     = $currentSlot === 'a' ? 'b' : 'a';
 
-        $newContainer = $branchSlug . '-' . $appSlug . '-' . $newSlot;
+        $newContainer = $composeProject . '-' . $appSlug . '-' . $newSlot;
 
         if ($currentSlot === 'a' || $currentSlot === 'b') {
-            $oldContainer = $branchSlug . '-' . $appSlug . '-' . $currentSlot;
+            $oldContainer = $composeProject . '-' . $appSlug . '-' . $currentSlot;
         } else {
             // First blue/green deploy or migration from compose-managed container.
             $oldContainer = trim((string) $sftp->exec(
-                'docker ps --filter ' . escapeshellarg('name=' . $branchSlug . '-' . $appSlug)
+                'docker ps --filter ' . escapeshellarg('name=' . $composeProject . '-' . $appSlug)
                 . ' --format "{{.Names}}" | head -1 2>/dev/null',
             ));
         }
@@ -643,7 +644,7 @@ final class DeployEnvironmentCommand extends Command
         // containers that survived strategy switches.
         $newId = '$(docker inspect --format "{{.Id}}" ' . escapeshellarg($newContainer) . ' 2>/dev/null | cut -c1-12)';
         $sftp->exec(
-            'docker ps -aq --filter ' . escapeshellarg('name=' . $branchSlug . '-' . $appSlug)
+            'docker ps -aq --filter ' . escapeshellarg('name=' . $composeProject . '-' . $appSlug)
             . ' | grep -v ' . $newId
             . ' | xargs -r docker rm -f 2>/dev/null; true',
         );
@@ -724,10 +725,13 @@ final class DeployEnvironmentCommand extends Command
         ProjectConfig $config,
         DeployJobIdentifier $jobId,
     ): void {
-        $parentSlug = $this->slugify(basename($parentBranch));
-        $branchSlug = $this->slugify(basename($branch));
-        $parentDir  = 'tragwerk/' . $projectId . '/' . $parentBranch;
-        $childDir   = 'tragwerk/' . $projectId . '/' . $branch;
+        $parentSlug           = $this->slugify(basename($parentBranch));
+        $branchSlug           = $this->slugify(basename($branch));
+        $parentDir            = 'tragwerk/' . $projectId . '/' . $parentBranch;
+        $childDir             = 'tragwerk/' . $projectId . '/' . $branch;
+        $shortId              = substr($projectId, 0, 8);
+        $parentComposeProject = 'tw-' . $shortId . '-' . $parentSlug;
+        $childComposeProject  = 'tw-' . $shortId . '-' . $branchSlug;
 
         foreach ($config->services as $service) {
             $type = $service->type->value;
@@ -742,19 +746,16 @@ final class DeployEnvironmentCommand extends Command
 
             $serviceSlug = $this->slugify($service->name);
             $volName     = $serviceSlug . '-data';
-            $src         = $parentSlug . '_' . $volName;
-            $dst         = $branchSlug . '_' . $volName;
+            $src         = $parentComposeProject . '_' . $volName;
+            $dst         = $childComposeProject . '_' . $volName;
 
             $this->log($jobId, '[Sync] Syncing DB volume "' . $volName . '" from parent...');
 
-            $sftp->exec(
-                'cd ~/' . $parentDir . ' && NO_COLOR=1 docker compose stop '
-                . escapeshellarg($serviceSlug) . ' 2>&1',
-            );
-            $sftp->exec(
-                'cd ~/' . $childDir . ' && NO_COLOR=1 docker compose stop '
-                . escapeshellarg($serviceSlug) . ' 2>&1',
-            );
+            $parentDc = 'NO_COLOR=1 docker compose --project-name ' . escapeshellarg($parentComposeProject);
+            $childDc  = 'NO_COLOR=1 docker compose --project-name ' . escapeshellarg($childComposeProject);
+
+            $sftp->exec('cd ~/' . $parentDir . ' && ' . $parentDc . ' stop ' . escapeshellarg($serviceSlug) . ' 2>&1');
+            $sftp->exec('cd ~/' . $childDir . ' && ' . $childDc . ' stop ' . escapeshellarg($serviceSlug) . ' 2>&1');
 
             $sftp->exec(
                 'docker run --rm'
@@ -763,14 +764,8 @@ final class DeployEnvironmentCommand extends Command
                 . ' alpine sh -c "cp -a /src/. /dst/" 2>&1',
             );
 
-            $sftp->exec(
-                'cd ~/' . $parentDir . ' && NO_COLOR=1 docker compose start '
-                . escapeshellarg($serviceSlug) . ' 2>&1',
-            );
-            $sftp->exec(
-                'cd ~/' . $childDir . ' && NO_COLOR=1 docker compose start '
-                . escapeshellarg($serviceSlug) . ' 2>&1',
-            );
+            $sftp->exec('cd ~/' . $parentDir . ' && ' . $parentDc . ' start ' . escapeshellarg($serviceSlug) . ' 2>&1');
+            $sftp->exec('cd ~/' . $childDir . ' && ' . $childDc . ' start ' . escapeshellarg($serviceSlug) . ' 2>&1');
 
             $this->log($jobId, '[Sync] Volume "' . $volName . '" synced.');
         }
@@ -785,8 +780,8 @@ final class DeployEnvironmentCommand extends Command
 
                 $mountSlug = $this->slugify($mount->name);
                 $volName   = $appSlug . '-' . $mountSlug;
-                $src       = $parentSlug . '_' . $volName;
-                $dst       = $branchSlug . '_' . $volName;
+                $src       = $parentComposeProject . '_' . $volName;
+                $dst       = $childComposeProject . '_' . $volName;
 
                 $this->log($jobId, '[Sync] Syncing app mount volume "' . $volName . '"...');
 

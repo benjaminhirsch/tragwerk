@@ -23,6 +23,7 @@ use function filter_var;
 use function is_string;
 use function preg_replace;
 use function strtolower;
+use function substr;
 use function trim;
 
 use const FILTER_FLAG_IPV6;
@@ -114,7 +115,8 @@ final class CleanupProjectDockerCommand extends Command
     ): void {
         $remoteBase = 'tragwerk/' . $projectId;
 
-        $lsOut = trim((string) $sftp->exec('ls ' . escapeshellarg($remoteBase) . ' 2>/dev/null'));
+        $shortId = substr($projectId, 0, 8);
+        $lsOut   = trim((string) $sftp->exec('ls ' . escapeshellarg($remoteBase) . ' 2>/dev/null'));
 
         if ($lsOut !== '') {
             foreach (explode("\n", $lsOut) as $branch) {
@@ -123,24 +125,25 @@ final class CleanupProjectDockerCommand extends Command
                     continue;
                 }
 
-                $branchDir  = $remoteBase . '/' . $branch;
-                $branchSlug = $this->slugify($branch);
+                $branchDir      = $remoteBase . '/' . $branch;
+                $branchSlug     = $this->slugify($branch);
+                $composeProject = 'tw-' . $shortId . '-' . $branchSlug;
 
                 $output->writeln('[Cleanup] Stopping containers for branch: ' . $branch);
 
                 $sftp->exec(
                     'cd ' . escapeshellarg($branchDir)
-                    . ' && NO_COLOR=1 docker compose -f docker-compose.yml down --volumes --remove-orphans 2>&1'
-                    . '; true',
+                    . ' && NO_COLOR=1 docker compose --project-name ' . escapeshellarg($composeProject)
+                    . ' -f docker-compose.yml down --volumes --remove-orphans 2>&1; true',
                 );
 
                 $sftp->exec(
-                    'docker ps -aq --filter ' . escapeshellarg('name=' . $branchSlug . '-')
+                    'docker ps -aq --filter ' . escapeshellarg('name=' . $composeProject . '-')
                     . ' 2>/dev/null | xargs -r docker rm -f 2>/dev/null; true',
                 );
 
                 $sftp->exec(
-                    'docker volume ls -q --filter ' . escapeshellarg('name=' . $branchSlug . '_')
+                    'docker volume ls -q --filter ' . escapeshellarg('name=' . $composeProject . '_')
                     . ' 2>/dev/null | xargs -r docker volume rm 2>/dev/null; true',
                 );
             }
@@ -148,6 +151,17 @@ final class CleanupProjectDockerCommand extends Command
 
         $sftp->exec('rm -rf ' . escapeshellarg($remoteBase) . ' 2>/dev/null; true');
         $output->writeln('[Cleanup] Removed project directory.');
+
+        $otherContainers = (int) trim((string) $sftp->exec(
+            'docker network inspect tragwerk-net --format \'{{range .Containers}}{{.Name}} {{end}}\' 2>/dev/null'
+            . ' | tr \' \' \'\\n\' | grep -v \'^tragwerk-traefik$\' | grep -v \'^$\' | wc -l',
+        ));
+
+        if ($otherContainers > 0) {
+            $output->writeln('[Cleanup] Other projects still running on this server — Traefik kept.');
+
+            return;
+        }
 
         $sftp->exec('docker rm -f tragwerk-traefik 2>/dev/null; true');
         $sftp->exec('docker volume rm tragwerk-traefik-certs 2>/dev/null; true');

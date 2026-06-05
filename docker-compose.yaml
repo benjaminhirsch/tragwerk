@@ -22,7 +22,7 @@ services:
       - *default-service
       - *as-current-user
     group_add:
-      - "${DOCKER_GID:-984}"
+      - "${DOCKER_SOCK_GID:-984}"
     image: tragwerk/app
     ipc: host
     build:
