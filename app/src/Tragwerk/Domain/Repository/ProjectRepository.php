@@ -13,7 +13,6 @@ use Tragwerk\Domain\Exception\Repository\EntityHydrationFailed;
 use Tragwerk\Domain\Exception\Repository\EntityNotFound;
 use Tragwerk\Domain\Exception\Repository\EntityUpdateFailed;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
-use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 
 interface ProjectRepository
@@ -39,5 +38,6 @@ interface ProjectRepository
     /** @return Generator<Project> */
     public function getAll(TeamIdentifier|null $teamId = null): Generator;
 
-    public function isServerInUse(ServerIdentifier $serverId, ProjectIdentifier|null $excludeProjectId = null): bool;
+    /** @return array<string, int> serverId → project count */
+    public function countProjectsByServer(TeamIdentifier $teamId): array;
 }

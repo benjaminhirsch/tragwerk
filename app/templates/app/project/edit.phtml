@@ -2,6 +2,7 @@
 /**
  * @var \Tragwerk\Domain\Entity\Project        $project
  * @var list<\Tragwerk\Domain\Entity\Server>   $servers
+ * @var array<string, int>                     $serverProjectCounts
  * @var list<\Tragwerk\Domain\Entity\Registry> $registries
  * @var \Tragwerk\Application\Validation\ValidationBag $validationBag
  */
@@ -24,7 +25,10 @@ $this->layout('layout::default', ['title' => $this->t('Edit project')]);
         <?php
             $serverOptions = [];
             foreach ($servers as $server) {
-                $serverOptions[$server->id->toString()] = $server->name;
+                $count = $serverProjectCounts[$server->id->toString()] ?? 0;
+                $serverOptions[$server->id->toString()] = $count > 0
+                    ? $server->name . ' (' . $count . ' ' . ($count === 1 ? $this->t('project') : $this->t('projects')) . ')'
+                    : $server->name;
             }
         ?>
         <?= $this->fetch('partial::input/select', [

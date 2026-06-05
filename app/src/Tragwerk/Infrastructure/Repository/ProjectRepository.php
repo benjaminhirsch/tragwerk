@@ -12,8 +12,6 @@ use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Enum\EntityType;
 use Tragwerk\Domain\Exception\Repository\EntityHydrationFailed;
 use Tragwerk\Domain\Repository\ProjectRepository as ProjectRepositoryInterface;
-use Tragwerk\Domain\ValueObject\ProjectIdentifier;
-use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Infrastructure\Helper\EntityHelper;
 
@@ -23,22 +21,26 @@ use function is_string;
 final class ProjectRepository extends GenericRepository implements ProjectRepositoryInterface
 {
     #[Override]
-    public function isServerInUse(ServerIdentifier $serverId, ProjectIdentifier|null $excludeProjectId = null): bool
+    public function countProjectsByServer(TeamIdentifier $teamId): array
     {
         $qb = $this->connection->createQueryBuilder();
-        $qb->select('COUNT(*)')
+        $qb->select('server_id', 'COUNT(*) AS cnt')
             ->from(EntityHelper::getDbTableName(EntityType::PROJECT))
-            ->where($qb->expr()->eq('server_id', ':server_id'))
-            ->setParameter('server_id', $serverId->toString());
+            ->where($qb->expr()->eq('team_id', ':team_id'))
+            ->setParameter('team_id', $teamId->toString())
+            ->groupBy('server_id');
 
-        if ($excludeProjectId !== null) {
-            $qb->andWhere($qb->expr()->neq('id', ':exclude_id'))
-                ->setParameter('exclude_id', $excludeProjectId->toString());
+        $counts = [];
+        foreach ($qb->executeQuery()->fetchAllAssociative() as $row) {
+            if (! is_string($row['server_id'])) {
+                continue;
+            }
+
+            $cnt                       = $row['cnt'];
+            $counts[$row['server_id']] = is_int($cnt) ? $cnt : (int) (is_string($cnt) ? $cnt : 0);
         }
 
-        $result = $qb->executeQuery()->fetchOne();
-
-        return (is_string($result) || is_int($result)) && (int) $result > 0;
+        return $counts;
     }
 
     #[Override]

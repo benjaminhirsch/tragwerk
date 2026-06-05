@@ -179,43 +179,41 @@ final class ProjectRepositoryTest extends IntegrationTestCase
     }
 
     #[Test]
-    public function isServerInUseReturnsFalseWhenNoProjectUsesServer(): void
+    public function countProjectsByServerReturnsEmptyWhenNoProjects(): void
     {
-        $serverId = ServerIdentifier::create();
+        $teamId = TeamIdentifier::create();
 
-        self::assertFalse($this->repository->isServerInUse($serverId));
+        self::assertSame([], $this->repository->countProjectsByServer($teamId));
     }
 
     #[Test]
-    public function isServerInUseReturnsTrueWhenProjectAssignedToServer(): void
+    public function countProjectsByServerCountsCorrectly(): void
     {
         $serverId = ServerIdentifier::create();
-        $this->repository->create($this->makeProject(serverId: $serverId));
+        $teamId   = TeamIdentifier::create();
 
-        self::assertTrue($this->repository->isServerInUse($serverId));
+        $this->repository->create($this->makeProject(serverId: $serverId, teamId: $teamId));
+        $this->repository->create($this->makeProject(serverId: $serverId, teamId: $teamId));
+        $this->repository->create($this->makeProject(serverId: ServerIdentifier::create(), teamId: $teamId));
+
+        $counts = $this->repository->countProjectsByServer($teamId);
+
+        self::assertSame(2, $counts[$serverId->toString()]);
     }
 
     #[Test]
-    public function isServerInUseReturnsFalseWhenOnlyMatchingProjectIsExcluded(): void
+    public function countProjectsByServerIgnoresOtherTeams(): void
     {
-        $serverId = ServerIdentifier::create();
-        $project  = $this->makeProject(serverId: $serverId);
-        $this->repository->create($project);
+        $serverId    = ServerIdentifier::create();
+        $teamId      = TeamIdentifier::create();
+        $otherTeamId = TeamIdentifier::create();
 
-        self::assertFalse($this->repository->isServerInUse($serverId, excludeProjectId: $project->id));
-    }
+        $this->repository->create($this->makeProject(serverId: $serverId, teamId: $teamId));
+        $this->repository->create($this->makeProject(serverId: $serverId, teamId: $otherTeamId));
 
-    #[Test]
-    public function isServerInUseIgnoresUnrelatedExcludeProject(): void
-    {
-        $serverId        = ServerIdentifier::create();
-        $projectOnServer = $this->makeProject(serverId: $serverId);
-        $unrelated       = $this->makeProject(serverId: ServerIdentifier::create());
+        $counts = $this->repository->countProjectsByServer($teamId);
 
-        $this->repository->create($projectOnServer);
-        $this->repository->create($unrelated);
-
-        self::assertTrue($this->repository->isServerInUse($serverId, excludeProjectId: $unrelated->id));
+        self::assertSame(1, $counts[$serverId->toString()]);
     }
 
     private function makeProject(

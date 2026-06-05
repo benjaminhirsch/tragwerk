@@ -33,7 +33,6 @@ use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\Repository\UserRepository;
 use Tragwerk\Domain\ValueObject\DomainIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
-use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 use Tragwerk\Infrastructure\Git\BareRepository;
@@ -157,11 +156,10 @@ final class BuildEnvironmentTest extends TestCase
                 yield from [];
             }
 
-            public function isServerInUse(
-                ServerIdentifier $serverId,
-                ProjectIdentifier|null $excludeProjectId = null,
-            ): bool {
-                return false;
+            /** @return array<string, int> */
+            public function countProjectsByServer(TeamIdentifier $teamId): array
+            {
+                return [];
             }
         };
 

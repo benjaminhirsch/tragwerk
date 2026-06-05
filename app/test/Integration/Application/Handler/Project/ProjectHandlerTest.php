@@ -145,7 +145,7 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
     }
 
     #[Test]
-    public function createPostWithAlreadyUsedServerReRendersForm(): void
+    public function createPostWithAlreadyUsedServerSucceeds(): void
     {
         $this->seedProject('Existing Project');
 
@@ -160,11 +160,11 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
             $this->sessionCookie,
         );
 
-        self::assertSame(200, $response->getStatusCode());
+        self::assertSame(302, $response->getStatusCode());
     }
 
     #[Test]
-    public function editPostWithAlreadyUsedServerReRendersForm(): void
+    public function editPostWithAlreadyUsedServerSucceeds(): void
     {
         $occupyingProject = $this->seedProject('Occupying Project');
         $secondServer     = $this->seedExtraServer();
@@ -181,7 +181,7 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
             $this->sessionCookie,
         );
 
-        self::assertSame(200, $response->getStatusCode());
+        self::assertSame(302, $response->getStatusCode());
     }
 
     #[Test]

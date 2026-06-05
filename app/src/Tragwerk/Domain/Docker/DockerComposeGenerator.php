@@ -42,6 +42,7 @@ final readonly class DockerComposeGenerator
         string $branch = '',
         array $domainsByPlaceholder = [],
         array $imageTags = [],
+        string $projectSlug = '',
     ): array {
         /** @var array<string, mixed> $services */
         $services = [];
@@ -94,7 +95,7 @@ final readonly class DockerComposeGenerator
                 }
             }
 
-            $labels = $this->buildTraefikLabels($app, $config, $domainsByPlaceholder, $branchSlug);
+            $labels = $this->buildTraefikLabels($app, $config, $domainsByPlaceholder, $branchSlug, $projectSlug);
 
             $svcConfig = isset($imageTags[$appSlug])
                 ? ['image' => $imageTags[$appSlug], 'read_only' => true, 'environment' => $environment]
@@ -182,9 +183,13 @@ final readonly class DockerComposeGenerator
         ProjectConfig $config,
         array $domainsByPlaceholder,
         string $branchSlug,
+        string $projectSlug = '',
     ): array {
         $slug     = $this->slugify($app->name);
-        $fullSlug = $branchSlug !== '' ? $slug . '-' . $branchSlug : $slug;
+        $suffix   = $projectSlug !== '' && $branchSlug !== ''
+            ? $projectSlug . '-' . $branchSlug
+            : ($projectSlug !== '' ? $projectSlug : $branchSlug);
+        $fullSlug = $suffix !== '' ? $slug . '-' . $suffix : $slug;
         $routes   = $this->routesForApp($app, $config);
 
         if ($routes === []) {

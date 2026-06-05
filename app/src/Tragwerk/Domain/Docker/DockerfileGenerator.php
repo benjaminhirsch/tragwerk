@@ -245,7 +245,10 @@ final readonly class DockerfileGenerator
     /** @param list<ExtensionConfig> $extensions */
     private function buildExtensionRun(array $extensions): string
     {
-        $extNames    = array_map(static fn (ExtensionConfig $e) => $e->name, $extensions);
+        $extNames   = array_map(static fn (ExtensionConfig $e) => $e->name, $extensions);
+        $nativeExts = array_values(array_filter($extNames, fn (string $n) => ! $this->isPeclExtension($n)));
+        $peclExts   = array_values(array_filter($extNames, fn (string $n) => $this->isPeclExtension($n)));
+
         $aptPackages = array_unique(array_merge(
             ['unzip'], // always needed so composer can extract packages
             ...array_map(fn (string $name) => $this->aptDepsForExtension($name), $extNames),
@@ -256,24 +259,38 @@ final readonly class DockerfileGenerator
         $parts[] = 'apt-get install -y --no-install-recommends ' . implode(' ', $aptPackages);
         $parts[] = 'rm -rf /var/lib/apt/lists/*';
 
-        if ($extNames !== []) {
-            $parts[] = 'docker-php-ext-install ' . implode(' ', $extNames);
+        if ($nativeExts !== []) {
+            $parts[] = 'docker-php-ext-install ' . implode(' ', $nativeExts);
+        }
+
+        foreach ($peclExts as $ext) {
+            $parts[] = 'pecl install ' . $ext;
+            $parts[] = 'docker-php-ext-enable ' . $ext;
         }
 
         return 'RUN ' . implode(" \\\n    && ", $parts);
+    }
+
+    private function isPeclExtension(string $extension): bool
+    {
+        return match ($extension) {
+            'imagick', 'redis', 'xdebug', 'mongodb', 'igbinary', 'msgpack', 'swoole' => true,
+            default => false,
+        };
     }
 
     /** @return list<string> */
     private function aptDepsForExtension(string $extension): array
     {
         return match ($extension) {
-            'intl'                  => ['libicu-dev'],
-            'gd'                    => ['libpng-dev', 'libfreetype6-dev', 'libjpeg62-turbo-dev'],
-            'zip'                   => ['libzip-dev'],
-            'pdo_pgsql', 'pgsql'   => ['libpq-dev'],
-            'xsl'                   => ['libxslt-dev'],
-            'imap'                  => ['libc-client-dev', 'libkrb5-dev'],
-            default                 => [],
+            'intl'                 => ['libicu-dev'],
+            'gd'                   => ['libpng-dev', 'libfreetype6-dev', 'libjpeg62-turbo-dev'],
+            'zip'                  => ['libzip-dev'],
+            'pdo_pgsql', 'pgsql'  => ['libpq-dev'],
+            'xsl'                  => ['libxslt-dev'],
+            'imap'                 => ['libc-client-dev', 'libkrb5-dev'],
+            'imagick'              => ['libmagickwand-dev'],
+            default                => [],
         };
     }
 
