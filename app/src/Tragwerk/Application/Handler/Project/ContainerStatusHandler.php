@@ -30,6 +30,9 @@ use function explode;
 use function is_array;
 use function is_string;
 use function json_decode;
+use function preg_replace;
+use function strtolower;
+use function substr;
 use function trim;
 
 final readonly class ContainerStatusHandler implements RequestHandlerInterface
@@ -106,13 +109,17 @@ final readonly class ContainerStatusHandler implements RequestHandlerInterface
 
         $sftp->setTimeout(30);
 
-        $remoteDir   = 'tragwerk/' . $project->id->toString() . '/' . $branch;
-        $labelFilter = escapeshellarg('label=tragwerk.working_dir=/root/' . $remoteDir);
-        $raw         = $sftp->exec(
-            'cd ~/' . $remoteDir . ' && docker compose ps --format json 2>&1; '
+        $remoteDir      = 'tragwerk/' . $project->id->toString() . '/' . $branch;
+        $branchSlug     = $this->slugify($branch);
+        $shortId        = substr($project->id->toString(), 0, 8);
+        $composeProject = 'tw-' . $shortId . '-' . $branchSlug;
+        $labelFilter    = escapeshellarg('label=tragwerk.working_dir=/root/' . $remoteDir);
+        $dc             = 'docker compose --project-name ' . escapeshellarg($composeProject);
+        $raw            = $sftp->exec(
+            'cd ~/' . $remoteDir . ' && ' . $dc . ' ps --format json 2>&1; '
             . 'docker ps --filter ' . $labelFilter . ' --format json 2>/dev/null',
         );
-        $output      = trim(is_string($raw) ? $raw : '');
+        $output         = trim(is_string($raw) ? $raw : '');
 
         return $this->parseContainers($output);
     }
@@ -153,6 +160,13 @@ final readonly class ContainerStatusHandler implements RequestHandlerInterface
         }
 
         return $containers;
+    }
+
+    private function slugify(string $name): string
+    {
+        $slug = preg_replace('/[\s_]+/', '-', strtolower($name)) ?? '';
+
+        return preg_replace('/[^a-z0-9-]/', '', $slug) ?? '';
     }
 
     private function resolveProject(ServerRequestInterface $request): Project|null
