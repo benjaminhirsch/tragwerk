@@ -24,6 +24,7 @@ use Tragwerk\Application\Queue\Message\PruneRegistryImages;
 use Tragwerk\Application\Queue\Producer;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
+use Tragwerk\Domain\Docker\ServiceImageResolver;
 use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Registry;
@@ -57,6 +58,7 @@ use function is_array;
 use function is_dir;
 use function is_int;
 use function is_string;
+use function json_decode;
 use function mkdir;
 use function preg_match;
 use function preg_replace;
@@ -90,6 +92,7 @@ final class DeployEnvironmentCommand extends Command
         private readonly XmlToArrayConverter $xmlConverter,
         private readonly TreeMapper $treeMapper,
         private readonly DockerComposeGenerator $composeGenerator,
+        private readonly ServiceImageResolver $imageResolver,
         private readonly Producer $producer,
         private readonly string $projectDataPath,
     ) {
@@ -439,6 +442,55 @@ final class DeployEnvironmentCommand extends Command
 
         $this->log($jobId, '[Deploy] Pulling image on VPS...');
         $sftp->exec('cd ~/' . $remoteDir . ' && ' . $dc . ' pull 2>&1');
+
+        foreach ($config->services as $service) {
+            $serviceSlug = $this->slugify($service->name);
+            $type        = $service->type->value;
+            $isPostgres  = str_starts_with($type, 'postgresql:');
+            $isMariaDb   = str_starts_with($type, 'mariadb:');
+            $isMysql     = str_starts_with($type, 'mysql:');
+
+            if (! $isPostgres && ! $isMariaDb && ! $isMysql) {
+                continue;
+            }
+
+            $runningImage = $this->getRunningDbImage($sftp, $remoteDir, $composeProject, $serviceSlug);
+
+            if ($runningImage === null) {
+                continue;
+            }
+
+            $newImage     = $this->imageResolver->forService($service->type);
+            $runningMajor = $this->parseMajorVersion($runningImage);
+            $newMajor     = $this->parseMajorVersion($newImage);
+
+            if ($runningMajor === null || $newMajor === null || $runningMajor === $newMajor) {
+                continue;
+            }
+
+            $this->log($jobId, '[Deploy] Detected major version upgrade for "' . $serviceSlug . '": '
+                . $runningImage . ' → ' . $newImage);
+
+            if ($isPostgres) {
+                $sftp->exec('cd ~/' . $remoteDir . ' && ' . $dc . ' stop ' . escapeshellarg($serviceSlug) . ' 2>&1');
+                $ok = $this->upgradePostgres($sftp, $composeProject, $serviceSlug, $runningMajor, $newMajor, $jobId);
+
+                if (! $ok) {
+                    $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+                    return Command::FAILURE;
+                }
+            } elseif ($isMariaDb) {
+                $ok = $this->upgradeMariaDb($sftp, $remoteDir, $composeProject, $serviceSlug, $dc, $jobId);
+
+                if (! $ok) {
+                    $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
+
+                    return Command::FAILURE;
+                }
+            }
+            // MySQL 8.0+: auto-upgrades on startup, no action needed here
+        }
 
         $this->log($jobId, '[Deploy] Ensuring DB is running...');
         $sftp->exec('cd ~/' . $remoteDir . ' && ' . $dc . ' up db --wait --no-deps -d 2>&1');
@@ -930,5 +982,122 @@ final class DeployEnvironmentCommand extends Command
         }
 
         rmdir($path);
+    }
+
+    private function getRunningDbImage(
+        SFTP $sftp,
+        string $remoteDir,
+        string $composeProject,
+        string $slug,
+    ): string|null {
+        $raw = trim((string) $sftp->exec(
+            'cd ~/' . $remoteDir
+            . ' && docker compose --project-name ' . escapeshellarg($composeProject)
+            . ' ps ' . escapeshellarg($slug) . ' --format json 2>/dev/null | head -1',
+        ));
+
+        if ($raw === '' || $raw[0] !== '{') {
+            return null;
+        }
+
+        $data = json_decode($raw, true);
+
+        if (! is_array($data) || ! is_string($data['Image'] ?? null)) {
+            return null;
+        }
+
+        return $data['Image'];
+    }
+
+    private function parseMajorVersion(string $image): int|null
+    {
+        // postgres:17.4 → 17, mariadb:10.11.2 → 10, mysql:8.0 → 8
+        if (preg_match('/:(\d+)/', $image, $m) === 1) {
+            return (int) $m[1];
+        }
+
+        return null;
+    }
+
+    private function upgradePostgres(
+        SFTP $sftp,
+        string $composeProject,
+        string $slug,
+        int $oldMajor,
+        int $newMajor,
+        DeployJobIdentifier $jobId,
+    ): bool {
+        $oldVol     = $composeProject . '_' . $slug . '-data';
+        $newVol     = $composeProject . '_' . $slug . '-data-upgrade';
+        $upgradeImg = 'tianon/postgres-upgrade:' . $oldMajor . '-to-' . $newMajor;
+
+        $this->log($jobId, '[Deploy] Running pg_upgrade via ' . $upgradeImg . '...');
+
+        $sftp->exec('docker volume create ' . escapeshellarg($newVol) . ' 2>&1');
+
+        $upgradeOut = (string) $sftp->exec(
+            'docker run --rm'
+            . ' -e PGUSER=app'
+            . ' -v ' . escapeshellarg($oldVol) . ':/var/lib/postgresql/' . $oldMajor . '/data'
+            . ' -v ' . escapeshellarg($newVol) . ':/var/lib/postgresql/' . $newMajor . '/data '
+            . escapeshellarg($upgradeImg) . ' 2>&1',
+        );
+
+        foreach (explode("\n", trim($upgradeOut)) as $line) {
+            if (trim($line) === '') {
+                continue;
+            }
+
+            $this->log($jobId, $line);
+        }
+
+        if ($sftp->getExitStatus() !== 0) {
+            $sftp->exec('docker volume rm ' . escapeshellarg($newVol) . ' 2>/dev/null; true');
+            $this->log($jobId, '[Deploy] pg_upgrade failed — old data volume preserved.');
+
+            return false;
+        }
+
+        // Swap: remove old vol, copy upgraded data into old vol name, remove temp vol
+        $sftp->exec('docker volume rm ' . escapeshellarg($oldVol) . ' 2>/dev/null; true');
+        $sftp->exec(
+            'docker run --rm'
+            . ' -v ' . escapeshellarg($newVol) . ':/src:ro'
+            . ' -v ' . escapeshellarg($oldVol) . ':/dst'
+            . ' alpine sh -c "cp -a /src/. /dst/" 2>&1',
+        );
+        $sftp->exec('docker volume rm ' . escapeshellarg($newVol) . ' 2>/dev/null; true');
+
+        $this->log($jobId, '[Deploy] pg_upgrade completed. Volume ready for PostgreSQL ' . $newMajor . '.');
+
+        return true;
+    }
+
+    private function upgradeMariaDb(
+        SFTP $sftp,
+        string $remoteDir,
+        string $composeProject,
+        string $slug,
+        string $dc,
+        DeployJobIdentifier $jobId,
+    ): bool {
+        $this->log($jobId, '[Deploy] Starting MariaDB "' . $slug . '" with new version for in-place upgrade...');
+
+        $sftp->exec('cd ~/' . $remoteDir . ' && ' . $dc . ' up ' . escapeshellarg($slug) . ' --wait --no-deps -d 2>&1');
+
+        $container  = $composeProject . '-' . $slug . '-1';
+        $upgradeOut = trim((string) $sftp->exec(
+            'docker exec ' . escapeshellarg($container) . ' mariadb-upgrade -u root -proot 2>&1',
+        ));
+
+        if ($upgradeOut !== '') {
+            $this->log($jobId, $upgradeOut);
+        }
+
+        $sftp->exec('cd ~/' . $remoteDir . ' && ' . $dc . ' restart ' . escapeshellarg($slug) . ' 2>&1');
+
+        $this->log($jobId, '[Deploy] MariaDB in-place upgrade completed.');
+
+        return true;
     }
 }
