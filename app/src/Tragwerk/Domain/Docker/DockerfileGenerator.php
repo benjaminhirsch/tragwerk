@@ -169,13 +169,13 @@ final readonly class DockerfileGenerator
         $lines   = [];
         $lines[] = '{';
 
-        if ($app->worker !== null) {
+        if ($app->workerMode !== null) {
             $lines[] = '    frankenphp {';
             $lines[] = '        worker {';
             $lines[] = '            file ' . $this->workerFile($app);
 
-            if ($app->worker->count !== null) {
-                $lines[] = '            num ' . $app->worker->count;
+            if ($app->workerMode->count !== null) {
+                $lines[] = '            num ' . $app->workerMode->count;
             }
 
             $lines[] = '        }';
