@@ -34,6 +34,7 @@ use function is_string;
 use function json_decode;
 use function preg_replace;
 use function strtolower;
+use function substr;
 use function trim;
 
 final readonly class EnvironmentLogsHandler implements RequestHandlerInterface
@@ -112,18 +113,20 @@ final readonly class EnvironmentLogsHandler implements RequestHandlerInterface
 
         $sftp->setTimeout(30);
 
-        $branchSlug = $this->slugify(basename($branch));
-        $projectId  = $project->id->toString();
-        $slotDir    = '~/tragwerk/' . $projectId . '/' . $branch;
+        $branchSlug     = $this->slugify(basename($branch));
+        $projectId      = $project->id->toString();
+        $shortId        = substr($projectId, 0, 8);
+        $composeProject = 'tw-' . $shortId . '-' . $branchSlug;
+        $slotDir        = '~/tragwerk/' . $projectId . '/' . $branch;
 
         // Find the running app container: prefer blue/green slot, fall back to compose name.
         $container = trim((string) $sftp->exec(
             'slot=$(cat ' . $slotDir . '/.slot-* 2>/dev/null | head -1); '
             . 'if [ -n "$slot" ]; then '
-            . '  docker ps --filter "name=' . $branchSlug . '" --format "{{.Names}}" '
+            . '  docker ps --filter "name=' . $composeProject . '" --format "{{.Names}}" '
             . '    | grep -E -- "-${slot}$" | head -1; '
             . 'else '
-            . '  docker ps --filter "name=' . $branchSlug . '" --format "{{.Names}}" '
+            . '  docker ps --filter "name=' . $composeProject . '" --format "{{.Names}}" '
             . '    | grep -v -- "-db-" | head -1; '
             . 'fi 2>/dev/null',
         ));
