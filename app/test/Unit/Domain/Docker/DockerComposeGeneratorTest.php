@@ -23,6 +23,7 @@ use Tragwerk\Domain\Model\RouteConfig;
 use Tragwerk\Domain\Model\ServiceConfig;
 use Tragwerk\Domain\Model\WebConfig;
 use Tragwerk\Domain\Model\WorkerConfig;
+use Tragwerk\Domain\Model\WorkerDefinitionConfig;
 
 final class DockerComposeGeneratorTest extends TestCase
 {
@@ -596,6 +597,118 @@ final class DockerComposeGeneratorTest extends TestCase
         $svc     = $this->service($compose, 'app');
 
         self::assertArrayNotHasKey('deploy', $svc);
+    }
+
+    #[Test]
+    public function backgroundWorkersGenerateSeparateServices(): void
+    {
+        $app     = new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([new LocationConfig(path: '/', root: 'public', passthru: '/index.php')]),
+            workers: [
+                new WorkerDefinitionConfig(name: 'queue', command: 'bin/cli worker:start default'),
+                new WorkerDefinitionConfig(name: 'metrics', command: 'bin/cli metrics:sample'),
+            ],
+        );
+        $config  = self::project([$app], [self::upstream('https://{default}', 'app:http')]);
+        $compose = $this->generator->generate($config, 'main');
+
+        $queue   = $this->service($compose, 'app-worker-queue');
+        $metrics = $this->service($compose, 'app-worker-metrics');
+
+        self::assertSame('bin/cli worker:start default', $queue['command']);
+        self::assertSame('bin/cli metrics:sample', $metrics['command']);
+        self::assertSame('unless-stopped', $queue['restart']);
+        self::assertSame('unless-stopped', $metrics['restart']);
+    }
+
+    #[Test]
+    public function backgroundWorkerHasNoTraefikLabels(): void
+    {
+        $app     = new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([new LocationConfig(path: '/', root: 'public', passthru: '/index.php')]),
+            workers: [new WorkerDefinitionConfig(name: 'queue', command: 'bin/cli worker:start default')],
+        );
+        $config  = self::project([$app], [self::upstream('https://{default}', 'app:http')]);
+        $compose = $this->generator->generate($config, 'main');
+
+        $worker = $this->service($compose, 'app-worker-queue');
+        self::assertArrayNotHasKey('labels', $worker);
+        self::assertArrayNotHasKey('healthcheck', $worker);
+    }
+
+    #[Test]
+    public function backgroundWorkerInheritsEnvironmentAndVolumes(): void
+    {
+        $rel     = new RelationshipConfig(name: 'database', target: 'db');
+        $svc     = new ServiceConfig(name: 'db', type: ServiceRuntime::POSTGRES18, disk: null);
+        $mount   = new MountConfig(
+            name: 'storage',
+            source: MountSource::LOCAL,
+            path: 'storage',
+            cloneFromParent: false,
+        );
+        $app     = new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([new LocationConfig(path: '/', root: 'public', passthru: '/index.php')]),
+            mounts: [$mount],
+            relationships: [$rel],
+            workers: [new WorkerDefinitionConfig(name: 'queue', command: 'bin/cli worker:start default')],
+        );
+        $config  = self::project([$app], [self::upstream('https://{default}', 'app:http')], [$svc]);
+        $compose = $this->generator->generate($config, 'main');
+
+        $worker = $this->service($compose, 'app-worker-queue');
+        /** @var array<string, string> $env */
+        $env = $worker['environment'];
+        self::assertSame('db', $env['TRAGWERK_DATABASE_HOST']);
+        self::assertContains('app-storage:/app/storage', $this->serviceVolumes($compose, 'app-worker-queue'));
+        /** @var list<string> $networks */
+        $networks = $worker['networks'];
+        self::assertContains('tragwerk-net', $networks);
+    }
+
+    #[Test]
+    public function backgroundWorkerInheritsBuildConfig(): void
+    {
+        $app     = new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([new LocationConfig(path: '/', root: 'public', passthru: '/index.php')]),
+            workers: [new WorkerDefinitionConfig(name: 'queue', command: 'bin/cli worker:start default')],
+        );
+        $config  = self::project([$app], [self::upstream('https://{default}', 'app:http')]);
+        $compose = $this->generator->generate($config, 'main');
+
+        $worker = $this->service($compose, 'app-worker-queue');
+        self::assertArrayHasKey('build', $worker);
+        self::assertSame('Dockerfile.app', $worker['build']['dockerfile']);
+    }
+
+    #[Test]
+    public function backgroundWorkerWithImageTagUsesImageKey(): void
+    {
+        $app     = new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([new LocationConfig(path: '/', root: 'public', passthru: '/index.php')]),
+            workers: [new WorkerDefinitionConfig(name: 'queue', command: 'bin/cli worker:start default')],
+        );
+        $config  = self::project([$app], [self::upstream('https://{default}', 'app:http')]);
+        $compose = $this->generator->generate($config, 'main', [], ['app' => 'ghcr.io/myorg/myapp:main']);
+
+        $worker = $this->service($compose, 'app-worker-queue');
+        self::assertSame('ghcr.io/myorg/myapp:main', $worker['image']);
+        self::assertArrayNotHasKey('build', $worker);
     }
 
     public static function slugifyProvider(): Generator

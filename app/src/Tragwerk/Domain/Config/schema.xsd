@@ -48,6 +48,10 @@
                     <xs:selector xpath="hooks/hook"/>
                     <xs:field xpath="@type"/>
                 </xs:unique>
+                <xs:unique name="uniqueWorkerName">
+                    <xs:selector xpath="workers/worker"/>
+                    <xs:field xpath="@name"/>
+                </xs:unique>
             </xs:element>
         </xs:sequence>
     </xs:complexType>
@@ -62,6 +66,7 @@
             <xs:element name="web"           type="WebType"/>
             <xs:element name="extensions"    type="ExtensionsType"     minOccurs="0"/>
             <xs:element name="worker"        type="WorkerType"         minOccurs="0"/>
+            <xs:element name="workers"       type="WorkersType"        minOccurs="0"/>
             <xs:element name="hooks"         type="HooksType"          minOccurs="0"/>
             <xs:element name="mounts"        type="MountsType"         minOccurs="0"/>
             <xs:element name="relationships" type="RelationshipsType"  minOccurs="0"/>
@@ -116,6 +121,42 @@
                 </xs:complexType>
             </xs:element>
         </xs:sequence>
+    </xs:complexType>
+
+    <!-- ============================================================ -->
+    <!-- Background Workers                                           -->
+    <!-- ============================================================ -->
+    <xs:complexType name="WorkersType">
+        <xs:annotation>
+            <xs:documentation>
+                Background worker processes: isolated containers that share the
+                application image but run a long-lived command instead of
+                serving HTTP traffic (e.g. queue consumers, metric samplers).
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="worker" type="WorkerDefinitionType" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="WorkerDefinitionType">
+        <xs:attribute name="name" type="IdentifierType" use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    Unique name for this worker within the application. Used to
+                    derive the Docker service name, e.g. "queue" →
+                    "{app}-worker-queue".
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="command" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    The command the container runs, e.g.
+                    "bin/cli worker:start default".
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
     </xs:complexType>
 
     <!-- ============================================================ -->

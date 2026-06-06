@@ -10,6 +10,7 @@ use Tragwerk\Domain\Model\ApplicationConfig;
 use Tragwerk\Domain\Model\ProjectConfig;
 use Tragwerk\Domain\Model\RouteConfig;
 use Tragwerk\Domain\Model\ServiceConfig;
+use Tragwerk\Domain\Model\WorkerDefinitionConfig;
 
 use function array_key_exists;
 use function array_map;
@@ -133,6 +134,11 @@ final readonly class DockerComposeGenerator
             }
 
             $services[$appSlug] = $svcConfig;
+
+            foreach ($app->workers as $workerDef) {
+                $services[$appSlug . '-worker-' . $this->slugify($workerDef->name)] =
+                    $this->buildWorkerService($svcConfig, $workerDef);
+            }
         }
 
         foreach ($config->services as $service) {
@@ -164,6 +170,45 @@ final readonly class DockerComposeGenerator
             'volumes'  => $volumes,
             'networks' => ['tragwerk-net' => ['external' => true]],
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $appService
+     *
+     * @return array<string, mixed>
+     */
+    private function buildWorkerService(array $appService, WorkerDefinitionConfig $def): array
+    {
+        $worker = [];
+
+        if (isset($appService['image'])) {
+            $worker['image'] = $appService['image'];
+        } elseif (isset($appService['build'])) {
+            $worker['build'] = $appService['build'];
+        }
+
+        $worker['command'] = $def->command;
+        $worker['restart'] = 'unless-stopped';
+
+        if (isset($appService['environment'])) {
+            $worker['environment'] = $appService['environment'];
+        }
+
+        if (isset($appService['volumes'])) {
+            $worker['volumes'] = $appService['volumes'];
+        }
+
+        if (isset($appService['tmpfs'])) {
+            $worker['tmpfs'] = $appService['tmpfs'];
+        }
+
+        if (isset($appService['depends_on'])) {
+            $worker['depends_on'] = $appService['depends_on'];
+        }
+
+        $worker['networks'] = $appService['networks'];
+
+        return $worker;
     }
 
     public function slugify(string $name): string

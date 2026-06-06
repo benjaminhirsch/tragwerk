@@ -9,10 +9,11 @@ use Tragwerk\Domain\Enum\ApplicationRuntime;
 final readonly class ApplicationConfig
 {
     /**
-     * @param list<HookConfig>         $hooks
-     * @param list<MountConfig>        $mounts
-     * @param list<RelationshipConfig> $relationships
-     * @param list<ExtensionConfig>    $extensions
+     * @param list<HookConfig>             $hooks
+     * @param list<MountConfig>            $mounts
+     * @param list<RelationshipConfig>     $relationships
+     * @param list<ExtensionConfig>        $extensions
+     * @param list<WorkerDefinitionConfig> $workers
      */
     public function __construct(
         public string $name,
@@ -24,6 +25,7 @@ final readonly class ApplicationConfig
         public array $relationships = [],
         public array $extensions = [],
         public WorkerConfig|null $worker = null,
+        public array $workers = [],
     ) {
     }
 }
