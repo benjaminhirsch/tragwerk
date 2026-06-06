@@ -32,7 +32,11 @@
                 ?>
                 <li class="list-group-item d-flex align-items-center gap-2">
                     <i class="bi bi-globe text-body-secondary"></i>
-                    <span class="flex-grow-1 font-monospace"><?= $this->e($domain->host) ?></span>
+                    <span class="flex-grow-1 font-monospace"><?= $this->insert('partial::link', [
+                            'label' => $domain->host,
+                            'href' => sprintf('https://%s', $domain->host),
+                            'target' => '_blank',
+                        ]) ?></span>
                     <code class="badge text-bg-secondary fw-normal">{<?= $this->e($domain->placeholder) ?>}</code>
 
                     <?php if ($domain->isPrimary): ?>
