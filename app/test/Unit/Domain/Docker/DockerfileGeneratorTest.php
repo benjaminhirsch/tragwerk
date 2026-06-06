@@ -500,6 +500,41 @@ final class DockerfileGeneratorTest extends TestCase
         $this->generator->generate($app);
     }
 
+    #[Test]
+    public function passthruNoneRendersFileServer(): void
+    {
+        $app    = new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([new LocationConfig(path: '/', root: 'public', passthru: 'none')]),
+        );
+        $output = $this->generator->generate($app);
+
+        $caddyfile = $output->caddyfileContent ?? '';
+        // file_server appears in the global "order" line + the server block = 2
+        self::assertSame(2, substr_count($caddyfile, 'file_server'));
+        // php_server appears only in the global "order" line, not in any server block
+        self::assertSame(1, substr_count($caddyfile, 'php_server'));
+    }
+
+    #[Test]
+    public function passthruNoneNotCountedAsWorkerPassthruLocation(): void
+    {
+        $app = new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([new LocationConfig(path: '/', root: 'public', passthru: 'none')]),
+            workerMode: new WorkerConfig(count: 2),
+        );
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('exactly one');
+
+        $this->generator->generate($app);
+    }
+
     private static function workerApp(WorkerConfig $worker): ApplicationConfig
     {
         return new ApplicationConfig(

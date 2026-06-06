@@ -204,7 +204,7 @@ final readonly class DockerfileGenerator
             $lines[] = '    root * ' . $root;
             $lines[] = '    encode zstd br gzip';
 
-            if ($location->passthru !== null) {
+            if ($location->passthru !== null && $location->passthru !== 'none') {
                 $lines[] = '    php_server';
             } else {
                 $lines[] = '    file_server';
@@ -225,7 +225,7 @@ final readonly class DockerfileGenerator
     {
         $passthruLocations = array_values(array_filter(
             $app->web->locations,
-            static fn (LocationConfig $location): bool => $location->passthru !== null,
+            static fn (LocationConfig $loc): bool => $loc->passthru !== null && $loc->passthru !== 'none',
         ));
 
         if (count($passthruLocations) !== 1) {
