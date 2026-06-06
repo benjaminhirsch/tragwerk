@@ -472,7 +472,7 @@ final class DockerfileGeneratorTest extends TestCase
             type: ApplicationRuntime::PHP85,
             root: '/',
             web: new WebConfig([new LocationConfig(path: '/', root: 'public')]),
-            worker: new WorkerConfig(count: 2),
+            workerMode: new WorkerConfig(count: 2),
         );
 
         $this->expectException(InvalidArgumentException::class);
@@ -492,7 +492,7 @@ final class DockerfileGeneratorTest extends TestCase
                 new LocationConfig(path: '/', root: 'public', passthru: '/index.php'),
                 new LocationConfig(path: '/api', root: 'api', passthru: '/api.php'),
             ]),
-            worker: new WorkerConfig(count: 2),
+            workerMode: new WorkerConfig(count: 2),
         );
 
         $this->expectException(InvalidArgumentException::class);
@@ -507,7 +507,7 @@ final class DockerfileGeneratorTest extends TestCase
             type: ApplicationRuntime::PHP85,
             root: '/',
             web: new WebConfig([new LocationConfig(path: '/', root: 'public', passthru: '/index.php')]),
-            worker: $worker,
+            workerMode: $worker,
         );
     }
 }

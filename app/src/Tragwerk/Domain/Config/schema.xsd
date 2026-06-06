@@ -65,7 +65,7 @@
         <xs:all>
             <xs:element name="web"           type="WebType"/>
             <xs:element name="extensions"    type="ExtensionsType"     minOccurs="0"/>
-            <xs:element name="worker"        type="WorkerType"         minOccurs="0"/>
+            <xs:element name="workerMode"    type="WorkerModeType"     minOccurs="0"/>
             <xs:element name="workers"       type="WorkersType"        minOccurs="0"/>
             <xs:element name="hooks"         type="HooksType"          minOccurs="0"/>
             <xs:element name="mounts"        type="MountsType"         minOccurs="0"/>
@@ -162,7 +162,7 @@
     <!-- ============================================================ -->
     <!-- Worker                                                       -->
     <!-- ============================================================ -->
-    <xs:complexType name="WorkerType">
+    <xs:complexType name="WorkerModeType">
         <xs:annotation>
             <xs:documentation>
                 Run the application in FrankenPHP worker mode: the front controller

@@ -24,7 +24,7 @@ final readonly class ApplicationConfig
         public array $mounts = [],
         public array $relationships = [],
         public array $extensions = [],
-        public WorkerConfig|null $worker = null,
+        public WorkerConfig|null $workerMode = null,
         public array $workers = [],
     ) {
     }
