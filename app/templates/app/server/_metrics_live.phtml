@@ -92,6 +92,27 @@ $gauge = function (string $label, float $pct, string $detail) use ($barClass): s
         </div>
 
         <?php if ($containers !== []): ?>
+            <?php
+            $parseBytes = static function (string $s): int {
+                if (preg_match('/^([\d.]+)\s*(B|KiB|MiB|GiB|TiB)$/', trim($s), $m)) {
+                    $units = ['B' => 1, 'KiB' => 1024, 'MiB' => 1024 ** 2, 'GiB' => 1024 ** 3, 'TiB' => 1024 ** 4];
+                    return (int) round((float) $m[1] * $units[$m[2]]);
+                }
+                return 0;
+            };
+
+            $totalCpu     = 0.0;
+            $totalMemPerc = 0.0;
+            $totalMemUsed = 0;
+            $maxMemTotal  = 0;
+            foreach ($containers as $c) {
+                $totalCpu     += (float) rtrim((string) ($c['CPUPerc'] ?? '0'), '%');
+                $totalMemPerc += (float) rtrim((string) ($c['MemPerc'] ?? '0'), '%');
+                [$usedStr, $totalStr] = explode('/', (string) ($c['MemUsage'] ?? '0 / 0'), 2) + ['0', '0'];
+                $totalMemUsed += $parseBytes($usedStr);
+                $maxMemTotal   = max($maxMemTotal, $parseBytes($totalStr));
+            }
+            ?>
             <h6 class="mt-3 mb-2 text-body-secondary"><?= $this->t('Containers') ?></h6>
             <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0">
@@ -115,6 +136,14 @@ $gauge = function (string $label, float $pct, string $detail) use ($barClass): s
                             </tr>
                         <?php endforeach ?>
                     </tbody>
+                    <tfoot>
+                        <tr class="small fw-bold border-top">
+                            <td><?= $this->t('Total') ?></td>
+                            <td class="text-end"><?= $this->e(sprintf('%.2f%%', $totalCpu)) ?></td>
+                            <td class="text-end"><?= $this->e($fmtBytes($totalMemUsed) . ' / ' . $fmtBytes($maxMemTotal)) ?></td>
+                            <td class="text-end"><?= $this->e(sprintf('%.2f%%', $totalMemPerc)) ?></td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         <?php endif ?>
