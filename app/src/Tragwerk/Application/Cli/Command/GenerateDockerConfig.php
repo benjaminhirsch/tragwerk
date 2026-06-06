@@ -122,6 +122,18 @@ final class GenerateDockerConfig extends Command
 
             $output->writeln('Generated ' . $outDir . '/' . $dockerfile->dockerfileName);
 
+            if ($dockerfile->caddyfileName !== null && $dockerfile->caddyfileContent !== null) {
+                $caddyfilePath = $outDir . '/' . $dockerfile->caddyfileName;
+
+                if (file_put_contents($caddyfilePath, $dockerfile->caddyfileContent) === false) {
+                    $output->writeln('Failed to write ' . $dockerfile->caddyfileName);
+
+                    return self::FAILURE;
+                }
+
+                $output->writeln('Generated ' . $outDir . '/' . $dockerfile->caddyfileName);
+            }
+
             if ($dockerfile->entrypointName === null || $dockerfile->entrypointContent === null) {
                 continue;
             }
