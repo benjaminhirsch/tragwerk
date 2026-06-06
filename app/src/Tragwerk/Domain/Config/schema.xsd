@@ -205,7 +205,15 @@
         <xs:attribute name="path"     type="xs:string" use="required"/>
         <xs:attribute name="root"     type="xs:string" use="required"/>
         <xs:attribute name="index"    type="xs:string" default="index.php"/>
-        <xs:attribute name="passthru" type="xs:string"/>
+        <xs:attribute name="passthru" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>
+                    PHP front controller to pass non-static requests to, e.g.
+                    "/index.php". Omitting this attribute or setting it to "none"
+                    serves only static files via file_server (no PHP).
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
     </xs:complexType>
 
     <!-- ============================================================ -->
