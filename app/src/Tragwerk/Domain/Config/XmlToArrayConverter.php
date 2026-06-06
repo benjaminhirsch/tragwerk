@@ -111,6 +111,7 @@ final readonly class XmlToArrayConverter
             'mounts',
             'relationships',
             'extensions',
+            'workers',
         ], true);
     }
 
