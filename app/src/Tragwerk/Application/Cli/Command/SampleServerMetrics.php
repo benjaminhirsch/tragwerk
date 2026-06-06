@@ -23,6 +23,7 @@ use Tragwerk\Domain\Repository\ServerMetricRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Infrastructure\Metrics\EnvironmentMetricsCollector;
 use Tragwerk\Infrastructure\Metrics\MetricsCollector;
+use Tragwerk\Infrastructure\Ssh\RemoteShell;
 
 use function assert;
 use function count;
@@ -32,6 +33,8 @@ use function pcntl_async_signals;
 use function pcntl_signal;
 use function sleep;
 use function sprintf;
+use function str_contains;
+use function trim;
 
 use const SIGINT;
 use const SIGTERM;
@@ -39,6 +42,8 @@ use const SIGTERM;
 #[AsCommand(name: 'metrics:sample', description: 'Sample host + per-environment app metrics (ticker)')]
 final class SampleServerMetrics extends Command
 {
+    private const int VERSION_REFRESH_CYCLES = 60;
+
     public function __construct(
         private readonly ServerRepository $servers,
         private readonly CredentialRepository $credentials,
@@ -48,6 +53,7 @@ final class SampleServerMetrics extends Command
         private readonly AppMetricRepository $appMetrics,
         private readonly EventDispatcherInterface $dispatcher,
         private readonly LoggerInterface $logger,
+        private readonly RemoteShell $shell,
         private readonly int $retentionDays = 7,
         private readonly int $appRetentionDays = 30,
     ) {
@@ -86,9 +92,17 @@ final class SampleServerMetrics extends Command
             $stopping = true;
         });
 
+        $cycle = 0;
+
         do {
             $this->prune($output);
             $this->sampleAll($output);
+
+            if ($cycle % self::VERSION_REFRESH_CYCLES === 0) {
+                $this->refreshVersionsAll($output);
+            }
+
+            $cycle++;
 
             if ($once) {
                 break;
@@ -188,6 +202,57 @@ final class SampleServerMetrics extends Command
             $server->name,
             count($envs),
         ));
+    }
+
+    private function refreshVersionsAll(OutputInterface $output): void
+    {
+        foreach ($this->servers->getAll() as $server) {
+            assert($server instanceof Server);
+
+            if ($server->credentialId === null) {
+                continue;
+            }
+
+            try {
+                $credential = $this->credentials->getById($server->credentialId);
+                assert($credential instanceof Credential);
+            } catch (Throwable $e) {
+                $this->logger->error('Could not load credential for server ' . $server->name, [
+                    'server_id' => $server->id->toString(),
+                    'exception' => $e->getMessage(),
+                ]);
+
+                continue;
+            }
+
+            $this->refreshVersions($server, $credential, $output);
+        }
+    }
+
+    private function refreshVersions(Server $server, Credential $credential, OutputInterface $output): void
+    {
+        try {
+            $dockerRaw  = $this->shell->run($server, $credential, 'docker --version 2>&1');
+            $composeRaw = $this->shell->run($server, $credential, 'docker compose version 2>&1');
+
+            $dockerVersion  = str_contains($dockerRaw, 'Docker version') ? trim($dockerRaw) : null;
+            $composeVersion = str_contains($composeRaw, 'Docker Compose') ? trim($composeRaw) : null;
+
+            $this->servers->updateVersions($server->id, $dockerVersion, $composeVersion);
+
+            $output->writeln(sprintf(
+                '<info>[versions] %s: docker=%s compose=%s</info>',
+                $server->name,
+                $dockerVersion ?? 'n/a',
+                $composeVersion ?? 'n/a',
+            ));
+        } catch (Throwable $e) {
+            $this->logger->error('Version refresh failed for server ' . $server->name, [
+                'server_id' => $server->id->toString(),
+                'exception' => $e->getMessage(),
+            ]);
+            $output->writeln(sprintf('<error>[versions] %s: %s</error>', $server->name, $e->getMessage()));
+        }
     }
 
     private function prune(OutputInterface $output): void
