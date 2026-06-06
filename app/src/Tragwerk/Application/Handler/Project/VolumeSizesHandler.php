@@ -36,6 +36,7 @@ use function preg_split;
 use function str_contains;
 use function str_starts_with;
 use function strtolower;
+use function substr;
 use function trim;
 
 final readonly class VolumeSizesHandler implements RequestHandlerInterface
@@ -120,9 +121,11 @@ final readonly class VolumeSizesHandler implements RequestHandlerInterface
         $raw    = $sftp->exec('docker system df -v 2>&1');
         $output = trim(is_string($raw) ? $raw : '');
 
-        $branchSlug = $this->slugify(basename($branch));
+        $branchSlug     = $this->slugify(basename($branch));
+        $shortId        = substr($project->id->toString(), 0, 8);
+        $composeProject = 'tw-' . $shortId . '-' . $branchSlug;
 
-        return $this->parseVolumes($output, $branchSlug);
+        return $this->parseVolumes($output, $composeProject);
     }
 
     /** @return array<string, string> */
