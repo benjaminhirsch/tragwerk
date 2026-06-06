@@ -10,6 +10,7 @@ use Tragwerk\Application\Cli\Command\DeployEnvironmentCommand;
 use Tragwerk\Application\Queue\Producer;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
+use Tragwerk\Domain\Docker\ServiceImageResolver;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\DeployJobRepository;
 use Tragwerk\Domain\Repository\DomainRepository;
@@ -42,6 +43,7 @@ final readonly class DeployEnvironmentCommandFactory
         $xmlConv     = $container->get(XmlToArrayConverter::class);
         $mapper      = $container->get(TreeMapper::class);
         $compose     = $container->get(DockerComposeGenerator::class);
+        $imgResolver = $container->get(ServiceImageResolver::class);
         $producer    = $container->get(Producer::class);
 
         assert($projects instanceof ProjectRepository);
@@ -54,6 +56,7 @@ final readonly class DeployEnvironmentCommandFactory
         assert($xmlConv instanceof XmlToArrayConverter);
         assert($mapper instanceof TreeMapper);
         assert($compose instanceof DockerComposeGenerator);
+        assert($imgResolver instanceof ServiceImageResolver);
         assert($producer instanceof Producer);
 
         return new DeployEnvironmentCommand(
@@ -67,6 +70,7 @@ final readonly class DeployEnvironmentCommandFactory
             $xmlConv,
             $mapper,
             $compose,
+            $imgResolver,
             $producer,
             $dataPath,
         );
