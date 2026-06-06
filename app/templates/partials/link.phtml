@@ -1,4 +1,4 @@
-<a href="<?= $this->e($href) ?>" class="<?= isset($classes) ? $this->e($classes) : '' ?>">
+<a href="<?= $this->e($href) ?>" target="<?= isset($target) ? $this->e($target) : '_self' ?>" class="<?= isset($classes) ? $this->e($classes) : '' ?>">
     <?php if (($icon ?? null) !== null):?>
         <i class="<?= $this->e($icon) ?>"></i>
     <?php endif; ?>
