@@ -110,7 +110,7 @@ final readonly class DockerfileGenerator
 
         if ($hasCaddyfile) {
             $lines[] = '';
-            $lines[] = 'COPY Caddyfile.' . $slug . ' /etc/caddy/Caddyfile';
+            $lines[] = 'COPY Caddyfile.' . $slug . ' /etc/frankenphp/Caddyfile';
         }
 
         if ($hasEntrypoint) {
@@ -121,7 +121,8 @@ final readonly class DockerfileGenerator
             $lines[] = 'ENTRYPOINT ["docker-entrypoint.sh"]';
 
             if (str_starts_with($app->type->value, 'php:')) {
-                $lines[] = 'CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]';
+                $lines[] = 'CMD ["frankenphp", "run",'
+                    . ' "--config", "/etc/frankenphp/Caddyfile", "--adapter", "caddyfile"]';
             }
         }
 
