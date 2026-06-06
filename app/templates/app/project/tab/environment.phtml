@@ -362,6 +362,35 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
                                     <?php endforeach ?>
                                 </div>
                             <?php endif ?>
+                            <?php if ($app->workerMode !== null): ?>
+                                <div class="small mt-1">
+                                    <span class="text-body-secondary"><?= $this->t('Worker mode:') ?></span>
+                                    <?php if ($app->workerMode->count !== null): ?>
+                                        <code class="ms-1"><?= $this->e((string) $app->workerMode->count) ?> <?= $this->t('workers') ?></code>
+                                    <?php else: ?>
+                                        <code class="ms-1"><?= $this->t('auto') ?></code>
+                                    <?php endif ?>
+                                    <?php if ($app->workerMode->maxRequests > 0): ?>
+                                        <span class="text-body-secondary ms-1">/ <?= $this->e((string) $app->workerMode->maxRequests) ?> req</span>
+                                    <?php endif ?>
+                                </div>
+                            <?php endif ?>
+                            <?php if ($app->workers !== []): ?>
+                                <div class="mt-2">
+                                    <div class="text-body-secondary small fw-semibold mb-1">
+                                        <?= $this->t('Workers') ?>
+                                    </div>
+                                    <ul class="list-unstyled mb-0">
+                                        <?php foreach ($app->workers as $worker): ?>
+                                            <li class="d-flex align-items-center gap-2 py-1 border-bottom small">
+                                                <i class="bi bi-terminal text-body-secondary flex-shrink-0"></i>
+                                                <span class="fw-medium flex-shrink-0"><?= $this->e($worker->name) ?></span>
+                                                <code class="text-body-secondary text-truncate"><?= $this->e($worker->command) ?></code>
+                                            </li>
+                                        <?php endforeach ?>
+                                    </ul>
+                                </div>
+                            <?php endif ?>
                         </div>
                     </div>
                 <?php endforeach ?>
