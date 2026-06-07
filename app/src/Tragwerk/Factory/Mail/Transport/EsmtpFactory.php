@@ -33,9 +33,11 @@ final readonly class EsmtpFactory
             $port,
         );
 
-        $localDomain = $transportConfig['localDomain'];
-        assert(is_string($localDomain));
-        $transport->setLocalDomain($localDomain);
+        if ($transportConfig['localDomain'] !== null && $transportConfig['localDomain'] !== false) {
+            $localDomain = $transportConfig['localDomain'];
+            assert(is_string($localDomain));
+            $transport->setLocalDomain($localDomain);
+        }
 
         if ($transportConfig['username'] !== null) {
             $username = $transportConfig['username'];

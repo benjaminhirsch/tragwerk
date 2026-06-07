@@ -27,6 +27,7 @@ use Tragwerk\Infrastructure\Ssh\RemoteShell;
 
 use function assert;
 use function count;
+use function function_exists;
 use function is_numeric;
 use function max;
 use function pcntl_async_signals;
@@ -84,13 +85,15 @@ final class SampleServerMetrics extends Command
         $interval    = max(1, is_numeric($intervalRaw) ? (int) $intervalRaw : 60);
 
         $stopping = false;
-        pcntl_async_signals(true);
-        pcntl_signal(SIGTERM, static function () use (&$stopping): void {
-            $stopping = true;
-        });
-        pcntl_signal(SIGINT, static function () use (&$stopping): void {
-            $stopping = true;
-        });
+        if (function_exists('pcntl_async_signals')) {
+            pcntl_async_signals(true);
+            pcntl_signal(SIGTERM, static function () use (&$stopping): void {
+                $stopping = true;
+            });
+            pcntl_signal(SIGINT, static function () use (&$stopping): void {
+                $stopping = true;
+            });
+        }
 
         $cycle = 0;
 
