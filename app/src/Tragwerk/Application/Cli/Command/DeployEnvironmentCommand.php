@@ -35,6 +35,7 @@ use Tragwerk\Domain\Model\ProjectConfig;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\DeployJobRepository;
 use Tragwerk\Domain\Repository\DomainRepository;
+use Tragwerk\Domain\Repository\EnvVarRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\RegistryPrefixRepository;
 use Tragwerk\Domain\Repository\RegistryRepository;
@@ -97,6 +98,7 @@ final class DeployEnvironmentCommand extends Command
         private readonly ServiceImageResolver $imageResolver,
         private readonly Producer $producer,
         private readonly RegistryPrefixRepository $registryPrefixRepository,
+        private readonly EnvVarRepository $envVarRepository,
         private readonly string $projectDataPath,
     ) {
         parent::__construct();
@@ -416,7 +418,19 @@ final class DeployEnvironmentCommand extends Command
             $domainsByPlaceholder[$domain->placeholder][] = $domain->host;
         }
 
-        $compose = $this->composeGenerator->generate($config, $branch, $domainsByPlaceholder, $imageTags, $projectSlug);
+        $userEnvVars = [];
+        foreach ($this->envVarRepository->findByBranch($projectIdentifier, $branch) as $envVar) {
+            $userEnvVars[$envVar->key] = $envVar->value;
+        }
+
+        $compose = $this->composeGenerator->generate(
+            $config,
+            $branch,
+            $domainsByPlaceholder,
+            $imageTags,
+            $projectSlug,
+            $userEnvVars,
+        );
         $sftp->put(
             $remoteDir . '/docker-compose.yml',
             Yaml::dump($compose, 8, 2, Yaml::DUMP_NULL_AS_TILDE),

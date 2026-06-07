@@ -14,6 +14,7 @@ use Tragwerk\Domain\Docker\ServiceImageResolver;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\DeployJobRepository;
 use Tragwerk\Domain\Repository\DomainRepository;
+use Tragwerk\Domain\Repository\EnvVarRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\RegistryPrefixRepository;
 use Tragwerk\Domain\Repository\RegistryRepository;
@@ -47,6 +48,7 @@ final readonly class DeployEnvironmentCommandFactory
         $imgResolver = $container->get(ServiceImageResolver::class);
         $producer    = $container->get(Producer::class);
         $regPrefixes = $container->get(RegistryPrefixRepository::class);
+        $envVars     = $container->get(EnvVarRepository::class);
 
         assert($projects instanceof ProjectRepository);
         assert($servers instanceof ServerRepository);
@@ -61,6 +63,7 @@ final readonly class DeployEnvironmentCommandFactory
         assert($imgResolver instanceof ServiceImageResolver);
         assert($producer instanceof Producer);
         assert($regPrefixes instanceof RegistryPrefixRepository);
+        assert($envVars instanceof EnvVarRepository);
 
         return new DeployEnvironmentCommand(
             $projects,
@@ -76,6 +79,7 @@ final readonly class DeployEnvironmentCommandFactory
             $imgResolver,
             $producer,
             $regPrefixes,
+            $envVars,
             $dataPath,
         );
     }
