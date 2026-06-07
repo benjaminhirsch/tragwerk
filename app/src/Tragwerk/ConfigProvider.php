@@ -52,12 +52,14 @@ use Tragwerk\Factory\EventListener\SshKey\UpdateAuthorizedKeysFactory;
 use Tragwerk\Factory\Git\BareRepositoryFactory;
 use Tragwerk\Factory\Handler\Project\DownloadBuildHandlerFactory;
 use Tragwerk\Factory\Handler\Project\TabHandlerFactory;
+use Tragwerk\Factory\Mercure\MercurePublisherFactory;
 use Tragwerk\Factory\Middleware\MiddlewareFactory;
 use Tragwerk\Factory\Queue\Handler\BuildEnvironmentFactory;
 use Tragwerk\Factory\Valinor\DefaultMapperBuilderFactory;
 use Tragwerk\Factory\Valinor\DefaultNormalizeBuilderFactory;
 use Tragwerk\Factory\Valinor\TreeMapperFactory;
 use Tragwerk\Infrastructure\Git\BareRepository;
+use Tragwerk\Infrastructure\Mercure\MercurePublisher;
 
 use function assert;
 
@@ -95,6 +97,7 @@ final readonly class ConfigProvider
                     Application\Handler\Project\DownloadBuildHandler::class => DownloadBuildHandlerFactory::class,
                     Application\Queue\Handler\BuildEnvironment::class         => BuildEnvironmentFactory::class,
                     Application\Cli\Command\DeployEnvironmentCommand::class   => DeployEnvironmentCommandFactory::class,
+                    MercurePublisher::class                                    => MercurePublisherFactory::class,
                     EventListener\SshKey\UpdateAuthorizedKeys::class        => UpdateAuthorizedKeysFactory::class,
                     ConfigValidator::class                              => ConfigValidatorFactory::class,
                     EventListener\Project\DeleteProjectData::class     => DeleteProjectDataFactory::class,

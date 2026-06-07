@@ -20,6 +20,7 @@ use Tragwerk\Domain\Repository\RegistryPrefixRepository;
 use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Infrastructure\Git\BareRepository;
+use Tragwerk\Infrastructure\Mercure\MercurePublisher;
 
 use function assert;
 use function is_array;
@@ -49,6 +50,7 @@ final readonly class DeployEnvironmentCommandFactory
         $producer    = $container->get(Producer::class);
         $regPrefixes = $container->get(RegistryPrefixRepository::class);
         $envVars     = $container->get(EnvVarRepository::class);
+        $mercure     = $container->get(MercurePublisher::class);
 
         assert($projects instanceof ProjectRepository);
         assert($servers instanceof ServerRepository);
@@ -64,6 +66,7 @@ final readonly class DeployEnvironmentCommandFactory
         assert($producer instanceof Producer);
         assert($regPrefixes instanceof RegistryPrefixRepository);
         assert($envVars instanceof EnvVarRepository);
+        assert($mercure instanceof MercurePublisher);
 
         return new DeployEnvironmentCommand(
             $projects,
@@ -81,6 +84,7 @@ final readonly class DeployEnvironmentCommandFactory
             $regPrefixes,
             $envVars,
             $dataPath,
+            $mercure,
         );
     }
 }

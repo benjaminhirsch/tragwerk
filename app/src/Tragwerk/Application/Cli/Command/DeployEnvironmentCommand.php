@@ -43,6 +43,7 @@ use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\ValueObject\DeployJobIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Infrastructure\Git\BareRepository;
+use Tragwerk\Infrastructure\Mercure\MercurePublisher;
 
 use function array_map;
 use function assert;
@@ -62,6 +63,7 @@ use function is_dir;
 use function is_int;
 use function is_string;
 use function json_decode;
+use function microtime;
 use function mkdir;
 use function preg_match;
 use function preg_replace;
@@ -84,6 +86,10 @@ use const FILTER_VALIDATE_IP;
 #[AsCommand(name: 'project:deploy', description: 'Deploy a built environment to the target server')]
 final class DeployEnvironmentCommand extends Command
 {
+    private float $lastMercurePublish                = 0.0;
+    private ProjectIdentifier|null $currentProjectId = null;
+    private string $currentBranch                    = '';
+
     public function __construct(
         private readonly ProjectRepository $projectRepository,
         private readonly ServerRepository $serverRepository,
@@ -100,6 +106,7 @@ final class DeployEnvironmentCommand extends Command
         private readonly RegistryPrefixRepository $registryPrefixRepository,
         private readonly EnvVarRepository $envVarRepository,
         private readonly string $projectDataPath,
+        private readonly MercurePublisher $mercurePublisher,
     ) {
         parent::__construct();
     }
@@ -130,6 +137,9 @@ final class DeployEnvironmentCommand extends Command
 
         $id    = ProjectIdentifier::fromString($projectId);
         $jobId = DeployJobIdentifier::fromString($deployJobId);
+
+        $this->currentProjectId = $id;
+        $this->currentBranch    = $branch;
 
         $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Running);
 
@@ -571,6 +581,7 @@ final class DeployEnvironmentCommand extends Command
         $this->syncFromParentIfFirstDeploy($sftp, $projectId, $branch, $commitSha, $jobId);
         $this->log($jobId, '[Deploy] Registry-based deploy completed.');
         $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Completed);
+        $this->publishDeployEvent($jobId, true);
 
         if ($registry->pruningEnabled) {
             foreach ($config->applications as $app) {
@@ -1004,6 +1015,35 @@ final class DeployEnvironmentCommand extends Command
     private function log(DeployJobIdentifier $jobId, string $message): void
     {
         $this->deployJobRepository->appendOutput($jobId, $message . "\n");
+        $this->publishDeployEvent($jobId, false);
+    }
+
+    private function publishDeployEvent(DeployJobIdentifier $jobId, bool $force): void
+    {
+        if ($this->currentProjectId === null) {
+            return;
+        }
+
+        $now = microtime(true);
+
+        if (! $force && $now - $this->lastMercurePublish < 0.5) {
+            return;
+        }
+
+        $this->lastMercurePublish = $now;
+        $pid                      = $this->currentProjectId->toString();
+        $this->mercurePublisher->publish(
+            $this->mercurePublisher->topic('/project/' . $pid . '/deploy-job/' . $jobId->toString()),
+            ['type' => 'update'],
+        );
+        $this->mercurePublisher->publish(
+            $this->mercurePublisher->topic('/project/' . $pid . '/deploy-log/' . $this->currentBranch),
+            ['type' => 'update'],
+        );
+        $this->mercurePublisher->publish(
+            $this->mercurePublisher->topic('/project/' . $pid . '/branch-list'),
+            ['type' => 'update'],
+        );
     }
 
     private function removeDirectory(string $path): void

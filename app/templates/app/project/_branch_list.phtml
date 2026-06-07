@@ -7,18 +7,12 @@
 
 $projectId = $project->id->toString();
 $listUrl   = $this->url('project.environment.branch-list', ['id' => $projectId]);
+$topicBase = $_SERVER['MERCURE_TOPIC_BASE'] ?? 'https://tragwerk.build';
+$sseTopic  = urlencode($topicBase . '/project/' . $projectId . '/branch-list');
 
 $children = [];
 foreach ($branchParents as $branch => $parent) {
     $children[$parent ?? ''][] = $branch;
-}
-
-$hasActiveJobs = false;
-foreach ($deployStatuses as $status) {
-    if ($status->value === 'pending' || $status->value === 'running') {
-        $hasActiveJobs = true;
-        break;
-    }
 }
 
 $renderBranches = function (array $nodes) use (
@@ -59,8 +53,10 @@ $renderBranches = function (array $nodes) use (
 };
 ?>
 <div id="tw-branch-list"
+    hx-ext="sse"
+    sse-connect="/.well-known/mercure?topic=<?= $sseTopic ?>"
     hx-get="<?= $this->e($listUrl) ?>"
-    hx-trigger="every <?= $hasActiveJobs ? '3s' : '10s' ?>"
+    hx-trigger="sse:message, every 30s"
     hx-swap="outerHTML"
     hx-on:htmx:load="var b=document.getElementById('tw-active-branch')?.value;if(b){document.querySelectorAll('.tw-branch-item').forEach(function(e){e.classList.toggle('active',e.dataset.branch===b)})}"
 >
