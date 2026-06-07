@@ -35,6 +35,14 @@ final readonly class DockerfileGenerator
 
     public function generate(ApplicationConfig $app): DockerfileOutput
     {
+        foreach ($app->extensions as $ext) {
+            if ($ext->name === 'swoole') {
+                throw new InvalidArgumentException(
+                    'The swoole extension is not supported with FrankenPHP. Use the FrankenPHP worker mode instead.',
+                );
+            }
+        }
+
         $slug            = $this->slugify($app->name);
         $buildHooks      = $this->filterHooks($app->hooks, HookType::BUILD);
         $deployHooks     = $this->filterHooks($app->hooks, HookType::DEPLOY);
@@ -275,7 +283,7 @@ final readonly class DockerfileGenerator
     private function isPeclExtension(string $extension): bool
     {
         return match ($extension) {
-            'imagick', 'redis', 'xdebug', 'mongodb', 'igbinary', 'msgpack', 'swoole' => true,
+            'imagick', 'redis', 'xdebug', 'mongodb', 'igbinary', 'msgpack' => true,
             default => false,
         };
     }
@@ -284,14 +292,32 @@ final readonly class DockerfileGenerator
     private function aptDepsForExtension(string $extension): array
     {
         return match ($extension) {
-            'intl'                 => ['libicu-dev'],
-            'gd'                   => ['libpng-dev', 'libfreetype6-dev', 'libjpeg62-turbo-dev'],
-            'zip'                  => ['libzip-dev'],
-            'pdo_pgsql', 'pgsql'  => ['libpq-dev'],
-            'xsl'                  => ['libxslt-dev'],
-            'imap'                 => ['libc-client-dev', 'libkrb5-dev'],
-            'imagick'              => ['libmagickwand-dev'],
-            default                => [],
+            'intl'                         => ['libicu-dev'],
+            'gd'                           => ['libpng-dev', 'libfreetype6-dev', 'libjpeg62-turbo-dev'],
+            'zip'                          => ['libzip-dev'],
+            'pdo_pgsql', 'pgsql'           => ['libpq-dev'],
+            'xsl'                          => ['libxslt-dev'],
+            'imap'                         => ['libc-client-dev', 'libkrb5-dev'],
+            'imagick'                      => ['libmagickwand-dev'],
+            'curl'                         => ['libcurl4-openssl-dev'],
+            'bz2'                          => ['libbz2-dev'],
+            'enchant'                      => ['libenchant-2-dev'],
+            'ffi'                          => ['libffi-dev'],
+            'ftp'                          => ['libssl-dev'],
+            'gmp'                          => ['libgmp-dev'],
+            'ldap'                         => ['libldap2-dev', 'libsasl2-dev'],
+            'pdo_dblib'                    => ['libfreetds-dev'],
+            'pdo_odbc'                     => ['unixodbc-dev'],
+            'pdo_sqlite', 'sqlite3'        => ['libsqlite3-dev'],
+            'pspell'                       => ['libpspell-dev'],
+            'readline'                     => ['libedit-dev'],
+            'snmp'                         => ['libsnmp-dev', 'snmp'],
+            'soap', 'xml', 'xmlreader',
+            'xmlwriter', 'simplexml'       => ['libxml2-dev'],
+            'sodium'                       => ['libsodium-dev'],
+            'tidy'                         => ['libtidy-dev'],
+            'mongodb'                      => ['libssl-dev'],
+            default                        => [],
         };
     }
 
