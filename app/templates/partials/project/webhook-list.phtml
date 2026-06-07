@@ -38,11 +38,10 @@
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="fw-semibold"><i class="bi bi-link-45deg me-1"></i><?= $this->e($forgeLabel) ?></span>
                         <button class="btn btn-outline-danger btn-sm"
-                                hx-post="<?= $this->e($deleteUrl) ?>"
-                                hx-target="#webhook-list"
-                                hx-swap="outerHTML"
-                                hx-include="#tw-csrf-token"
-                                hx-confirm="<?= $this->e($this->t('Remove this integration?')) ?>">
+                                data-bs-toggle="modal"
+                                data-bs-target="#tw-webhook-delete-modal"
+                                data-delete-url="<?= $this->e($deleteUrl) ?>"
+                                data-forge-label="<?= $this->e($forgeLabel) ?>">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
@@ -67,7 +66,7 @@
         </div>
     <?php endif ?>
 
-    <?php if ($availableForges !== []): ?>
+    <?php if ($integrations === [] && $availableForges !== []): ?>
         <form hx-post="<?= $this->url('project.webhook.create', ['id' => $project->id->toString()]) ?>"
               hx-target="#webhook-list"
               hx-swap="outerHTML"
@@ -96,9 +95,9 @@
                 </button>
             </div>
         </form>
-    <?php else: ?>
+    <?php elseif ($integrations !== []): ?>
         <p class="text-body-secondary small mb-0">
-            <i class="bi bi-check-circle me-1"></i><?= $this->t('All supported forges are configured.') ?>
+            <i class="bi bi-info-circle me-1"></i><?= $this->t('Delete the existing integration to add a different one.') ?>
         </p>
     <?php endif ?>
 </div>
