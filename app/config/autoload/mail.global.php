@@ -29,7 +29,7 @@ return [
             ],
         ],
         'defaultEmail' => [
-            'from' => ['no-reply@luminario.de' => 'Tragwerk'],
+            'from' => ['no-reply@tragwerk.app' => 'Tragwerk'],
         ],
     ],
 ];
