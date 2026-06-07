@@ -7,6 +7,8 @@
  * @var \Tragwerk\Domain\Model\ProjectConfig|null $projectConfig
  * @var list<\Tragwerk\Domain\Entity\Domain>     $domains
  * @var string|null                              $parentBranch
+ * @var list<\Tragwerk\Domain\Entity\EnvVar>     $ownVars
+ * @var list<\Tragwerk\Domain\Entity\EnvVar>     $inheritedVars
  */
 $tabId        = 'tw-env-tab-' . md5($branch);
 $deployUrl    = $this->url('project.environment.deploy-log', ['id' => $project->id->toString()])
@@ -79,6 +81,13 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
                 data-bs-toggle="tab" data-bs-target="#<?= $tabId ?>-domains"
                 type="button" role="tab">
             <?= $this->t('Domains') ?>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="<?= $tabId ?>-env-vars-tab"
+                data-bs-toggle="tab" data-bs-target="#<?= $tabId ?>-env-vars"
+                type="button" role="tab">
+            <?= $this->t('Env Vars') ?>
         </button>
     </li>
     <li class="nav-item" role="presentation">
@@ -287,6 +296,16 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
                 <?= $this->t('Loading logs...') ?>
             </div>
         </div>
+    </div>
+
+    <div class="tab-pane fade" id="<?= $tabId ?>-env-vars" role="tabpanel">
+        <?= $this->fetch('partial::project/env-var-list', [
+            'project'       => $project,
+            'branch'        => $branch,
+            'ownVars'       => $ownVars,
+            'inheritedVars' => $inheritedVars,
+            'error'         => null,
+        ]) ?>
     </div>
 
     <div class="tab-pane fade" id="<?= $tabId ?>-config" role="tabpanel">
@@ -533,6 +552,35 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
                         <span class="spinner-border spinner-border-sm me-2" role="status"></span>
                         <?= $this->t('Loading...') ?>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="tw-env-var-delete-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><?= $this->t('Remove variable') ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0"><?= $this->t('Really remove variable') ?> <strong id="tw-env-var-delete-key"></strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <?= $this->t('Cancel') ?>
+                    </button>
+                    <button type="button"
+                            id="tw-env-var-delete-confirm"
+                            class="btn btn-danger"
+                            data-bs-dismiss="modal"
+                            hx-post=""
+                            hx-target="#env-var-list"
+                            hx-swap="outerHTML"
+                            hx-include="#tw-csrf-token">
+                        <i class="bi bi-trash me-1"></i><?= $this->t('Remove') ?>
+                    </button>
                 </div>
             </div>
         </div>

@@ -13,6 +13,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Throwable;
 use Tragwerk\Application\Response\ResponseRenderer;
+use Tragwerk\Application\Service\BranchAncestorResolver;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Team;
@@ -20,6 +21,7 @@ use Tragwerk\Domain\Model\ProjectConfig;
 use Tragwerk\Domain\Repository\BuildLogRepository;
 use Tragwerk\Domain\Repository\DeployJobRepository;
 use Tragwerk\Domain\Repository\DomainRepository;
+use Tragwerk\Domain\Repository\EnvVarRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Infrastructure\Git\BareRepository;
@@ -40,6 +42,8 @@ final readonly class EnvironmentHandler implements RequestHandlerInterface
         private DeployJobRepository $deployJobRepository,
         private XmlToArrayConverter $xmlConverter,
         private TreeMapper $treeMapper,
+        private EnvVarRepository $envVarRepository,
+        private BranchAncestorResolver $ancestorResolver,
     ) {
     }
 
@@ -75,6 +79,10 @@ final readonly class EnvironmentHandler implements RequestHandlerInterface
 
         $parentBranch = $this->resolveParentBranch($project->id->toString(), $branch);
 
+        $ancestors     = $this->ancestorResolver->getAncestors($project->id->toString(), $branch);
+        $ownVars       = $this->envVarRepository->findByBranch($project->id, $branch);
+        $inheritedVars = $this->envVarRepository->findInheritedFromAncestors($project->id, $ancestors);
+
         return $this->renderer->render($request, 'page::project/tab/environment', [
             'project'       => $project,
             'branch'        => $branch,
@@ -83,6 +91,8 @@ final readonly class EnvironmentHandler implements RequestHandlerInterface
             'projectConfig' => $projectConfig,
             'domains'       => $domains,
             'parentBranch'  => $parentBranch,
+            'ownVars'       => $ownVars,
+            'inheritedVars' => $inheritedVars,
         ]);
     }
 

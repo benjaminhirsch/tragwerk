@@ -299,6 +299,8 @@ final readonly class ConfigProvider
                         Infrastructure\Repository\PasswordResetRepository::class,
                     Domain\Repository\ProjectWebhookRepository::class =>
                         Infrastructure\Repository\ProjectWebhookRepository::class,
+                    Domain\Repository\EnvVarRepository::class =>
+                        Infrastructure\Repository\EnvVarRepository::class,
                 ],
             ],
         ];
@@ -411,6 +413,18 @@ final readonly class ConfigProvider
                 Event\DomainSetPrimary::class  => [EventListener\Domain\SetDomainAsPrimary::class],
                 Event\WebhookIntegrationCreated::class => [EventListener\Project\CreateWebhookIntegration::class],
                 Event\WebhookIntegrationDeleted::class => [EventListener\Project\DeleteWebhookIntegration::class],
+                Event\EnvVarCreated::class => [
+                    EventListener\EnvVar\PersistEnvVar::class,
+                    EventListener\EnvVar\TriggerBuildOnEnvVarChange::class,
+                ],
+                Event\EnvVarUpdated::class => [
+                    EventListener\EnvVar\UpdateEnvVar::class,
+                    EventListener\EnvVar\TriggerBuildOnEnvVarChange::class,
+                ],
+                Event\EnvVarDeleted::class => [
+                    EventListener\EnvVar\DeleteEnvVar::class,
+                    EventListener\EnvVar\TriggerBuildOnEnvVarChange::class,
+                ],
                 Event\BuildLogCreated::class   => [EventListener\BuildLog\PersistBuildLog::class],
                 Event\DeployJobCreated::class  => [EventListener\DeployJob\PersistDeployJob::class],
                 Event\TeamInvitationCreated::class =>

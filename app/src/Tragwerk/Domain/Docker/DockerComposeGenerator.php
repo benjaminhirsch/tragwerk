@@ -35,6 +35,8 @@ final readonly class DockerComposeGenerator
      * @param array<string, string>       $imageTags            Map of appSlug → fully-qualified image tag.
      *                                                          When provided the service uses `image:` instead
      *                                                          of `build:`.
+     * @param array<string, string>       $userEnvVars          User-defined env vars injected into app containers.
+     *                                                          System keys (SERVER_NAME, TRAGWERK_*) take precedence.
      *
      * @return array<string, mixed>
      */
@@ -44,6 +46,7 @@ final readonly class DockerComposeGenerator
         array $domainsByPlaceholder = [],
         array $imageTags = [],
         string $projectSlug = '',
+        array $userEnvVars = [],
     ): array {
         /** @var array<string, mixed> $services */
         $services = [];
@@ -74,8 +77,9 @@ final readonly class DockerComposeGenerator
             }
 
             /** @var array<string, array<string, string>> $dependsOn */
-            $dependsOn   = [];
-            $environment = ['SERVER_NAME' => ':80'];
+            $dependsOn                  = [];
+            $environment                = $userEnvVars;
+            $environment['SERVER_NAME'] = ':80';
 
             // Worker scripts honour MAX_REQUESTS to restart after N requests (memory-leak guard).
             if ($app->workerMode !== null && $app->workerMode->maxRequests > 0) {
