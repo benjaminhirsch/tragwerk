@@ -11,6 +11,7 @@ use Tragwerk\Domain\Model\RouteConfig;
 use Tragwerk\Domain\Model\ServiceConfig;
 use Tragwerk\Domain\Model\WorkerDefinitionConfig;
 
+use function array_any;
 use function array_key_exists;
 use function array_map;
 use function explode;
@@ -197,6 +198,8 @@ final readonly class DockerComposeGenerator
             $worker['volumes'] = $appService['volumes'];
         }
 
+        $worker['read_only'] = true;
+
         if (isset($appService['tmpfs'])) {
             $worker['tmpfs'] = $appService['tmpfs'];
         }
@@ -302,13 +305,10 @@ final readonly class DockerComposeGenerator
 
     private function anyAppMatches(string $upstreamName, ProjectConfig $config): bool
     {
-        foreach ($config->applications as $candidate) {
-            if ($upstreamName === $candidate->name || $upstreamName === $this->slugify($candidate->name)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any(
+            $config->applications,
+            fn ($candidate) => $upstreamName === $candidate->name || $upstreamName === $this->slugify($candidate->name),
+        );
     }
 
     private function extractHost(string $pattern): string

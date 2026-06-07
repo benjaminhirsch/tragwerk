@@ -39,7 +39,7 @@ abstract class AppIntegrationTestCase extends IntegrationTestCase
         parent::setUp(); // builds container, gets connection, starts transaction
 
         $this->tempRepoDir = sys_get_temp_dir() . '/tragwerk-test-repos-' . uniqid();
-        mkdir($this->tempRepoDir, 0755, true);
+        @mkdir($this->tempRepoDir, 0755, true);
 
         // Override services that require external infrastructure
         $this->container->setAllowOverride(true);
