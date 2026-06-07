@@ -355,6 +355,11 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
                                                         <?= $this->e($volName) ?>
                                                     </span>
                                                 </div>
+                                                <?php if ($mount->source->value === 'local'): ?>
+                                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle flex-shrink-0">local</span>
+                                                <?php else: ?>
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle flex-shrink-0"><?= $this->e($mount->source->value) ?></span>
+                                                <?php endif ?>
                                                 <?php if (! $mount->cloneFromParent): ?>
                                                     <span class="badge bg-warning-subtle text-warning border border-warning-subtle flex-shrink-0">
                                                         no clone
@@ -374,24 +379,35 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
                                 </div>
                             <?php endif ?>
                             <?php if ($app->hooks !== []): ?>
-                                <div class="small mt-1">
-                                    <span class="text-body-secondary"><?= $this->t('Hooks:') ?></span>
-                                    <?php foreach ($app->hooks as $hook): ?>
-                                        <span class="badge bg-light text-dark ms-1"><?= $this->e($hook->type->value) ?></span>
-                                    <?php endforeach ?>
+                                <div class="mt-2">
+                                    <div class="text-body-secondary small fw-semibold mb-1">
+                                        <?= $this->t('Hooks') ?>
+                                    </div>
+                                    <ul class="list-unstyled mb-0">
+                                        <?php foreach ($app->hooks as $hook): ?>
+                                            <li class="py-1 border-bottom small">
+                                                <span class="badge bg-secondary mb-1"><?= $this->e($hook->type->value) ?></span>
+                                                <code class="d-block text-body-secondary" style="white-space: pre-wrap; word-break: break-all;"><?= $this->e(preg_replace('/^[ \t]+|[ \t]+$/m', '', $hook->value)) ?></code>
+                                            </li>
+                                        <?php endforeach ?>
+                                    </ul>
                                 </div>
                             <?php endif ?>
                             <?php if ($app->workerMode !== null): ?>
-                                <div class="small mt-1">
-                                    <span class="text-body-secondary"><?= $this->t('Worker mode:') ?></span>
-                                    <?php if ($app->workerMode->count !== null): ?>
-                                        <code class="ms-1"><?= $this->e((string) $app->workerMode->count) ?> <?= $this->t('workers') ?></code>
-                                    <?php else: ?>
-                                        <code class="ms-1"><?= $this->t('auto') ?></code>
-                                    <?php endif ?>
-                                    <?php if ($app->workerMode->maxRequests > 0): ?>
-                                        <span class="text-body-secondary ms-1">/ <?= $this->e((string) $app->workerMode->maxRequests) ?> req</span>
-                                    <?php endif ?>
+                                <div class="mt-2">
+                                    <div class="text-body-secondary small fw-semibold mb-1">
+                                        <?= $this->t('Worker Mode') ?>
+                                    </div>
+                                    <div class="small">
+                                        <?php if ($app->workerMode->count !== null): ?>
+                                            <code><?= $this->e((string) $app->workerMode->count) ?> <?= $this->t('workers') ?></code>
+                                        <?php else: ?>
+                                            <code><?= $this->t('auto') ?></code>
+                                        <?php endif ?>
+                                        <?php if ($app->workerMode->maxRequests > 0): ?>
+                                            <span class="text-body-secondary ms-1">/ <?= $this->e((string) $app->workerMode->maxRequests) ?> req</span>
+                                        <?php endif ?>
+                                    </div>
                                 </div>
                             <?php endif ?>
                             <?php if ($app->workers !== []): ?>
@@ -453,10 +469,28 @@ $addDomainUrl = $this->url('project.domain.add', ['id' => $project->id->toString
                 </h6>
                 <ul class="list-unstyled mb-0">
                     <?php foreach ($projectConfig->routes as $route): ?>
-                        <li class="d-flex align-items-center gap-2 py-1 border-bottom small">
-                            <i class="bi bi-arrow-right text-body-secondary flex-shrink-0"></i>
-                            <code class="text-truncate flex-grow-1"><?= $this->e($route->pattern) ?></code>
-                            <span class="badge bg-secondary ms-auto flex-shrink-0"><?= $this->e($route->upstream ?? '') ?></span>
+                        <?php
+                        preg_match('/\{([^}]+)\}/', $route->pattern, $m);
+                        $placeholder    = $m[1] ?? null;
+                        $routeDomains   = $placeholder !== null
+                            ? array_filter($domains, static fn ($d) => $d->placeholder === $placeholder && $d->branch === $branch)
+                            : [];
+                        ?>
+                        <li class="py-1 border-bottom small">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-arrow-right text-body-secondary flex-shrink-0"></i>
+                                <code class="text-truncate flex-grow-1"><?= $this->e($route->pattern) ?></code>
+                                <?php if ($route->upstream !== null && $route->upstream !== ''): ?>
+                                    <span class="badge bg-secondary ms-auto flex-shrink-0"><?= $this->e($route->upstream) ?></span>
+                                <?php endif ?>
+                            </div>
+                            <?php if ($routeDomains !== []): ?>
+                                <div class="ms-4 text-body-secondary" style="font-size:.72rem">
+                                    <?php foreach ($routeDomains as $i => $domain): ?>
+                                        <?= $i > 0 ? ' · ' : '' ?><?= $this->e($domain->host) ?>
+                                    <?php endforeach ?>
+                                </div>
+                            <?php endif ?>
                         </li>
                     <?php endforeach ?>
                 </ul>
