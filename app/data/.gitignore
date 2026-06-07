@@ -4,3 +4,4 @@
 !.gitignore
 !translations
 !translations/*.po
+!translations/*.mo
