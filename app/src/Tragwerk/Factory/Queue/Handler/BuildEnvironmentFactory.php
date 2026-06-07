@@ -11,10 +11,12 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Lock\LockFactory;
 use Tragwerk\Application\Queue\Handler\BuildEnvironment;
 use Tragwerk\Application\Queue\Producer;
+use Tragwerk\Application\Service\BranchAncestorResolver;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
 use Tragwerk\Domain\Docker\DockerfileGenerator;
 use Tragwerk\Domain\Repository\DomainRepository;
+use Tragwerk\Domain\Repository\EnvVarRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\Repository\UserRepository;
@@ -47,6 +49,8 @@ final readonly class BuildEnvironmentFactory
         $teams            = $container->get(TeamRepository::class);
         $users            = $container->get(UserRepository::class);
         $lockFactory      = $container->get(LockFactory::class);
+        $envVars          = $container->get(EnvVarRepository::class);
+        $ancestors        = $container->get(BranchAncestorResolver::class);
 
         assert($bareRepository instanceof BareRepository);
         assert($xmlConverter instanceof XmlToArrayConverter);
@@ -61,6 +65,8 @@ final readonly class BuildEnvironmentFactory
         assert($teams instanceof TeamRepository);
         assert($users instanceof UserRepository);
         assert($lockFactory instanceof LockFactory);
+        assert($envVars instanceof EnvVarRepository);
+        assert($ancestors instanceof BranchAncestorResolver);
 
         return new BuildEnvironment(
             $bareRepository,
@@ -77,6 +83,8 @@ final readonly class BuildEnvironmentFactory
             $teams,
             $users,
             $lockFactory,
+            $envVars,
+            $ancestors,
         );
     }
 }

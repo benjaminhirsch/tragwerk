@@ -141,6 +141,24 @@ final readonly class Project
         );
 
         $routes->post(
+            '/projects/{id}/environments/{branch}/env-vars',
+            $this->middlewareFactory->prepare([Handler\Project\EnvVar\CreateEnvVarHandler::class]),
+            'project.env-var.create',
+        );
+
+        $routes->post(
+            '/projects/{id}/environments/{branch}/env-vars/{varId}/update',
+            $this->middlewareFactory->prepare([Handler\Project\EnvVar\UpdateEnvVarHandler::class]),
+            'project.env-var.update',
+        );
+
+        $routes->post(
+            '/projects/{id}/environments/{branch}/env-vars/{varId}/delete',
+            $this->middlewareFactory->prepare([Handler\Project\EnvVar\DeleteEnvVarHandler::class]),
+            'project.env-var.delete',
+        );
+
+        $routes->post(
             '/projects/{id}/webhooks',
             $this->middlewareFactory->prepare([Handler\Project\Webhook\CreateWebhookIntegrationHandler::class]),
             'project.webhook.create',

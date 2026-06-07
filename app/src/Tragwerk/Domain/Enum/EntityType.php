@@ -26,6 +26,7 @@ enum EntityType: string implements Translatable
     case EMAIL_CONFIRMATION  = 'EMAIL_CONFIRMATION';
     case PASSWORD_RESET      = 'PASSWORD_RESET';
     case WEBHOOK_INTEGRATION = 'WEBHOOK_INTEGRATION';
+    case ENV_VAR             = 'ENV_VAR';
 
     /** @phpstan-pure  */
     #[Override]
@@ -47,6 +48,7 @@ enum EntityType: string implements Translatable
             self::EMAIL_CONFIRMATION  => _('Email Confirmation'),
             self::PASSWORD_RESET      => _('Password Reset'),
             self::WEBHOOK_INTEGRATION => _('Webhook Integration'),
+            self::ENV_VAR             => _('Environment Variable'),
         };
     }
 
@@ -73,6 +75,7 @@ enum EntityType: string implements Translatable
             self::EMAIL_CONFIRMATION  => Entity\EmailConfirmation::class,
             self::PASSWORD_RESET      => Entity\PasswordReset::class,
             self::WEBHOOK_INTEGRATION => Entity\ProjectWebhook::class,
+            self::ENV_VAR             => Entity\EnvVar::class,
         };
     }
 }

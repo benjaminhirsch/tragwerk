@@ -1,0 +1,190 @@
+<?php
+/**
+ * @var \Tragwerk\Domain\Entity\Project      $project
+ * @var string                               $branch
+ * @var list<\Tragwerk\Domain\Entity\EnvVar> $ownVars
+ * @var list<\Tragwerk\Domain\Entity\EnvVar> $inheritedVars
+ * @var string|null                          $error
+ */
+$createUrl = $this->url('project.env-var.create', ['id' => $project->id->toString(), 'branch' => $branch]);
+?>
+<div id="env-var-list">
+    <?php if ($error !== null): ?>
+        <div class="alert alert-danger py-2 mb-3">
+            <i class="bi bi-exclamation-triangle me-1"></i><?= $this->e($error) ?>
+        </div>
+    <?php endif ?>
+
+    <?php if ($ownVars !== [] || $inheritedVars !== []): ?>
+        <table class="table table-sm mb-3">
+            <thead>
+                <tr>
+                    <th class="text-body-secondary fw-normal small"><?= $this->t('Key') ?></th>
+                    <th class="text-body-secondary fw-normal small"><?= $this->t('Value') ?></th>
+                    <th class="text-body-secondary fw-normal small"></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($ownVars as $var): ?>
+                    <?php
+                    $deleteUrl = $this->url('project.env-var.delete', [
+                        'id'     => $project->id->toString(),
+                        'branch' => $branch,
+                        'varId'  => $var->id->toString(),
+                    ]);
+                    $updateUrl = $this->url('project.env-var.update', [
+                        'id'     => $project->id->toString(),
+                        'branch' => $branch,
+                        'varId'  => $var->id->toString(),
+                    ]);
+                    $editCollapseId = 'env-var-edit-' . $var->id->toString();
+                    ?>
+                    <tr>
+                        <td class="align-middle font-monospace small"><?= $this->e($var->key) ?></td>
+                        <td class="align-middle font-monospace small">
+                            <?php if ($var->isSecret): ?>
+                                <span class="text-body-secondary">••••••••</span>
+                            <?php else: ?>
+                                <?= $this->e($var->value) ?>
+                            <?php endif ?>
+                        </td>
+                        <td class="align-middle">
+                            <?php if ($var->isSecret): ?>
+                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle">
+                                    <i class="bi bi-lock-fill me-1"></i><?= $this->t('Secret') ?>
+                                </span>
+                            <?php endif ?>
+                            <?php if ($var->isInherited): ?>
+                                <span class="badge bg-info-subtle text-info border border-info-subtle ms-1">
+                                    <i class="bi bi-diagram-3 me-1"></i><?= $this->t('Inherited') ?>
+                                </span>
+                            <?php endif ?>
+                        </td>
+                        <td class="align-middle text-end">
+                            <button class="btn btn-outline-secondary btn-sm me-1"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#<?= $this->e($editCollapseId) ?>">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#tw-env-var-delete-modal"
+                                    data-delete-url="<?= $this->e($deleteUrl) ?>"
+                                    data-var-key="<?= $this->e($var->key) ?>">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="collapse" id="<?= $this->e($editCollapseId) ?>">
+                        <td colspan="4" class="bg-body-tertiary p-3">
+                            <form hx-post="<?= $this->e($updateUrl) ?>"
+                                  hx-target="#env-var-list"
+                                  hx-swap="outerHTML"
+                                  hx-include="#tw-csrf-token">
+                                <div class="mb-2">
+                                    <label class="form-label small"><?= $this->t('Value') ?></label>
+                                    <input type="text"
+                                           name="value"
+                                           class="form-control form-control-sm font-monospace"
+                                           <?php if ($var->isSecret): ?>
+                                               placeholder="<?= $this->t('Leave blank to keep current value') ?>"
+                                           <?php else: ?>
+                                               value="<?= $this->e($var->value) ?>"
+                                           <?php endif ?>>
+                                </div>
+                                <div class="d-flex gap-3 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="is_secret"
+                                               id="<?= $this->e($editCollapseId) ?>-secret"
+                                               <?= $var->isSecret ? 'checked' : '' ?>>
+                                        <label class="form-check-label small" for="<?= $this->e($editCollapseId) ?>-secret">
+                                            <?= $this->t('Secret') ?>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="is_inherited"
+                                               id="<?= $this->e($editCollapseId) ?>-inherited"
+                                               <?= $var->isInherited ? 'checked' : '' ?>>
+                                        <label class="form-check-label small" for="<?= $this->e($editCollapseId) ?>-inherited">
+                                            <?= $this->t('Inherit to child environments') ?>
+                                        </label>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <?= $this->t('Save') ?>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                <?php endforeach ?>
+
+                <?php foreach ($inheritedVars as $var): ?>
+                    <tr class="text-body-secondary">
+                        <td class="align-middle font-monospace small"><?= $this->e($var->key) ?></td>
+                        <td class="align-middle font-monospace small">
+                            <?php if ($var->isSecret): ?>
+                                <span class="text-body-secondary">••••••••</span>
+                            <?php else: ?>
+                                <?= $this->e($var->value) ?>
+                            <?php endif ?>
+                        </td>
+                        <td class="align-middle">
+                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle small">
+                                <i class="bi bi-diagram-3 me-1"></i><?= $this->e($var->branch) ?>
+                            </span>
+                        </td>
+                        <td></td>
+                    </tr>
+                <?php endforeach ?>
+            </tbody>
+        </table>
+    <?php else: ?>
+        <p class="text-body-secondary mb-3"><?= $this->t('No environment variables defined yet.') ?></p>
+    <?php endif ?>
+
+    <form hx-post="<?= $this->e($createUrl) ?>"
+          hx-target="#env-var-list"
+          hx-swap="outerHTML"
+          hx-include="#tw-csrf-token"
+          class="mt-2">
+        <div class="d-flex gap-2 align-items-end flex-wrap">
+            <div>
+                <label class="form-label small"><?= $this->t('Key') ?></label>
+                <input type="text"
+                       name="key"
+                       class="form-control form-control-sm font-monospace"
+                       placeholder="MY_VARIABLE"
+                       pattern="[A-Z][A-Z0-9_]*"
+                       title="<?= $this->t('Uppercase letters, digits, and underscores; must start with a letter') ?>"
+                       required>
+            </div>
+            <div class="flex-grow-1">
+                <label class="form-label small"><?= $this->t('Value') ?></label>
+                <input type="text"
+                       name="value"
+                       class="form-control form-control-sm font-monospace"
+                       required>
+            </div>
+            <div class="d-flex gap-3 align-items-center pb-1">
+                <div class="form-check mb-0">
+                    <input class="form-check-input" type="checkbox" name="is_secret" id="env-var-new-secret-<?= md5($branch) ?>">
+                    <label class="form-check-label small" for="env-var-new-secret-<?= md5($branch) ?>">
+                        <?= $this->t('Secret') ?>
+                    </label>
+                </div>
+                <div class="form-check mb-0">
+                    <input class="form-check-input" type="checkbox" name="is_inherited" id="env-var-new-inherited-<?= md5($branch) ?>">
+                    <label class="form-check-label small" for="env-var-new-inherited-<?= md5($branch) ?>">
+                        <?= $this->t('Inherit to child environments') ?>
+                    </label>
+                </div>
+            </div>
+            <div class="pb-1">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-lg me-1"></i><?= $this->t('Add') ?>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

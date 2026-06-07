@@ -18,20 +18,24 @@ use Tragwerk\Application\Queue\Handler\BuildEnvironment;
 use Tragwerk\Application\Queue\Message;
 use Tragwerk\Application\Queue\Producer;
 use Tragwerk\Application\Queue\Queue;
+use Tragwerk\Application\Service\BranchAncestorResolver;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
 use Tragwerk\Domain\Docker\DockerfileGenerator;
 use Tragwerk\Domain\Docker\ServiceImageResolver;
 use Tragwerk\Domain\Entity\Domain;
 use Tragwerk\Domain\Entity\Entity;
+use Tragwerk\Domain\Entity\EnvVar;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\Repository\DomainRepository;
+use Tragwerk\Domain\Repository\EnvVarRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\Repository\UserRepository;
 use Tragwerk\Domain\ValueObject\DomainIdentifier;
+use Tragwerk\Domain\ValueObject\EnvVarIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
@@ -257,6 +261,41 @@ final class BuildEnvironmentTest extends TestCase
             }
         };
 
+        $nullEnvVarRepo = new class implements EnvVarRepository {
+            public function getById(EnvVarIdentifier $id): EnvVar
+            {
+                throw new RuntimeException();
+            }
+
+            public function create(EnvVar $var): void
+            {
+            }
+
+            public function update(EnvVar $var): void
+            {
+            }
+
+            public function delete(EnvVarIdentifier $id): void
+            {
+            }
+
+            /** @return list<EnvVar> */
+            public function findByBranch(ProjectIdentifier $projectId, string $branch): array
+            {
+                return [];
+            }
+
+            /**
+             * @param list<string> $ancestorBranches
+             *
+             * @return list<EnvVar>
+             */
+            public function findInheritedFromAncestors(ProjectIdentifier $projectId, array $ancestorBranches): array
+            {
+                return [];
+            }
+        };
+
         $this->handler = new BuildEnvironment(
             $this->bareRepository,
             new XmlToArrayConverter(),
@@ -272,6 +311,8 @@ final class BuildEnvironmentTest extends TestCase
             $nullTeamRepo,
             $nullUserRepo,
             new LockFactory(new InMemoryStore()),
+            $nullEnvVarRepo,
+            new BranchAncestorResolver($this->bareRepository),
         );
     }
 
