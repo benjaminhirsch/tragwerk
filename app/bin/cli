@@ -42,6 +42,7 @@ $commands = [
         Command\SyncEnvironmentDataCommand::class,
         Command\SampleServerMetrics::class,
         Command\CleanupProjectDockerCommand::class,
+        Command\PruneOrphanedRegistryImagesCommand::class,
 
         DoctrineMigrationsCommand\CurrentCommand::class,
         DoctrineMigrationsCommand\DiffCommand::class,

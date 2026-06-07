@@ -9,6 +9,7 @@ use Tragwerk\Domain\Entity\Registry;
 
 use function array_merge;
 use function array_slice;
+use function array_unique;
 use function base64_encode;
 use function curl_exec;
 use function curl_getinfo;
@@ -49,6 +50,43 @@ final readonly class RegistryPruner
 {
     private const string DOCKER_HUB_HOST = 'docker.io';
 
+    /**
+     * Deletes ALL tags whose name starts with any of $prefixes.
+     *
+     * Used when a project is deleted to wipe its registry images entirely.
+     *
+     * @param list<string> $prefixes e.g. ['myapp-main-', 'myapp-dev-']
+     *
+     * @return list<string> tags that were deleted
+     */
+    public function pruneAll(Registry $registry, array $prefixes): array
+    {
+        if ($registry->url === self::DOCKER_HUB_HOST) {
+            return $this->deleteMatchingDockerHub($registry, $prefixes, keepCount: 0);
+        }
+
+        return $this->deleteMatchingOci($registry, $prefixes, keepCount: 0);
+    }
+
+    /**
+     * Deletes tags whose prefix does NOT appear in $activePrefixes.
+     *
+     * Used for dead-branch cleanup: pass all currently active prefixes so only
+     * images for deleted branches are removed.
+     *
+     * @param list<string> $activePrefixes e.g. ['myapp-main-', 'myapp-dev-']
+     *
+     * @return list<string> tags that were deleted
+     */
+    public function pruneOrphaned(Registry $registry, array $activePrefixes): array
+    {
+        if ($registry->url === self::DOCKER_HUB_HOST) {
+            return $this->deleteOrphanedDockerHub($registry, $activePrefixes);
+        }
+
+        return $this->deleteOrphanedOci($registry, $activePrefixes);
+    }
+
     /** @return list<string> tags that were deleted */
     public function prune(Registry $registry, string $appSlug, string $branchSlug): array
     {
@@ -79,22 +117,31 @@ final readonly class RegistryPruner
             return [];
         }
 
-        $matching = [];
+        $matching      = [];
+        $matchingCache = [];
         foreach ($data['results'] as $tag) {
             if (! is_array($tag)) {
                 continue;
             }
 
             $name = is_string($tag['name'] ?? null) ? $tag['name'] : '';
-            if ($name === '' || ! str_starts_with($name, $prefix) || str_ends_with($name, '-cache')) {
+            if ($name === '' || ! str_starts_with($name, $prefix)) {
                 continue;
             }
 
-            $matching[] = $name;
+            if (str_ends_with($name, '-cache')) {
+                $matchingCache[] = $name;
+            } else {
+                $matching[] = $name;
+            }
         }
 
         rsort($matching, SORT_STRING);
-        $toDelete = array_slice($matching, $registry->keepTags);
+        rsort($matchingCache, SORT_STRING);
+        $toDelete = array_merge(
+            array_slice($matching, $registry->keepTags),
+            array_slice($matchingCache, $registry->keepTags),
+        );
         $deleted  = [];
 
         foreach ($toDelete as $tag) {
@@ -128,17 +175,26 @@ final readonly class RegistryPruner
             return [];
         }
 
-        $matching = [];
+        $matching      = [];
+        $matchingCache = [];
         foreach ($data['tags'] as $tag) {
-            if (! is_string($tag) || ! str_starts_with($tag, $prefix) || str_ends_with($tag, '-cache')) {
+            if (! is_string($tag) || ! str_starts_with($tag, $prefix)) {
                 continue;
             }
 
-            $matching[] = $tag;
+            if (str_ends_with($tag, '-cache')) {
+                $matchingCache[] = $tag;
+            } else {
+                $matching[] = $tag;
+            }
         }
 
         rsort($matching, SORT_STRING);
-        $toDelete = array_slice($matching, $registry->keepTags);
+        rsort($matchingCache, SORT_STRING);
+        $toDelete = array_merge(
+            array_slice($matching, $registry->keepTags),
+            array_slice($matchingCache, $registry->keepTags),
+        );
         $deleted  = [];
 
         foreach ($toDelete as $tag) {
@@ -303,6 +359,258 @@ final readonly class RegistryPruner
         curl_exec($ch);
 
         return (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    }
+
+    /**
+     * @param list<string> $prefixes
+     *
+     * @return list<string>
+     */
+    private function deleteMatchingDockerHub(Registry $registry, array $prefixes, int $keepCount): array
+    {
+        $token = $this->dockerHubToken($registry);
+
+        [$namespace, $repo] = $this->splitRepository($registry->repository);
+
+        $url  = 'https://hub.docker.com/v2/repositories/' . $namespace . '/' . $repo
+            . '/tags/?page_size=100&ordering=-last_updated';
+        $body = $this->httpGet($url, ['Authorization: Bearer ' . $token]);
+
+        /** @var array<string, mixed>|null $data */
+        $data = json_decode($body, true);
+
+        if (! is_array($data) || ! isset($data['results']) || ! is_array($data['results'])) {
+            return [];
+        }
+
+        $byPrefix = [];
+        foreach ($data['results'] as $tag) {
+            if (! is_array($tag)) {
+                continue;
+            }
+
+            $name = is_string($tag['name'] ?? null) ? $tag['name'] : '';
+            if ($name === '') {
+                continue;
+            }
+
+            foreach ($prefixes as $prefix) {
+                if (str_starts_with($name, $prefix)) {
+                    $byPrefix[$prefix][] = $name;
+                    break;
+                }
+            }
+        }
+
+        $toDelete = [];
+        foreach ($byPrefix as $tags) {
+            rsort($tags, SORT_STRING);
+            foreach (array_slice($tags, $keepCount) as $tag) {
+                $toDelete[] = $tag;
+            }
+        }
+
+        $deleted = [];
+        foreach (array_unique($toDelete) as $tag) {
+            $deleteUrl = 'https://hub.docker.com/v2/repositories/' . $namespace . '/' . $repo . '/tags/' . $tag . '/';
+            $status    = $this->httpDelete($deleteUrl, ['Authorization: Bearer ' . $token]);
+
+            if ($status < 200 || $status >= 300) {
+                continue;
+            }
+
+            $deleted[] = $tag;
+        }
+
+        return $deleted;
+    }
+
+    /**
+     * @param list<string> $prefixes
+     *
+     * @return list<string>
+     */
+    private function deleteMatchingOci(Registry $registry, array $prefixes, int $keepCount): array
+    {
+        [$token, $authType] = $this->ociToken($registry);
+        $repo               = $registry->repository;
+        $base               = 'https://' . $registry->url . '/v2/' . $repo;
+        $auth               = 'Authorization: ' . $authType . ' ' . $token;
+
+        $body = $this->httpGet($base . '/tags/list', [$auth]);
+
+        /** @var array<string, mixed>|null $data */
+        $data = json_decode($body, true);
+
+        if (! is_array($data) || ! isset($data['tags']) || ! is_array($data['tags'])) {
+            return [];
+        }
+
+        $byPrefix = [];
+        foreach ($data['tags'] as $tag) {
+            if (! is_string($tag)) {
+                continue;
+            }
+
+            foreach ($prefixes as $prefix) {
+                if (str_starts_with($tag, $prefix)) {
+                    $byPrefix[$prefix][] = $tag;
+                    break;
+                }
+            }
+        }
+
+        $toDelete = [];
+        foreach ($byPrefix as $tags) {
+            rsort($tags, SORT_STRING);
+            foreach (array_slice($tags, $keepCount) as $tag) {
+                $toDelete[] = $tag;
+            }
+        }
+
+        $deleted = [];
+        foreach (array_unique($toDelete) as $tag) {
+            $digest = $this->ociDigest($base . '/manifests/' . $tag, [$auth]);
+
+            if ($digest === '') {
+                continue;
+            }
+
+            $status = $this->httpDelete($base . '/manifests/' . $digest, [$auth]);
+
+            if ($status < 200 || $status >= 300) {
+                continue;
+            }
+
+            $deleted[] = $tag;
+        }
+
+        return $deleted;
+    }
+
+    /**
+     * @param list<string> $activePrefixes
+     *
+     * @return list<string>
+     */
+    private function deleteOrphanedDockerHub(Registry $registry, array $activePrefixes): array
+    {
+        $token = $this->dockerHubToken($registry);
+
+        [$namespace, $repo] = $this->splitRepository($registry->repository);
+
+        $url  = 'https://hub.docker.com/v2/repositories/' . $namespace . '/' . $repo
+            . '/tags/?page_size=100&ordering=-last_updated';
+        $body = $this->httpGet($url, ['Authorization: Bearer ' . $token]);
+
+        /** @var array<string, mixed>|null $data */
+        $data = json_decode($body, true);
+
+        if (! is_array($data) || ! isset($data['results']) || ! is_array($data['results'])) {
+            return [];
+        }
+
+        $toDelete = [];
+        foreach ($data['results'] as $tag) {
+            if (! is_array($tag)) {
+                continue;
+            }
+
+            $name = is_string($tag['name'] ?? null) ? $tag['name'] : '';
+            if ($name === '') {
+                continue;
+            }
+
+            $isActive = false;
+            foreach ($activePrefixes as $prefix) {
+                if (str_starts_with($name, $prefix)) {
+                    $isActive = true;
+                    break;
+                }
+            }
+
+            if ($isActive) {
+                continue;
+            }
+
+            $toDelete[] = $name;
+        }
+
+        $deleted = [];
+        foreach ($toDelete as $tag) {
+            $deleteUrl = 'https://hub.docker.com/v2/repositories/' . $namespace . '/' . $repo . '/tags/' . $tag . '/';
+            $status    = $this->httpDelete($deleteUrl, ['Authorization: Bearer ' . $token]);
+
+            if ($status < 200 || $status >= 300) {
+                continue;
+            }
+
+            $deleted[] = $tag;
+        }
+
+        return $deleted;
+    }
+
+    /**
+     * @param list<string> $activePrefixes
+     *
+     * @return list<string>
+     */
+    private function deleteOrphanedOci(Registry $registry, array $activePrefixes): array
+    {
+        [$token, $authType] = $this->ociToken($registry);
+        $repo               = $registry->repository;
+        $base               = 'https://' . $registry->url . '/v2/' . $repo;
+        $auth               = 'Authorization: ' . $authType . ' ' . $token;
+
+        $body = $this->httpGet($base . '/tags/list', [$auth]);
+
+        /** @var array<string, mixed>|null $data */
+        $data = json_decode($body, true);
+
+        if (! is_array($data) || ! isset($data['tags']) || ! is_array($data['tags'])) {
+            return [];
+        }
+
+        $toDelete = [];
+        foreach ($data['tags'] as $tag) {
+            if (! is_string($tag)) {
+                continue;
+            }
+
+            $isActive = false;
+            foreach ($activePrefixes as $prefix) {
+                if (str_starts_with($tag, $prefix)) {
+                    $isActive = true;
+                    break;
+                }
+            }
+
+            if ($isActive) {
+                continue;
+            }
+
+            $toDelete[] = $tag;
+        }
+
+        $deleted = [];
+        foreach ($toDelete as $tag) {
+            $digest = $this->ociDigest($base . '/manifests/' . $tag, [$auth]);
+
+            if ($digest === '') {
+                continue;
+            }
+
+            $status = $this->httpDelete($base . '/manifests/' . $digest, [$auth]);
+
+            if ($status < 200 || $status >= 300) {
+                continue;
+            }
+
+            $deleted[] = $tag;
+        }
+
+        return $deleted;
     }
 
     /** @return array{0: string, 1: string} */
