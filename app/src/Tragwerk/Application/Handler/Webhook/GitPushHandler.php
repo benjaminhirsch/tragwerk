@@ -7,27 +7,16 @@ namespace Tragwerk\Application\Handler\Webhook;
 use Laminas\Diactoros\Response\EmptyResponse;
 use Laminas\Diactoros\Response\JsonResponse;
 use Override;
-use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Throwable;
-use Tragwerk\Application\Queue\Message\BuildEnvironment;
-use Tragwerk\Application\Queue\Producer;
-use Tragwerk\Domain\Config\ConfigValidator;
-use Tragwerk\Domain\Entity\BuildLog;
+use Tragwerk\Application\Service\BuildDispatcher;
 use Tragwerk\Domain\Entity\Project;
-use Tragwerk\Domain\Enum\BuildLogType;
-use Tragwerk\Domain\Event\BuildLogCreated;
-use Tragwerk\Domain\Repository\DomainRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
-use Tragwerk\Domain\ValueObject\BuildLogIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
-use Tragwerk\Domain\ValueObject\TimestampImmutable;
-use Tragwerk\Infrastructure\Git\BareRepository;
 
 use function assert;
-use function implode;
 use function is_array;
 use function is_string;
 
@@ -35,11 +24,7 @@ final readonly class GitPushHandler implements RequestHandlerInterface
 {
     public function __construct(
         private ProjectRepository $projectRepository,
-        private BareRepository $bareRepository,
-        private ConfigValidator $configValidator,
-        private EventDispatcherInterface $eventDispatcher,
-        private DomainRepository $domainRepository,
-        private Producer $producer,
+        private BuildDispatcher $buildDispatcher,
     ) {
     }
 
@@ -75,46 +60,8 @@ final readonly class GitPushHandler implements RequestHandlerInterface
             return new EmptyResponse(404);
         }
 
-        [$message, $configValid] = $this->validateConfig($project->id->toString(), $newSha);
-
-        $this->eventDispatcher->dispatch(new BuildLogCreated(new BuildLog(
-            id:        BuildLogIdentifier::create(),
-            projectId: $project->id,
-            branch:    $branch,
-            type:      BuildLogType::PUSH,
-            message:   $message,
-            createdAt: TimestampImmutable::now(),
-        )));
-
-        $isMain    = $branch === 'main' || $branch === 'master';
-        $hasDomain = $isMain || $this->domainRepository->findByEnvironment($project->id, $branch) !== [];
-
-        if ($configValid && $hasDomain) {
-            $this->producer->sendMessage(new BuildEnvironment(
-                projectId: $project->id->toString(),
-                branch:    $branch,
-                commitSha: $newSha,
-            ));
-        }
+        $this->buildDispatcher->dispatch($project, $branch, $newSha);
 
         return new JsonResponse(['status' => 'ok']);
-    }
-
-    /** @return array{string, bool} */
-    private function validateConfig(string $projectId, string $commitSha): array
-    {
-        $content = $this->bareRepository->getFileContent($projectId, $commitSha, '.tragwerk/config.xml');
-
-        if ($content === null || $content === '') {
-            return ['No .tragwerk/config.xml found — skipping validation', false];
-        }
-
-        $errors = $this->configValidator->validate($content);
-
-        if ($errors === []) {
-            return ['Configuration validated successfully', true];
-        }
-
-        return ['Configuration is invalid:' . "\n" . implode("\n", $errors), false];
     }
 }

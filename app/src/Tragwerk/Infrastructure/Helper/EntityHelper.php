@@ -25,6 +25,7 @@ final readonly class EntityHelper
             EntityType::REGISTRY           => 'registries',
             EntityType::EMAIL_CONFIRMATION => 'email_confirmations',
             EntityType::PASSWORD_RESET     => 'password_resets',
+            EntityType::WEBHOOK_INTEGRATION => 'project_webhooks',
         };
     }
 }

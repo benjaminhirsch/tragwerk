@@ -25,5 +25,12 @@ final readonly class Webhook
             [RequestMethodInterface::METHOD_POST],
             'webhook.git-push',
         )->setOptions([AuthenticationMiddleware::OPTION_REQUIRE_AUTHENTICATION => false]);
+
+        $routes->route(
+            '/webhooks/{forge}/{projectId}',
+            $this->middlewareFactory->prepare([Handler\Webhook\ForgeWebhookHandler::class]),
+            [RequestMethodInterface::METHOD_POST],
+            'webhook.forge',
+        )->setOptions([AuthenticationMiddleware::OPTION_REQUIRE_AUTHENTICATION => false]);
     }
 }
