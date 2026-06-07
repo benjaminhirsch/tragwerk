@@ -198,7 +198,8 @@ final readonly class DockerComposeGenerator
             $worker['volumes'] = $appService['volumes'];
         }
 
-        $worker['read_only'] = true;
+        $worker['read_only']   = true;
+        $worker['healthcheck'] = ['disable' => true];
 
         if (isset($appService['tmpfs'])) {
             $worker['tmpfs'] = $appService['tmpfs'];

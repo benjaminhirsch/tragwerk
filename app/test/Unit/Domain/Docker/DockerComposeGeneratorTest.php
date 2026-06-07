@@ -659,7 +659,7 @@ final class DockerComposeGeneratorTest extends TestCase
 
         $worker = $this->service($compose, 'app-worker-queue');
         self::assertArrayNotHasKey('labels', $worker);
-        self::assertArrayNotHasKey('healthcheck', $worker);
+        self::assertSame(['disable' => true], $worker['healthcheck'] ?? null);
     }
 
     #[Test]
