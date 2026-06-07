@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tragwerk\Domain\Docker;
 
-use Tragwerk\Domain\Enum\MountSource;
 use Tragwerk\Domain\Enum\ServiceRuntime;
 use Tragwerk\Domain\Model\ApplicationConfig;
 use Tragwerk\Domain\Model\ProjectConfig;
@@ -66,10 +65,6 @@ final readonly class DockerComposeGenerator
             $appVolumes = [];
 
             foreach ($app->mounts as $mount) {
-                if ($mount->source === MountSource::SERVICE) {
-                    continue;
-                }
-
                 $mountSlug         = $this->slugify($mount->name);
                 $volName           = $appSlug . '-' . $mountSlug;
                 $appVolumes[]      = $volName . ':/app/' . ltrim($mount->path, '/');
