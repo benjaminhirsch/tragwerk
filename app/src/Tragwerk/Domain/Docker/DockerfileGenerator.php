@@ -147,6 +147,8 @@ final readonly class DockerfileGenerator
         $lines[] = '#!/bin/sh';
         $lines[] = 'set -e';
         $lines[] = '';
+        $lines[] = 'rm -f /app/data/cache/config-cache.php';
+        $lines[] = '';
 
         foreach ($deployHooks as $hook) {
             foreach ($this->parseScriptLines($hook->value) as $line) {
