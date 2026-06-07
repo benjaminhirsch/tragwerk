@@ -54,6 +54,22 @@ $this->layout('layout::default', ['title' => $project->name]);
             'label'        => $this->t('Environments'),
         ]) ?>
     </li>
+    <li class="nav-item" role="presentation">
+        <?= $this->fetch('partial::input/button', [
+            'classes'      => 'nav-link',
+            'type'         => 'button',
+            'role'         => 'tab',
+            'id'           => 'tab-webhooks-btn',
+            'dataBsToggle' => 'tab',
+            'dataBsTarget' => '#tab-webhooks',
+            'hxGet'        => $this->url('project.show.tab', ['id' => $project->id->toString(), 'tab' => 'webhooks']),
+            'hxTarget'     => '#tab-webhooks',
+            'hxSwap'       => 'innerHTML',
+            'hxTrigger'    => 'shown.bs.tab once',
+            'icon'         => 'bi bi-link-45deg me-1',
+            'label'        => $this->t('Integrations'),
+        ]) ?>
+    </li>
 </ul>
 
 <div class="tab-content tw-card tw-card-tabs">
@@ -63,6 +79,7 @@ $this->layout('layout::default', ['title' => $project->name]);
          hx-swap="innerHTML">
     </div>
     <div class="tab-pane fade" id="tab-environments" role="tabpanel"></div>
+    <div class="tab-pane fade" id="tab-webhooks" role="tabpanel"></div>
 </div>
 
 <div id="tw-env-modal-container"></div>

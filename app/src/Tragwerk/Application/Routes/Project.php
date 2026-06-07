@@ -141,6 +141,18 @@ final readonly class Project
         );
 
         $routes->post(
+            '/projects/{id}/webhooks',
+            $this->middlewareFactory->prepare([Handler\Project\Webhook\CreateWebhookIntegrationHandler::class]),
+            'project.webhook.create',
+        );
+
+        $routes->post(
+            '/projects/{id}/webhooks/{webhookId}/delete',
+            $this->middlewareFactory->prepare([Handler\Project\Webhook\DeleteWebhookIntegrationHandler::class]),
+            'project.webhook.delete',
+        );
+
+        $routes->post(
             '/projects/{id}/delete',
             $this->middlewareFactory->prepare([Handler\Project\DeleteHandler::class]),
             'project.delete',

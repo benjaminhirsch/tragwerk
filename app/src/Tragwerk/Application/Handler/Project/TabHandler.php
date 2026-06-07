@@ -15,13 +15,16 @@ use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Registry;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
+use Tragwerk\Domain\Enum\GitForge;
 use Tragwerk\Domain\Repository\ProjectRepository;
+use Tragwerk\Domain\Repository\ProjectWebhookRepository;
 use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 
 use function assert;
+use function in_array;
 use function is_string;
 
 final readonly class TabHandler implements RequestHandlerInterface
@@ -32,6 +35,7 @@ final readonly class TabHandler implements RequestHandlerInterface
         private ServerRepository $serverRepository,
         private TeamRepository $teamRepository,
         private RegistryRepository $registryRepository,
+        private ProjectWebhookRepository $webhookRepository,
         private string $gitSshHost,
         private string $gitSshRepoBase,
     ) {
@@ -51,6 +55,7 @@ final readonly class TabHandler implements RequestHandlerInterface
         return match ($tab) {
             'overview'     => $this->renderOverview($request, $project),
             'environments' => $this->renderEnvironments($request, $project),
+            'webhooks'     => $this->renderWebhooks($request, $project),
             default        => new EmptyResponse(404),
         };
     }
@@ -85,6 +90,34 @@ final readonly class TabHandler implements RequestHandlerInterface
     private function renderEnvironments(ServerRequestInterface $request, Project $project): ResponseInterface
     {
         return $this->renderer->render($request, 'page::project/tab/environments', ['project' => $project]);
+    }
+
+    private function renderWebhooks(ServerRequestInterface $request, Project $project): ResponseInterface
+    {
+        $integrations = $this->webhookRepository->findByProject($project->id);
+        $usedForges   = [];
+        foreach ($integrations as $i) {
+            $usedForges[] = $i->forge;
+        }
+
+        $availableForges = [];
+        foreach (GitForge::cases() as $case) {
+            if (in_array($case, $usedForges, true)) {
+                continue;
+            }
+
+            $availableForges[] = $case;
+        }
+
+        $uri     = $request->getUri();
+        $baseUrl = $uri->getScheme() . '://' . $uri->getHost();
+
+        return $this->renderer->render($request, 'page::project/tab/webhooks', [
+            'project'         => $project,
+            'integrations'    => $integrations,
+            'availableForges' => $availableForges,
+            'baseUrl'         => $baseUrl,
+        ]);
     }
 
     private function resolveProject(ServerRequestInterface $request): Project|null

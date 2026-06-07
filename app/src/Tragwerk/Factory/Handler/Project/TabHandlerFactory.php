@@ -8,6 +8,7 @@ use Psr\Container\ContainerInterface;
 use Tragwerk\Application\Handler\Project\TabHandler;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Repository\ProjectRepository;
+use Tragwerk\Domain\Repository\ProjectWebhookRepository;
 use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
@@ -33,13 +34,15 @@ final readonly class TabHandlerFactory
         $servers    = $container->get(ServerRepository::class);
         $teams      = $container->get(TeamRepository::class);
         $registries = $container->get(RegistryRepository::class);
+        $webhooks   = $container->get(ProjectWebhookRepository::class);
 
         assert($renderer instanceof ResponseRenderer);
         assert($projects instanceof ProjectRepository);
         assert($servers instanceof ServerRepository);
         assert($teams instanceof TeamRepository);
         assert($registries instanceof RegistryRepository);
+        assert($webhooks instanceof ProjectWebhookRepository);
 
-        return new TabHandler($renderer, $projects, $servers, $teams, $registries, $sshHost, $sshRepoBase);
+        return new TabHandler($renderer, $projects, $servers, $teams, $registries, $webhooks, $sshHost, $sshRepoBase);
     }
 }

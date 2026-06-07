@@ -1,0 +1,15 @@
+<?php
+/**
+ * @var \Tragwerk\Domain\Entity\Project              $project
+ * @var list<\Tragwerk\Domain\Entity\ProjectWebhook> $integrations
+ * @var list<\Tragwerk\Domain\Enum\GitForge>         $availableForges
+ * @var string                                       $baseUrl
+ */
+?>
+<?= $this->fetch('partial::project/webhook-list', [
+    'project'         => $project,
+    'integrations'    => $integrations,
+    'availableForges' => $availableForges,
+    'baseUrl'         => $baseUrl,
+    'error'           => null,
+]) ?>
