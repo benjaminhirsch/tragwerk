@@ -578,7 +578,7 @@ final class DockerComposeGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function serviceMountIsSkipped(): void
+    public function serviceMountCreatesNamedVolume(): void
     {
         $mount   = new MountConfig(name: 'uploads', source: MountSource::SERVICE, path: 'data/uploads');
         $config  = self::project([self::app('app', mounts: [$mount])], []);
@@ -586,7 +586,27 @@ final class DockerComposeGeneratorTest extends TestCase
 
         /** @var array<string, mixed> $volumes */
         $volumes = $compose['volumes'] ?? [];
-        self::assertArrayNotHasKey('app-uploads', $volumes);
+        self::assertArrayHasKey('app-uploads', $volumes);
+        self::assertContains('app-uploads:/app/data/uploads', $this->serviceVolumes($compose, 'app'));
+    }
+
+    #[Test]
+    public function serviceMountIsInheritedByWorker(): void
+    {
+        $mount   = new MountConfig(name: 'uploads', source: MountSource::SERVICE, path: 'data/uploads');
+        $worker  = new WorkerDefinitionConfig(name: 'queue', command: 'bin/cli worker:start default');
+        $app     = new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([new LocationConfig(path: '/', root: 'public', passthru: '/index.php')]),
+            mounts: [$mount],
+            workers: [$worker],
+        );
+        $config  = self::project([$app], [self::upstream('https://{default}', 'app:http')]);
+        $compose = $this->generator->generate($config);
+
+        self::assertContains('app-uploads:/app/data/uploads', $this->serviceVolumes($compose, 'app-worker-queue'));
     }
 
     #[Test]
