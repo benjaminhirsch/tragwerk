@@ -8,10 +8,14 @@ $outputUrl = $this->url('project.environment.deploy-job-output', [
     'id'    => $project->id->toString(),
     'jobId' => $job->id->toString(),
 ]);
+$topicBase = $_SERVER['MERCURE_TOPIC_BASE'] ?? 'https://tragwerk.build';
+$sseTopic  = urlencode($topicBase . '/project/' . $project->id->toString() . '/deploy-job/' . $job->id->toString());
 ?>
-<div <?php if ($isActive): ?>
+<div hx-ext="sse"
+     sse-connect="/.well-known/mercure?topic=<?= $sseTopic ?>"
+     <?php if ($isActive): ?>
      hx-get="<?= $this->e($outputUrl) ?>"
-     hx-trigger="every 2s"
+     hx-trigger="sse:message, every 30s"
      hx-target="#tw-job-modal-body"
      hx-swap="innerHTML"
      <?php endif ?>>

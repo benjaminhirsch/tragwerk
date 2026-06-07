@@ -32,6 +32,9 @@ services:
     environment:
       <<: *default-variables
       PHP_IDE_CONFIG: "serverName=app"
+      MERCURE_PUBLISHER_JWT_SECRET: ${MERCURE_PUBLISHER_JWT_SECRET:-changeme-publisher-secret}
+      MERCURE_SUBSCRIBER_JWT_SECRET: ${MERCURE_SUBSCRIBER_JWT_SECRET:-changeme-subscriber-secret}
+      MERCURE_HUB_URL: http://localhost/.well-known/mercure
     working_dir: /app
     depends_on:
       - db

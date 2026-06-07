@@ -23,11 +23,13 @@ use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\Repository\SetupJobRepository;
 use Tragwerk\Domain\ValueObject\SetupJobIdentifier;
+use Tragwerk\Infrastructure\Mercure\MercurePublisher;
 
 use function assert;
 use function filter_var;
 use function in_array;
 use function is_string;
+use function microtime;
 use function sprintf;
 use function str_contains;
 use function strlen;
@@ -40,11 +42,14 @@ use const FILTER_VALIDATE_IP;
 #[AsCommand(name: 'server:setup', description: 'Run server setup for a given setup job')]
 final class SetupServerCommand extends Command
 {
+    private float $lastMercurePublish = 0.0;
+
     public function __construct(
         private readonly SetupJobRepository $setupJobRepository,
         private readonly ServerRepository $serverRepository,
         private readonly CredentialRepository $credentialRepository,
         private readonly LockFactory $lockFactory,
+        private readonly MercurePublisher $mercurePublisher,
     ) {
         parent::__construct();
     }
@@ -222,6 +227,7 @@ final class SetupServerCommand extends Command
             $this->serverRepository->updateVersions($server->id, $dockerVersion, $dockerComposeVersion);
 
             $this->setupJobRepository->updateStatus($job->id, SetupJobStatus::Completed);
+            $this->publishSetupJobUpdate($job, true);
 
             return Command::SUCCESS;
         } finally {
@@ -386,12 +392,27 @@ final class SetupServerCommand extends Command
     private function append(SetupJob $job, string $text): void
     {
         $this->setupJobRepository->appendOutput($job->id, $text);
+        $this->publishSetupJobUpdate($job, false);
     }
 
     private function fail(SetupJob $job, string $message): void
     {
         $this->setupJobRepository->appendOutput($job->id, $message);
         $this->setupJobRepository->updateStatus($job->id, SetupJobStatus::Failed);
+        $this->publishSetupJobUpdate($job, true);
+    }
+
+    private function publishSetupJobUpdate(SetupJob $job, bool $force): void
+    {
+        $now = microtime(true);
+
+        if (! $force && $now - $this->lastMercurePublish < 0.5) {
+            return;
+        }
+
+        $this->lastMercurePublish = $now;
+        $topic                    = '/server/' . $job->serverId->toString() . '/setup-job/' . $job->id->toString();
+        $this->mercurePublisher->publish($this->mercurePublisher->topic($topic), ['type' => 'update']);
     }
 
     private function formatHost(string $host): string

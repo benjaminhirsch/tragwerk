@@ -299,7 +299,8 @@ final class SetupHandlerTest extends AppIntegrationTestCase
 
         $body = (string) $response->getBody();
         self::assertStringContainsString('hx-get', $body);
-        self::assertStringContainsString('every 1s', $body);
+        self::assertStringContainsString('sse:message', $body);
+        self::assertStringContainsString('sse-connect', $body);
     }
 
     #[Test]

@@ -1,13 +1,17 @@
 <?php
 /** @var \Tragwerk\Domain\Entity\Server $server */
 /** @var \Tragwerk\Domain\Entity\SetupJob $job */
-$polling = $job->status->value === 'pending' || $job->status->value === 'running';
-$logUrl  = $this->url('server.setup.log', ['id' => $server->id->toString(), 'jobId' => $job->id->toString()]);
+$polling  = $job->status->value === 'pending' || $job->status->value === 'running';
+$logUrl   = $this->url('server.setup.log', ['id' => $server->id->toString(), 'jobId' => $job->id->toString()]);
+$topicBase = $_SERVER['MERCURE_TOPIC_BASE'] ?? 'https://tragwerk.build';
+$sseTopic  = urlencode($topicBase . '/server/' . $server->id->toString() . '/setup-job/' . $job->id->toString());
 ?>
 <div id="tw-setup-log"
     <?php if ($polling): ?>
+    hx-ext="sse"
+    sse-connect="/.well-known/mercure?topic=<?= $sseTopic ?>"
     hx-get="<?= $this->e($logUrl) ?>"
-    hx-trigger="every 1s"
+    hx-trigger="sse:message, every 30s"
     hx-swap="outerHTML"
     <?php endif ?>
 >

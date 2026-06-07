@@ -11,11 +11,15 @@
 $logUrl   = $this->url('project.environment.deploy-log', ['id' => $project->id->toString()])
     . '?branch=' . urlencode($branch);
 $polling  = $forcePolling || $activeJobs !== [];
+$topicBase = $_SERVER['MERCURE_TOPIC_BASE'] ?? 'https://tragwerk.build';
+$sseTopic  = urlencode($topicBase . '/project/' . $project->id->toString() . '/deploy-log/' . $branch);
 ?>
 <div id="tw-deploy-log"
     <?php if ($polling): ?>
+    hx-ext="sse"
+    sse-connect="/.well-known/mercure?topic=<?= $sseTopic ?>"
     hx-get="<?= $this->e($logUrl) ?>"
-    hx-trigger="every 2s"
+    hx-trigger="sse:message, every 30s"
     hx-swap="outerHTML"
     <?php endif ?>
 >
