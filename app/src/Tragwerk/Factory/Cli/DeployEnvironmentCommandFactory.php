@@ -15,6 +15,7 @@ use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\DeployJobRepository;
 use Tragwerk\Domain\Repository\DomainRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
+use Tragwerk\Domain\Repository\RegistryPrefixRepository;
 use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Infrastructure\Git\BareRepository;
@@ -45,6 +46,7 @@ final readonly class DeployEnvironmentCommandFactory
         $compose     = $container->get(DockerComposeGenerator::class);
         $imgResolver = $container->get(ServiceImageResolver::class);
         $producer    = $container->get(Producer::class);
+        $regPrefixes = $container->get(RegistryPrefixRepository::class);
 
         assert($projects instanceof ProjectRepository);
         assert($servers instanceof ServerRepository);
@@ -58,6 +60,7 @@ final readonly class DeployEnvironmentCommandFactory
         assert($compose instanceof DockerComposeGenerator);
         assert($imgResolver instanceof ServiceImageResolver);
         assert($producer instanceof Producer);
+        assert($regPrefixes instanceof RegistryPrefixRepository);
 
         return new DeployEnvironmentCommand(
             $projects,
@@ -72,6 +75,7 @@ final readonly class DeployEnvironmentCommandFactory
             $compose,
             $imgResolver,
             $producer,
+            $regPrefixes,
             $dataPath,
         );
     }

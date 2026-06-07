@@ -48,6 +48,7 @@
     },
     "require": {
         "php": "~8.5.0",
+        "ext-curl": "*",
         "ext-dom": "*",
         "ext-gettext": "*",
         "ext-intl": "*",

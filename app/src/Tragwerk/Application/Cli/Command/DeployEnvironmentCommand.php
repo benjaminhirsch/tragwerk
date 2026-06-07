@@ -36,6 +36,7 @@ use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\DeployJobRepository;
 use Tragwerk\Domain\Repository\DomainRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
+use Tragwerk\Domain\Repository\RegistryPrefixRepository;
 use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\ValueObject\DeployJobIdentifier;
@@ -94,6 +95,7 @@ final class DeployEnvironmentCommand extends Command
         private readonly DockerComposeGenerator $composeGenerator,
         private readonly ServiceImageResolver $imageResolver,
         private readonly Producer $producer,
+        private readonly RegistryPrefixRepository $registryPrefixRepository,
         private readonly string $projectDataPath,
     ) {
         parent::__construct();
@@ -376,6 +378,12 @@ final class DeployEnvironmentCommand extends Command
             (new Process(['docker', 'push', $cacheTag], env: $dockerEnv, timeout: null))->run();
 
             (new Process(['docker', 'rmi', $imageTag, $cacheTag], env: $dockerEnv))->run();
+            $this->registryPrefixRepository->upsert(
+                ProjectIdentifier::fromString($projectId),
+                $registry->id,
+                $appSlug,
+                $branchSlug,
+            );
             $imageTags[$appSlug] = $imageTag;
         }
 

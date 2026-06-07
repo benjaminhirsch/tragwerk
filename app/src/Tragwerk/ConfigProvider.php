@@ -291,6 +291,8 @@ final readonly class ConfigProvider
                         Infrastructure\Repository\AppMetricRepository::class,
                     Domain\Repository\RegistryRepository::class =>
                         Infrastructure\Repository\RegistryRepository::class,
+                    Domain\Repository\RegistryPrefixRepository::class =>
+                        Infrastructure\Repository\RegistryPrefixRepository::class,
                     Domain\Repository\EmailConfirmationRepository::class =>
                         Infrastructure\Repository\EmailConfirmationRepository::class,
                     Domain\Repository\PasswordResetRepository::class =>
@@ -382,6 +384,7 @@ final readonly class ConfigProvider
                 Event\ProjectUpdated::class      => [EventListener\Project\UpdateProject::class],
                 Event\ProjectDeleted::class      => [
                     EventListener\Project\QueueDockerCleanup::class,
+                    EventListener\Project\QueueRegistryProjectCleanup::class,
                     EventListener\Project\DeleteProject::class,
                     EventListener\Project\DeleteGitRepository::class,
                     EventListener\Project\DeleteProjectData::class,
