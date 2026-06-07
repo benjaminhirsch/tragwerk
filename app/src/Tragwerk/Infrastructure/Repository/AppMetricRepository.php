@@ -38,24 +38,41 @@ final readonly class AppMetricRepository implements AppMetricRepositoryInterface
         EnvironmentMetrics $metrics,
         TimestampImmutable|null $sampledAt = null,
     ): void {
-        $this->connection->insert(self::TABLE, [
-            'id'              => Uuid::uuid7()->toString(),
-            'project_id'      => $projectId->toString(),
-            'branch'          => $branch,
-            'sampled_at'      => ($sampledAt ?? TimestampImmutable::now())->toString(),
-            'total_workers'   => $metrics->totalWorkers,
-            'busy_workers'    => $metrics->busyWorkers,
-            'ready_workers'   => $metrics->readyWorkers,
-            'queue_depth'     => $metrics->queueDepth,
-            'total_threads'   => $metrics->totalThreads,
-            'busy_threads'    => $metrics->busyThreads,
-            'requests_total'  => $metrics->requestsTotal,
-            'requests_5xx'    => $metrics->requests5xx,
-            'requests_4xx'    => $metrics->requests4xx,
-            'duration_sum_ms' => $metrics->durationSumMs,
-            'duration_count'  => $metrics->durationCount,
-            'in_flight'       => $metrics->inFlight,
-        ]);
+        $this->connection->executeStatement(
+            <<<'SQL'
+            INSERT INTO app_metrics (
+                id, project_id, branch, sampled_at,
+                total_workers, busy_workers, ready_workers, queue_depth,
+                total_threads, busy_threads,
+                requests_total, requests_5xx, requests_4xx,
+                duration_sum_ms, duration_count, in_flight
+            )
+            SELECT :id, :project_id, :branch, :sampled_at,
+                   :total_workers, :busy_workers, :ready_workers, :queue_depth,
+                   :total_threads, :busy_threads,
+                   :requests_total, :requests_5xx, :requests_4xx,
+                   :duration_sum_ms, :duration_count, :in_flight
+            WHERE EXISTS (SELECT 1 FROM projects WHERE id = :project_id)
+            SQL,
+            [
+                'id'              => Uuid::uuid7()->toString(),
+                'project_id'      => $projectId->toString(),
+                'branch'          => $branch,
+                'sampled_at'      => ($sampledAt ?? TimestampImmutable::now())->toString(),
+                'total_workers'   => $metrics->totalWorkers,
+                'busy_workers'    => $metrics->busyWorkers,
+                'ready_workers'   => $metrics->readyWorkers,
+                'queue_depth'     => $metrics->queueDepth,
+                'total_threads'   => $metrics->totalThreads,
+                'busy_threads'    => $metrics->busyThreads,
+                'requests_total'  => $metrics->requestsTotal,
+                'requests_5xx'    => $metrics->requests5xx,
+                'requests_4xx'    => $metrics->requests4xx,
+                'duration_sum_ms' => $metrics->durationSumMs,
+                'duration_count'  => $metrics->durationCount,
+                'in_flight'       => $metrics->inFlight,
+            ],
+        );
     }
 
     /**
