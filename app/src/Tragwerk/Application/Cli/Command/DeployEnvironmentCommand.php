@@ -43,6 +43,7 @@ use Tragwerk\Domain\ValueObject\DeployJobIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Infrastructure\Git\BareRepository;
 
+use function array_map;
 use function assert;
 use function basename;
 use function copy;
@@ -536,6 +537,22 @@ final class DeployEnvironmentCommand extends Command
 
         $sftp->exec('docker logout ' . escapeshellarg($registry->url) . ' 2>/dev/null; true');
         $this->ensureServerTraefik($sftp, $acmeEmail, $jobId);
+
+        $workerServices = [];
+        foreach ($config->applications as $app) {
+            $appSlug = $this->slugify($app->name);
+            foreach ($app->workers as $workerDef) {
+                $workerServices[] = $appSlug . '-worker-' . $this->slugify($workerDef->name);
+            }
+        }
+
+        if ($workerServices !== []) {
+            $this->log($jobId, '[Deploy] Starting worker services: ' . implode(', ', $workerServices));
+            $sftp->exec(
+                'cd ~/' . $remoteDir . ' && ' . $dc . ' up --no-deps -d '
+                . implode(' ', array_map('escapeshellarg', $workerServices)) . ' 2>&1',
+            );
+        }
 
         $this->syncFromParentIfFirstDeploy($sftp, $projectId, $branch, $commitSha, $jobId);
         $this->log($jobId, '[Deploy] Registry-based deploy completed.');
