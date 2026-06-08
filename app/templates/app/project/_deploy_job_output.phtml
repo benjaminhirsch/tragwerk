@@ -44,6 +44,6 @@ $sseTopic  = urlencode($topicBase . '/project/' . $project->id->toString() . '/d
     </div>
     <pre id="tw-deploy-pre"
          class="bg-dark text-light p-3 rounded-bottom mb-0"
-         style="min-height: 120px; max-height: 500px; overflow-y: auto; font-size: 0.8rem; white-space: pre-wrap;"
+         style="font-size: 0.8rem; white-space: pre-wrap;"
     ><?= $this->e($job->output !== '' ? $job->output : '...') ?></pre>
 </div>

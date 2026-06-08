@@ -497,3 +497,40 @@ h6 {
     opacity: 1;
     text-decoration: underline;
 }
+
+/* ── Deploy log modal ───────────────────────────────────── */
+
+.tw-job-modal-dialog {
+    max-width: min(90vw, 1600px);
+    height: 90vh;
+}
+
+.tw-job-modal-dialog .modal-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.tw-job-modal-dialog .modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0;
+}
+
+.tw-job-modal-dialog .modal-body > div {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+#tw-deploy-pre {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    max-height: none !important;
+}
