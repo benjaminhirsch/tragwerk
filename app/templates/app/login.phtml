@@ -1,68 +1,120 @@
-<?php $this->layout('layout::default', ['title' => 'Login · Tragwerk']) ?>
+<?php $this->layout('layout::default') ?>
 
-<h4 class="card-title mb-1"><?= $this->t('Sign in') ?></h4>
-<p class="text-body-secondary small mb-4"><?= $this->t('Enter your credentials to continue') ?></p>
 
-<?php if ($registered ?? false): ?>
-<div class="alert alert-info small mb-3">
-    <?= $this->t('Registration successful. Please check your email to confirm your account.') ?>
+<div class="auth-wrap">
+
+    <!-- Brand panel -->
+    <aside class="auth-brand">
+        <?= $this->fetch('partial::logo') ?>
+        <div class="auth-hero">
+            <h2><?= $this->e($this->t('Deploy without friction')) ?></h2>
+            <p><?= $this->e($this->t('From commit to production in minutes on your very own server!')) ?></p>
+            <ul class="auth-feats">
+                <li><span class="ic"><i class="bi bi-diagram-3"></i></span> <?= $this->e($this->t('Isolated environments per branch')) ?></li>
+                <li><span class="ic"><i class="bi bi-copy"></i></span> <?= $this->e($this->t('Instant data clone cloning')) ?></li>
+                <li><span class="ic"><i class="bi bi-hdd-stack"></i></span> <?= $this->e($this->t('Use any VPS with your prefered hoster')) ?></li>
+                <li><span class="ic"><i class="bi bi-unlock"></i></span> <?= $this->e($this->t('No vendor lock-in')) ?></li>
+            </ul>
+        </div>
+        <div class="auth-brand__foot">
+            <span class="auth-status"><span class="dot"></span> <?= $this->e($this->t('')) ?></span>
+            <span class="mono">EU-1</span>
+        </div>
+    </aside>
+
+    <!-- Form -->
+    <main class="auth-main">
+        <button class="auth-theme" id="auth-theme-btn" title="<?= $this->e($this->t('Change theme')) ?>"><i id="auth-theme-ico" class="bi bi-moon-stars"></i></button>
+
+        <div class="auth-card">
+            <div class="auth-card__logo">
+                <?= $this->fetch('partial::logo') ?>
+            </div>
+            <div class="auth-head">
+                <h1><?= $this->e($this->t('Welcome back')) ?></h1>
+                <p><?= $this->e($this->t('No account yet?')) ?>
+
+                    <?= $this->fetch('partial::link', [
+                            'href' => $this->url('register'),
+                            'label' => $this->t('Register now'),
+                    ]) ?>
+                </p>
+            </div>
+
+            <?php /*
+            <div class="auth-sso mb-3">
+                <button class="btn-sso"><i class="bi bi-github"></i> Mit GitHub fortfahren</button>
+                <button class="btn-sso"><i class="bi bi-google"></i> Mit Google fortfahren</button>
+            </div>
+            <div class="auth-or">oder</div>*/ ?>
+
+            <form class="auth-form" action="<?= $this->url('login') ?>" method="post">
+            <?= $this->fetch('partial::input/csrf') ?>
+
+                <?php if ($registered ?? false): ?>
+                    <div class="alert alert-info small mb-3">
+                        <?= $this->t('Registration successful. Please check your email to confirm your account.') ?>
+                    </div>
+                <?php endif ?>
+
+                <?php if ($confirmed ?? false): ?>
+                    <div class="alert alert-success small mb-3">
+                        <?= $this->t('Your email address has been confirmed. You can now sign in.') ?>
+                    </div>
+                <?php endif ?>
+
+                <?php if ($resetRequested ?? false): ?>
+                    <div class="alert alert-info small mb-3">
+                        <?= $this->t('If an account exists for that email, a password reset link has been sent.') ?>
+                    </div>
+                <?php endif ?>
+
+                <?php if ($passwordReset ?? false): ?>
+                    <div class="alert alert-success small mb-3">
+                        <?= $this->t('Your password has been updated. You can now sign in with your new password.') ?>
+                    </div>
+                <?php endif ?>
+
+                <?php if ($notConfirmed ?? false): ?>
+                    <div class="alert alert-warning small mb-3">
+                        <?= $this->t('Please confirm your email address before signing in. Check your inbox for the confirmation link.') ?>
+                    </div>
+                <?php endif ?>
+
+                <?php if ($loginError ?? false): ?>
+                    <?= $this->fetch('partial::alert', [
+                            'content' => $this->t('Invalid email address or password.'),
+                            'type' => 'danger',
+                    ]) ?>
+                <?php endif ?>
+
+                <?= $this->fetch('partial::input/email', [
+                        'id' => 'email',
+                        'placeholder' => 'your@email.address',
+                        'label' => $this->t('E-Mail'),
+                        'autofocus' => true,
+                ]) ?>
+
+                <?= $this->fetch('partial::input/password', [
+                        'id' => 'password',
+                        'label' => $this->t('Password')
+                ]) ?>
+
+                <?= $this->fetch('partial::link', [
+                        'href' => $this->url('passwordReset.request'),
+                        'label' => $this->t('Forgot your password?'),
+                        'classes' => 'small'
+                ]) ?>
+
+                <?= $this->fetch('partial::input/button', [
+                        'label' => $this->t('Sign in'),
+                        'classes' => 'btn btn-primary'
+                ]) ?>
+            </form>
+        </div>
+    </main>
 </div>
-<?php endif ?>
 
-<?php if ($confirmed ?? false): ?>
-<div class="alert alert-success small mb-3">
-    <?= $this->t('Your email address has been confirmed. You can now sign in.') ?>
-</div>
-<?php endif ?>
-
-<?php if ($resetRequested ?? false): ?>
-<div class="alert alert-info small mb-3">
-    <?= $this->t('If an account exists for that email, a password reset link has been sent.') ?>
-</div>
-<?php endif ?>
-
-<?php if ($passwordReset ?? false): ?>
-<div class="alert alert-success small mb-3">
-    <?= $this->t('Your password has been updated. You can now sign in with your new password.') ?>
-</div>
-<?php endif ?>
-
-<?php if ($notConfirmed ?? false): ?>
-<div class="alert alert-warning small mb-3">
-    <?= $this->t('Please confirm your email address before signing in. Check your inbox for the confirmation link.') ?>
-</div>
-<?php endif ?>
-
-<?php if ($loginError ?? false): ?>
-<div class="alert alert-danger small mb-3">
-    <?= $this->t('Invalid email address or password.') ?>
-</div>
-<?php endif ?>
-
-<form action="<?= $this->url('login') ?>" method="post">
-    <?= $this->fetch('partial::input/csrf') ?>
-    <?= $this->fetch('partial::input/email', [
-            'id' => 'email',
-            'label' => $this->t('E-Mail'),
-            'autofocus' => true,
-    ]) ?>
-    <?= $this->fetch('partial::input/password', [
-            'id' => 'password',
-            'label' => $this->t('Password')
-    ]) ?>
-    <div class="form-actions d-grid">
-        <?= $this->fetch('partial::input/button', [
-                'label' => $this->t('Sign in'),
-                'classes' => 'btn btn-primary'
-        ]) ?>
-    </div>
-</form>
-
-<hr class="my-3">
-<p class="text-center text-body-secondary small mb-1">
-    <?= $this->t("Don't have an account?") ?>
-    <a href="<?= $this->url('register') ?>"><?= $this->t('Create one') ?></a>
-</p>
-<p class="text-center text-body-secondary small mb-0">
-    <a href="<?= $this->url('passwordReset.request') ?>"><?= $this->t('Forgot your password?') ?></a>
-</p>
+<?php $this->start('javascript') ?>
+<script src="/js/auth.js"></script>
+<?php $this->stop() ?>

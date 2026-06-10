@@ -1,0 +1,9 @@
+<?php assert(isset($content) && isset($type)); ?>
+
+
+
+<div class="tw-alert tw-alert--bar tw-alert--<?= $type ?>">
+    <div class="tw-alert__body">
+        <p><?= $this->e($content) ?></p>
+    </div>
+</div>
