@@ -1,0 +1,32 @@
+<?php $this->layout('layout::blank') ?>
+
+<div class="auth-wrap">
+
+    <!-- Brand panel -->
+    <aside class="auth-brand">
+        <?= $this->fetch('partial::logo') ?>
+        <div class="auth-hero">
+            <h2><?= $this->e($this->t('Deploy without friction')) ?></h2>
+            <p><?= $this->e($this->t('From commit to production in minutes on a server of your choice!')) ?></p>
+            <ul class="auth-feats">
+                <li><span class="ic"><i class="bi bi-diagram-3"></i></span> <?= $this->e($this->t('Isolated environments per branch')) ?></li>
+                <li><span class="ic"><i class="bi bi-copy"></i></span> <?= $this->e($this->t('Instant data cloning for child branches')) ?></li>
+                <li><span class="ic"><i class="bi bi-hdd-stack"></i></span> <?= $this->e($this->t('Use any Linux Server from a hoster of your choice')) ?></li>
+                <li><span class="ic"><i class="bi bi-unlock"></i></span> <?= $this->e($this->t('No vendor lock-in')) ?></li>
+            </ul>
+        </div>
+        <div class="auth-brand__foot">
+            <span class="auth-status"><span class="dot"></span> <?= $this->e($this->t('')) ?></span>
+            <span class="mono">EU-1</span>
+        </div>
+    </aside>
+
+    <main class="auth-main">
+        <button class="auth-theme" id="auth-theme-btn" title="<?= $this->e($this->t('Change theme')) ?>"><i id="auth-theme-ico" class="bi bi-moon-stars"></i></button>
+        <?= $this->section('content') ?>
+    </main>
+</div>
+
+<?php $this->start('javascript') ?>
+<script src="/js/auth.js"></script>
+<?php $this->stop() ?>

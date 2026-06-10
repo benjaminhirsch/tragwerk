@@ -1,102 +1,73 @@
-<?php $this->layout('layout::default'); ?>
+<?php $this->layout('layout::auth'); ?>
 
-<div class="auth-wrap">
 
-    <!-- Brand panel -->
-    <aside class="auth-brand">
+<div class="auth-card">
+    <div class="auth-card__logo">
         <?= $this->fetch('partial::logo') ?>
-        <div class="auth-hero">
-            <h2><?= $this->e($this->t('Deploy without friction')) ?></h2>
-            <p><?= $this->e($this->t('From commit to production in minutes on any Linux server of your choice!')) ?></p>
-            <ul class="auth-feats">
-                <li><span class="ic"><i class="bi bi-diagram-3"></i></span> <?= $this->e($this->t('Isolated environments per branch')) ?></li>
-                <li><span class="ic"><i class="bi bi-copy"></i></span> <?= $this->e($this->t('Instant data clone cloning')) ?></li>
-                <li><span class="ic"><i class="bi bi-hdd-stack"></i></span> <?= $this->e($this->t('Use any VPS with your prefered hoster')) ?></li>
-                <li><span class="ic"><i class="bi bi-unlock"></i></span> <?= $this->e($this->t('No vendor lock-in')) ?></li>
-            </ul>
-        </div>
-        <div class="auth-brand__foot">
-            <span class="auth-status"><span class="dot"></span> <?= $this->e($this->t('')) ?></span>
-            <span class="mono">EU-1</span>
-        </div>
-    </aside>
+    </div>
+    <div class="auth-head">
+        <h1><?= $this->e($this->t('Create account')) ?></h1>
+        <p><?= $this->e($this->t('Already registered?')) ?>
+            <?= $this->fetch('partial::link', [
+                'href' => $this->url('login'),
+                'label' => $this->e($this->t('Sign in')),
+            ]) ?>
+        </p>
+    </div>
 
-    <!-- Form -->
-    <main class="auth-main">
-        <button class="auth-theme" id="auth-theme-btn" title="<?= $this->e($this->t('Change theme')) ?>"><i id="auth-theme-ico" class="bi bi-moon-stars"></i></button>
-
-        <div class="auth-card">
-            <div class="auth-card__logo">
-                <?= $this->fetch('partial::logo') ?>
+    <form class="auth-form" action="<?= $this->url('register') ?>" method="post">
+        <?= $this->fetch('partial::input/csrf') ?>
+        <div class="auth-field">
+            <div class="row g-2">
+                <div class="col-6">
+                    <?= $this->fetch('partial::input/text', [
+                        'id'         => 'firstname',
+                        'label'      => $this->t('Firstname'),
+                        'required'   => true,
+                        'validation' => $validationBag ?? null,
+                        'autofocus'  => true,
+                    ]) ?>
+                </div>
+                <div class="col-6">
+                    <?= $this->fetch('partial::input/text', [
+                        'id'         => 'lastname',
+                        'label'      => $this->t('Lastname'),
+                        'required'   => true,
+                        'validation' => $validationBag ?? null,
+                    ]) ?>
+                </div>
             </div>
-            <div class="auth-head">
-                <h1><?= $this->e($this->t('Create account')) ?></h1>
-                <p><?= $this->e($this->t('Already registered?')) ?>
-                    <?= $this->fetch('partial::link', [
-                        'href' => $this->url('login'),
-                        'label' => $this->e($this->t('Sign in')),
-                    ]) ?>
-                </p>
-            </div>
-
-            <form class="auth-form" action="<?= $this->url('register') ?>" method="post">
-                <?= $this->fetch('partial::input/csrf') ?>
-                <div class="auth-field">
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <?= $this->fetch('partial::input/text', [
-                                'id'         => 'firstname',
-                                'label'      => $this->t('Firstname'),
-                                'required'   => true,
-                                'validation' => $validationBag ?? null,
-                                'autofocus'  => true,
-                            ]) ?>
-                        </div>
-                        <div class="col-6">
-                            <?= $this->fetch('partial::input/text', [
-                                'id'         => 'lastname',
-                                'label'      => $this->t('Lastname'),
-                                'required'   => true,
-                                'validation' => $validationBag ?? null,
-                            ]) ?>
-                        </div>
-                    </div>
-                </div>
-                <div class="auth-field">
-                    <?= $this->fetch('partial::input/email', [
-                        'id'         => 'email',
-                        'label'      => $this->t('E-Mail'),
-                        'required'   => true,
-                        'validation' => $validationBag ?? null,
-                    ]) ?>
-                </div>
-                <div class="auth-field">
-                    <?= $this->fetch('partial::input/password', [
-                        'id'         => 'password1',
-                        'label'      => $this->t('Password'),
-                        'required'   => true,
-                        'validation' => $validationBag ?? null,
-                    ]) ?>
-                </div>
-                <div class="auth-field">
-                    <?= $this->fetch('partial::input/password', [
-                        'id'         => 'password2',
-                        'label'      => $this->t('Password repeat'),
-                        'required'   => true,
-                        'validation' => $validationBag ?? null,
-                    ]) ?>
-                </div>
-
-                <?= $this->fetch('partial::input/button', ['label' => $this->t('Create account'), 'classes' => 'btn btn-primary']) ?>
-
-            </form>
-
-            <p class="auth-foot">By signing up you agree to our terms.</p>
-
         </div>
-    </main>
+        <div class="auth-field">
+            <?= $this->fetch('partial::input/email', [
+                'id'         => 'email',
+                'label'      => $this->t('E-Mail'),
+                'required'   => true,
+                'validation' => $validationBag ?? null,
+            ]) ?>
+        </div>
+        <div class="auth-field">
+            <?= $this->fetch('partial::input/password', [
+                'id'         => 'password1',
+                'label'      => $this->t('Password'),
+                'required'   => true,
+                'validation' => $validationBag ?? null,
+            ]) ?>
+        </div>
+        <div class="auth-field">
+            <?= $this->fetch('partial::input/password', [
+                'id'         => 'password2',
+                'label'      => $this->t('Password repeat'),
+                'required'   => true,
+                'validation' => $validationBag ?? null,
+            ]) ?>
+        </div>
+
+        <?= $this->fetch('partial::input/button', [
+                'label' => $this->t('Create account'),
+                'classes' => 'btn btn-primary btn-block',
+        ]) ?>
+
+    </form>
+    <p class="auth-foot">By signing up you agree to our terms.</p>
 </div>
-
-<?php $this->start('javascript') ?>
-    <script src="/js/auth.js"></script>
-<?php $this->stop() ?>
