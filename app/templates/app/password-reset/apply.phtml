@@ -1,27 +1,50 @@
-<?php $this->layout('layout::default', ['title' => 'Set New Password · Tragwerk']) ?>
+<?php $this->layout('layout::auth') ?>
 
-<h4 class="card-title mb-1"><?= $this->t('Set new password') ?></h4>
-<p class="text-body-secondary small mb-4"><?= $this->t('Enter and confirm your new password.') ?></p>
-
-<form action="<?= $this->url('passwordReset.apply', ['token' => $token]) ?>" method="post">
-    <?= $this->fetch('partial::input/csrf') ?>
-    <?= $this->fetch('partial::input/password', [
-            'id'         => 'password1',
-            'label'      => $this->t('New password'),
-            'required'   => true,
-            'autofocus'  => true,
-            'validation' => $validationBag ?? null,
-    ]) ?>
-    <?= $this->fetch('partial::input/password', [
-            'id'         => 'password2',
-            'label'      => $this->t('Confirm new password'),
-            'required'   => true,
-            'validation' => $validationBag ?? null,
-    ]) ?>
-    <div class="form-actions d-grid">
-        <?= $this->fetch('partial::input/button', [
-                'label'   => $this->t('Update password'),
-                'classes' => 'btn btn-primary',
-        ]) ?>
+<div class="auth-card">
+    <div class="auth-card__logo">
+        <?= $this->fetch('partial::logo') ?>
     </div>
-</form>
+    <div id="reset-request">
+        <?= $this->fetch('partial::link', [
+                'href' => $this->url('login'),
+                'label' => $this->t('Back to sign in'),
+                'icon' => 'bi bi-arrow-left',
+                'classes' => 'auth-back'
+        ]) ?>
+        <div class="auth-head">
+            <h1><?= $this->t('Set new password') ?></h1>
+            <p><?= $this->t('Enter and confirm your new password.') ?></p>
+        </div>
+
+        <form class="auth-form" action="<?= $this->url('passwordReset.apply', ['token' => $token]) ?>" method="post">
+            <?= $this->fetch('partial::input/csrf') ?>
+            <div class="auth-field">
+                <?= $this->fetch('partial::input/password', [
+                        'id'         => 'password1',
+                        'label'      => $this->t('New password'),
+                        'required'   => true,
+                        'autofocus'  => true,
+                        'validation' => $validationBag ?? null,
+                ]) ?>
+            </div>
+
+            <div class="auth-field">
+                <?= $this->fetch('partial::input/password', [
+                        'id'         => 'password2',
+                        'label'      => $this->t('Confirm new password'),
+                        'required'   => true,
+                        'validation' => $validationBag ?? null,
+                ]) ?>
+            </div>
+
+
+                <?= $this->fetch('partial::input/button', [
+                        'label'   => $this->t('Update password'),
+                        'classes' => 'btn btn-primary btn-block',
+                ]) ?>
+
+        </form>
+    </div>
+</div>
+
+

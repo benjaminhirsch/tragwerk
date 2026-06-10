@@ -1,26 +1,35 @@
-<?php $this->layout('layout::default', ['title' => 'Reset Password · Tragwerk']) ?>
+<?php $this->layout('layout::auth') ?>
 
-<h4 class="card-title mb-1"><?= $this->t('Reset password') ?></h4>
-<p class="text-body-secondary small mb-4"><?= $this->t('Enter your email address and we will send you a reset link.') ?></p>
-
-<form action="<?= $this->url('passwordReset.request') ?>" method="post">
-    <?= $this->fetch('partial::input/csrf') ?>
-    <?= $this->fetch('partial::input/email', [
-            'id'         => 'email',
-            'label'      => $this->t('E-Mail'),
-            'autofocus'  => true,
-            'required'   => true,
-            'validation' => $validationBag ?? null,
-    ]) ?>
-    <div class="form-actions d-grid">
-        <?= $this->fetch('partial::input/button', [
-                'label'   => $this->t('Send reset link'),
-                'classes' => 'btn btn-primary',
-        ]) ?>
+<div class="auth-card">
+    <div class="auth-card__logo">
+        <?= $this->fetch('partial::logo') ?>
     </div>
-</form>
-
-<hr class="my-3">
-<p class="text-center text-body-secondary small mb-0">
-    <a href="<?= $this->url('login') ?>"><?= $this->t('Back to sign in') ?></a>
-</p>
+    <div id="reset-request">
+        <?= $this->fetch('partial::link', [
+            'href' => $this->url('login'),
+            'label' => $this->t('Back to sign in'),
+            'icon' => 'bi bi-arrow-left',
+            'classes' => 'auth-back'
+        ]) ?>
+        <div class="auth-head">
+            <h1><?= $this->t('Reset password') ?></h1>
+            <p><?= $this->t('Enter your email — we\'ll send you a reset link.') ?></p>
+        </div>
+        <form class="auth-form" action="<?= $this->url('passwordReset.request') ?>" method="post">
+            <?= $this->fetch('partial::input/csrf') ?>
+            <div class="auth-field">
+                <?= $this->fetch('partial::input/email', [
+                        'id'         => 'email',
+                        'label'      => $this->t('E-Mail'),
+                        'autofocus'  => true,
+                        'required'   => true,
+                        'validation' => $validationBag ?? null,
+                ]) ?>
+            </div>
+            <?= $this->fetch('partial::input/button', [
+                    'label'   => $this->t('Send reset link'),
+                    'classes' => 'btn btn-primary btn-block',
+            ]) ?>
+        </form>
+    </div>
+</div>

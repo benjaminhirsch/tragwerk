@@ -38,7 +38,7 @@ final readonly class PasswordResetApplyHandler implements RequestHandlerInterfac
     {
         $token = $request->getAttribute('token');
         assert(is_string($token));
-
+/*
         try {
             $passwordReset = $this->passwordResetRepository->getByToken($token);
         } catch (EntityNotFound) {
@@ -47,7 +47,7 @@ final readonly class PasswordResetApplyHandler implements RequestHandlerInterfac
 
         if ($passwordReset->expiresAt->isPast() || $passwordReset->usedAt !== null) {
             return $this->renderer->render($request, 'page::password-reset/invalid');
-        }
+        }*/
 
         $validationBag = null;
 
@@ -58,7 +58,7 @@ final readonly class PasswordResetApplyHandler implements RequestHandlerInterfac
                 $dto = $validationBag->getDto();
                 assert($dto instanceof PasswordResetApply);
 
-                $this->userRepository->updatePassword(
+                /*$this->userRepository->updatePassword(
                     $passwordReset->userId,
                     (string) PasswordHash::create($dto->password1),
                 );
@@ -66,7 +66,7 @@ final readonly class PasswordResetApplyHandler implements RequestHandlerInterfac
 
                 return new RedirectResponse(
                     $this->urlHelper->generate('login') . '?password-reset=1',
-                );
+                );*/
             }
         }
 
