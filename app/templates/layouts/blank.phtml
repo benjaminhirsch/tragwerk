@@ -25,6 +25,8 @@
     <link rel="stylesheet" href="/css/app.css">
     <?php if (!$this->isAuthenticated()): ?>
         <link rel="stylesheet" href="/css/auth.css">
+    <?php else: ?>
+        <link rel="stylesheet" href="/css/topbar.css">
     <?php endif; ?>
     <?= $this->section('stylesheets') ?>
 </head>
@@ -33,6 +35,10 @@
 <?= $this->section('content') ?>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+<script src="/js/theme.js"></script>
+<?php if ($this->isAuthenticated()): ?>
+    <script src="/js/topbar.js"></script>
+<?php endif ?>
 <?= $this->section('javascript') ?>
 </body>
 </html>

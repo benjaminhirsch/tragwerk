@@ -1,0 +1,61 @@
+/* ============================================================
+   Tragwerk — No-JS chrome
+   Makes the top-bar dropdowns (team/project/env switchers + user
+   menu) open and close WITHOUT any JavaScript — using the CSS
+   :focus-within technique. Pairs with the static <header> markup.
+   Load AFTER app.css. Bootstrap's JS bundle is NOT required.
+   ============================================================ */
+
+/* The toggle becomes a <button> (focusable, no navigation). Reset its
+   chrome so .tw-switcher / .tw-iconbtn look identical to before. */
+.tw-topbar button.tw-switcher,
+.tw-topbar button.tw-iconbtn {
+    background: transparent;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: left;
+}
+.tw-topbar button.tw-switcher { color: var(--text); }
+
+/* Dropdown container */
+.tw-topbar .dropdown { position: relative; }
+
+/* Menu: take over Bootstrap's display:none so we can animate, then
+   hide via opacity/visibility instead. */
+.tw-topbar .dropdown > .dropdown-menu {
+    display: block;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.35rem;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    transform-origin: top;
+    transition: opacity 0.12s ease, transform 0.12s ease, visibility 0s linear 0.12s;
+    pointer-events: none;
+    z-index: 1031;
+}
+
+/* Open on focus (click focuses the button; clicking outside blurs → closes;
+   clicking another switcher moves focus → the first one closes). */
+.tw-topbar .dropdown:focus-within > .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    transition: opacity 0.12s ease, transform 0.12s ease;
+    pointer-events: auto;
+}
+
+/* End-aligned menu (user avatar) — JS-free replacement for [data-bs-popper] */
+.tw-topbar .dropdown-menu-end { left: auto; right: 0; }
+
+/* Chevron affordance flips while the menu is open */
+.tw-topbar .dropdown:focus-within .tw-switcher .bi-chevron-expand {
+    color: var(--accent-text);
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .tw-topbar .dropdown > .dropdown-menu { transition: none; }
+}
