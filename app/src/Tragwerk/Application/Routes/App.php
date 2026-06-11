@@ -80,7 +80,7 @@ final readonly class App
             '/',
             $this->middlewareFactory->prepare([
                 new Middleware\Conditional\Authenticated($this->middlewareFactory->prepare([
-                    Middleware\Redirect\ToServerIndex::class,
+                    Middleware\Redirect\ToDefaultTeam::class,
                 ])),
                 Handler\HomeHandler::class,
             ]),

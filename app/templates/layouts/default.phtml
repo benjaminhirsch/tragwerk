@@ -1,5 +1,95 @@
-<?php $this->layout('layout::blank') ?>
+<?php
 
-<?php if($this->section('content')): ?>
-    <?= $this->section('content') ?>
-<?php endif ?>
+use Tragwerk\Domain\Entity\Team;
+
+$this->layout('layout::blank') ?>
+
+<header class="tw-topbar">
+    <div class="tw-topbar__row">
+        <?= $this->fetch('partial::logo') ?>
+        <span class="tw-crumb-sep tw-hide-sm" style="margin:0 .2rem">/</span>
+
+        <div class="tw-crumbs">
+            <div class="dropdown">
+                <button type="button" class="tw-switcher" aria-haspopup="menu">
+                    <span class="tw-ava" style="background:linear-gradient(150deg, oklch(0.6 0.18 256), oklch(0.5 0.2 286))"><?= $this->e($this->activeTeam()->abbreviation()) ?></span>
+                    <span class="tw-switcher__name"><?= $this->e($this->activeTeam()->name) ?></span>
+                    <i class="bi bi-chevron-expand"></i>
+                </button>
+                <ul class="dropdown-menu tw-switch-menu">
+                    <li class="dropdown-header">Teams</li>
+                    <?php
+                    /** @var Team $team */
+                    foreach ($this->userTeams() as $team): ?>
+                    <li><a class="dropdown-item active" href="<?= $this->url('team.show', ['id' => $team->id])?>">
+                            <span class="tw-ava" style="background:linear-gradient(150deg, oklch(0.6 0.18 256), oklch(0.5 0.2 286))"><?= $this->e($team->abbreviation()) ?></span>
+                            <span class="flex-grow-1"><?= $this->e($team->name) ?></span>
+                            <i class="bi bi-check2"></i>
+                        </a></li>
+                    <?php endforeach ?>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="<?= $this->url('team.create')?>"><i class="bi bi-plus-lg"></i> <?= $this->t('Create team') ?></a></li>
+                    <li><a class="dropdown-item" href="<?= $this->url('team.edit', ['id' => $team->id])?>"><i class="bi bi-gear"></i> <?= $this->t('Team settings') ?></a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <?php /*<label class="tw-search tw-hide-md">
+                <i class="bi bi-search"></i>
+                <input type="text" placeholder="Search…" aria-label="Search">
+                <kbd>⌘K</kbd>
+            </label>
+            <button class="tw-iconbtn tw-hide-md" title="Documentation"><i class="bi bi-life-preserver"></i></button>
+            <button class="tw-iconbtn" title="Notifications" style="position:relative">
+                <i class="bi bi-bell"></i>
+                <span style="position:absolute;top:7px;right:8px;width:6px;height:6px;border-radius:99px;background:var(--danger)"></span>
+            </button> */ ?>
+            <button class="tw-iconbtn" id="tw-theme-btn" title="Switch theme"><i id="tw-theme-ico" class="bi bi-moon-stars"></i></button>
+
+            <!-- User menu (no JS) -->
+            <div class="dropdown">
+                <button type="button" class="tw-iconbtn" aria-haspopup="menu" style="width:auto;padding:0 .15rem">
+                    <span class="tw-ava" style="width:30px;height:30px;border-radius:8px"><?= $this->e($this->user()->getDetail('abbreviation')) ?></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" style="min-width:230px">
+                    <li class="px-2 py-1">
+                        <div class="fw-semibold" style="font-size:.88rem"><?= $this->e($this->user()->getDetail('firstname')) ?> <?= $this->e($this->user()->getDetail('lastname')) ?></div>
+                        <div class="text-faint" style="font-size:.78rem"><?= $this->e($this->user()->getDetail('email')) ?></div>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="account.html"><i class="bi bi-person"></i> Account</a></li>
+                    <li><a class="dropdown-item" href="account.html#security"><i class="bi bi-shield-lock"></i> Security</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-credit-card"></i> Billing</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <form action="<?= $this->url('logout') ?>" method="post">
+                            <?= $this->fetch('partial::input/csrf') ?>
+                            <?= $this->fetch('partial::input/button', [
+                               'label' => $this->t('Sign out'),
+                                'icon' => 'bi bi-box-arrow-right',
+                                'classes' => 'dropdown-item btn btn-link',
+                            ]) ?>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contextual tabs (static links) -->
+    <nav class="tw-tabs">
+        <a class="tw-tab active" href="index.html"><i class="bi bi-grid-1x2"></i> Overview</a>
+        <a class="tw-tab" href="projects.html"><i class="bi bi-box-seam"></i> Projects <span class="tw-tab__count">6</span></a>
+        <a class="tw-tab" href="servers.html"><i class="bi bi-hdd-stack"></i> Servers <span class="tw-tab__count">6</span></a>
+        <a class="tw-tab" href="registries.html"><i class="bi bi-archive"></i> Registries <span class="tw-tab__count">3</span></a>
+        <a class="tw-tab" href="settings.html"><i class="bi bi-people"></i> Members <span class="tw-tab__count">14</span></a>
+        <a class="tw-tab" href="settings.html#general"><i class="bi bi-gear"></i> Settings</a>
+    </nav>
+</header>
+
+<main class="tw-page tw-page--wide">
+    <?php if($this->section('content')): ?>
+        <?= $this->section('content') ?>
+    <?php endif ?>
+</main>

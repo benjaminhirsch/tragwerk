@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5a9fd4cd7946e4f220a9b26526c11b6e",
+    "content-hash": "f0833108b1dd5f332cefe85f89259ab8",
     "packages": [
         {
             "name": "brick/math",
@@ -114,6 +114,60 @@
                 }
             ],
             "time": "2025-02-20T17:42:39+00:00"
+        },
+        {
+            "name": "chypriote/unique-names-generator",
+            "version": "v0.0.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/chypriote/UniqueNamesGenerator.git",
+                "reference": "a963aed683f7232bf5a713ddbe91a4f553cd3402"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/chypriote/UniqueNamesGenerator/zipball/a963aed683f7232bf5a713ddbe91a4f553cd3402",
+                "reference": "a963aed683f7232bf5a713ddbe91a4f553cd3402",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "php": ">=7.4"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^10.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Chypriote\\UniqueNames\\": "src",
+                    "Chypriote\\UniqueNames\\Tests\\": "tests"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nicolas",
+                    "email": "chypriote@lolpros.gg"
+                }
+            ],
+            "description": "A package to create readable, meaningful, random strings from animal names, colors and adjectives.",
+            "keywords": [
+                "adjective",
+                "animal",
+                "color",
+                "generator",
+                "name",
+                "random",
+                "slug"
+            ],
+            "support": {
+                "issues": "https://github.com/chypriote/UniqueNamesGenerator/issues",
+                "source": "https://github.com/chypriote/UniqueNamesGenerator/tree/v0.0.4"
+            },
+            "time": "2025-12-30T16:45:57+00:00"
         },
         {
             "name": "composer/package-versions-deprecated",

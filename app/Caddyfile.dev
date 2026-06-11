@@ -1,31 +1,39 @@
 {
-	frankenphp {
-		worker {
-			file ./public/index.php
-			watch ./src/**/*.php
-			watch ./config/**/*.php
-			watch ./public/index.php
-			watch ./templates/**/*.phtml
-		}
-	}
-	auto_https off
-	log {
-		level DEBUG
-	}
+    frankenphp {
+
+        php_ini xdebug.mode debug,develop
+        php_ini xdebug.start_with_request yes
+        php_ini xdebug.start_upon_error no
+        php_ini xdebug.client_host host.docker.internal
+        php_ini xdebug.client_port 9003
+        php_ini xdebug.idekey PHPSTORM
+
+        worker {
+            file ./public/index.php
+            watch ./src/**/*.php
+            watch ./config/**/*.php
+            watch ./public/index.php
+            watch ./templates/**/*.phtml
+        }
+    }
+    auto_https off
+    log {
+        level DEBUG
+    }
 }
 
 :80 {
-	root * public/
-	encode zstd br gzip
+    root * public/
+    encode zstd br gzip
 
-	route {
-		mercure {
-			publisher_jwt {env.MERCURE_PUBLISHER_JWT_SECRET}
-			subscriber_jwt {env.MERCURE_SUBSCRIBER_JWT_SECRET}
-			anonymous
-			cors_origins *
-		}
+    route {
+        mercure {
+            publisher_jwt {env.MERCURE_PUBLISHER_JWT_SECRET}
+            subscriber_jwt {env.MERCURE_SUBSCRIBER_JWT_SECRET}
+            anonymous
+            cors_origins *
+        }
 
-		php_server
-	}
+        php_server
+    }
 }

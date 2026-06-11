@@ -54,6 +54,7 @@
         "ext-intl": "*",
         "ext-libxml": "*",
         "ext-session": "*",
+        "chypriote/unique-names-generator": "^0.0.4",
         "composer/package-versions-deprecated": "^1.11.99.5",
         "cuyz/valinor": "^2.4",
         "doctrine/dbal": "^4.4",

@@ -84,7 +84,7 @@ final class TeamRepository extends GenericRepository implements TeamRepositoryIn
     #[Override]
     public function assignUsers(TeamIdentifier $teamId, array $userIds): void
     {
-        $assignedAt = (new DateTimeImmutable())->format('Y-m-d H:i:s.u');
+        $assignedAt = new DateTimeImmutable()->format('Y-m-d H:i:s.u');
 
         try {
             foreach ($userIds as $userId) {
