@@ -1,16 +1,39 @@
-<?php $this->layout('layout::default', ['title' => '400 — Bad Request']) ?>
+<?php $this->layout('layout::default') ?>
 
-<div class="error-hero">
-    <span class="error-code-big">400</span>
-    <div class="error-title">INVALID SPELL CAST</div>
-    <div class="error-pixel-art">
-        ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~<br>
-        ~ ~ ! BAD REQUEST ! ~<br>
-        ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+<?php $this->start('stylesheets') ?>
+<link rel="stylesheet" href="/css/error.css">
+<?php $this->stop() ?>
+
+<button class="tw-iconbtn err-theme" id="tw-theme-btn" title="Switch theme"><i id="tw-theme-ico" class="bi bi-moon-stars"></i></button>
+
+<main class="err-wrap">
+    <div class="err-card">
+        <div class="mb-3">
+            <?= $this->fetch('partial::logo') ?>
+        </div>
+
+        <div class="err-hero">
+            <span class="err-watermark">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 4 20 19 4 19Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                    <path d="M12 4V19M4 19 12 12M20 19 12 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </span>
+            <div class="err-code">404</div>
+        </div>
+
+        <div class="err-badge"><span class="tw-dot" style="background:var(--accent)"></span><?= $this->e($this->t('Error 400 · Bad Request')) ?></div>
+
+        <h1><?= $this->e($this->t('Something went wrong')) ?></h1>
+        <p class="lead">
+            <?= $this->e($this->t('The server was unable to process your request.')) ?>
+        </p>
+
+        <div class="err-actions">
+            <button class="btn btn-outline-secondary" onclick="history.back()"><i class="bi bi-house"></i> <?= $this->e($this->t('Homepage')) ?></button>
+        </div>
+
     </div>
-    <div class="error-desc">
-        The incantation was malformed.<br>
-        Check your inputs and try again.
-    </div>
-    <a href="/" class="btn btn-primary" style="font-size:8px;padding:10px 18px;">▶ RETURN TO SAFETY</a>
-</div>
+</main>
+
+
