@@ -4,17 +4,12 @@ declare(strict_types=1);
 
 namespace Tragwerk\Domain\Entity;
 
+use Tragwerk\Application\Helper\AbbreviationHelper;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
-use function count;
-use function mb_strtoupper;
-use function mb_substr;
-use function str_word_count;
-use function trim;
-
-final class Team implements Entity
+final class Team implements Entity, Abbreviation
 {
     public function __construct(
         public TeamIdentifier $id,
@@ -27,13 +22,8 @@ final class Team implements Entity
     ) {
     }
 
-    public function abbreviation(): string
+    public function abbreviation(): AbbreviationHelper
     {
-        return $this->name
-            |> trim(...)
-            |> (static fn ($s) => str_word_count($s, 1))
-            |> (static fn ($words) => count($words) === 1
-                ? mb_strtoupper(mb_substr($words[0], 0, 1))
-                : mb_strtoupper(mb_substr($words[0], 0, 1) . mb_substr($words[count($words) - 1], 0, 1)));
+        return new AbbreviationHelper($this->name);
     }
 }

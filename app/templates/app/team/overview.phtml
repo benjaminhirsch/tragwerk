@@ -1,0 +1,88 @@
+<?php use Tragwerk\Application\Helper\AbbreviationHelper;
+use Tragwerk\Domain\Entity\Project;
+
+$this->layout('layout::default', [
+        'pageType' => $this->t('Team overview'),
+        'pageTitle' => $this->activeTeam()->name,
+        'pageSubTitle' => sprintf(
+                $this->t('Created at %s'),
+                $this->fetch('partial::datetime', ['date' => $this->activeTeam()->createdAt])
+        ),
+]) ?>
+
+<?= $this->fetch('partial::card/container', [
+        [
+            'label' => $this->t('Active projects'),
+            'labelIcon' => 'bi bi-box-seam',
+            'value' => 1,
+            'delta' => '2 this month',
+            'deltaIcon' => 'bi bi-arrow-up-short',
+            'deltaColorVar' => '--ok-text',
+        ],
+        [
+            'label' => $this->t('Environments'),
+            'labelIcon' => 'bi bi-diagram-3',
+            'value' => 19,
+            'text' => '4 in preview branches',
+        ],
+        [
+            'label' => $this->t('Deployments / 24 h'),
+            'labelIcon' => 'bi bi-rocket-takeoff',
+            'value' => 37,
+            'delta' => '98.1 % successful',
+            'deltaIcon' => 'bi bi-check2-circle',
+            'deltaColorVar' => '--ok-text',
+        ],
+        [
+            'label' => $this->t('Server utilization'),
+            'labelIcon' => 'bi bi-hdd-stack',
+            'value' => 61,
+            'bar' => 61,
+        ],
+    ]
+) ?>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <h6>Projects</h6>
+            <a href="<?= $this->url('project') ?>" class="btn btn-ghost btn-sm">View all <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="tw-table-wrap">
+            <table class="tw-table">
+                <thead>
+                <tr>
+                    <th class="sortable">Project <i class="bi bi-chevron-expand"></i></th>
+                    <th class="sortable tw-hide-sm">Stack <i class="bi bi-chevron-expand"></i></th>
+                    <th class="sortable tw-hide-sm">Region <i class="bi bi-chevron-expand"></i></th>
+                    <th class="sortable">Status <i class="bi bi-chevron-expand"></i></th>
+                    <th class="sortable tw-hide-sm">Last deploy <i class="bi bi-chevron-expand"></i></th>
+                </tr>
+                </thead>
+                <tbody id="proj-rows">
+                <?php
+                /** @var $project Project */
+                foreach ($projects as $project): ?>
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="tw-stack__ico" style="background:<?= $project->abbreviation()->oklch() ?>"><?= $project->abbreviation()->forString() ?></span>
+                                <span class="tw-cell-strong">
+                                    <?= $this->fetch('partial::link', [
+                                        'label' => $project->name,
+                                        'href' => $this->url('project.show', ['id' => $project->id])
+                                    ]) ?>
+                                </span>
+                            </div>
+                        </td>
+                        <td class="tw-hide-sm tw-cell-muted">PHP 8.5</td>
+                        <td class="tw-hide-sm"><span class="tw-tag">EU-1</span></td>
+                        <td><span class="tw-badge tw-badge--ok"><span class="tw-dot"></span>Active</span></td>
+                        <td class="tw-hide-sm tw-cell-muted">12m ago</td>
+                    </tr>
+                <?php endforeach ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

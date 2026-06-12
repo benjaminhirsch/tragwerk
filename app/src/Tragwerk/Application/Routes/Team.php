@@ -94,7 +94,7 @@ final readonly class Team
 
         $routes->get(
             '/teams/{id}',
-            $this->middlewareFactory->prepare([Handler\Team\ShowHandler::class]),
+            $this->middlewareFactory->prepare([Handler\Team\OverviewHandler::class]),
             'team.show',
         );
     }

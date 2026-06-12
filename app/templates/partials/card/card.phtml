@@ -1,0 +1,18 @@
+<div class="tw-stat">
+    <div class="tw-stat__label"><i class="<?= $this->e($labelIcon) ?>"></i> <?= $this->e($label) ?></div>
+    <div class="tw-stat__value">
+        <?= $this->e($value) ?><?php if (isset($bar)): ?><span style="font-size:1rem;font-weight:600;color:var(--text-muted)"> %</span><?php endif ?>
+    </div>
+
+    <?php if(isset($delta, $deltaIcon, $deltaColorVar)): ?>
+    <div class="tw-stat__delta" style="color:var(<?= $this->e($deltaColorVar) ?>)"><i class="bi <?= $this->e($deltaIcon) ?>"></i><?= $this->e($delta) ?></div>
+    <?php endif ?>
+
+    <?php if(isset($text)): ?>
+    <div class="tw-stat__delta text-muted-2"><?= $this->e($text) ?></div>
+    <?php endif ?>
+
+    <?php if(isset($bar)): ?>
+        <div class="tw-bar mt-2"><span style="width:<?= $this->e($bar) ?>%"></span></div>
+    <?php endif ?>
+</div>
