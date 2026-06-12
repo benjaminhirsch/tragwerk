@@ -1,0 +1,5 @@
+<div class="row g-3 mb-4">
+<?php foreach($this->data as $card): ?>
+    <div class="col-6 col-lg-3"><?= $this->fetch('partial::card/card', $card) ?></div>
+<?php endforeach ?>
+</div>

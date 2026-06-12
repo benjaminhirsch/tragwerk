@@ -87,6 +87,7 @@ return static function (
     $app->pipe(Template\Extension\Authentication::class);
     $app->pipe(Template\Extension\Locale::class);
     $app->pipe(Middleware\ActiveTeamMiddleware::class);
+    $app->pipe(Middleware\ActiveProjectMiddleware::class);
     $app->pipe(Template\Extension\TeamContext::class);
 
     $app->pipe(new Middleware\Conditional\Method(

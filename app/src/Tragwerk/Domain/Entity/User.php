@@ -5,17 +5,13 @@ declare(strict_types=1);
 namespace Tragwerk\Domain\Entity;
 
 use SensitiveParameter;
+use Tragwerk\Application\Helper\AbbreviationHelper;
 use Tragwerk\Domain\ValueObject\PasswordHash;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
-use function count;
-use function mb_strtoupper;
-use function mb_substr;
-use function str_word_count;
-
-final class User implements Entity
+final class User implements Entity, Abbreviation
 {
     public function __construct(
         public UserIdentifier $id,
@@ -36,12 +32,8 @@ final class User implements Entity
         return $this->firstname . ' ' . $this->lastname;
     }
 
-    public function abbreviation(): string
+    public function abbreviation(): AbbreviationHelper
     {
-        return $this->fullName()
-                |> (static fn ($s) => str_word_count($s, 1))
-                |> (static fn ($words) => count($words) === 1
-                    ? mb_strtoupper(mb_substr($words[0], 0, 1))
-                    : mb_strtoupper(mb_substr($words[0], 0, 1) . mb_substr($words[count($words) - 1], 0, 1)));
+        return new AbbreviationHelper($this->fullName());
     }
 }

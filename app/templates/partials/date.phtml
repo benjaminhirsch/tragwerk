@@ -1,0 +1,26 @@
+<?php
+
+use Tragwerk\Domain\ValueObject\TimestampImmutable;
+
+assert(isset($date) && $date instanceof TimestampImmutable);
+
+$dateFormat = 'Y-m-d';
+$formatter = 'date';
+
+if (($numerical ?? false) === true) {
+    $formatter = 'date-numerical';
+}
+
+if(($hideDay ?? false) === true) {
+    $dateFormat = 'Y-m';
+    $formatter = 'year-month';
+    if(($numerical ?? false) === true) {
+        $formatter = 'year-month-numerical';
+    }
+}
+
+?>
+<time datetime="<?= $this->e($date->format($dateFormat)) ?>" title="<?= $this->e($date->format($dateFormat)) ?>" data-formatter="<?= $formatter ?>"
+      <?php if(($classes ?? null) !== null): ?>class="<?= $classes ?>"<?php endif ?>>
+      <?= $this->e($date->format($dateFormat)) ?>
+</time>
