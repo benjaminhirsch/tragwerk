@@ -17,15 +17,15 @@
         </div>
         <form class="auth-form" action="<?= $this->url('passwordReset.request') ?>" method="post">
             <?= $this->fetch('partial::input/csrf') ?>
-            <div class="auth-field">
-                <?= $this->fetch('partial::input/email', [
-                        'id'         => 'email',
-                        'label'      => $this->t('E-Mail'),
-                        'autofocus'  => true,
-                        'required'   => true,
-                        'validation' => $validationBag ?? null,
-                ]) ?>
-            </div>
+
+            <?= $this->fetch('partial::input/email', [
+                    'id'         => 'email',
+                    'label'      => $this->t('E-Mail'),
+                    'autofocus'  => true,
+                    'required'   => true,
+                    'validation' => $validationBag ?? null,
+            ]) ?>
+
             <?= $this->fetch('partial::input/button', [
                     'label'   => $this->t('Send reset link'),
                     'classes' => 'btn btn-primary btn-block',

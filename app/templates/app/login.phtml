@@ -62,21 +62,21 @@
             ]) ?>
         <?php endif ?>
 
-        <div class="auth-field">
+
             <?= $this->fetch('partial::input/email', [
                     'id' => 'email',
                     'placeholder' => 'your@email.address',
                     'label' => $this->t('E-Mail'),
                     'autofocus' => true,
             ]) ?>
-        </div>
 
-        <div class="auth-field">
+
+
             <?= $this->fetch('partial::input/password', [
                     'id' => 'password',
                     'label' => $this->t('Password')
             ]) ?>
-        </div>
+
 
         <?= $this->fetch('partial::link', [
                 'href' => $this->url('passwordReset.request'),

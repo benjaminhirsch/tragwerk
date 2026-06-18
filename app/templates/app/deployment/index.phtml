@@ -1,0 +1,58 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @var \Tragwerk\Domain\Entity\Project                          $project
+ * @var string                                                   $branch
+ * @var list<\Tragwerk\Application\Dto\Deployment\LogListEntry>  $entries
+ * @var list<\Tragwerk\Domain\Entity\DeployJob>                  $activeJobs
+ * @var \Tragwerk\Application\Dto\Deployment\LogListEntry|null   $selected
+ * @var int                                                      $offset
+ * @var bool                                                     $hasMore
+ * @var string                                                   $type     'all'|'build'|'deploy'
+ */
+
+$this->layout('layout::default', [
+    'pageType'     => $this->activeTeam()->name . ' / ' . $this->activeEnvironment(),
+    'pageTitle'    => $this->t('Deployments'),
+    'pageSubTitle' => $this->t('Build and deployment logs for this environment. Select an entry for the terminal view.'),
+]);
+
+?>
+
+<div class="logs-grid">
+    <!-- master list -->
+    <div class="log-list" id="log-panel">
+        <?= $this->fetch('page::deployment/_log_panel', [
+            'project'    => $project,
+            'branch'     => $branch,
+            'entries'    => $entries,
+            'activeJobs' => $activeJobs,
+            'offset'     => $offset,
+            'hasMore'    => $hasMore,
+            'type'       => $type,
+        ]) ?>
+    </div>
+
+    <!-- detail terminal -->
+    <?php if ($selected !== null): ?>
+        <?= $this->fetch('page::deployment/_terminal', [
+            'project'   => $project,
+            'kind'      => $selected->kind,
+            'deployJob' => $selected->deployJob,
+            'buildLog'  => $selected->buildLog,
+        ]) ?>
+    <?php else: ?>
+        <div class="term-win" id="tw-terminal">
+            <div class="term-bar">
+                <span class="term-title" id="term-title">—</span>
+            </div>
+            <div class="term-body" id="term-body"><?= $this->e($this->t('Select a log entry to view its output.')) ?></div>
+        </div>
+    <?php endif ?>
+</div>
+
+<?php $this->start('javascript') ?>
+<script src="/js/deploy-logs.js"></script>
+<?php $this->stop() ?>

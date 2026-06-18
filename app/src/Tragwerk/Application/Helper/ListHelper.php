@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tragwerk\Application\Helper;
 
 use Generator;
+use Iterator;
 
 use function is_array;
 use function iterator_to_array;
@@ -14,15 +15,15 @@ use function usort;
 final readonly class ListHelper
 {
     /**
-     * @param Generator<T> $generator
+     * @param Iterator<T> $list
      *
      * @return Generator<T>
      *
      * @template T of array|object
      */
-    public static function sortGenerator(Generator $generator, string $sortKey, string $sortOrder = 'ASC'): Generator
+    public static function sort(Iterator $list, string $sortKey, string $sortOrder = 'ASC'): Generator
     {
-        $items = iterator_to_array($generator, preserve_keys: false);
+        $items = iterator_to_array($list, preserve_keys: false);
 
         usort($items, static function ($a, $b) use ($sortKey, $sortOrder) {
             // @phpstan-ignore property.dynamicName
@@ -39,18 +40,18 @@ final readonly class ListHelper
     }
 
     /**
-     * @param Generator<T> $generator
+     * @param Iterator<T> $list
      *
      * @return T|null
      *
      * @template T of array|object
      */
-    public static function first(Generator $generator): mixed
+    public static function first(Iterator $list): mixed
     {
-        if (! $generator->valid()) {
+        if (! $list->valid()) {
             return null;
         }
 
-        return $generator->current();
+        return $list->current();
     }
 }

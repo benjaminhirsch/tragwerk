@@ -1,0 +1,36 @@
+<?php
+
+use Tragwerk\Domain\Model\ApplicationConfig;
+use Tragwerk\Domain\Model\ServiceConfig;
+
+/** @var ApplicationConfig|null $app */
+/** @var list<ServiceConfig> $services */
+/** @var array<string, string> $sizes */
+/** @var string|null $error */
+
+$slugify = static function (string $name): string {
+    $slug = preg_replace('/[\s_]+/', '-', strtolower($name)) ?? '';
+
+    return preg_replace('/[^a-z0-9-]/', '', $slug) ?? '';
+};
+?>
+<?php if ($app !== null): ?>
+    <?php $appSlug = $slugify($app->name); ?>
+    <?php foreach ($app->mounts as $mount): ?>
+        <?php
+        $shortName = $appSlug . '-' . $slugify($mount->name);
+        $size      = $sizes[$shortName] ?? null;
+        ?>
+        <td id="cfg-mount-disk-<?= $this->e($shortName) ?>" class="tw-hide-sm tw-cell-muted" hx-swap-oob="true"
+            <?php if ($error !== null): ?>title="<?= $this->e($error) ?>"<?php endif ?>>
+            <?= $size !== null ? $this->e($size) : '—' ?>
+        </td>
+    <?php endforeach ?>
+<?php endif ?>
+<?php foreach ($services ?? [] as $service): ?>
+    <?php $size = $sizes[$slugify($service->name) . '-data'] ?? null; ?>
+    <td id="cfg-service-disk-<?= $this->e($slugify($service->name)) ?>" class="tw-hide-sm tw-cell-muted" hx-swap-oob="true"
+        <?php if ($error !== null): ?>title="<?= $this->e($error) ?>"<?php endif ?>>
+        <?= $size !== null ? $this->e($size) : '—' ?>
+    </td>
+<?php endforeach ?>

@@ -1,39 +1,64 @@
-<?php $this->layout('layout::default', ['title' => $this->t('Projects')]) ?>
+<?php
 
-<h1><?= $this->t('Projects') ?></h1>
+use Tragwerk\Domain\Entity\Project;
 
-<div class="tw-card">
+$this->layout('layout::default', [
+    'pageType' =>  $this->activeTeam()->name,
+    'pageTitle' => $this->t('Projects'),
+    'pageSubTitle' => $this->t('Every project belongs to the team and contains its own environments.'),
+]) ?>
+
+
+<?php $this->start('pageHeadButtons') ?>
     <?= $this->fetch('partial::link', [
         'label'   => $this->t('Create Project'),
         'icon'    => 'bi bi-plus-circle',
         'classes' => 'btn btn-primary',
         'href'    => $this->url('project.create'),
     ]) ?>
+<?php $this->stop() ?>
 
-    <hr />
 
-    <table class="table table-striped table-hover">
+<div class="tw-table-wrap">
+    <table class="tw-table">
         <thead>
         <tr>
-            <th><?= $this->t('Name') ?></th>
-            <th><?= $this->t('Server') ?></th>
+            <th class="sortable">Project <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable tw-hide-sm">Stack <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable tw-hide-sm">Applications <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable tw-hide-sm">Server <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable">Status <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable tw-hide-sm">Last deploy <i class="bi bi-chevron-expand"></i></th>
         </tr>
         </thead>
-        <tbody>
-        <?php foreach ($projects as $project): ?>
+        <tbody id="proj-rows">
+        <?php
+        /** @var $project Project */
+        foreach ($projects as $project): ?>
             <tr>
-                <td><?= $this->fetch('partial::link', [
-                        'href'  => $this->url('project.show', ['id' => $project->id->toString()]),
-                        'label' => $project->name,
-                    ]) ?></td>
-                <td><?php $server = $servers[$project->serverId->toString()] ?? null ?>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="tw-stack__ico" style="background:<?= $project->abbreviation()->oklch() ?>"><?= $project->abbreviation()->forString() ?></span>
+                        <span class="tw-cell-strong">
+                                    <?= $this->fetch('partial::link', [
+                                            'label' => $project->name,
+                                            'href' => $this->url('project.show', ['id' => $project->id])
+                                    ]) ?>
+                                </span>
+                    </div>
+                </td>
+                <td class="tw-hide-sm tw-cell-muted">PHP 8.5</td>
+                <td class="tw-hide-sm tw-num tw-cell-muted">1</td>
+                <td class="tw-hide-sm"><?php $server = $servers[$project->serverId->toString()] ?? null ?>
                     <?php if ($server !== null): ?>
                         <?= $this->fetch('partial::link', [
-                            'href'  => $this->url('server.show', ['id' => $server->id->toString()]),
-                            'label' => $server->name,
+                                'href'  => $this->url('server.show', ['id' => $server->id->toString()]),
+                                'label' => $server->name,
                         ]) ?>
                     <?php endif ?>
                 </td>
+                <td><span class="tw-badge tw-badge--ok"><span class="tw-dot"></span>Active</span></td>
+                <td class="tw-hide-sm tw-cell-muted">12m ago</td>
             </tr>
         <?php endforeach ?>
         </tbody>

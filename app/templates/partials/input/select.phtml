@@ -9,7 +9,7 @@ if (($validation ?? null) !== null):
     $defaultValue = $validation->getValueByName($name);
 endif;
 ?>
-<div class="mb-3">
+<div>
     <?php if (($label ?? null) !== null): ?>
         <label class="form-label" for="<?= $this->e($id) ?>">
             <?= $this->e($label) ?>
@@ -17,7 +17,7 @@ endif;
         </label>
     <?php endif; ?>
 
-    <select class="form-select"  name="<?= $this->e($name) ?>" id="<?= $this->e($id) ?>"
+    <select class="form-select<?php if(($validation?->getErrorByName($name) ?? null) !== null): ?> is-invalid<?php endif ?>"  name="<?= $this->e($name) ?>" id="<?= $this->e($id) ?>"
             <?php if (($hxGet ?? null) !== null):?>hx-get="<?= $this->e($hxGet) ?>"<?php endif; ?>
             <?php if (($hxPost ?? null) !== null):?>hx-post="<?= $this->e($hxPost) ?>"<?php endif; ?>
             <?php if (($hxSwap ?? null) !== null):?>hx-swap="<?= $this->e($hxSwap) ?>"<?php endif; ?>

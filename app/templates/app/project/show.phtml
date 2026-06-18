@@ -1,29 +1,21 @@
 <?php
-/** @var \Tragwerk\Domain\Entity\Project $project */
-$this->layout('layout::default', ['title' => $project->name]);
-?>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <nav aria-label="breadcrumb" class="mb-1">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item">
-                    <?= $this->fetch('partial::link', ['href' => $this->url('project'), 'label' => $this->t('Projects')]) ?>
-                </li>
-                <li class="breadcrumb-item active"><?= $this->e($project->name) ?></li>
-            </ol>
-        </nav>
-        <h1 class="mb-0"><?= $this->e($project->name) ?></h1>
-    </div>
-    <div class="d-flex gap-2">
-        <?= $this->fetch('partial::link', [
-            'label'   => $this->t('Edit'),
-            'href'    => $this->url('project.edit', ['id' => $project->id->toString()]),
-            'icon'    => 'bi bi-pencil',
-            'classes' => 'btn btn-outline-secondary btn-sm',
-        ]) ?>
-    </div>
-</div>
+use Tragwerk\Domain\Entity\Project;
+
+$this->layout('layout::default', [
+        'pageType' =>  $this->activeTeam()->name,
+        'pageTitle' => $project->name,
+        'pageSubTitle' => $this->t('Lorem ipsuim....'),
+]) ?>
+
+<?php $this->start('pageHeadButtons') ?>
+<?= $this->fetch('partial::link', [
+        'label'   => $this->t('Edit'),
+        'href'    => $this->url('project.edit', ['id' => $project->id->toString()]),
+        'icon'    => 'bi bi-pencil',
+        'classes' => 'btn btn-outline-secondary btn-sm',
+]) ?>
+<?php $this->stop() ?>
 
 <ul class="nav nav-tabs" id="projectDetailTabs" role="tablist">
     <li class="nav-item" role="presentation">

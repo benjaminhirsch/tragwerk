@@ -18,31 +18,25 @@
 
         <form class="auth-form" action="<?= $this->url('passwordReset.apply', ['token' => $token]) ?>" method="post">
             <?= $this->fetch('partial::input/csrf') ?>
-            <div class="auth-field">
-                <?= $this->fetch('partial::input/password', [
-                        'id'         => 'password1',
-                        'label'      => $this->t('New password'),
-                        'required'   => true,
-                        'autofocus'  => true,
-                        'validation' => $validationBag ?? null,
-                ]) ?>
-            </div>
+            <?= $this->fetch('partial::input/password', [
+                    'id'         => 'password1',
+                    'label'      => $this->t('New password'),
+                    'required'   => true,
+                    'autofocus'  => true,
+                    'validation' => $validationBag ?? null,
+            ]) ?>
 
-            <div class="auth-field">
-                <?= $this->fetch('partial::input/password', [
-                        'id'         => 'password2',
-                        'label'      => $this->t('Confirm new password'),
-                        'required'   => true,
-                        'validation' => $validationBag ?? null,
-                ]) ?>
-            </div>
+            <?= $this->fetch('partial::input/password', [
+                    'id'         => 'password2',
+                    'label'      => $this->t('Confirm new password'),
+                    'required'   => true,
+                    'validation' => $validationBag ?? null,
+            ]) ?>
 
-
-                <?= $this->fetch('partial::input/button', [
-                        'label'   => $this->t('Update password'),
-                        'classes' => 'btn btn-primary btn-block',
-                ]) ?>
-
+            <?= $this->fetch('partial::input/button', [
+                    'label'   => $this->t('Update password'),
+                    'classes' => 'btn btn-primary btn-block',
+            ]) ?>
         </form>
     </div>
 </div>

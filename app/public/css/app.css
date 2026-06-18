@@ -580,6 +580,7 @@ a.tw-card:hover {
 .form-control::placeholder { color: var(--text-faint); }
 .form-label { font-size: 0.82rem; font-weight: 600; color: var(--text); margin-bottom: 0.35rem; }
 .form-text { color: var(--text-muted); font-size: 0.8rem; }
+.form-page { max-width: 680px; margin: 0 auto; width: 100% }
 
 /* Segmented control */
 .tw-seg {
@@ -681,6 +682,74 @@ a.tw-card:hover {
 .tw-alert--bar.tw-alert--warn   { border-left-color: var(--warn); }
 .tw-alert--bar.tw-alert--danger { border-left-color: var(--danger); }
 
+
+body:has(> .tw-footer) { display: flex; flex-direction: column; min-height: 100vh; }
+body:has(> .tw-footer) > main { flex: 1 0 auto; width: 100% }
+
+.tw-footer {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.tw-footer a { color: var(--text-muted); font-size: 0.85rem; font-weight: 500; }
+.tw-footer a:hover { color: var(--text); }
+
+/* ============================================================
+   LOGS PAGE (master list + terminal detail)
+   ============================================================ */
+.logs-grid { display: grid; grid-template-columns: 340px 1fr; gap: 1.25rem; align-items: start; }
+
+.log-list { background: var(--surface); border: 1px solid var(--border); border-radius: .85rem; overflow: hidden; box-shadow: var(--shadow-sm); }
+.log-list__head { padding: .7rem .8rem; border-bottom: 1px solid var(--border); }
+.log-items { max-height: 620px; overflow-y: auto; }
+.log-item { display: flex; gap: .7rem; padding: .7rem .8rem; border-bottom: 1px solid var(--border); cursor: pointer; border-left: 2px solid transparent; }
+.log-item:last-child { border-bottom: none; }
+.log-item:hover { background: var(--surface-2); }
+.log-item.active { background: var(--accent-soft); border-left-color: var(--accent); }
+.log-item__ico { width: 30px; height: 30px; border-radius: 8px; flex: none; display: grid; place-items: center; background: var(--surface-2); font-size: .85rem; }
+.log-item.active .log-item__ico { background: var(--surface); }
+.log-item__title { font-size: .86rem; font-weight: 650; display: flex; align-items: center; gap: .4rem; }
+.log-item__meta { font-size: .74rem; color: var(--text-faint); margin-top: .1rem; }
+
+.term-win { border: 1px solid var(--border); border-radius: .85rem; overflow: hidden; box-shadow: var(--shadow); }
+.term-bar { display: flex; align-items: center; gap: .7rem; padding: .55rem .9rem; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+.term-dots { display: flex; gap: .4rem; }
+.term-dots i { width: 11px; height: 11px; border-radius: 99px; display: block; }
+.term-title { font-family: var(--font-mono); font-size: .78rem; color: var(--text-muted); }
+.term-actions { margin-left: auto; display: flex; gap: .3rem; }
+.term-actions .btn { padding: .2rem .45rem; }
+.term-meta { display: flex; flex-wrap: wrap; gap: .4rem 1.1rem; padding: .7rem .9rem; background: var(--surface); border-bottom: 1px solid var(--border); font-size: .8rem; }
+.term-meta .m { display: flex; align-items: center; gap: .4rem; color: var(--text-muted); }
+.term-meta .m b { color: var(--text); font-weight: 600; }
+.term-body { background: oklch(0.16 0.008 270); padding: 1rem 1.1rem; font-family: var(--font-mono); font-size: .8rem; line-height: 1.7; max-height: 560px; overflow: auto; }
+[data-bs-theme="light"] .term-body { background: oklch(0.21 0.01 270); }
+.term-body .ln { display: flex; gap: 1rem; white-space: pre-wrap; }
+.term-body .lt { color: oklch(0.55 0.02 270); flex: none; user-select: none; }
+.term-body .l-ok { color: oklch(0.78 0.14 155); }
+.term-body .l-warn { color: oklch(0.82 0.13 85); }
+.term-body .l-err { color: oklch(0.72 0.16 22); }
+.term-body .l-info { color: oklch(0.74 0.13 256); }
+.term-body .l-dim { color: oklch(0.6 0.02 270); }
+.term-body .l-txt { color: oklch(0.86 0.01 270); }
+.cursor { display: inline-block; width: 8px; height: 1em; background: oklch(0.8 0.14 155); vertical-align: text-bottom; animation: tw-pulse 1s steps(2) infinite; }
+
+/* ============================================================
+   FORM / EDIT PAGES (create & edit views)
+   ============================================================ */
+.form-page { max-width: 680px; }
+.prop-switch { display: flex; gap: .75rem; align-items: flex-start; padding: .8rem .9rem; border: 1px solid var(--border); border-radius: .6rem; background: var(--surface-2); }
+.prop-switch + .prop-switch { margin-top: .6rem; }
+.prop-switch .form-check-input { margin-top: .15rem; }
+.prop-switch .ttl { font-size: .9rem; font-weight: 650; }
+.prop-switch .dsc { font-size: .8rem; color: var(--text-muted); }
+.field-help { font-size: .8rem; color: var(--text-muted); margin-top: .35rem; }
+.key-input { font-family: var(--font-mono); text-transform: uppercase; }
+
 /* responsive */
 @media (max-width: 1120px) {
   .tw-hide-md { display: none !important; }
@@ -688,8 +757,24 @@ a.tw-card:hover {
 @media (max-width: 920px) {
   .tw-switcher { max-width: 150px; }
 }
+@media (max-width: 900px) {
+  .logs-grid { grid-template-columns: 1fr; }
+}
 @media (max-width: 720px) {
   .tw-hide-sm { display: none !important; }
   .tw-page { padding: 1.25rem 1rem 3rem; }
   .tw-switcher__name { max-width: 96px; }
 }
+
+/* Configuration page */
+.cfg-h { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; color: var(--text-faint); margin: 0 0 .6rem; display: flex; align-items: center; gap: .5rem; }
+.cfg-h .bi { font-size: .95rem; color: var(--text-muted); }
+.cfg-row { display: flex; justify-content: space-between; gap: 1rem; padding: .6rem 0; border-bottom: 1px solid var(--border); font-size: .875rem; align-items: center; }
+.cfg-row:first-child { padding-top: 0; }
+.cfg-row:last-child { border-bottom: none; padding-bottom: 0; }
+.cfg-row .k { color: var(--text-muted); display: flex; align-items: center; gap: .5rem; }
+.cfg-row .v { font-weight: 600; text-align: right; }
+.hook-block + .hook-block { margin-top: .85rem; }
+.hook-label { font-size: .8rem; font-weight: 700; color: var(--text); margin-bottom: .35rem; display: flex; align-items: center; gap: .4rem; }
+.hook-label .tw-tag { font-weight: 500; }
+.rel-pill { font-family: var(--font-mono); font-size: .74rem; background: var(--accent-soft); color: var(--accent-text); border: 1px solid var(--accent-border); border-radius: .4rem; padding: .1rem .4rem; }

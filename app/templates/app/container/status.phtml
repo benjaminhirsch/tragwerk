@@ -1,0 +1,87 @@
+<div class="tw-table-wrap"  hx-get="<?= $this->e($this->url('container.status')) ?>"
+     hx-trigger="every 30s"
+     hx-target="#table-container"
+     hx-swap="innerHTML">
+    <table class="tw-table">
+        <thead>
+        <tr>
+            <th class="sortable"><?= $this->e($this->t('Name')) ?> <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable"><?= $this->e($this->t('Service')) ?> <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable"><?= $this->e($this->t('Status')) ?> <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable tw-hide-sm" style="min-width:110px"><?= $this->e($this->t('CPU')) ?> <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable tw-hide-sm" style="min-width:110px"><?= $this->e($this->t('RAM')) ?> <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable tw-hide-sm"><?= $this->e($this->t('Uptime')) ?> <i class="bi bi-chevron-expand"></i></th>
+        </tr>
+        </thead>
+        <tbody id="env-rows">
+        <?php foreach ($containers ?? [] as $container): ?>
+            <?php
+            $state   = (string) ($container['State'] ?? '');
+            $status  = (string) ($container['Status'] ?? '');
+            $health  = (string) ($container['Health'] ?? '');
+            if ($health === '' && preg_match('/\((\w+)\)/', $status, $m)) {
+                $health = $m[1];
+            }
+            $service = (string) ($container['Service'] ?? '');
+            $name    = (string) ($container['Name'] ?? '');
+
+            if ($state === 'running' && $health === 'healthy') {
+                $badgeCss       = 'ok';
+                $badgeLabel = $this->t('Healthy');
+            } elseif ($state === 'running' && $health === 'unhealthy') {
+                $badgeCss       = 'danger';
+                $badgeLabel = $this->t('Unhealthy');
+            } elseif ($state === 'running' && $health === 'starting') {
+                $badgeCss       = 'warning';
+                $badgeLabel = $this->t('Starting');
+            } elseif ($state === 'running') {
+                $badgeCss       = 'info';
+                $badgeLabel = $this->t('Running');
+            } elseif ($state === 'restarting') {
+                $badgeCss       = 'purple';
+                $badgeLabel = $this->t('Restarting');
+            } else {
+                $badgeCss       = 'neutral';
+                $badgeLabel = $this->t('Stopped');
+            }
+            $containerIcon = 'bi-box-seam';
+
+            if (str_contains($name, '-worker-')) {
+                $containerIcon = 'bi-gear-wide-connected';
+            }
+
+            ?>
+        <tr>
+            <td>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="tw-iconbtn" style="background:var(--surface-2);width:30px;height:30px"><i class="bi <?=$containerIcon?>" style="font-size:.85rem"></i></span>
+                    <span class="tw-cell-strong mono"><?= $this->e($name) ?></span>
+                </div>
+            </td>
+            <td class="tw-hide-sm"><?= $this->e($service) ?></span></td>
+            <td><?= $this->fetch('partial::badge', [
+                    'type' => $badgeCss,
+                    'label' => $badgeLabel,
+                ]) ?></td>
+            <td class="tw-hide-sm" data-sort="38">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="tw-bar" style="width:58px">
+                        <span style="width:38%;background:var(--accent)"></span>
+                    </div>
+                    <span class="tw-cell-muted mono" style="font-size:.74rem">38%</span>
+                </div>
+            </td>
+            <td class="tw-hide-sm" data-sort="61">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="tw-bar" style="width:58px">
+                        <span style="width:61%;background:var(--purple)"></span>
+                    </div>
+                    <span class="tw-cell-muted mono" style="font-size:.74rem">61%</span>
+                </div>
+            </td>
+            <td class="tw-hide-sm tw-cell-muted"><?= $this->e($status) ?></td>
+        </tr>
+        <?php endforeach ?>
+        </tbody>
+    </table>
+</div>

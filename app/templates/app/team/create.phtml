@@ -1,35 +1,53 @@
-<?php $this->layout('layout::default', ['title' => $this->t('Create team')]) ?>
+<?php
 
-<h1><?= $this->t('Create team') ?></h1>
+/**
+ * @var list<\Tragwerk\Domain\Entity\Server>                        $servers
+ * @var array<string, int>                                          $serverProjectCounts
+ * @var list<\Tragwerk\Domain\Entity\Registry>                      $registries
+ * @var \Tragwerk\Application\Validation\ValidationBag|null         $validationBag
+ */
 
-<?php $this->start('card-content') ?>
-    <form action="<?= $this->url('team.create') ?>" method="post">
-        <?= $this->fetch('partial::input/csrf') ?>
+$this->layout('layout::default', [
+        'pageType' =>  $this->activeTeam()->name,
+        'pageTitle' => $this->t('Create team'),
+        'pageSubTitle' => $this->t('A new team contains its own projects which own environments, servers and registries'),
+        'wide' => false,
+]) ?>
 
-        <?= $this->fetch('partial::input/text', [
-            'id'         => 'name',
-            'label'      => $this->t('Team name'),
-            'autofocus'  => 'autofocus',
-            'validation' => $validationBag ?? null,
-        ]) ?>
 
-        <div class="form-group">
-            <label class="form-label"><?= $this->t('Invite team members (optional)') ?></label>
+<form class="tw-card"  action="<?= $this->url('team.create') ?>" method="post">
+    <div class="tw-card__body d-flex flex-column gap-3">
+            <?= $this->fetch('partial::input/csrf') ?>
+
+            <?= $this->fetch('partial::input/text', [
+                'id'         => 'name',
+                'label'      => $this->t('Team name'),
+                'autofocus'  => 'autofocus',
+                'validation' => $validationBag ?? null,
+            ]) ?>
+
+            <?= $this->fetch('partial::alert', [
+                'content' => $this->t('Invite team members (optional)'),
+                'type' => 'light',
+                'icon' => 'bi-info-circle',
+            ]) ?>
+
+
             <?= $this->fetch('partial::team/email-fields', [
                 'emails'     => $validationBag?->getArrayValueByName('emailsToInvite') ?: [''],
                 'validation' => $validationBag ?? null,
             ]) ?>
-        </div>
-
-        <?= $this->fetch('partial::input/button', [
-            'label' => $this->t('Save'),
-        ]) ?>
-
+    </div>
+    <div class="tw-card__head  justify-content-end border-top">
         <?= $this->fetch('partial::link', [
-                'label' => $this->t('Cancel'),
-                'href' => $this->url('team'),
-                'classes' => 'btn btn-secondary',
+                'label'   => $this->t('Cancel'),
+                'href'    => $this->url('home'),
+                'classes' => 'btn btn-ghost',
         ]) ?>
+        <?= $this->fetch('partial::input/button', [
+                'label' => $this->t('Create team'),
+                'icon' => 'bi bi-check-lg',
+        ]) ?>
+    </div>
+</form>
 
-    </form>
-<?php $this->stop() ?>

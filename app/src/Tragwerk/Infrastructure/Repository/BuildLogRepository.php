@@ -14,7 +14,9 @@ use Tragwerk\Domain\Entity\BuildLog;
 use Tragwerk\Domain\Enum\EntityType;
 use Tragwerk\Domain\Exception\Repository\EntityCreationFailed;
 use Tragwerk\Domain\Exception\Repository\EntityHydrationFailed;
+use Tragwerk\Domain\Exception\Repository\EntityNotFound;
 use Tragwerk\Domain\Repository\BuildLogRepository as BuildLogRepositoryInterface;
+use Tragwerk\Domain\ValueObject\BuildLogIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Infrastructure\Helper\EntityHelper;
 
@@ -40,6 +42,28 @@ final readonly class BuildLogRepository implements BuildLogRepositoryInterface
             ]);
         } catch (Exception $e) {
             throw EntityCreationFailed::create(BuildLog::class, $log->id, $e);
+        }
+    }
+
+    #[Override]
+    public function getById(BuildLogIdentifier $id): BuildLog
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb->select('*')
+            ->from(EntityHelper::getDbTableName(EntityType::BUILD_LOG))
+            ->where($qb->expr()->eq('id', ':id'))
+            ->setParameter('id', $id->toString());
+
+        try {
+            $row = $qb->executeQuery()->fetchAssociative();
+
+            if ($row === false) {
+                throw EntityNotFound::fromIdentifier($id);
+            }
+
+            return $this->mapperBuilder->mapper()->map(BuildLog::class, $row);
+        } catch (MappingError | Exception $e) {
+            throw EntityHydrationFailed::create(BuildLog::class, $e);
         }
     }
 

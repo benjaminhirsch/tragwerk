@@ -33,9 +33,9 @@ final readonly class ToDefaultTeam implements MiddlewareInterface
         $user = $request->getAttribute(UserInterface::class);
         assert($user instanceof UserInterface);
 
-        $team = ListHelper::sortGenerator(
+        $team = ListHelper::sort(
             $this->teamRepository->getByUserId(UserIdentifier::fromString($user->getIdentity())),
-            'created_at',
+            'createdAt',
             'asc',
         )->current();
 

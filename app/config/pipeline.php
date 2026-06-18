@@ -86,9 +86,14 @@ return static function (
     $app->pipe(Template\Extension\Csrf::class);
     $app->pipe(Template\Extension\Authentication::class);
     $app->pipe(Template\Extension\Locale::class);
-    $app->pipe(Middleware\ActiveTeamMiddleware::class);
-    $app->pipe(Middleware\ActiveProjectMiddleware::class);
+    $app->pipe(Middleware\TeamMiddleware::class);
+    $app->pipe(Middleware\ProjectMiddleware::class);
+    $app->pipe(Middleware\EnvironmentMiddleware::class);
     $app->pipe(Template\Extension\TeamContext::class);
+    $app->pipe(Template\Extension\ActiveUriPath::class);
+    $app->pipe(Template\Extension\ProjectContext::class);
+    $app->pipe(Template\Extension\ProjectContext::class);
+    $app->pipe(Template\Extension\EnvironmentContext::class);
 
     $app->pipe(new Middleware\Conditional\Method(
         ['POST'],

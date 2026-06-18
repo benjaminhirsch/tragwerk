@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Tragwerk\Application\Middleware\ActiveTeamMiddleware;
+use Tragwerk\Application\Middleware\TeamMiddleware;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\Repository\UserRepository;
@@ -31,14 +31,14 @@ final class ActiveTeamMiddlewareTest extends TestCase
 {
     private TeamRepository&MockObject $teamRepository;
     private UserRepository&MockObject $userRepository;
-    private ActiveTeamMiddleware $middleware;
+    private TeamMiddleware $middleware;
 
     protected function setUp(): void
     {
         $this->teamRepository = $this->createMock(TeamRepository::class);
         $this->userRepository = $this->createMock(UserRepository::class);
 
-        $this->middleware = new ActiveTeamMiddleware(
+        $this->middleware = new TeamMiddleware(
             $this->teamRepository,
             $this->userRepository,
         );
@@ -89,7 +89,7 @@ final class ActiveTeamMiddlewareTest extends TestCase
         $team    = $this->makeTeam($userId);
         $session = $this->createMock(SessionInterface::class);
         $session->method('get')
-            ->with(ActiveTeamMiddleware::SESSION_KEY)
+            ->with(TeamMiddleware::SESSION_KEY)
             ->willReturn($team->id->toString());
 
         $request = $this->buildAuthenticatedRequest($userId, $session);

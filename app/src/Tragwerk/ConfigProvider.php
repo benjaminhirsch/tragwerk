@@ -138,6 +138,9 @@ final readonly class ConfigProvider
                     Template\Extension\Locale::class,
                     Template\Extension\Csrf::class,
                     Template\Extension\TeamContext::class,
+                    Template\Extension\ActiveUriPath::class,
+                    Template\Extension\ProjectContext::class,
+                    Template\Extension\EnvironmentContext::class,
                 ],
             ],
             'dependencies' => [

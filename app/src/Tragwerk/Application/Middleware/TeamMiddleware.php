@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tragwerk\Application\Middleware;
 
 use Mezzio\Authentication\UserInterface;
+use Mezzio\Router\RouteResult;
 use Mezzio\Session\SessionInterface;
 use Mezzio\Session\SessionMiddleware;
 use Override;
@@ -24,7 +25,7 @@ use function assert;
 use function is_string;
 use function iterator_to_array;
 
-final readonly class ActiveTeamMiddleware implements MiddlewareInterface
+final readonly class TeamMiddleware implements MiddlewareInterface
 {
     public const string SESSION_KEY = 'active_team_id';
 
@@ -45,6 +46,9 @@ final readonly class ActiveTeamMiddleware implements MiddlewareInterface
         $session = $request->getAttribute(SessionMiddleware::SESSION_ATTRIBUTE);
         assert($session instanceof SessionInterface);
 
+        $route = $request->getAttribute(RouteResult::class);
+        assert($route instanceof RouteResult);
+
         $userId = UserIdentifier::fromString($user->getIdentity());
         $teams  = iterator_to_array($this->teamRepository->getByUserId($userId), false);
 
@@ -60,6 +64,10 @@ final readonly class ActiveTeamMiddleware implements MiddlewareInterface
         foreach ($teams as $team) {
             assert($team instanceof Team);
             $teamMap[$team->id->toString()] = $team;
+        }
+
+        if ($route->getMatchedRouteName() === 'team.show') {
+            $session->set(self::SESSION_KEY, $request->getAttribute('id'));
         }
 
         $sessionTeamId = $session->get(self::SESSION_KEY);

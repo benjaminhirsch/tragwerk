@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tragwerk\Domain\Repository;
 
+use Generator;
 use Tragwerk\Domain\Entity\EnvVar;
 use Tragwerk\Domain\Exception\Repository\EntityCreationFailed;
 use Tragwerk\Domain\Exception\Repository\EntityDeletionFailed;
@@ -26,15 +27,15 @@ interface EnvVarRepository
     /** @throws EntityDeletionFailed */
     public function delete(EnvVarIdentifier $id): void;
 
-    /** @return list<EnvVar> */
-    public function findByBranch(ProjectIdentifier $projectId, string $branch): array;
+    /** @return Generator<EnvVar> */
+    public function findByBranch(ProjectIdentifier $projectId, string $branch): Generator;
 
     /**
      * Returns inherited vars from the given ancestor branches, ordered by branch (for caller to apply precedence).
      *
      * @param list<string> $ancestorBranches
      *
-     * @return list<EnvVar>
+     * @return Generator<EnvVar>
      */
-    public function findInheritedFromAncestors(ProjectIdentifier $projectId, array $ancestorBranches): array;
+    public function findInheritedFromAncestors(ProjectIdentifier $projectId, array $ancestorBranches): Generator;
 }

@@ -1,0 +1,84 @@
+<?php
+
+declare(strict_types=1);
+
+use Tragwerk\Domain\Enum\DeployJobStatus;
+
+/**
+ * @var \Tragwerk\Domain\Entity\Project        $project
+ * @var string                                 $kind       'deploy' | 'build'
+ * @var \Tragwerk\Domain\Entity\DeployJob|null $deployJob
+ * @var \Tragwerk\Domain\Entity\BuildLog|null  $buildLog
+ */
+
+$terminalUrl = $this->url('deployment.terminal');
+
+if ($kind === 'deploy' && $deployJob !== null):
+    $status    = $deployJob->status;
+    $isActive  = $status === DeployJobStatus::Pending || $status === DeployJobStatus::Running;
+    $commitSha = $deployJob->commitSha;
+    $title     = 'deploy-' . ($commitSha !== '' ? substr($commitSha, 0, 7) : $deployJob->id->toString()) . '.log';
+
+    $diff     = $deployJob->createdAt->toDateTime()->diff($deployJob->updatedAt->toDateTime());
+    $seconds  = $diff->days * 86400 + $diff->h * 3600 + $diff->i * 60 + $diff->s;
+    $duration = $seconds >= 60
+        ? sprintf('%dm %ds', intdiv($seconds, 60), $seconds % 60)
+        : $seconds . 's';
+
+    $statusBadge = match ($status) {
+        DeployJobStatus::Completed => '<span class="tw-badge tw-badge--ok"><span class="tw-dot"></span>' . $this->e($this->t('Completed')) . '</span>',
+        DeployJobStatus::Failed    => '<span class="tw-badge tw-badge--danger"><span class="tw-dot"></span>' . $this->e($this->t('Failed')) . '</span>',
+        DeployJobStatus::Running   => '<span class="tw-badge tw-badge--info tw-badge--building"><span class="tw-dot"></span>' . $this->e($this->t('Running')) . '</span>',
+        DeployJobStatus::Pending   => '<span class="tw-badge tw-badge--info tw-badge--building"><span class="tw-dot"></span>' . $this->e($this->t('Pending')) . '</span>',
+    };
+
+    $output = $deployJob->output;
+
+    $topicBase = $_SERVER['MERCURE_TOPIC_BASE'] ?? 'https://tragwerk.build';
+    $sseTopic  = urlencode($topicBase . '/project/' . $project->id->toString() . '/deploy-job/' . $deployJob->id->toString());
+    $reloadUrl = $terminalUrl . '?kind=deploy&id=' . urlencode($deployJob->id->toString());
+    ?>
+    <div class="term-win" id="tw-terminal"
+         <?php if ($isActive): ?>
+         hx-ext="sse"
+         sse-connect="/.well-known/mercure?topic=<?= $sseTopic ?>"
+         hx-get="<?= $this->e($reloadUrl) ?>"
+         hx-trigger="sse:message, every 30s"
+         hx-swap="outerHTML"
+         <?php endif ?>>
+        <div class="term-bar">
+            <span class="term-title" id="term-title"><?= $this->e($title) ?></span>
+            <span class="term-actions">
+                <button class="btn btn-ghost btn-sm" id="copy-btn" title="<?= $this->e($this->t('Copy')) ?>"><i class="bi bi-clipboard"></i></button>
+                <button class="btn btn-ghost btn-sm" id="dl-btn" title="<?= $this->e($this->t('Download')) ?>"><i class="bi bi-download"></i></button>
+            </span>
+        </div>
+        <div class="term-meta" id="term-meta">
+            <span class="m"><?= $statusBadge ?></span>
+            <?php if ($commitSha !== ''): ?>
+                <span class="m"><i class="bi bi-git"></i> <?= $this->e($this->t('Commit')) ?> <b class="mono"><?= $this->e(substr($commitSha, 0, 7)) ?></b></span>
+            <?php endif ?>
+            <span class="m"><i class="bi bi-stopwatch"></i> <b><?= $this->e($duration) ?></b></span>
+            <span class="m"><i class="bi bi-clock"></i> <?= $this->e($deployJob->createdAt->format('Y-m-d H:i:s')) ?></span>
+        </div>
+        <div class="term-body" id="term-body" style="white-space:pre-wrap"><?= $this->e($output !== '' ? $output : '...') ?><?php if ($isActive): ?> <span class="cursor"></span><?php endif ?></div>
+    </div>
+<?php else:
+    /** @var \Tragwerk\Domain\Entity\BuildLog $buildLog */
+    $title = 'build-' . substr($buildLog->id->toString(), 0, 7) . '.log';
+    ?>
+    <div class="term-win" id="tw-terminal">
+        <div class="term-bar">
+            <span class="term-title" id="term-title"><?= $this->e($title) ?></span>
+            <span class="term-actions">
+                <button class="btn btn-ghost btn-sm" id="copy-btn" title="<?= $this->e($this->t('Copy')) ?>"><i class="bi bi-clipboard"></i></button>
+                <button class="btn btn-ghost btn-sm" id="dl-btn" title="<?= $this->e($this->t('Download')) ?>"><i class="bi bi-download"></i></button>
+            </span>
+        </div>
+        <div class="term-meta" id="term-meta">
+            <span class="m"><span class="tw-badge tw-badge--info"><span class="tw-dot"></span><?= $this->e($buildLog->type->value) ?></span></span>
+            <span class="m"><i class="bi bi-clock"></i> <?= $this->e($buildLog->createdAt->format('Y-m-d H:i:s')) ?></span>
+        </div>
+        <div class="term-body" id="term-body" style="white-space:pre-wrap"><?= $this->e($buildLog->message !== '' ? $buildLog->message : '...') ?></div>
+    </div>
+<?php endif ?>
