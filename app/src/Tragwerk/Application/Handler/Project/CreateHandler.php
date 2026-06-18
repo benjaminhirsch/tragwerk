@@ -66,7 +66,7 @@ final readonly class CreateHandler implements RequestHandlerInterface
                 ));
 
                 return new RedirectResponse(
-                    $this->urlHelper->generate('project.show', ['id' => $projectId->toString()]),
+                    $this->urlHelper->generate('project'),
                 );
             }
         }

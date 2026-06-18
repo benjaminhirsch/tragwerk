@@ -86,6 +86,7 @@
         "php-di/invoker": "^2.3",
         "php-http/discovery": "^1.20",
         "phpseclib/phpseclib": "^3.0",
+        "psr/simple-cache": "^3.0",
         "ramsey/uuid": "^4.9",
         "symfony/cache": "^7.4",
         "symfony/console": "^7.4",

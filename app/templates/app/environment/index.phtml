@@ -1,0 +1,42 @@
+<?php
+
+$this->layout('layout::default', [
+    'pageType' =>  $this->activeTeam()->name,
+    'pageTitle' => $this->t('Environments'),
+    'pageSubTitle' => $this->t('Any branch can be deployed as an isolated environment.'),
+]) ?>
+
+<div class="tw-table-wrap">
+    <table class="tw-table">
+        <thead>
+        <tr>
+            <th class="sortable">Environment <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable">Type <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable">Status <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable tw-hide-sm">Branch <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable tw-hide-sm">Commit <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable tw-hide-sm">Deploy <i class="bi bi-chevron-expand"></i></th>
+        </tr>
+        </thead>
+        <tbody id="env-rows">
+        <?php foreach ($branches as $branch): ?>
+        <tr>
+            <td>
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-git" style="color:var(--text-faint)"></i>
+                    <span class="tw-cell-strong mono"><?= $this->fetch('partial::link', [
+                            'label' => $branch,
+                            'href' => $this->url('environment.show', queryParams: ['id' => $branch]),
+                        ]) ?></span>
+                </div>
+            </td>
+            <td><span class="tw-badge tw-badge--purple"><span class="tw-dot"></span>Production</span></td>
+            <td><span class="tw-badge tw-badge--ok"><span class="tw-dot"></span>Running</span></td>
+            <td class="tw-hide-sm"><span class="tw-tag">main</span></td>
+            <td class="tw-hide-sm mono tw-cell-muted">a91f3c2</td>
+            <td class="tw-hide-sm tw-cell-muted">12m ago</td>
+        </tr>
+        <?php endforeach ?>
+        </tbody>
+    </table>
+</div>

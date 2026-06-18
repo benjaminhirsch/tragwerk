@@ -1,0 +1,113 @@
+<?php
+
+declare(strict_types=1);
+
+use Tragwerk\Domain\Enum\DeployJobStatus;
+
+/**
+ * @var string                                              $branch
+ * @var list<\Tragwerk\Application\Dto\Deployment\LogListEntry> $entries
+ * @var int                                                 $offset
+ * @var bool                                                $hasMore
+ * @var string                                              $type     'all'|'build'|'deploy'
+ */
+
+$terminalUrl = $this->url('deployment.terminal');
+$listUrl     = $this->url('deployment');
+$nextOffset  = $offset + count($entries);
+
+$buildIcon = static fn (string $type): string => match ($type) {
+    'PUSH'    => 'bi-arrow-up-circle',
+    'BUILD'   => 'bi-hammer',
+    'WEBHOOK' => 'bi-plug',
+    'CRONJOB' => 'bi-clock',
+    default   => 'bi-gear',
+};
+?>
+<?php if ($entries === []): ?>
+    <div class="text-body-secondary small" style="padding:.8rem">
+        <i class="bi bi-info-circle me-1"></i>
+        <?= $this->e($this->t('No logs yet.')) ?>
+    </div>
+<?php endif ?>
+<?php foreach ($entries as $entry): ?>
+    <?php if ($entry->kind === 'deploy' && $entry->deployJob !== null):
+        $job       = $entry->deployJob;
+        $commitSha = $job->commitSha;
+
+        $diff     = $job->createdAt->toDateTime()->diff($job->updatedAt->toDateTime());
+        $seconds  = $diff->days * 86400 + $diff->h * 3600 + $diff->i * 60 + $diff->s;
+        $duration = $seconds >= 60
+            ? sprintf('%dm %ds', intdiv($seconds, 60), $seconds % 60)
+            : $seconds . 's';
+        $showDuration = $job->status === DeployJobStatus::Completed || $job->status === DeployJobStatus::Failed;
+
+        $iconColor = match ($job->status) {
+            DeployJobStatus::Completed => '--ok-text',
+            DeployJobStatus::Running, DeployJobStatus::Pending => '--accent',
+            DeployJobStatus::Failed => '--danger',
+        };
+        $statusIcon = match ($job->status) {
+            DeployJobStatus::Completed => '<i class="bi bi-check-circle-fill" style="color:var(--ok-text)"></i>',
+            DeployJobStatus::Failed    => '<i class="bi bi-x-circle-fill" style="color:var(--danger)"></i>',
+            DeployJobStatus::Running, DeployJobStatus::Pending => '<i class="bi bi-arrow-repeat" style="color:var(--accent)"></i>',
+        };
+        $isActive = $job->status === DeployJobStatus::Running || $job->status === DeployJobStatus::Pending;
+        $loadUrl  = $terminalUrl . '?kind=deploy&id=' . urlencode($job->id->toString());
+        ?>
+        <div class="log-item" data-f="deploy"
+             hx-get="<?= $this->e($loadUrl) ?>"
+             hx-target="#tw-terminal"
+             hx-swap="outerHTML">
+            <span class="log-item__ico"><i class="bi bi-rocket-takeoff" style="color:var(<?= $iconColor ?>)"></i></span>
+            <div style="min-width:0;flex:1">
+                <div class="log-item__title">
+                    <span><?= $this->e($this->t('Deploy')) ?></span>
+                    <span class="mono text-faint" style="font-weight:500;font-size:.78rem">
+                        <?php if ($commitSha !== ''): ?>
+                            <?= $this->e(substr($commitSha, 0, 7)) ?>
+                        <?php else: ?>
+                            <?= $this->e($this->t('(sync)')) ?>
+                        <?php endif ?>
+                    </span>
+                    <?php if ($isActive): ?>
+                        <span class="tw-badge tw-badge--info tw-badge--building" style="font-size:.62rem;padding:.05rem .35rem"><span class="tw-dot"></span>live</span>
+                    <?php endif ?>
+                </div>
+                <div class="log-item__meta">
+                    <?= $this->e($job->createdAt->format('Y-m-d H:i')) ?>
+                    <?php if ($showDuration): ?>
+                        &middot; <?= $this->e($duration) ?>
+                    <?php endif ?>
+                </div>
+            </div>
+            <span style="flex:none"><?= $statusIcon ?></span>
+        </div>
+    <?php elseif ($entry->buildLog !== null):
+        $log     = $entry->buildLog;
+        $loadUrl = $terminalUrl . '?kind=build&id=' . urlencode($log->id->toString());
+        ?>
+        <div class="log-item" data-f="build"
+             hx-get="<?= $this->e($loadUrl) ?>"
+             hx-target="#tw-terminal"
+             hx-swap="outerHTML">
+            <span class="log-item__ico"><i class="bi <?= $buildIcon($log->type->value) ?>" style="color:var(--text-muted)"></i></span>
+            <div style="min-width:0;flex:1">
+                <div class="log-item__title">
+                    <span><?= $this->e($this->t('Build')) ?></span>
+                    <span class="mono text-faint" style="font-weight:500;font-size:.78rem"><?= $this->e($log->type->value) ?></span>
+                </div>
+                <div class="log-item__meta"><?= $this->e(mb_strimwidth($log->message, 0, 60, '…')) ?></div>
+                <div class="log-item__meta"><?= $this->e($log->createdAt->format('Y-m-d H:i')) ?></div>
+            </div>
+            <span style="flex:none"><i class="bi bi-dot text-muted"></i></span>
+        </div>
+    <?php endif ?>
+<?php endforeach ?>
+<?php if ($hasMore): ?>
+    <div hx-get="<?= $this->e($listUrl . '?offset=' . $nextOffset . '&type=' . urlencode($type)) ?>"
+         hx-trigger="intersect once root:#log-items"
+         hx-target="this"
+         hx-swap="outerHTML">
+    </div>
+<?php endif ?>

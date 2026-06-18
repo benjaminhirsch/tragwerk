@@ -1,0 +1,8 @@
+<?php
+
+$this->layout('layout::default', [
+    'pageType' =>  $this->activeTeam()->name . ' / ' . $this->activeEnvironment(),
+    'pageTitle' => $this->activeEnvironment(),
+    'pageTitleIcon' => 'bi bi-git'
+]) ?>
+

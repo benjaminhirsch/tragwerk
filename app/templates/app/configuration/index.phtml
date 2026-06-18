@@ -1,0 +1,295 @@
+<?php
+
+use Tragwerk\Domain\Entity\Domain;
+use Tragwerk\Domain\Enum\MountSource;
+use Tragwerk\Domain\Model\ApplicationConfig;
+use Tragwerk\Domain\Model\ProjectConfig;
+
+/** @var ProjectConfig|null $projectConfig */
+/** @var list<Domain> $domains */
+
+$this->layout('layout::default', [
+        'pageType' => $this->activeTeam()->name . ' / ' . $this->activeEnvironment(),
+        'pageTitle' => $this->t('Configuration'),
+        'pageSubTitle' => sprintf(
+                $this->t('Complete definition of this environment — generated from %s in the repository.'),
+                '<span class="mono">.tragwerk/config.xml</span>',
+        ),
+]) ?>
+
+<?php
+/** Humanize a runtime enum value such as "php:8.5" → "PHP 8.5". */
+$runtimeLabel = static fn(string $value): string => ucfirst(str_replace(':', ' ', $value));
+
+/** Slugify a name the same way DockerComposeGenerator does (for volume names). */
+$slugify = static function (string $name): string {
+    $slug = preg_replace('/[\s_]+/', '-', strtolower($name)) ?? '';
+
+    return preg_replace('/[^a-z0-9-]/', '', $slug) ?? '';
+};
+
+$app = null;
+if ($projectConfig !== null && $projectConfig->applications !== []) {
+    $app = $projectConfig->applications[0];
+    assert($app instanceof ApplicationConfig);
+}
+
+// Map each route placeholder (e.g. {default}) to its bound domain host (primary wins).
+$hostByPlaceholder = [];
+foreach ($domains ?? [] as $domain) {
+    if (!isset($hostByPlaceholder[$domain->placeholder]) || $domain->isPrimary) {
+        $hostByPlaceholder[$domain->placeholder] = $domain->host;
+    }
+}
+
+$resolveDomain = static function (string $pattern) use ($hostByPlaceholder): string|null {
+    if (preg_match('/\{([a-z0-9_-]+)\}/i', $pattern, $matches) !== 1) {
+        return null;
+    }
+
+    return $hostByPlaceholder[$matches[1]] ?? null;
+};
+?>
+
+<?php if ($projectConfig === null): ?>
+
+    <div class="tw-card">
+        <div class="tw-card__body text-center text-muted-2" style="padding:2.5rem 1rem">
+            <i class="bi bi-file-earmark-code" style="font-size:1.6rem;display:block;margin-bottom:.6rem"></i>
+            <?= $this->e($this->t('No configuration found for this environment. Add a .tragwerk/config.xml to the repository and deploy.')) ?>
+        </div>
+    </div>
+
+<?php else: ?>
+
+    <div class="row g-4">
+        <!-- Runtime -->
+        <div class="col-lg-6">
+            <section class="mb-4">
+                <h2 class="cfg-h"><i class="bi bi-cpu"></i> <?= $this->t('Runtime') ?></h2>
+                <div class="tw-card">
+                    <div class="tw-card__body">
+                        <div class="cfg-row"><span class="k"><?= $this->t('Language') ?></span><span
+                                    class="v"><?= $this->e($app !== null ? $runtimeLabel($app->type->value) : 'PHP 8.5') ?></span>
+                        </div>
+                        <div class="cfg-row"><span class="k"><?= $this->t('Web server') ?></span><span
+                                    class="v"><?= $this->e($app?->workerMode !== null ? 'FrankenPHP · worker mode' : 'FrankenPHP') ?></span>
+                        </div>
+                        <div class="cfg-row"><span class="k"><?= $this->t('Workers') ?></span><span
+                                    class="v"><?= $this->e(count($app?->workers ?? [])) ?></span></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Hooks -->
+    <?php if ($app !== null && $app->hooks !== []): ?>
+        <section class="mt-2 mb-4">
+            <h2 class="cfg-h"><i class="bi bi-terminal"></i> <?= $this->t('Hooks') ?></h2>
+            <div class="tw-card">
+                <div class="tw-card__body">
+                    <?php foreach ($app->hooks as $hook): ?>
+                        <div class="hook-block">
+                            <div class="hook-label"><span class="tw-tag"><?= $this->e($hook->type->value) ?></span>
+                            </div>
+                            <div class="tw-terminal"><?= nl2br($this->e($hook->value)) ?></div>
+                        </div>
+                    <?php endforeach ?>
+                </div>
+            </div>
+        </section>
+    <?php endif ?>
+
+    <!-- Mounts -->
+    <?php if ($app !== null && $app->mounts !== []): ?>
+        <section class="mb-4">
+            <h2 class="cfg-h"><i class="bi bi-folder2-open"></i> <?= $this->t('Mounts & Volumes') ?></h2>
+            <div class="tw-table-wrap">
+                <table class="tw-table">
+                    <thead>
+                    <tr>
+                        <th><?= $this->t('Path') ?></th>
+                        <th><?= $this->t('Type') ?></th>
+                        <th><?= $this->t('Source') ?></th>
+                        <th class="tw-hide-sm"><?= $this->t('Disk') ?></th>
+                        <th><?= $this->t('Mode') ?></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php $appSlug = $slugify($app->name); ?>
+                    <?php foreach ($app->mounts as $mount): ?>
+                        <?php $mountShort = $appSlug . '-' . $slugify($mount->name); ?>
+                        <tr>
+                            <td class="mono tw-cell-strong"><?= $this->e($mount->name) ?></td>
+                            <td>
+                                <?php if ($mount->source === MountSource::SERVICE): ?>
+                                    <span class="tw-badge tw-badge--purple"><span
+                                                class="tw-dot"></span><?= $this->t('Volume') ?></span>
+                                <?php else: ?>
+                                    <span class="tw-badge tw-badge--neutral"><span class="tw-dot"></span>tmpfs</span>
+                                <?php endif ?>
+                            </td>
+                            <td class="tw-cell-muted mono"><?= $this->e($mount->path) ?></td>
+                            <td id="cfg-mount-disk-<?= $this->e($mountShort) ?>" class="tw-hide-sm tw-cell-muted">
+                                <span class="spinner-border spinner-border-sm me-2  col-3" role="status"></span>
+                            </td>
+                            <td><span class="tw-tag"><?= $this->t('read-write') ?></span></td>
+                        </tr>
+                    <?php endforeach ?>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    <?php endif ?>
+
+    <?php if (($app?->mounts ?? []) !== [] || $projectConfig->services !== []): ?>
+        <div hx-get="<?= $this->e($this->url('configuration.mounts')) ?>"
+             hx-trigger="load, every 60s"
+             hx-swap="none"></div>
+    <?php endif ?>
+
+    <!-- Services -->
+    <?php if ($projectConfig->services !== []): ?>
+        <section class="mb-4">
+            <h2 class="cfg-h"><i class="bi bi-hdd-stack"></i> <?= $this->t('Services') ?></h2>
+            <div class="tw-table-wrap">
+                <table class="tw-table">
+                    <thead>
+                    <tr>
+                        <th><?= $this->t('Service') ?></th>
+                        <th><?= $this->t('Relationship') ?></th>
+                        <th class="tw-hide-sm"><?= $this->t('Disk') ?></th>
+                        <th><?= $this->t('Status') ?></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($projectConfig->services as $service): ?>
+                        <tr>
+                            <td class="tw-cell-strong mono"><?= $this->e($service->type->value) ?></td>
+                            <td><span class="rel-pill"><?= $this->e($service->name) ?></span></td>
+                            <td id="cfg-service-disk-<?= $this->e($slugify($service->name)) ?>" class="tw-hide-sm tw-cell-muted">
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                            </td>
+                            <td><span class="tw-badge tw-badge--ok"><span
+                                            class="tw-dot"></span><?= $this->t('Running') ?></span></td>
+                        </tr>
+                    <?php endforeach ?>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    <?php endif ?>
+
+    <!-- Routes -->
+    <?php if ($projectConfig->routes !== []): ?>
+        <section class="mb-4">
+            <h2 class="cfg-h"><i class="bi bi-signpost-split"></i> <?= $this->t('Routes') ?></h2>
+            <div class="tw-table-wrap">
+                <table class="tw-table">
+                    <thead>
+                    <tr>
+                        <th><?= $this->t('Route') ?></th>
+                        <th><?= $this->t('Type') ?></th>
+                        <th><?= $this->t('Target / upstream') ?></th>
+                        <th class="tw-hide-sm"><?= $this->t('Cache') ?></th>
+                        <th class="tw-hide-sm"><?= $this->t('Domain') ?></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($projectConfig->routes as $route): ?>
+                        <tr>
+                            <td class="mono tw-cell-strong"><?= $this->e($route->pattern) ?></td>
+                            <?php if ($route->upstream !== null): ?>
+                                <td><span class="tw-badge tw-badge--info"><span
+                                                class="tw-dot"></span><?= $this->t('upstream') ?></span></td>
+                                <td><span class="rel-pill"><?= $this->e($route->upstream) ?></span></td>
+                            <?php else: ?>
+                                <td><span class="tw-badge tw-badge--neutral"><i class="bi bi-arrow-return-right"
+                                                                                style="font-size:.7rem"></i><?= $this->t('redirect') ?></span>
+                                </td>
+                                <td class="tw-cell-muted">—</td>
+                            <?php endif ?>
+                            <td class="tw-hide-sm"><span class="tw-badge tw-badge--neutral"
+                                                         style="font-size:.68rem">off</span></td>
+                            <?php $routeHost = $resolveDomain($route->pattern); ?>
+                            <td class="tw-hide-sm mono tw-cell-muted"><?= $routeHost !== null ? $this->e($routeHost) : '—' ?></td>
+                        </tr>
+                    <?php endforeach ?>
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-faint mt-2" style="font-size:.8rem"><i
+                        class="bi bi-info-circle"></i> <?= sprintf($this->t('Domains are mapped to the %s placeholder in the Domains tab.'), '<span class="mono">{default}</span>') ?>
+            </p>
+        </section>
+    <?php endif ?>
+
+    <!-- Crons & Workers -->
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <section>
+                <h2 class="cfg-h"><i class="bi bi-clock-history"></i> <?= $this->t('Cron jobs') ?></h2>
+                <div class="tw-table-wrap">
+                    <table class="tw-table">
+                        <thead>
+                        <tr>
+                            <th><?= $this->t('Name') ?></th>
+                            <th><?= $this->t('Schedule') ?></th>
+                            <th><?= $this->t('Command') ?></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td class="tw-cell-strong">cache-prune</td>
+                            <td><span class="tw-tag">*/15 * * * *</span></td>
+                            <td class="mono tw-cell-muted" style="font-size:.78rem">artisan cache:prune</td>
+                        </tr>
+                        <tr>
+                            <td class="tw-cell-strong">reports</td>
+                            <td><span class="tw-tag">0 2 * * *</span></td>
+                            <td class="mono tw-cell-muted" style="font-size:.78rem">artisan reports:generate</td>
+                        </tr>
+                        <tr>
+                            <td class="tw-cell-strong">sitemap</td>
+                            <td><span class="tw-tag">0 */6 * * *</span></td>
+                            <td class="mono tw-cell-muted" style="font-size:.78rem">artisan sitemap:build</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+        <div class="col-lg-5">
+            <section>
+                <h2 class="cfg-h"><i class="bi bi-gear-wide-connected"></i> <?= $this->t('Workers') ?></h2>
+                <div class="tw-table-wrap">
+                    <table class="tw-table">
+                        <thead>
+                        <tr>
+                            <th><?= $this->t('Name') ?></th>
+                            <th><?= $this->t('Command') ?></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php if ($app !== null && $app->workers !== []): ?>
+                            <?php foreach ($app->workers as $worker): ?>
+                                <tr>
+                                    <td class="tw-cell-strong"><?= $this->e($worker->name) ?></td>
+                                    <td class="mono tw-cell-muted"
+                                        style="font-size:.78rem"><?= $this->e($worker->command) ?></td>
+                                </tr>
+                            <?php endforeach ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="3" class="tw-cell-muted"><?= $this->t('No workers configured.') ?></td>
+                            </tr>
+                        <?php endif ?>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+
+<?php endif ?>

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tragwerk\Application\Middleware;
 
 use Mezzio\Authentication\UserInterface;
+use Mezzio\Router\RouteResult;
 use Mezzio\Session\SessionInterface;
 use Mezzio\Session\SessionMiddleware;
 use Override;
@@ -21,7 +22,7 @@ use function assert;
 use function is_string;
 use function iterator_to_array;
 
-final readonly class ActiveProjectMiddleware implements MiddlewareInterface
+final readonly class ProjectMiddleware implements MiddlewareInterface
 {
     public const string SESSION_KEY = 'active_project_id';
 
@@ -44,6 +45,9 @@ final readonly class ActiveProjectMiddleware implements MiddlewareInterface
         $team = $request->getAttribute('active_team');
         assert($team instanceof Team);
 
+        $route = $request->getAttribute(RouteResult::class);
+        assert($route instanceof RouteResult);
+
         $projects = iterator_to_array($this->projectRepository->getAll($team->id), false);
 
         if ($projects === []) {
@@ -60,10 +64,18 @@ final readonly class ActiveProjectMiddleware implements MiddlewareInterface
             $projectMap[$project->id->toString()] = $project;
         }
 
+        if ($route->getMatchedRouteName() === 'project.show') {
+            $session->set(self::SESSION_KEY, $request->getAttribute('id'));
+        }
+
+        if ($route->getMatchedRouteName() === 'team.show') {
+            $session->unset(self::SESSION_KEY);
+        }
+
         $sessionProjectId = $session->get(self::SESSION_KEY);
+
         if (is_string($sessionProjectId) && array_key_exists($sessionProjectId, $projectMap)) {
             $activeProject = $projectMap[$sessionProjectId];
-            $session->set(self::SESSION_KEY, $activeProject->id->toString());
         }
 
         return $handler->handle(

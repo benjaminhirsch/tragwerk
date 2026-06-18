@@ -45,7 +45,7 @@ final class UserRepository extends GenericRepository implements UserRepositoryIn
         assert(is_array($details) && isset($details['password']) && is_string($details['password']));
 
         $details['abbreviation'] = $user->abbreviation()->forString();
-        $details['oklch'] = $user->abbreviation()->oklch();
+        $details['oklch']        = $user->abbreviation()->oklch();
 
         if (password_verify($password ?? '', $details['password'])) {
             unset($details['password']);

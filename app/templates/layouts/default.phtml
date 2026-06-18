@@ -1,5 +1,6 @@
 <?php
 
+use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Team;
 
 $this->layout('layout::blank') ?>
@@ -21,10 +22,12 @@ $this->layout('layout::blank') ?>
                     <?php
                     /** @var Team $team */
                     foreach ($this->userTeams() as $team): ?>
-                    <li><a class="dropdown-item active" href="<?= $this->url('team.show', ['id' => $team->id])?>">
-                            <span class="tw-ava" style="background:<?= $this->activeTeam()->abbreviation()->oklch() ?>"><?= $this->e($this->activeTeam()->abbreviation()->forString()) ?></span>
+                    <li><a class="dropdown-item<?= ($team->id->isEqualTo($this->activeTeam()->id)) ? ' active' : '' ?>"
+                           href="<?= $this->url('team.show', ['id' => $team->id])?>">
                             <span class="flex-grow-1"><?= $this->e($team->name) ?></span>
-                            <i class="bi bi-check2"></i>
+                            <?php if($team->id->isEqualTo($this->activeTeam()->id)): ?>
+                                <i class="bi bi-check2"></i>
+                            <?php endif ?>
                         </a></li>
                     <?php endforeach ?>
                     <li><hr class="dropdown-divider"></li>
@@ -32,6 +35,61 @@ $this->layout('layout::blank') ?>
                     <li><a class="dropdown-item" href="<?= $this->url('team.edit', ['id' => $team->id])?>"><i class="bi bi-gear"></i> <?= $this->t('Team settings') ?></a></li>
                 </ul>
             </div>
+            <?php if($this->activeProject() !== null): ?>
+            <span class="tw-crumb-sep">/</span>
+                <div class="dropdown">
+                    <button type="button" class="tw-switcher" aria-haspopup="menu">
+                        <span class="tw-ava" style="background:<?= $this->activeProject()->abbreviation()->oklch() ?>"><?= $this->e($this->activeProject()->abbreviation()->forString()) ?></span>
+                        <span class="tw-switcher__name"><?= $this->e($this->activeProject()->name) ?></span>
+                        <i class="bi bi-chevron-expand"></i>
+                    </button>
+                    <ul class="dropdown-menu tw-switch-menu">
+                        <li class="dropdown-header">Teams</li>
+                        <?php
+                        /** @var Project $project */
+                        foreach ($this->getTeamProjects() as $project): ?>
+                            <li><a class="dropdown-item<?= ($project->id->isEqualTo($this->activeProject()->id)) ? ' active' : '' ?>"
+                                   href="<?= $this->url('project.show', ['id' => $project->id])?>">
+                                    <span class="flex-grow-1"><?= $this->e($project->name) ?></span>
+                                    <?php if($project->id->isEqualTo($this->activeProject()->id)): ?>
+                                        <i class="bi bi-check2"></i>
+                                    <?php endif ?>
+                                </a></li>
+                        <?php endforeach ?>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="<?= $this->url('team.create')?>"><i class="bi bi-plus-lg"></i> <?= $this->t('Create team') ?></a></li>
+                        <li><a class="dropdown-item" href="<?= $this->url('team.edit', ['id' => $team->id])?>"><i class="bi bi-gear"></i> <?= $this->t('Team settings') ?></a></li>
+                    </ul>
+                </div>
+            <?php endif ?>
+            <?php if($this->activeEnvironment() !== null): ?>
+            <span class="tw-crumb-sep">/</span>
+                <?php if(count($this->getProjectEnvironments()) > 0): ?>
+                <div class="dropdown">
+                    <button type="button" class="tw-switcher" aria-haspopup="menu">
+                        <span class="tw-switcher__name"><?= $this->e($this->activeEnvironment()) ?></span>
+                        <i class="bi bi-chevron-expand"></i>
+                    </button>
+                    <ul class="dropdown-menu tw-switch-menu">
+                        <li class="dropdown-header"><?= $this->t('Environments') ?></li>
+                        <?php
+                        foreach ($this->getProjectEnvironments() as $env): ?>
+                            <li><a class="dropdown-item<?= ($this->activeEnvironment() === $env) ? ' active' : '' ?>"
+                                   href="<?= $this->url('environemnt.show', queryParams: ['id' => $env])?>">
+                                    <span class="flex-grow-1"><?= $this->e($env) ?></span>
+                                    <?php if($this->activeEnvironment() === $env): ?>
+                                        <i class="bi bi-check2"></i>
+                                    <?php endif ?>
+                                </a></li>
+                        <?php endforeach ?>
+                    </ul>
+                </div>
+                <?php else: ?>
+                    <button type="button" class="tw-switcher" aria-haspopup="menu">
+                        <span class="tw-switcher__name"><?= $this->e($this->activeEnvironment()) ?></span>
+                    </button>
+                <?php endif ?>
+            <?php endif ?>
         </div>
 
         <div class="ms-auto d-flex align-items-center gap-2">
@@ -78,22 +136,157 @@ $this->layout('layout::blank') ?>
     </div>
 
     <!-- Contextual tabs (static links) -->
+
+    <?php
+
+    if ($this->activeTeam() !== null) {
+        $tabs = [
+            [
+                'route' => [
+                    'routeName' => 'team.show',
+                    'routeParams' => ['id' => $this->activeTeam()->id],
+                ],
+                'label' => $this->t('Overview'),
+                'icon' => 'bi bi-grid-1x2',
+            ],
+           [
+                'route' => [
+                    'routeName' => 'project',
+                    'routeParams' => [],
+                ],
+                'label' => $this->t('Projects'),
+                'count' => 6,
+                'icon' => 'bi bi-box-seam',
+            ],
+            [
+                'route' => [
+                    'routeName' => 'server',
+                    'routeParams' => [],
+                ],
+                'label' => $this->t('Servers'),
+                'count' => 6,
+                'icon' => 'bi bi-hdd-stack',
+            ],
+            [
+                'route' => [
+                    'routeName' => 'registry',
+                    'routeParams' => [],
+                ],
+                'label' => $this->t('Registries'),
+                'count' => 1,
+                'icon' => 'bi bi-archive',
+            ],
+            [
+                'route' => [
+                    'routeName' => 'home',
+                    'routeParams' => [],
+                ],
+                'label' => $this->t('Members'),
+                'count' => 1,
+                'icon' => 'bi bi-people',
+            ],
+            [
+                'route' => [
+                        'routeName' => 'home',
+                        'routeParams' => [],
+                ],
+                'label' => $this->t('Settings'),
+                'icon' => 'bi bi-gear',
+            ],
+        ];
+    }
+
+    if ($this->activeProject() !== null) {
+        $tabs = [
+            [
+                'route' => [
+                    'routeName' => 'project.show',
+                    'routeParams' => ['id' => $this->activeProject()->id],
+                ],
+                'label' => $this->t('Overview'),
+                'icon' => 'bi bi-grid-1x2',
+            ],
+            [
+                'route' => [
+                    'routeName' => 'environment',
+                    'routeParams' => ['id' => $this->activeProject()->id],
+                ],
+                'label' => $this->t('Environments'),
+                'icon' => 'bi bi-diagram-3',
+                'count' => 2
+            ],
+        ];
+    }
+
+    if ($this->activeEnvironment() !== null) {
+        $tabs = [
+            [
+                'route' => [
+                    'routeName' => 'environment.show',
+                    'queryParams' => ['id' => $this->activeEnvironment()],
+                ],
+                'label' => $this->t('Overview'),
+                'icon' => 'bi bi-grid-1x2',
+            ],
+            [
+                'route' => [
+                    'routeName' => 'container',
+                    'routeParams' => [],
+                ],
+                'label' => $this->t('Containers'),
+                'icon' => 'bi bi-boxes',
+            ],
+            [
+                'route' => [
+                    'routeName' => 'deployment',
+                    'routeParams' => [],
+                ],
+                'label' => $this->t('Deployments'),
+                'icon' => 'bi bi-rocket-takeoff',
+            ],
+            [
+                'route' => [
+                    'routeName' => 'variable',
+                    'routeParams' => [],
+                ],
+                'label' => $this->t('Variables'),
+                'icon' => 'bi bi-sliders',
+            ],
+            [
+                'route' => [
+                    'routeName' => 'configuration',
+                    'routeParams' => [],
+                ],
+                'label' => $this->t('Configuration'),
+                'icon' => 'bi bi-file-earmark-code',
+            ],
+        ];
+    }
+    ?>
+
     <nav class="tw-tabs">
-        <a class="tw-tab active" href="index.html"><i class="bi bi-grid-1x2"></i> Overview</a>
-        <a class="tw-tab" href="projects.html"><i class="bi bi-box-seam"></i> Projects <span class="tw-tab__count">6</span></a>
-        <a class="tw-tab" href="servers.html"><i class="bi bi-hdd-stack"></i> Servers <span class="tw-tab__count">6</span></a>
-        <a class="tw-tab" href="registries.html"><i class="bi bi-archive"></i> Registries <span class="tw-tab__count">3</span></a>
-        <a class="tw-tab" href="settings.html"><i class="bi bi-people"></i> Members <span class="tw-tab__count">14</span></a>
-        <a class="tw-tab" href="settings.html#general"><i class="bi bi-gear"></i> Settings</a>
+        <?php foreach ($tabs as $tab): ?>
+            <a class="tw-tab<?= ($this->routeDoesMatch($tab['route']['routeName'])) ? ' active' : '' ?>" href="<?= $this->url(...$tab['route']) ?>">
+                <i class="<?= $tab['icon'] ?>"></i> <?= $tab['label'] ?>
+                <?= (isset($tab['count']) ? '<span class="tw-tab__count">' . $tab['count'] . '</span>' : '') ?>
+            </a>
+        <?php endforeach ?>
     </nav>
 </header>
 
-<main class="tw-page tw-page--wide">
-
+<main class="tw-page<?= (($wide ?? true) === true) ? ' tw-page--wide' : '' ?>">
+    <?php if(($wide ?? true) === false):?><div class="form-page"><?php endif ?>
     <div class="tw-pagehead">
         <div>
             <p class="tw-eyebrow mb-1"><?= $this->e($pageType) ?></p>
+            <?php if(($pageTitleIcon ?? null) !== null):?>
+                <div class="d-flex align-items-center gap-2">
+                    <i class="<?= $this->e($pageTitleIcon) ?>"></i>
+            <?php endif ?>
             <h1><?= $this->e($pageTitle) ?></h1>
+            <?php if(($pageTitleIcon ?? null) !== null):?>
+                </div>
+            <?php endif ?>
             <p class="tw-sub"><?= $pageSubTitle ?? '' ?></p>
         </div>
         <div class="d-flex gap-2">
@@ -106,10 +299,16 @@ $this->layout('layout::blank') ?>
     <?php if($this->section('content')): ?>
         <?= $this->section('content') ?>
     <?php endif ?>
+    <?php if(($wide ?? true) === false):?></div><?php endif ?>
 </main>
 
+<footer class="tw-footer">
+    <a href="#">Imprint</a>
+    <a href="#">Privacy Policy</a>
+    <a href="#">Terms &amp; Conditions</a>
+</footer>
 
-<?php $this->start('javascript') ?>
+<?php $this->push('javascript') ?>
 <script src="/js/init-elements.js"></script>
 <script>
     (function() {
@@ -186,5 +385,4 @@ $this->layout('layout::blank') ?>
         });
     })();
 </script>
-
 <?php $this->stop() ?>

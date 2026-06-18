@@ -1,0 +1,55 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @var \Tragwerk\Domain\Entity\Project                          $project
+ * @var string                                                   $branch
+ * @var list<\Tragwerk\Application\Dto\Deployment\LogListEntry>  $entries
+ * @var list<\Tragwerk\Domain\Entity\DeployJob>                  $activeJobs
+ * @var int                                                      $offset
+ * @var bool                                                     $hasMore
+ * @var string                                                   $type     'all'|'build'|'deploy'
+ */
+
+$listUrl = $this->url('deployment');
+$polling = $activeJobs !== [];
+
+$filters = [
+    'all'    => $this->t('All'),
+    'build'  => $this->t('Builds'),
+    'deploy' => $this->t('Deploys'),
+];
+
+$topicBase = $_SERVER['MERCURE_TOPIC_BASE'] ?? 'https://tragwerk.build';
+$sseTopic  = urlencode($topicBase . '/project/' . $project->id->toString() . '/deploy-log/' . $branch);
+?>
+<div class="log-list__head">
+    <div class="tw-seg w-100" id="log-filter" style="display:flex">
+        <?php foreach ($filters as $value => $label): ?>
+            <button class="flex-fill<?= $type === $value ? ' active' : '' ?>"
+                    hx-get="<?= $this->e($listUrl . '?panel=1&type=' . urlencode($value)) ?>"
+                    hx-target="#log-panel"
+                    hx-swap="innerHTML">
+                <?= $this->e($label) ?>
+            </button>
+        <?php endforeach ?>
+    </div>
+</div>
+<div class="log-items" id="log-items"
+     <?php if ($polling): ?>
+     hx-ext="sse"
+     sse-connect="/.well-known/mercure?topic=<?= $sseTopic ?>"
+     hx-get="<?= $this->e($listUrl . '?fragment=1&type=' . urlencode($type)) ?>"
+     hx-trigger="sse:message, every 30s"
+     hx-target="#log-items"
+     hx-swap="innerHTML"
+     <?php endif ?>>
+    <?= $this->fetch('page::deployment/_log_items', [
+        'branch'  => $branch,
+        'entries' => $entries,
+        'offset'  => $offset,
+        'hasMore' => $hasMore,
+        'type'    => $type,
+    ]) ?>
+</div>

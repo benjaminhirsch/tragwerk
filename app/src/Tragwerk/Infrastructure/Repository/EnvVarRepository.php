@@ -6,6 +6,8 @@ namespace Tragwerk\Infrastructure\Repository;
 
 use CuyZ\Valinor\Mapper\MappingError;
 use Doctrine\DBAL\Exception;
+use Doctrine\DBAL\Types\Types;
+use Generator;
 use Override;
 use Tragwerk\Domain\Entity\EnvVar;
 use Tragwerk\Domain\Enum\EntityType;
@@ -29,7 +31,7 @@ final class EnvVarRepository extends GenericRepository implements EnvVarReposito
     }
 
     #[Override]
-    public function findByBranch(ProjectIdentifier $projectId, string $branch): array
+    public function findByBranch(ProjectIdentifier $projectId, string $branch): Generator
     {
         $qb = $this->connection->createQueryBuilder();
         $qb->select('*')
@@ -41,19 +43,16 @@ final class EnvVarRepository extends GenericRepository implements EnvVarReposito
             ->orderBy('key', 'ASC');
 
         try {
-            $vars = [];
             foreach ($qb->executeQuery()->iterateAssociative() as $row) {
-                $vars[] = $this->map($row, EnvVar::class);
+                yield $this->map($row, EnvVar::class);
             }
-
-            return $vars;
         } catch (MappingError | Exception $e) {
             throw EntityHydrationFailed::create(EnvVar::class, $e);
         }
     }
 
     #[Override]
-    public function findInheritedFromAncestors(ProjectIdentifier $projectId, array $ancestorBranches): array
+    public function findInheritedFromAncestors(ProjectIdentifier $projectId, array $ancestorBranches): Generator
     {
         if ($ancestorBranches === []) {
             return [];
@@ -67,16 +66,13 @@ final class EnvVarRepository extends GenericRepository implements EnvVarReposito
             ->andWhere($qb->expr()->in('branch', ':branches'))
             ->setParameter('project_id', $projectId->toString())
             ->setParameter('inherited', true, 'boolean')
-            ->setParameter('branches', $ancestorBranches)
+            ->setParameter('branches', $ancestorBranches, Types::SIMPLE_ARRAY)
             ->orderBy('key', 'ASC');
 
         try {
-            $vars = [];
             foreach ($qb->executeQuery()->iterateAssociative() as $row) {
-                $vars[] = $this->map($row, EnvVar::class);
+                yield $this->map($row, EnvVar::class);
             }
-
-            return $vars;
         } catch (MappingError | Exception $e) {
             throw EntityHydrationFailed::create(EnvVar::class, $e);
         }

@@ -14,7 +14,7 @@ use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Tragwerk\Application\Middleware\ActiveTeamMiddleware;
+use Tragwerk\Application\Middleware\TeamMiddleware;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Event\UserSwitchedTeam;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
@@ -52,7 +52,7 @@ final readonly class SwitchHandler implements RequestHandlerInterface
             if ($hasAccess) {
                 $session = $request->getAttribute(SessionMiddleware::SESSION_ATTRIBUTE);
                 assert($session instanceof SessionInterface);
-                $session->set(ActiveTeamMiddleware::SESSION_KEY, $teamId);
+                $session->set(TeamMiddleware::SESSION_KEY, $teamId);
 
                 $user = $request->getAttribute(UserInterface::class);
                 assert($user instanceof UserInterface);

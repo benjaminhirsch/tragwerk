@@ -1,8 +1,10 @@
 <?php assert(isset($content) && isset($type)); ?>
 
 
-
 <div class="tw-alert tw-alert--bar tw-alert--<?= $type ?>">
+    <?php if(($icon ?? null) !== null): ?>
+    <i class="bi bi-lightbulb <?= $this->e($icon) ?>"></i>
+    <?php endif; ?>
     <div class="tw-alert__body">
         <p><?= $this->e($content) ?></p>
     </div>

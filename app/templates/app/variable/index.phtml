@@ -1,0 +1,94 @@
+<?php
+
+use Tragwerk\Domain\Entity\EnvVar;
+
+$this->layout('layout::default', [
+    'pageType' =>  $this->activeTeam()->name . ' / ' . $this->activeEnvironment(),
+    'pageTitle' => $this->t('Environment variables'),
+    'pageSubTitle' => sprintf(
+        $this->t('%d variables · %d secret · %d inherited — injected at build and runtime.'),
+        count($vars),
+        count(array_filter($vars, static fn(EnvVar $e) => $e->isSecret)),
+        count(array_filter($vars, static fn(EnvVar $e) => $e->isInherited)),
+    ),
+]) ?>
+
+<?php $this->start('pageHeadButtons') ?>
+    <?= $this->fetch('partial::link', [
+        'label'   => $this->t('New variable'),
+        'href'    => $this->url('variable.create'),
+        'icon'    => 'bi bi-plus-lg',
+        'classes' => 'btn btn-primary',
+    ]) ?>
+<?php $this->stop() ?>
+
+<div class="tw-table-wrap">
+    <table class="tw-table">
+        <thead>
+        <tr>
+            <th class="sortable">Key <i class="bi bi-chevron-expand"></i></th>
+            <th>Value</th>
+            <th>Properties</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php
+        /** @var EnvVar $var */
+        foreach ($vars as $var):?>
+        <tr>
+            <td><a href="<?= $this->e($this->url('variable.edit', ['id' => $var->id])) ?>" class="tw-cell-strong mono" style="color:var(--text)"><?= $this->e($var->key) ?></a></td>
+            <td>
+                <div class="var-value">
+                    <?php if($var->isSecret): ?>
+                        <code><?= $this->e(substr(str_repeat("*", strlen($var->value)), 0, 10)) ?></code>
+                    <?php else: ?>
+                        <code><?= $this->e(substr($var->value, 0, 40)) ?></code>
+                    <?php endif ?>
+                </div>
+            </td>
+            <td>
+                <div class="d-flex gap-1 flex-wrap">
+                    <?php if($var->isSecret): ?>
+                        <span class="tw-badge tw-badge--warn"><i class="bi bi-lock-fill" style="font-size:.7rem"></i><?= $this->e($this->t('Secret')) ?></span>
+                    <?php endif ?>
+                    <?php if($var->isInherited): ?>
+                        <span class="tw-badge tw-badge--info"><i class="bi bi-diagram-2" style="font-size:.7rem"></i><?= $this->e($this->t('Inherited')) ?></span>
+                    <?php endif ?>
+                    <?php if($var->branch === $this->activeEnvironment() && $var->isInherited === false): ?>
+                        <span class="tw-badge tw-badge--neutral"><i class="tw-dot" style="font-size:.7rem"></i><?= $this->e($this->t('This environment only')) ?></span>
+                    <?php endif ?>
+                </div>
+            </td>
+            <td class="text-end">
+                <?php if($var->branch === $this->activeEnvironment() && $var->isInherited === false): ?>
+                <div class="d-flex justify-content-end gap-1">
+                    <a class="btn btn-ghost btn-sm" href="<?= $this->url('variable.edit', ['id' => $var->id->toString()]) ?>" title="<?= $this->e($this->t('Edit')) ?>"><i class="bi bi-pencil"></i></a>
+                    <button class="btn btn-ghost btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#tw-delete-variable-<?= $this->e($var->id->toString()) ?>" title="<?= $this->e($this->t('Delete')) ?>"><i class="bi bi-trash3"></i></button>
+                </div>
+                <?php endif ?>
+            </td>
+        </tr>
+        <?php endforeach ?>
+        </tbody>
+    </table>
+</div>
+
+<?php
+/** @var EnvVar $var */
+foreach ($vars as $var):
+    if ($var->branch !== $this->activeEnvironment() || $var->isInherited) {
+        continue;
+    }
+    ?>
+    <?= $this->fetch('partial::modal', [
+        'id'            => 'tw-delete-variable-' . $var->id->toString(),
+        'header'        => $this->t('Delete variable'),
+        'body'          => $this->t('Are you sure you want to delete {key}? The variable will no longer be available after the next deploy.', ['key' => '<b class="mono">' . $this->e($var->key) . '</b>']),
+        'actionUrl'     => $this->url('variable.delete', ['id' => $var->id->toString()]),
+        'actionLabel'   => $this->t('Delete'),
+        'actionClasses' => 'btn btn-danger',
+        'actionIcon'    => 'bi bi-trash3',
+    ]) ?>
+<?php endforeach ?>
+

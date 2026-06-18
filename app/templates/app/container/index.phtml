@@ -1,0 +1,16 @@
+<?php
+
+$this->layout('layout::default', [
+    'pageType' =>  $this->activeTeam()->name . ' / ' . $this->activeEnvironment(),
+    'pageTitle' => $this->t('Containers'),
+    'pageSubTitle' => $this->t('All running containers in this environment — apps, workers and services.'),
+]) ?>
+
+<div id="table-container"
+     hx-get="<?= $this->e($this->url('container.status')) ?>"
+     hx-trigger="load"
+     hx-target="#table-container"
+     hx-swap="innerHTML">
+    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+    <?= $this->t('Loading...') ?>
+</div>
