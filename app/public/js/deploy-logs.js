@@ -56,4 +56,41 @@
         a.click();
         URL.revokeObjectURL(a.href);
     });
+
+    // Auto-follow the terminal output on live updates.
+    // The whole #tw-terminal is swapped (outerHTML) on each SSE/poll update, which resets the
+    // scroll position. We keep following the tail only while the user is already near the bottom,
+    // so scrolling up to read earlier output is not interrupted.
+    var BOTTOM_THRESHOLD = 48;
+    var follow = true;
+
+    function scrollToBottom() {
+        var body = document.getElementById('term-body');
+        if (body) {
+            body.scrollTop = body.scrollHeight;
+        }
+    }
+
+    function isTerminalSwap(evt) {
+        var t = evt.detail && evt.detail.target;
+        return !!t && (t.id === 'tw-terminal' || t.querySelector('#term-body') !== null);
+    }
+
+    document.body.addEventListener('htmx:beforeSwap', function (evt) {
+        if (!isTerminalSwap(evt)) {
+            return;
+        }
+        var body = document.getElementById('term-body');
+        if (body) {
+            follow = (body.scrollHeight - body.scrollTop - body.clientHeight) <= BOTTOM_THRESHOLD;
+        }
+    });
+
+    document.body.addEventListener('htmx:afterSwap', function (evt) {
+        if (isTerminalSwap(evt) && follow) {
+            scrollToBottom();
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', scrollToBottom);
 })();
