@@ -60,7 +60,7 @@ final readonly class MetricsLiveHandler implements RequestHandlerInterface
             $error = $e->getMessage();
         }
 
-        return $this->renderer->render($request, 'page::server/_metrics_live', [
+        return $this->renderer->render($request, 'page::server/_kpi', [
             'server'     => $server,
             'sample'     => $sample,
             'containers' => $containers,

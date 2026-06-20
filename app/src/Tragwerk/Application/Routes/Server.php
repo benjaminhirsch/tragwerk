@@ -72,12 +72,6 @@ final readonly class Server
         );
 
         $routes->get(
-            '/servers/{id}/tabs/{tab}',
-            $this->middlewareFactory->prepare([Handler\Server\TabHandler::class]),
-            'server.show.tab',
-        );
-
-        $routes->get(
             '/servers/{id}/metrics/live',
             $this->middlewareFactory->prepare([Handler\Server\MetricsLiveHandler::class]),
             'server.metrics.live',

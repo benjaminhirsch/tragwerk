@@ -1,0 +1,67 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @var \Tragwerk\Domain\Entity\Server                 $server
+ * @var \Tragwerk\Domain\Model\ServerMetricSample|null $sample
+ * @var string|null                                    $error
+ */
+
+$liveUrl = $this->url('server.metrics.live', ['id' => $server->id->toString()]);
+
+$fmtBytes = static function (int $bytes): string {
+    $units = ['B', 'KiB', 'MiB', 'GiB', 'TiB'];
+    $value = (float) $bytes;
+    $i     = 0;
+    while ($value >= 1024 && $i < 4) {
+        $value /= 1024;
+        $i++;
+    }
+
+    return sprintf('%.1f %s', $value, $units[$i]);
+};
+?>
+<div hx-get="<?= $this->e($liveUrl) ?>"
+     hx-trigger="every 15s"
+     hx-target="#tw-server-kpi"
+     hx-swap="innerHTML">
+    <?php if ($error !== null): ?>
+        <div class="tw-card"><div class="tw-card__body d-flex align-items-center gap-2 text-body-secondary small">
+            <i class="bi bi-exclamation-triangle text-warning flex-shrink-0"></i>
+            <span><?= $this->e($error) ?></span>
+        </div></div>
+    <?php elseif ($sample === null): ?>
+        <div class="tw-card"><div class="tw-card__body text-body-secondary small">
+            <i class="bi bi-info-circle me-1"></i><?= $this->t('No metrics available.') ?>
+        </div></div>
+    <?php else: ?>
+        <?php
+        $cpuPct  = max(0.0, min(100.0, $sample->cpuPercent));
+        $memPct  = $sample->memTotalBytes > 0 ? max(0.0, min(100.0, $sample->memUsedBytes / $sample->memTotalBytes * 100)) : 0.0;
+        $diskPct = $sample->diskTotalBytes > 0 ? max(0.0, min(100.0, $sample->diskUsedBytes / $sample->diskTotalBytes * 100)) : 0.0;
+        ?>
+        <div class="row g-3">
+            <div class="col-6 col-lg-3"><div class="tw-stat">
+                <div class="tw-stat__label"><i class="bi bi-cpu"></i> <?= $this->t('CPU') ?></div>
+                <div class="tw-stat__value" style="font-size:1.5rem"><?= $this->e((string) round($cpuPct)) ?><span style="font-size:.9rem;color:var(--text-muted)"> %</span></div>
+                <div class="tw-bar mt-2"><span style="width:<?= $this->e((string) round($cpuPct, 1)) ?>%"></span></div>
+            </div></div>
+            <div class="col-6 col-lg-3"><div class="tw-stat">
+                <div class="tw-stat__label"><i class="bi bi-memory"></i> <?= $this->t('Memory') ?></div>
+                <div class="tw-stat__value" style="font-size:1.5rem"><?= $this->e((string) round($memPct)) ?><span style="font-size:.9rem;color:var(--text-muted)"> %</span></div>
+                <div class="tw-bar mt-2"><span style="width:<?= $this->e((string) round($memPct, 1)) ?>%;background:var(--purple)"></span></div>
+            </div></div>
+            <div class="col-6 col-lg-3"><div class="tw-stat">
+                <div class="tw-stat__label"><i class="bi bi-hdd"></i> <?= $this->t('Disk') ?></div>
+                <div class="tw-stat__value" style="font-size:1.5rem"><?= $this->e((string) round($diskPct)) ?><span style="font-size:.9rem;color:var(--text-muted)"> %</span></div>
+                <div class="tw-stat__delta text-muted-2"><?= $this->e($fmtBytes($sample->diskUsedBytes) . ' / ' . $fmtBytes($sample->diskTotalBytes)) ?></div>
+            </div></div>
+            <div class="col-6 col-lg-3"><div class="tw-stat">
+                <div class="tw-stat__label"><i class="bi bi-speedometer2"></i> <?= $this->t('Load (1m)') ?></div>
+                <div class="tw-stat__value" style="font-size:1.5rem"><?= $this->e(sprintf('%.2f', $sample->load1)) ?></div>
+                <div class="tw-stat__delta text-muted-2"><?= $this->e($fmtBytes($sample->memUsedBytes) . ' / ' . $fmtBytes($sample->memTotalBytes)) ?></div>
+            </div></div>
+        </div>
+    <?php endif ?>
+</div>

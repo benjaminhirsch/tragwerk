@@ -34,10 +34,10 @@ $this->layout('layout::default', [
         /** @var string[] $completedIds */
         foreach ($servers as $server): ?>
             <tr>
-                <td><?= $this->fetch('partial::link', [
+                <td><span class="tw-cell-strong"><?= $this->fetch('partial::link', [
                         'href'  => $this->url('server.show', ['id' => $server->id]),
                         'label' => $server->name,
-                    ]) ?></td>
+                        ]) ?></span></td>
                 <td class="tw-hide-sm"><?= $this->e($server->host) ?></td>
                 <td>
                     <?php if ($server->credentialId !== null): ?>

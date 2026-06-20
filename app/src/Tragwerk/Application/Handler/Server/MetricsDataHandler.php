@@ -28,6 +28,7 @@ final readonly class MetricsDataHandler implements RequestHandlerInterface
         '1h'  => '-1 hour',
         '6h'  => '-6 hours',
         '24h' => '-24 hours',
+        '7d'  => '-7 days',
     ];
 
     public function __construct(
