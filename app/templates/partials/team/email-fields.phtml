@@ -17,7 +17,7 @@ $emails = $emails ?? [''];
         </div>
         <?php if (count($emails) > 1): ?>
         <?= $this->fetch('partial::input/button', [
-                'classes' => 'btn btn-outline-secondary flex-shrink-0',
+                'classes' => 'btn btn-ghost btn-del flex-shrink-0',
                 'icon' => 'bi bi-x-lg',
                 'hxPost' => $this->url('team.emails'),
                 'hxTarget' => '#tw-email-list',
@@ -31,7 +31,7 @@ $emails = $emails ?? [''];
     </div>
     <?php endforeach; ?>
     <?= $this->fetch('partial::input/button', [
-            'classes' => 'btn btn-outline-secondary align-self-start d-inline-block',
+            'classes' => 'btn btn-ghost align-self-start d-inline-block',
             'icon' => 'bi bi-plus-lg',
             'hxPost' => $this->url('team.emails'),
             'hxTarget' => '#tw-email-list',

@@ -46,22 +46,6 @@ $this->layout('layout::default', [
             'label'        => $this->t('Environments'),
         ]) ?>
     </li>
-    <li class="nav-item" role="presentation">
-        <?= $this->fetch('partial::input/button', [
-            'classes'      => 'nav-link',
-            'type'         => 'button',
-            'role'         => 'tab',
-            'id'           => 'tab-webhooks-btn',
-            'dataBsToggle' => 'tab',
-            'dataBsTarget' => '#tab-webhooks',
-            'hxGet'        => $this->url('project.show.tab', ['id' => $project->id->toString(), 'tab' => 'webhooks']),
-            'hxTarget'     => '#tab-webhooks',
-            'hxSwap'       => 'innerHTML',
-            'hxTrigger'    => 'shown.bs.tab once',
-            'icon'         => 'bi bi-link-45deg me-1',
-            'label'        => $this->t('Integrations'),
-        ]) ?>
-    </li>
 </ul>
 
 <div class="tab-content tw-card tw-card-tabs">
@@ -71,42 +55,15 @@ $this->layout('layout::default', [
          hx-swap="innerHTML">
     </div>
     <div class="tab-pane fade" id="tab-environments" role="tabpanel"></div>
-    <div class="tab-pane fade" id="tab-webhooks" role="tabpanel"></div>
 </div>
 
 <div id="tw-env-modal-container"></div>
-
-<div class="modal fade" id="tw-webhook-delete-modal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><?= $this->t('Remove integration') ?></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p class="mb-0"><?= $this->t('Really remove the') ?> <strong id="tw-webhook-delete-forge"></strong> <?= $this->t('integration?') ?></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <?= $this->t('Cancel') ?>
-                </button>
-                <button type="button"
-                        id="tw-webhook-delete-confirm"
-                        class="btn btn-danger"
-                        data-bs-dismiss="modal">
-                    <i class="bi bi-trash me-1"></i><?= $this->t('Remove') ?>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <?php $this->start('javascript') ?>
 <link rel="stylesheet" href="/css/uPlot.min.css">
 <script src="/js/detail-tabs.js"></script>
 <script src="/js/domain-delete-modal.js"></script>
 <script src="/js/env-var-delete-modal.js"></script>
-<script src="/js/webhook-delete-modal.js"></script>
 <script src="/js/uPlot.iife.min.js"></script>
 <script src="/js/app-metrics.js"></script>
 <?php $this->stop() ?>
