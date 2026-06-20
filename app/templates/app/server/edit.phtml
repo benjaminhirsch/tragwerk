@@ -1,19 +1,42 @@
-<?php $this->layout('layout::default', ['title' => $this->t('Edit server')]) ?>
+<?php
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="mb-0"><?= $this->t('Edit server') ?></h1>
-    <form action="<?= $this->url('server.setup.start', ['id' => $server->id->toString()]) ?>" method="post">
-        <?= $this->fetch('partial::input/csrf') ?>
-        <?= $this->fetch('partial::input/button', [
-            'label'   => $this->t('Setup server'),
-            'icon'    => 'bi bi-terminal',
-            'classes' => 'btn btn-outline-primary',
-        ]) ?>
-    </form>
-</div>
+declare(strict_types=1);
 
-<?php $this->start('card-content') ?>
-    <form action="<?= $this->url('server.edit', ['id' => $server->id->toString()]) ?>" method="post">
+/**
+ * @var \Tragwerk\Domain\Entity\Server                     $server
+ * @var iterable<\Tragwerk\Domain\Entity\Credential>       $credentials
+ * @var \Tragwerk\Application\Validation\ValidationBag      $validationBag
+ * @var bool                                               $isAssigned
+ */
+
+$this->layout('layout::default', [
+    'pageType'     => $this->activeTeam()->name,
+    'pageTitle'    => $this->t('Edit server'),
+    'pageSubTitle' => $this->t('Update connection details for this server'),
+    'wide'         => false,
+]);
+?>
+
+<?php $this->start('pageHeadButtons') ?>
+<form action="<?= $this->url('server.setup.start', ['id' => $server->id->toString()]) ?>" method="post">
+    <?= $this->fetch('partial::input/csrf') ?>
+    <?= $this->fetch('partial::input/button', [
+        'label'   => $this->t('Setup server'),
+        'icon'    => 'bi bi-terminal',
+        'classes' => 'btn btn-outline-secondary',
+    ]) ?>
+</form>
+<?php $this->stop() ?>
+
+<?php
+    $credentialOptions = [];
+    foreach ($credentials as $cred) {
+        $credentialOptions[$cred->id->toString()] = $cred->name;
+    }
+?>
+
+<form class="tw-card" action="<?= $this->url('server.edit', ['id' => $server->id->toString()]) ?>" method="post">
+    <div class="tw-card__body d-flex flex-column gap-3">
         <?= $this->fetch('partial::input/csrf') ?>
 
         <?= $this->fetch('partial::input/text', [
@@ -38,12 +61,6 @@
             'validation' => $validationBag,
         ]) ?>
 
-        <?php
-            $credentialOptions = [];
-            foreach ($credentials as $cred) {
-                $credentialOptions[$cred->id->toString()] = $cred->name;
-            }
-        ?>
         <?= $this->fetch('partial::input/select', [
             'id'                 => 'credentialId',
             'label'              => $this->t('Credential'),
@@ -51,35 +68,59 @@
             'options'            => $credentialOptions,
             'defaultOptionLabel' => $this->t('— no credential —'),
         ]) ?>
+    </div>
+    <div class="tw-card__head justify-content-end border-top">
+        <?= $this->fetch('partial::link', [
+            'label'   => $this->t('Cancel'),
+            'href'    => $this->url('server.show', ['id' => $server->id->toString()]),
+            'classes' => 'btn btn-ghost',
+        ]) ?>
+        <?= $this->fetch('partial::input/button', [
+            'label' => $this->t('Save changes'),
+            'icon'  => 'bi bi-check-lg',
+        ]) ?>
+    </div>
+</form>
 
-        <div class="d-flex gap-2">
-            <?= $this->fetch('partial::input/button', [
-                'label' => $this->t('Save'),
-            ]) ?>
-            <?= $this->fetch('partial::link', [
-                    'label' => $this->t('Cancel'),
-                    'href' => $this->url('server'),
-                    'classes' => 'btn btn-secondary',
-            ]) ?>
-            <?= $this->fetch('partial::input/button', [
-                //'label'        => $this->t('Delete server'),
-                'classes'      => 'btn btn-outline-danger',
-                'icon'         => 'bi bi-trash3',
-                'type'         => 'button',
-                'dataBsToggle' => 'modal',
-                'dataBsTarget' => '#tw-delete-server-modal',
-            ]) ?>
+<!-- Danger zone -->
+<section id="danger" class="mt-4">
+    <div class="tw-card" style="border-color:var(--danger-soft)">
+        <div class="tw-card__head" style="border-color:var(--danger-soft)">
+            <h2 style="color:var(--danger-text)"><?= $this->e($this->t('Danger zone')) ?></h2>
         </div>
+        <div class="tw-card__body d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+                <div class="fw-semibold" style="font-size:.92rem"><?= $this->e($this->t('Delete server')) ?></div>
+                <div class="text-muted-2" style="font-size:.82rem">
+                    <?= $isAssigned
+                        ? $this->e($this->t('This server still hosts projects and cannot be deleted.'))
+                        : $this->e($this->t('Permanently removes the server.')) ?>
+                </div>
+            </div>
+            <?php if ($isAssigned): ?>
+                <button type="button" class="btn btn-outline-secondary" disabled
+                        title="<?= $this->e($this->t('Cannot delete: server still hosts projects')) ?>">
+                    <i class="bi bi-trash3"></i> <?= $this->e($this->t('Delete server')) ?>
+                </button>
+            <?php else: ?>
+                <button type="button" class="btn btn-outline-secondary"
+                        style="color:var(--danger-text);border-color:var(--danger-soft)"
+                        data-bs-toggle="modal" data-bs-target="#tw-delete-server-modal">
+                    <i class="bi bi-trash3"></i> <?= $this->e($this->t('Delete server')) ?>
+                </button>
+            <?php endif ?>
+        </div>
+    </div>
+</section>
 
-    </form>
-<?php $this->stop() ?>
-
-<?= $this->fetch('partial::modal', [
-    'id'            => 'tw-delete-server-modal',
-    'header'        => $this->t('Delete server'),
-    'body'          => $this->t('Are you sure you want to delete the server {name}? This action cannot be undone.', ['name' => '<strong>' . $this->e($server->name) . '</strong>']),
-    'actionUrl'     => $this->url('server.delete', ['id' => $server->id->toString()]),
-    'actionLabel'   => $this->t('Delete server'),
-    'actionClasses' => 'btn btn-danger',
-    'actionIcon'    => 'bi bi-trash3',
-]) ?>
+<?php if (! $isAssigned): ?>
+    <?= $this->fetch('partial::modal', [
+        'id'            => 'tw-delete-server-modal',
+        'header'        => $this->t('Delete server'),
+        'body'          => $this->t('Are you sure you want to delete the server {name}? This action cannot be undone.', ['name' => '<strong>' . $this->e($server->name) . '</strong>']),
+        'actionUrl'     => $this->url('server.delete', ['id' => $server->id->toString()]),
+        'actionLabel'   => $this->t('Delete server'),
+        'actionClasses' => 'btn btn-danger',
+        'actionIcon'    => 'bi bi-trash3',
+    ]) ?>
+<?php endif ?>
