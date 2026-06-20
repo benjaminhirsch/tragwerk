@@ -1,0 +1,49 @@
+<?php
+
+/**
+ * @var \Tragwerk\Domain\Entity\Project                    $project
+ * @var list<\Tragwerk\Domain\Enum\GitForge>               $forges
+ * @var \Tragwerk\Application\Validation\ValidationBag|null $validationBag
+ */
+
+$this->layout('layout::default', [
+    'pageType'     => $this->activeProject()->name,
+    'pageTitle'    => $this->t('Add integration'),
+    'pageSubTitle' => $this->t('Connect a git forge so pushes trigger a deployment'),
+    'wide'         => false,
+]) ?>
+
+<?php
+    $forgeOptions = [];
+    foreach ($forges as $forge) {
+        $forgeOptions[$forge->value] = $forge->label();
+    }
+?>
+
+<form class="tw-card" action="<?= $this->url('integration.create') ?>" method="post">
+    <div class="tw-card__body d-flex flex-column gap-3">
+        <?= $this->fetch('partial::input/csrf') ?>
+
+        <?= $this->fetch('partial::input/select', [
+            'id'                 => 'forge',
+            'label'              => $this->t('Git forge'),
+            'validation'         => $validationBag ?? null,
+            'options'            => $forgeOptions,
+            'defaultOptionLabel' => $this->t('— select a git forge —'),
+        ]) ?>
+        <p class="text-body-secondary small mb-0">
+            <?= $this->t('A secure webhook secret is generated automatically.') ?>
+        </p>
+    </div>
+    <div class="tw-card__head justify-content-end border-top">
+        <?= $this->fetch('partial::link', [
+            'label'   => $this->t('Cancel'),
+            'href'    => $this->url('integration'),
+            'classes' => 'btn btn-ghost',
+        ]) ?>
+        <?= $this->fetch('partial::input/button', [
+            'label' => $this->t('Add integration'),
+            'icon'  => 'bi bi-check-lg',
+        ]) ?>
+    </div>
+</form>

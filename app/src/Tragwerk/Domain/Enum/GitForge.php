@@ -17,4 +17,16 @@ enum GitForge: string
     {
         return self::tryFrom($slug);
     }
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::GITHUB    => 'GitHub',
+            self::GITLAB    => 'GitLab',
+            self::FORGEJO   => 'Forgejo',
+            self::GITEA     => 'Gitea',
+            self::CODEBERG  => 'Codeberg',
+            self::BITBUCKET => 'Bitbucket',
+        };
+    }
 }

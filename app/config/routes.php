@@ -29,4 +29,5 @@ return static function (Application $app, MiddlewareFactory $factory, ContainerI
     new Routes\Deployment($middlewareFactory)->registerRoutes($routeCollector);
     new Routes\Variables($middlewareFactory)->registerRoutes($routeCollector);
     new Routes\Configuration($middlewareFactory)->registerRoutes($routeCollector);
+    new Routes\Integration($middlewareFactory)->registerRoutes($routeCollector);
 };
