@@ -493,16 +493,22 @@ final class DeployEnvironmentCommand extends Command
                 continue;
             }
 
-            $newImage     = $this->imageResolver->forService($service->type);
-            $runningMajor = $this->parseMajorVersion($runningImage);
-            $newMajor     = $this->parseMajorVersion($newImage);
+            $newImage = $this->imageResolver->forService($service->type);
+            $newMajor = $this->parseMajorVersion($newImage);
+
+            // The running image as reported by `docker compose ps` may be a bare digest
+            // (sha256:...), whose hex must never be parsed as a version. For PostgreSQL read the
+            // authoritative PG_MAJOR env from the running container instead.
+            $runningMajor = $isPostgres
+                ? $this->getRunningPostgresMajor($sftp, $remoteDir, $composeProject, $serviceSlug)
+                : $this->parseMajorVersion($runningImage);
 
             if ($runningMajor === null || $newMajor === null || $runningMajor === $newMajor) {
                 continue;
             }
 
             $this->log($jobId, '[Deploy] Detected major version upgrade for "' . $serviceSlug . '": '
-                . $runningImage . ' → ' . $newImage);
+                . $runningMajor . ' → ' . $newMajor);
 
             if ($isPostgres) {
                 $sftp->exec('cd ~/' . $remoteDir . ' && ' . $dc . ' stop ' . escapeshellarg($serviceSlug) . ' 2>&1');
@@ -1090,8 +1096,48 @@ final class DeployEnvironmentCommand extends Command
 
     private function parseMajorVersion(string $image): int|null
     {
+        // Drop a digest pin so its hex is never read as a version (postgres:17@sha256:abc… or a
+        // bare sha256:abc… reference returned by `docker compose ps`).
+        $image = preg_replace('/@sha256:[0-9a-f]+$/', '', $image) ?? $image;
+
+        if (str_starts_with($image, 'sha256:')) {
+            return null;
+        }
+
         // postgres:17.4 → 17, mariadb:10.11.2 → 10, mysql:8.0 → 8
         if (preg_match('/:(\d+)/', $image, $m) === 1) {
+            return (int) $m[1];
+        }
+
+        return null;
+    }
+
+    /**
+     * Reads the authoritative major version from a running PostgreSQL container's PG_MAJOR env,
+     * which the official postgres image always sets. Robust against digest-pinned image refs.
+     */
+    private function getRunningPostgresMajor(
+        SFTP $sftp,
+        string $remoteDir,
+        string $composeProject,
+        string $slug,
+    ): int|null {
+        $containerId = trim((string) $sftp->exec(
+            'cd ~/' . $remoteDir
+            . ' && docker compose --project-name ' . escapeshellarg($composeProject)
+            . ' ps -q ' . escapeshellarg($slug) . ' 2>/dev/null | head -1',
+        ));
+
+        if ($containerId === '') {
+            return null;
+        }
+
+        $env = (string) $sftp->exec(
+            'docker inspect --format ' . escapeshellarg('{{range .Config.Env}}{{println .}}{{end}}')
+            . ' ' . escapeshellarg($containerId) . ' 2>/dev/null',
+        );
+
+        if (preg_match('/^PG_MAJOR=(\d+)/m', $env, $m) === 1) {
             return (int) $m[1];
         }
 
