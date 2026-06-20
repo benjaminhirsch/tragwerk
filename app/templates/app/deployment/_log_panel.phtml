@@ -13,7 +13,6 @@ declare(strict_types=1);
  */
 
 $listUrl = $this->url('deployment');
-$polling = $activeJobs !== [];
 
 $filters = [
     'all'    => $this->t('All'),
@@ -37,14 +36,12 @@ $sseTopic  = urlencode($topicBase . '/project/' . $project->id->toString() . '/d
     </div>
 </div>
 <div class="log-items" id="log-items"
-     <?php if ($polling): ?>
      hx-ext="sse"
      sse-connect="/.well-known/mercure?topic=<?= $sseTopic ?>"
      hx-get="<?= $this->e($listUrl . '?fragment=1&type=' . urlencode($type)) ?>"
      hx-trigger="sse:message, every 30s"
      hx-target="#log-items"
-     hx-swap="innerHTML"
-     <?php endif ?>>
+     hx-swap="innerHTML">
     <?= $this->fetch('page::deployment/_log_items', [
         'branch'  => $branch,
         'entries' => $entries,
