@@ -1,36 +1,51 @@
-<?php $this->layout('layout::default', ['title' => $this->t('Create server')]) ?>
+<?php
 
-<h1><?= $this->t('Create server') ?></h1>
+/**
+ * @var list<\Tragwerk\Domain\Entity\Credential>           $credentials
+ * @var \Tragwerk\Application\Validation\ValidationBag|null $validationBag
+ */
 
-<?php $this->start('card-content') ?>
-    <form action="<?= $this->url('server.create') ?>" method="post">
+$this->layout('layout::default', [
+    'pageType'     => $this->activeTeam()->name,
+    'pageTitle'    => $this->t('Create server'),
+    'pageSubTitle' => $this->t('Register a VPS reachable over SSH to host your environments'),
+    'wide'         => false,
+]) ?>
+
+<?php
+    $credentialOptions = [];
+    foreach ($credentials as $cred) {
+        $credentialOptions[$cred->id->toString()] = $cred->name;
+    }
+?>
+
+<form class="tw-card" action="<?= $this->url('server.create') ?>" method="post">
+    <div class="tw-card__body d-flex flex-column gap-3">
         <?= $this->fetch('partial::input/csrf') ?>
+
         <?= $this->fetch('partial::input/text', [
-                'id' => 'name',
-                'label' => $this->t('Server name'),
-                'autofocus' => 'autofocus',
-                'validation' => $validationBag ?? null
+            'id'         => 'name',
+            'label'      => $this->t('Server name'),
+            'autofocus'  => 'autofocus',
+            'validation' => $validationBag ?? null,
         ]) ?>
+
         <?= $this->fetch('partial::input/text', [
-                'id' => 'host',
-                'label' => $this->t('IP address (IPv4 or IPv6)'),
-                'validation' => $validationBag ?? null
+            'id'         => 'host',
+            'label'      => $this->t('IP address (IPv4 or IPv6)'),
+            'validation' => $validationBag ?? null,
         ]) ?>
+
         <?= $this->fetch('partial::input/input', [
-                'id'         => 'port',
-                'type'       => 'number',
-                'label'      => $this->t('SSH port'),
-                'defaultValue'    => 22,
-                'min'        => '1',
-                'max'        => '65535',
-                'validation' => $validationBag ?? null,
+            'id'           => 'port',
+            'type'         => 'number',
+            'label'        => $this->t('SSH port'),
+            'defaultValue' => 22,
+            'min'          => '1',
+            'max'          => '65535',
+            'validation'   => $validationBag ?? null,
         ]) ?>
-        <?php
-            $credentialOptions = [];
-            foreach ($credentials as $cred) {
-                $credentialOptions[$cred->id->toString()] = $cred->name;
-            }
-        ?>
+
         <?= $this->fetch('partial::input/select', [
             'id'                 => 'credentialId',
             'label'              => $this->t('Credential'),
@@ -38,13 +53,16 @@
             'options'            => $credentialOptions,
             'defaultOptionLabel' => $this->t('— no credential —'),
         ]) ?>
-        <?= $this->fetch('partial::input/button', [
-                'label' => $this->t('Save'),
-        ]) ?>
+    </div>
+    <div class="tw-card__head justify-content-end border-top">
         <?= $this->fetch('partial::link', [
-                'label' => $this->t('Cancel'),
-                'href' => $this->url('server'),
-                'classes' => 'btn btn-secondary',
+            'label'   => $this->t('Cancel'),
+            'href'    => $this->url('server'),
+            'classes' => 'btn btn-ghost',
         ]) ?>
-    </form>
-<?php $this->stop() ?>
+        <?= $this->fetch('partial::input/button', [
+            'label' => $this->t('Create server'),
+            'icon'  => 'bi bi-check-lg',
+        ]) ?>
+    </div>
+</form>

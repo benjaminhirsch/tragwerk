@@ -292,12 +292,12 @@ $this->layout('layout::blank') ?>
     <?php if(($wide ?? true) === false):?><div class="form-page"><?php endif ?>
     <div class="tw-pagehead">
         <div>
-            <p class="tw-eyebrow mb-1"><?= $this->e($pageType) ?></p>
+            <p class="tw-eyebrow mb-1"><?= $this->e($pageType ?? '') ?></p>
             <?php if(($pageTitleIcon ?? null) !== null):?>
                 <div class="d-flex align-items-center gap-2">
                     <i class="<?= $this->e($pageTitleIcon) ?>"></i>
             <?php endif ?>
-            <h1><?= $this->e($pageTitle) ?></h1>
+            <h1><?= $this->e($pageTitle ?? $title ?? '') ?></h1>
             <?php if(($pageTitleIcon ?? null) !== null):?>
                 </div>
             <?php endif ?>

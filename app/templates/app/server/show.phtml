@@ -1,92 +1,187 @@
 <?php
-/** @var \Tragwerk\Domain\Entity\Server $server */
-$this->layout('layout::default', ['title' => $server->name]);
+
+declare(strict_types=1);
+
+use Tragwerk\Domain\Enum\SetupJobStatus;
+
+/**
+ * @var \Tragwerk\Domain\Entity\Server          $server
+ * @var \Tragwerk\Domain\Entity\Credential|null $credential
+ * @var \Tragwerk\Domain\Entity\SetupJob|null   $latestJob
+ * @var bool                                    $jobActive
+ * @var list<\Tragwerk\Domain\Entity\Project>   $workloads
+ */
+
+$this->layout('layout::default', [
+    'wide'      => true,
+    'pageType'  => $this->activeTeam()->name . ' / Servers',
+    'pageTitle' => $server->name,
+]);
+
+$statusBadge = match ($latestJob?->status) {
+    SetupJobStatus::Completed => '<span class="tw-badge tw-badge--ok"><span class="tw-dot"></span>' . $this->e($this->t('Provisioned')) . '</span>',
+    SetupJobStatus::Failed    => '<span class="tw-badge tw-badge--danger"><span class="tw-dot"></span>' . $this->e($this->t('Setup failed')) . '</span>',
+    SetupJobStatus::Running, SetupJobStatus::Pending => '<span class="tw-badge tw-badge--info tw-badge--building"><span class="tw-dot"></span>' . $this->e($this->t('Provisioning')) . '</span>',
+    default => '<span class="tw-badge"><span class="tw-dot"></span>' . $this->e($this->t('Not set up')) . '</span>',
+};
+
+$dataUrl = $this->url('server.metrics.data', ['id' => $server->id->toString()]);
+$liveUrl = $this->url('server.metrics.live', ['id' => $server->id->toString()]);
 ?>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<a class="d-inline-flex align-items-center gap-2 mb-3" href="<?= $this->url('server') ?>" style="color:var(--text-muted);font-weight:600;font-size:.86rem">
+    <i class="bi bi-arrow-left"></i> <?= $this->e($this->t('Servers')) ?>
+</a>
+
+<div class="tw-pagehead">
     <div>
-        <nav aria-label="breadcrumb" class="mb-1">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item">
-                    <?= $this->fetch('partial::link', ['href' => $this->url('server'), 'label' => $this->t('Servers')]) ?>
-                </li>
-                <li class="breadcrumb-item active"><?= $this->e($server->name) ?></li>
-            </ol>
-        </nav>
-        <h1 class="mb-0"><?= $this->e($server->name) ?></h1>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="tw-iconbtn" style="background:var(--surface-2);width:34px;height:34px"><i class="bi bi-server"></i></span>
+            <h1 class="mono" style="margin:0;font-size:1.45rem"><?= $this->e($server->name) ?></h1>
+            <?= $statusBadge ?>
+        </div>
+        <p class="tw-sub mt-1 mono"><?= $this->e($server->host) ?>:<?= $this->e((string) $server->port) ?></p>
     </div>
     <div class="d-flex gap-2">
         <?= $this->fetch('partial::link', [
             'label'   => $this->t('Edit'),
             'href'    => $this->url('server.edit', ['id' => $server->id->toString()]),
             'icon'    => 'bi bi-pencil',
-            'classes' => 'btn btn-outline-secondary btn-sm',
+            'classes' => 'btn btn-outline-secondary',
         ]) ?>
+        <button type="button" class="btn btn-outline-secondary" style="color:var(--danger-text);border-color:var(--danger-soft)"
+                data-bs-toggle="modal" data-bs-target="#tw-delete-server-modal" title="<?= $this->e($this->t('Delete server')) ?>">
+            <i class="bi bi-trash3"></i>
+        </button>
     </div>
 </div>
 
-<ul class="nav nav-tabs" id="serverDetailTabs" role="tablist">
-    <li class="nav-item" role="presentation">
-        <?= $this->fetch('partial::input/button', [
-            'classes'      => 'nav-link active',
-            'type'         => 'button',
-            'role'         => 'tab',
-            'id'           => 'tab-overview-btn',
-            'dataBsToggle' => 'tab',
-            'dataBsTarget' => '#tab-overview',
-            'icon'         => 'bi bi-info-circle me-1',
-            'label'        => $this->t('Overview'),
-        ]) ?>
-    </li>
-    <li class="nav-item" role="presentation">
-        <?= $this->fetch('partial::input/button', [
-            'classes'      => 'nav-link',
-            'type'         => 'button',
-            'role'         => 'tab',
-            'id'           => 'tab-setup-btn',
-            'dataBsToggle' => 'tab',
-            'dataBsTarget' => '#tab-setup',
-            'hxGet'        => $this->url('server.show.tab', ['id' => $server->id->toString(), 'tab' => 'setup']),
-            'hxTarget'     => '#tab-setup',
-            'hxSwap'       => 'innerHTML',
-            'hxTrigger'    => 'shown.bs.tab once',
-            'icon'         => 'bi bi-terminal me-1',
-            'label'        => $this->t('Setup Log'),
-        ]) ?>
-    </li>
-    <li class="nav-item" role="presentation">
-        <?= $this->fetch('partial::input/button', [
-            'classes'      => 'nav-link',
-            'type'         => 'button',
-            'role'         => 'tab',
-            'id'           => 'tab-metrics-btn',
-            'dataBsToggle' => 'tab',
-            'dataBsTarget' => '#tab-metrics',
-            'hxGet'        => $this->url('server.show.tab', ['id' => $server->id->toString(), 'tab' => 'metrics']),
-            'hxTarget'     => '#tab-metrics',
-            'hxSwap'       => 'innerHTML',
-            'hxTrigger'    => 'shown.bs.tab once',
-            'icon'         => 'bi bi-graph-up me-1',
-            'label'        => $this->t('Metrics'),
-        ]) ?>
-    </li>
-</ul>
+<!-- KPI tiles (live) -->
+<div id="tw-server-kpi" class="mb-4"
+     hx-get="<?= $this->e($liveUrl) ?>"
+     hx-trigger="load"
+     hx-swap="innerHTML">
+    <div class="tw-card"><div class="tw-card__body text-body-secondary small">
+        <i class="bi bi-hourglass-split me-1"></i><?= $this->t('Loading live metrics…') ?>
+    </div></div>
+</div>
 
-<div class="tab-content tw-card tw-card-tabs">
-    <div class="tab-pane fade show active" id="tab-overview" role="tabpanel"
-         hx-get="<?= $this->url('server.show.tab', ['id' => $server->id->toString(), 'tab' => 'overview']) ?>"
-         hx-trigger="load"
-         hx-swap="innerHTML">
+<div class="row g-4">
+    <!-- Left: metrics + setup log -->
+    <div class="col-lg-8">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <h2 style="font-size:1.1rem;margin:0"><?= $this->t('Metrics') ?></h2>
+            <div class="tw-seg" id="range-seg">
+                <button data-range="1h">1 hr</button>
+                <button data-range="6h">6 hr</button>
+                <button class="active" data-range="24h">24 hr</button>
+                <button data-range="7d">7 days</button>
+            </div>
+        </div>
+
+        <div id="tw-metrics-charts" data-url="<?= $this->e($dataUrl) ?>" data-range="24h">
+            <div data-chart-empty class="tw-card d-none mb-4"><div class="tw-card__body text-body-secondary small">
+                <i class="bi bi-info-circle me-1"></i><?= $this->t('No data yet — samples appear as the metrics ticker runs.') ?>
+            </div></div>
+
+            <div data-chart-grid class="row g-3 mb-4">
+                <?php
+                $charts = [
+                    ['c-cpu', $this->t('CPU utilization'), $this->t('utilization, %'), 'cpu', '--accent-text'],
+                    ['c-mem', $this->t('Memory'), $this->t('utilization, %'), 'mem', '--purple'],
+                    ['c-disk', $this->t('Disk'), $this->t('utilization, %'), 'disk', '--warn-text'],
+                    ['c-load', $this->t('Load (1m)'), $this->t('run-queue'), 'load', '--ok-text'],
+                ];
+                foreach ($charts as [$id, $title, $sub, $spark, $color]):
+                ?>
+                <div class="col-md-6">
+                    <div class="tw-chart-card">
+                        <div class="tw-chart-card__head">
+                            <div><h3><?= $this->e($title) ?></h3><div class="sub"><?= $this->e($sub) ?></div></div>
+                            <div class="fw-bold tw-spark" style="color:var(<?= $color ?>)" data-spark="<?= $this->e($spark) ?>">—</div>
+                        </div>
+                        <div class="tw-chart-card__body"><div class="tw-chart-box" id="<?= $id ?>" style="height:150px"></div></div>
+                    </div>
+                </div>
+                <?php endforeach ?>
+            </div>
+        </div>
+
+        <!-- Setup log -->
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <div>
+                <h2 style="font-size:1.1rem;margin:0"><?= $this->t('Setup log') ?></h2>
+                <p class="text-faint m-0" style="font-size:.82rem"><?= $this->t('Provisioning & bootstrap output.') ?></p>
+            </div>
+        </div>
+
+        <?php if ($latestJob === null): ?>
+            <div class="tw-card mb-3"><div class="tw-card__body text-body-secondary small">
+                <i class="bi bi-info-circle me-1"></i><?= $this->t('No setup has been run yet.') ?>
+            </div></div>
+        <?php else: ?>
+            <?= $this->fetch('page::server/_log_widget', ['server' => $server, 'job' => $latestJob]) ?>
+        <?php endif ?>
+
+        <?php if (! $jobActive): ?>
+            <form class="mt-3" action="<?= $this->url('server.setup.start', ['id' => $server->id->toString()]) ?>" method="post">
+                <?= $this->fetch('partial::input/csrf') ?>
+                <?= $this->fetch('partial::input/button', [
+                    'label'   => $latestJob !== null ? $this->t('Run setup again') : $this->t('Run setup'),
+                    'icon'    => 'bi bi-play-circle',
+                    'classes' => 'btn btn-outline-primary',
+                ]) ?>
+            </form>
+        <?php endif ?>
     </div>
 
-    <div class="tab-pane fade" id="tab-setup" role="tabpanel"></div>
+    <!-- Right: details + workloads -->
+    <div class="col-lg-4">
+        <h2 style="font-size:1.1rem;margin:0 0 .5rem"><?= $this->t('Details') ?></h2>
+        <div class="tw-card mb-4"><div class="tw-card__body">
+            <div class="cfg-row"><span class="k"><?= $this->t('Host') ?></span><span class="v mono"><?= $this->e($server->host) ?></span></div>
+            <div class="cfg-row"><span class="k"><?= $this->t('SSH port') ?></span><span class="v mono"><?= $this->e((string) $server->port) ?></span></div>
+            <div class="cfg-row"><span class="k"><?= $this->t('Credential') ?></span><span class="v">
+                <?php if ($credential !== null): ?>
+                    <?= $this->fetch('partial::link', ['href' => $this->url('credential.show', ['id' => $credential->id->toString()]), 'label' => $credential->name]) ?>
+                <?php else: ?><span class="text-body-secondary">—</span><?php endif ?>
+            </span></div>
+            <div class="cfg-row"><span class="k"><?= $this->t('Docker') ?></span><span class="v mono" style="font-size:.8rem"><?= $server->dockerVersion !== null ? $this->e($server->dockerVersion) : '—' ?></span></div>
+            <div class="cfg-row"><span class="k"><?= $this->t('Docker Compose') ?></span><span class="v mono" style="font-size:.8rem"><?= $server->dockerComposeVersion !== null ? $this->e($server->dockerComposeVersion) : '—' ?></span></div>
+            <div class="cfg-row"><span class="k"><?= $this->t('Created') ?></span><span class="v"><?= $this->e($server->createdAt->format('Y-m-d')) ?></span></div>
+        </div></div>
 
-    <div class="tab-pane fade" id="tab-metrics" role="tabpanel"></div>
+        <h2 style="font-size:1.1rem;margin:0 0 .5rem"><?= $this->t('Hosted workloads') ?></h2>
+        <div class="tw-card"><div class="tw-card__body">
+            <?php if ($workloads === []): ?>
+                <span class="text-body-secondary small"><?= $this->t('No projects deployed to this server yet.') ?></span>
+            <?php else: ?>
+                <div class="d-flex flex-column gap-2">
+                    <?php foreach ($workloads as $project): ?>
+                        <a class="d-flex align-items-center gap-2" href="<?= $this->url('project.show', ['id' => $project->id->toString()]) ?>" style="color:var(--text);font-weight:600;font-size:.9rem">
+                            <span class="tw-ava" style="width:22px;height:22px;border-radius:6px;background:<?= $project->abbreviation()->oklch() ?>"><?= $this->e($project->abbreviation()->forString()) ?></span>
+                            <span class="flex-grow-1 text-truncate"><?= $this->e($project->name) ?></span>
+                            <i class="bi bi-chevron-right text-faint"></i>
+                        </a>
+                    <?php endforeach ?>
+                </div>
+            <?php endif ?>
+        </div></div>
+    </div>
 </div>
+
+<?= $this->fetch('partial::modal', [
+    'id'            => 'tw-delete-server-modal',
+    'header'        => $this->t('Delete server'),
+    'body'          => $this->t('Are you sure you want to delete the server {name}? This action cannot be undone.', ['name' => '<strong>' . $this->e($server->name) . '</strong>']),
+    'actionUrl'     => $this->url('server.delete', ['id' => $server->id->toString()]),
+    'actionLabel'   => $this->t('Delete server'),
+    'actionClasses' => 'btn btn-danger',
+    'actionIcon'    => 'bi bi-trash3',
+]) ?>
 
 <?php $this->start('javascript') ?>
 <link rel="stylesheet" href="/css/uPlot.min.css">
-<script src="/js/detail-tabs.js"></script>
 <script src="/js/uPlot.iife.min.js"></script>
-<script src="/js/server-metrics.js"></script>
+<script src="/js/server-detail-metrics.js"></script>
 <?php $this->stop() ?>

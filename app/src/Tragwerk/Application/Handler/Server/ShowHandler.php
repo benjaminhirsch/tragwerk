@@ -12,9 +12,15 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Throwable;
 use Tragwerk\Application\Response\ResponseRenderer;
+use Tragwerk\Domain\Entity\Credential;
+use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
+use Tragwerk\Domain\Enum\SetupJobStatus;
+use Tragwerk\Domain\Repository\CredentialRepository;
+use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
+use Tragwerk\Domain\Repository\SetupJobRepository;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
 
 use function assert;
@@ -25,6 +31,9 @@ final readonly class ShowHandler implements RequestHandlerInterface
     public function __construct(
         private ResponseRenderer $renderer,
         private ServerRepository $serverRepository,
+        private CredentialRepository $credentialRepository,
+        private SetupJobRepository $setupJobRepository,
+        private ProjectRepository $projectRepository,
         private UrlHelper $urlHelper,
     ) {
     }
@@ -38,7 +47,40 @@ final readonly class ShowHandler implements RequestHandlerInterface
             return new RedirectResponse($this->urlHelper->generate('server'));
         }
 
-        return $this->renderer->render($request, 'page::server/show', ['server' => $server]);
+        $activeTeam = $request->getAttribute('active_team');
+        assert($activeTeam instanceof Team);
+
+        $credential = null;
+        if ($server->credentialId !== null) {
+            try {
+                $credential = $this->credentialRepository->getById($server->credentialId);
+                assert($credential instanceof Credential);
+            } catch (Throwable) {
+            }
+        }
+
+        $latestJob = $this->setupJobRepository->getLatestForServer($server->id);
+        $jobActive = $latestJob !== null
+            && ($latestJob->status === SetupJobStatus::Pending || $latestJob->status === SetupJobStatus::Running);
+
+        $workloads = [];
+        foreach ($this->projectRepository->getAll($activeTeam->id) as $project) {
+            assert($project instanceof Project);
+
+            if ($project->serverId->toString() !== $server->id->toString()) {
+                continue;
+            }
+
+            $workloads[] = $project;
+        }
+
+        return $this->renderer->render($request, 'page::server/show', [
+            'server'     => $server,
+            'credential' => $credential,
+            'latestJob'  => $latestJob,
+            'jobActive'  => $jobActive,
+            'workloads'  => $workloads,
+        ]);
     }
 
     private function resolveServer(ServerRequestInterface $request): Server|null
