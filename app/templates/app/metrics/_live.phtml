@@ -1,0 +1,97 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @var \Tragwerk\Domain\Entity\Project                $project
+ * @var string                                         $branch
+ * @var \Tragwerk\Domain\Model\EnvironmentMetrics|null $metrics
+ * @var string|null                                    $error
+ */
+
+$liveUrl = $this->url('metric.live') . '?branch=' . urlencode($branch);
+?>
+<div hx-get="<?= $this->e($liveUrl) ?>"
+     hx-trigger="every 15s"
+     hx-target="#tw-app-metrics"
+     hx-swap="innerHTML">
+    <?php if ($error !== null || $metrics === null): ?>
+        <div class="row g-3 mb-4">
+            <div class="col-12"><div class="tw-card"><div class="tw-card__body d-flex align-items-center gap-2 text-body-secondary small">
+                <i class="bi bi-exclamation-triangle text-warning flex-shrink-0"></i>
+                <span><?= $error !== null
+                    ? $this->e($error)
+                    : $this->t('No FrankenPHP worker metrics available — environment is not running or not in worker mode.') ?></span>
+            </div></div></div>
+        </div>
+        <div id="tw-status" hx-swap-oob="true">
+            <div class="text-body-secondary small"><i class="bi bi-info-circle me-1"></i><?= $this->t('No data.') ?></div>
+        </div>
+    <?php else: ?>
+        <?php
+        $workerPct = $metrics->totalWorkers > 0
+            ? round(max(0.0, min(100.0, $metrics->busyWorkers / $metrics->totalWorkers * 100)), 0)
+            : 0.0;
+        $avgLatency = $metrics->durationCount > 0
+            ? (int) round($metrics->durationSumMs / $metrics->durationCount)
+            : 0;
+        $total = $metrics->requestsTotal;
+        $c4    = $metrics->requests4xx;
+        $c5    = $metrics->requests5xx;
+        $c2    = max(0, $total - $c4 - $c5);
+        $pct   = static fn (int $n): float => $total > 0 ? round($n / $total * 100, 1) : 0.0;
+        ?>
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3"><div class="tw-stat">
+                <div class="tw-stat__label"><i class="bi bi-arrow-left-right"></i> <?= $this->t('HTTP requests') ?></div>
+                <div class="tw-stat__value" style="font-size:1.6rem"><?= $this->e((string) $total) ?></div>
+                <div class="tw-stat__delta text-muted-2"><?= $this->t('In-flight') ?>: <?= $this->e((string) $metrics->inFlight) ?></div>
+            </div></div>
+            <div class="col-6 col-lg-3"><div class="tw-stat">
+                <div class="tw-stat__label"><i class="bi bi-speedometer2"></i> <?= $this->t('Avg response time') ?></div>
+                <div class="tw-stat__value" style="font-size:1.6rem">
+                    <?= $this->e((string) $avgLatency) ?><span style="font-size:.85rem;font-weight:600;color:var(--text-muted)"> ms</span>
+                </div>
+                <div class="tw-stat__delta text-muted-2"><?= $this->t('Cumulative average') ?></div>
+            </div></div>
+            <div class="col-6 col-lg-3"><div class="tw-stat">
+                <div class="tw-stat__label"><i class="bi bi-cpu"></i> <?= $this->t('Active workers') ?></div>
+                <div class="tw-stat__value" style="font-size:1.6rem">
+                    <?= $this->e((string) $metrics->busyWorkers) ?><span style="font-size:.85rem;font-weight:600;color:var(--text-muted)"> / <?= $this->e((string) $metrics->totalWorkers) ?></span>
+                </div>
+                <div class="tw-bar mt-2"><span style="width:<?= $this->e((string) $workerPct) ?>%"></span></div>
+            </div></div>
+            <div class="col-6 col-lg-3"><div class="tw-stat">
+                <div class="tw-stat__label"><i class="bi bi-hdd-network"></i> <?= $this->t('Queue depth') ?></div>
+                <div class="tw-stat__value" style="font-size:1.6rem"><?= $this->e((string) $metrics->queueDepth) ?></div>
+                <div class="tw-stat__delta text-muted-2"><?= $this->t('Restarts') ?>: <?= $this->e((string) $metrics->restarts) ?> · <?= $this->t('Crashes') ?>: <?= $this->e((string) $metrics->crashes) ?></div>
+            </div></div>
+        </div>
+
+        <div id="tw-status" hx-swap-oob="true">
+            <?php if ($total > 0): ?>
+                <div class="tw-stack-bar mb-3">
+                    <span style="width:<?= $this->e((string) $pct($c2)) ?>%;background:var(--ok)"></span>
+                    <span style="width:<?= $this->e((string) $pct($c4)) ?>%;background:var(--warn)"></span>
+                    <span style="width:<?= $this->e((string) $pct($c5)) ?>%;background:var(--danger)"></span>
+                </div>
+                <div class="d-flex flex-column gap-2">
+                    <div class="d-flex align-items-center justify-content-between" style="font-size:.82rem">
+                        <span class="d-flex align-items-center gap-2"><i style="width:9px;height:9px;border-radius:3px;background:var(--ok);display:inline-block"></i><span class="fw-semibold">2xx/3xx</span></span>
+                        <span class="fw-semibold tw-spark"><?= $this->e((string) $c2) ?> · <?= $this->e((string) $pct($c2)) ?> %</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between" style="font-size:.82rem">
+                        <span class="d-flex align-items-center gap-2"><i style="width:9px;height:9px;border-radius:3px;background:var(--warn);display:inline-block"></i><span class="fw-semibold">4xx</span></span>
+                        <span class="fw-semibold tw-spark"><?= $this->e((string) $c4) ?> · <?= $this->e((string) $pct($c4)) ?> %</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between" style="font-size:.82rem">
+                        <span class="d-flex align-items-center gap-2"><i style="width:9px;height:9px;border-radius:3px;background:var(--danger);display:inline-block"></i><span class="fw-semibold">5xx</span></span>
+                        <span class="fw-semibold tw-spark"><?= $this->e((string) $c5) ?> · <?= $this->e((string) $pct($c5)) ?> %</span>
+                    </div>
+                </div>
+            <?php else: ?>
+                <div class="text-body-secondary small"><?= $this->t('No requests recorded yet.') ?></div>
+            <?php endif ?>
+        </div>
+    <?php endif ?>
+</div>

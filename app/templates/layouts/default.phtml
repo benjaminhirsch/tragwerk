@@ -174,23 +174,6 @@ $this->layout('layout::blank') ?>
                 'count' => 1,
                 'icon' => 'bi bi-archive',
             ],
-            [
-                'route' => [
-                    'routeName' => 'home',
-                    'routeParams' => [],
-                ],
-                'label' => $this->t('Members'),
-                'count' => 1,
-                'icon' => 'bi bi-people',
-            ],
-            [
-                'route' => [
-                        'routeName' => 'home',
-                        'routeParams' => [],
-                ],
-                'label' => $this->t('Settings'),
-                'icon' => 'bi bi-gear',
-            ],
         ];
     }
 
@@ -220,6 +203,14 @@ $this->layout('layout::blank') ?>
                 ],
                 'label' => $this->t('Integrations'),
                 'icon' => 'bi bi-link-45deg',
+            ],
+            [
+                'route' => [
+                    'routeName' => 'metric',
+                    'routeParams' => [],
+                ],
+                'label' => $this->t('Metrics'),
+                'icon' => 'bi bi-graph-up',
             ],
         ];
     }
@@ -257,6 +248,14 @@ $this->layout('layout::blank') ?>
                 ],
                 'label' => $this->t('Variables'),
                 'icon' => 'bi bi-sliders',
+            ],
+            [
+                'route' => [
+                        'routeName' => 'metric',
+                        'routeParams' => [],
+                ],
+                'label' => $this->t('Metrics'),
+                'icon' => 'bi bi-graph-up',
             ],
             [
                 'route' => [
@@ -309,9 +308,9 @@ $this->layout('layout::blank') ?>
 </main>
 
 <footer class="tw-footer">
-    <a href="#">Imprint</a>
-    <a href="#">Privacy Policy</a>
-    <a href="#">Terms &amp; Conditions</a>
+    <a href="<?= $this->url('imprint') ?>"><?= $this->e($this->t('Imprint')) ?></a>
+    <a href="<?= $this->url('privacy-policy') ?>"><?= $this->e($this->t('Privacy Policy')) ?></a>
+    <a href="<?= $this->url('terms-and-conditions') ?>"><?= $this->e($this->t('Terms & Conditions')) ?></a>
 </footer>
 
 <?php $this->push('javascript') ?>

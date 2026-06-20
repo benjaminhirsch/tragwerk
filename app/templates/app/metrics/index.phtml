@@ -1,0 +1,133 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @var \Tragwerk\Domain\Entity\Project $project
+ * @var list<string>                    $environments
+ * @var string|null                     $branch
+ * @var bool|null                       $workerMode
+ */
+
+$runtimeText = match ($workerMode ?? null) {
+    true    => $this->t('Provided by the {runtime} runtime (worker mode)', ['runtime' => '<b>FrankenPHP</b>']),
+    false   => $this->t('Provided by the {runtime} runtime (classic mode)', ['runtime' => '<b>FrankenPHP</b>']),
+    default => $this->t('Provided by the {runtime} runtime', ['runtime' => '<b>FrankenPHP</b>']),
+};
+
+$subtitle = '<span class="tw-live"><span class="tw-dot"></span>' . $this->e($this->t('Live')) . '</span>'
+    . '<span class="text-faint">·</span>'
+    . '<span>' . $runtimeText . '</span>';
+
+$this->layout('layout::default', [
+    'wide'         => true,
+    'pageType'     => $this->activeProject()->name . ' / Metrics',
+    'pageTitle'    => $this->t('Metrics'),
+    'pageSubTitle' => '<span class="d-inline-flex align-items-center gap-2 flex-wrap">' . $subtitle . '</span>',
+]);
+?>
+
+<?php $this->start('pageHeadButtons') ?>
+    <?php if ($branch !== null && $environments !== []): ?>
+        <div class="tw-seg" id="env-seg">
+            <?php foreach ($environments as $env): ?>
+                <a class="<?= $env === $branch ? 'active' : '' ?>"
+                   href="<?= $this->url('metric') ?>?branch=<?= urlencode($env) ?>"><?= $this->e($env) ?></a>
+            <?php endforeach ?>
+        </div>
+    <?php endif ?>
+    <?php if ($branch !== null): ?>
+        <div class="tw-seg" id="range-seg">
+            <button data-range="1h">1 hr</button>
+            <button data-range="6h">6 hr</button>
+            <button class="active" data-range="24h">24 hr</button>
+            <button data-range="7d">7 days</button>
+        </div>
+    <?php endif ?>
+<?php $this->stop() ?>
+
+<?php if ($branch === null): ?>
+    <div class="tw-card">
+        <div class="tw-card__body text-center text-body-secondary">
+            <i class="bi bi-info-circle me-1"></i>
+            <?= $this->t('No environment deployed yet. Metrics appear once an environment is running.') ?>
+        </div>
+    </div>
+<?php else: ?>
+    <?php
+    $liveUrl = $this->url('metric.live') . '?branch=' . urlencode($branch);
+    $dataUrl = $this->url('metric.data') . '?branch=' . urlencode($branch);
+    ?>
+
+    <div id="tw-app-metrics"
+         hx-get="<?= $this->e($liveUrl) ?>"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <div class="tw-card"><div class="tw-card__body text-body-secondary small">
+            <i class="bi bi-hourglass-split me-1"></i><?= $this->t('Loading live metrics…') ?>
+        </div></div>
+    </div>
+
+    <div id="tw-app-metrics-charts" data-url="<?= $this->e($dataUrl) ?>" data-range="24h">
+        <div data-chart-empty class="tw-card d-none">
+            <div class="tw-card__body text-body-secondary small">
+                <i class="bi bi-info-circle me-1"></i><?= $this->t('No data yet — history appears as the metrics ticker runs.') ?>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-lg-8">
+                <div class="tw-chart-card">
+                    <div class="tw-chart-card__head">
+                        <div><h3><?= $this->t('Requests per second') ?></h3><div class="sub"><?= $this->t('Throughput across all workers') ?></div></div>
+                        <div class="text-end">
+                            <div class="fw-bold tw-spark" style="font-size:1.05rem" data-spark="rps">—</div>
+                            <div class="sub" style="color:var(--ok-text)" data-spark="rps-avg"></div>
+                        </div>
+                    </div>
+                    <div class="tw-chart-card__body"><div class="tw-chart-box" id="c-rps" style="height:240px"></div></div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="tw-chart-card">
+                    <div class="tw-chart-card__head"><div><h3><?= $this->t('Status codes') ?></h3><div class="sub"><?= $this->t('Cumulative HTTP responses') ?></div></div></div>
+                    <div class="tw-chart-card__body d-flex flex-column justify-content-center">
+                        <div id="tw-status">
+                            <div class="text-body-secondary small"><i class="bi bi-hourglass-split me-1"></i><?= $this->t('Loading…') ?></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-6">
+                <div class="tw-chart-card">
+                    <div class="tw-chart-card__head">
+                        <div><h3><?= $this->t('Response times') ?></h3><div class="sub"><?= $this->t('Average latency, ms') ?></div></div>
+                        <div class="fw-bold tw-spark" data-spark="latency">—</div>
+                    </div>
+                    <div class="tw-chart-card__body"><div class="tw-chart-box" id="c-latency" style="height:220px"></div></div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="tw-chart-card">
+                    <div class="tw-chart-card__head">
+                        <div><h3><?= $this->t('Worker utilization') ?></h3><div class="sub"><?= $this->t('Busy vs. total FrankenPHP workers') ?></div></div>
+                        <div class="tw-legend">
+                            <span><i style="background:var(--accent)"></i><?= $this->t('busy') ?></span>
+                            <span><i style="background:var(--text-faint)"></i><?= $this->t('total') ?></span>
+                        </div>
+                    </div>
+                    <div class="tw-chart-card__body"><div class="tw-chart-box" id="c-workers" style="height:220px"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php endif ?>
+
+<?php $this->start('javascript') ?>
+<link rel="stylesheet" href="/css/uPlot.min.css">
+<script src="/js/uPlot.iife.min.js"></script>
+<script src="/js/metrics-charts.js"></script>
+<?php $this->stop() ?>
