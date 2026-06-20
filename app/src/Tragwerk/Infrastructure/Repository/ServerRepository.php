@@ -62,6 +62,23 @@ final class ServerRepository extends GenericRepository implements ServerReposito
     }
 
     #[Override]
+    public function isAssignedToProject(ServerIdentifier $id): bool
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb->select('1')
+            ->from(EntityHelper::getDbTableName(EntityType::PROJECT))
+            ->where($qb->expr()->eq('server_id', ':id'))
+            ->setParameter('id', $id->toString())
+            ->setMaxResults(1);
+
+        try {
+            return $qb->executeQuery()->fetchOne() !== false;
+        } catch (Exception) {
+            return false;
+        }
+    }
+
+    #[Override]
     public function getAll(
         array|null $ids = null,
         array|null $names = null,

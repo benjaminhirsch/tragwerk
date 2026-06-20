@@ -36,6 +36,13 @@ final readonly class DeleteHandler implements RequestHandlerInterface
         $server = $this->resolveServer($request);
 
         if ($server instanceof Server) {
+            // A server hosting projects must not be deleted — its environments would be orphaned.
+            if ($this->serverRepository->isAssignedToProject($server->id)) {
+                $showUrl = $this->urlHelper->generate('server.show', ['id' => $server->id->toString()]);
+
+                return new RedirectResponse($showUrl . '?assigned=1');
+            }
+
             $this->eventDispatcher->dispatch(new ServerDeleted($server->id));
         }
 

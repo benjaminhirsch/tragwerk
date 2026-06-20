@@ -10,7 +10,10 @@ use Tragwerk\Domain\Enum\SetupJobStatus;
  * @var \Tragwerk\Domain\Entity\SetupJob|null   $latestJob
  * @var bool                                    $jobActive
  * @var list<\Tragwerk\Domain\Entity\Project>   $workloads
+ * @var bool                                    $deleteBlocked
  */
+
+$hasWorkloads = $workloads !== [];
 
 $this->layout('layout::default', [
     'wide'      => true,
@@ -49,12 +52,28 @@ $liveUrl = $this->url('server.metrics.live', ['id' => $server->id->toString()]);
             'icon'    => 'bi bi-pencil',
             'classes' => 'btn btn-outline-secondary',
         ]) ?>
-        <button type="button" class="btn btn-outline-secondary" style="color:var(--danger-text);border-color:var(--danger-soft)"
-                data-bs-toggle="modal" data-bs-target="#tw-delete-server-modal" title="<?= $this->e($this->t('Delete server')) ?>">
-            <i class="bi bi-trash3"></i>
-        </button>
+        <?php if ($hasWorkloads): ?>
+            <button type="button" class="btn btn-outline-secondary" disabled
+                    title="<?= $this->e($this->t('Cannot delete: server still hosts projects')) ?>">
+                <i class="bi bi-trash3"></i>
+            </button>
+        <?php else: ?>
+            <button type="button" class="btn btn-outline-secondary" style="color:var(--danger-text);border-color:var(--danger-soft)"
+                    data-bs-toggle="modal" data-bs-target="#tw-delete-server-modal" title="<?= $this->e($this->t('Delete server')) ?>">
+                <i class="bi bi-trash3"></i>
+            </button>
+        <?php endif ?>
     </div>
 </div>
+
+<?php if ($deleteBlocked): ?>
+    <div class="tw-card mb-4" style="border-color:var(--danger-soft)">
+        <div class="tw-card__body d-flex align-items-center gap-2" style="color:var(--danger-text)">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span><?= $this->t('This server cannot be deleted while it still hosts projects. Reassign or delete them first.') ?></span>
+        </div>
+    </div>
+<?php endif ?>
 
 <!-- KPI tiles (live) -->
 <div id="tw-server-kpi" class="mb-4"

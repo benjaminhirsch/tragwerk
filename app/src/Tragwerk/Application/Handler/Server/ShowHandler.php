@@ -74,12 +74,15 @@ final readonly class ShowHandler implements RequestHandlerInterface
             $workloads[] = $project;
         }
 
+        $deleteBlocked = ($request->getQueryParams()['assigned'] ?? null) === '1';
+
         return $this->renderer->render($request, 'page::server/show', [
-            'server'     => $server,
-            'credential' => $credential,
-            'latestJob'  => $latestJob,
-            'jobActive'  => $jobActive,
-            'workloads'  => $workloads,
+            'server'        => $server,
+            'credential'    => $credential,
+            'latestJob'     => $latestJob,
+            'jobActive'     => $jobActive,
+            'workloads'     => $workloads,
+            'deleteBlocked' => $deleteBlocked,
         ]);
     }
 

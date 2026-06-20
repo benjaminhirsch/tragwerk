@@ -47,6 +47,8 @@ interface ServerRepository
 
     public function isCredentialAssigned(CredentialIdentifier $id): bool;
 
+    public function isAssignedToProject(ServerIdentifier $id): bool;
+
     /**
      * @param ServerIdentifier[]|null $ids
      * @param string[]|null           $names
