@@ -1,0 +1,70 @@
+<?php
+
+/**
+ * @var \Tragwerk\Domain\Entity\Project              $project
+ * @var list<\Tragwerk\Domain\Entity\ProjectWebhook> $integrations
+ * @var string                                       $baseUrl
+ */
+
+$integration = $integrations[0] ?? null;
+
+$this->layout('layout::default', [
+    'pageType'     => $this->activeProject()->name,
+    'pageTitle'    => $this->t('Integrations'),
+    'pageSubTitle' => $this->t('Git forge webhook that triggers deployments on push.'),
+    'wide'         => false,
+]) ?>
+
+<?php if ($integration === null): ?>
+    <?php $this->start('pageHeadButtons') ?>
+    <?= $this->fetch('partial::link', [
+        'label'   => $this->t('Add integration'),
+        'icon'    => 'bi bi-plus-circle',
+        'classes' => 'btn btn-primary',
+        'href'    => $this->url('integration.create'),
+    ]) ?>
+    <?php $this->stop() ?>
+
+    <div class="tw-card">
+        <div class="tw-card__body text-center text-body-secondary">
+            <?= $this->t('No integration configured yet. Add a git forge webhook to enable push-triggered deployments.') ?>
+        </div>
+    </div>
+<?php else: ?>
+    <?php $webhookUrl = $baseUrl . '/webhooks/' . $integration->forge->value . '/' . $project->id->toString(); ?>
+
+    <div class="tw-card">
+        <div class="tw-card__head">
+            <h2><i class="bi bi-link-45deg"></i> <?= $this->e($integration->forge->label()) ?></h2>
+        </div>
+        <div class="tw-card__body d-flex flex-column gap-3">
+            <div>
+                <label class="form-label" for="webhookUrl"><?= $this->t('Webhook URL') ?></label>
+                <input type="text" id="webhookUrl" class="form-control font-monospace"
+                       value="<?= $this->e($webhookUrl) ?>" readonly onclick="this.select()">
+            </div>
+            <div>
+                <label class="form-label" for="webhookSecret"><?= $this->t('Secret') ?></label>
+                <input type="text" id="webhookSecret" class="form-control font-monospace"
+                       value="<?= $this->e($integration->secret) ?>" readonly onclick="this.select()">
+            </div>
+        </div>
+        <div class="tw-card__head justify-content-end border-top">
+            <button type="button" class="btn btn-outline-secondary"
+                    style="color:var(--danger-text);border-color:var(--danger-soft)"
+                    data-bs-toggle="modal" data-bs-target="#tw-delete-integration-modal">
+                <i class="bi bi-trash3"></i> <?= $this->e($this->t('Delete integration')) ?>
+            </button>
+        </div>
+    </div>
+
+    <?= $this->fetch('partial::modal', [
+        'id'            => 'tw-delete-integration-modal',
+        'header'        => $this->t('Delete integration'),
+        'body'          => $this->t('Are you sure you want to delete the {forge} integration? This action cannot be undone.', ['forge' => '<strong>' . $this->e($integration->forge->label()) . '</strong>']),
+        'actionUrl'     => $this->url('integration.delete', ['id' => $integration->id->toString()]),
+        'actionLabel'   => $this->t('Delete integration'),
+        'actionClasses' => 'btn btn-danger',
+        'actionIcon'    => 'bi bi-trash3',
+    ]) ?>
+<?php endif ?>

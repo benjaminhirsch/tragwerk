@@ -1,80 +1,95 @@
 <?php
+
 /**
- * @var \Tragwerk\Domain\Entity\Project        $project
- * @var list<\Tragwerk\Domain\Entity\Server>   $servers
- * @var array<string, int>                     $serverProjectCounts
- * @var list<\Tragwerk\Domain\Entity\Registry> $registries
- * @var \Tragwerk\Application\Validation\ValidationBag $validationBag
+ * @var \Tragwerk\Domain\Entity\Project                            $project
+ * @var list<\Tragwerk\Domain\Entity\Server>                       $servers
+ * @var array<string, int>                                         $serverProjectCounts
+ * @var list<\Tragwerk\Domain\Entity\Registry>                     $registries
+ * @var \Tragwerk\Application\Validation\ValidationBag|null        $validationBag
  */
-$this->layout('layout::default', ['title' => $this->t('Edit project')]);
-?>
 
-<h1><?= $this->t('Edit project') ?></h1>
+$this->layout('layout::default', [
+    'pageType'     => $this->activeTeam()->name,
+    'pageTitle'    => $this->t('Edit project'),
+    'pageSubTitle' => $this->t('Update the server and registry this project deploys to'),
+    'wide'         => false,
+]) ?>
 
-<?php $this->start('card-content') ?>
-    <form action="<?= $this->url('project.edit', ['id' => $project->id->toString()]) ?>" method="post">
-        <?= $this->fetch('partial::input/csrf') ?>
 
-        <?= $this->fetch('partial::input/text', [
-            'id'         => 'name',
-            'label'      => $this->t('Project name'),
-            'autofocus'  => 'autofocus',
-            'validation' => $validationBag,
-        ]) ?>
+<form class="tw-card" action="<?= $this->url('project.edit', ['id' => $project->id->toString()]) ?>" method="post">
+    <div class="tw-card__body d-flex flex-column gap-3">
+    <?= $this->fetch('partial::input/csrf') ?>
 
-        <?php
-            $serverOptions = [];
-            foreach ($servers as $server) {
-                $count = $serverProjectCounts[$server->id->toString()] ?? 0;
-                $serverOptions[$server->id->toString()] = $count > 0
-                    ? $server->name . ' (' . $count . ' ' . ($count === 1 ? $this->t('project') : $this->t('projects')) . ')'
-                    : $server->name;
-            }
-        ?>
-        <?= $this->fetch('partial::input/select', [
-            'id'           => 'serverId',
-            'label'        => $this->t('Server'),
-            'validation'   => $validationBag,
-            'options'      => $serverOptions,
-            'defaultValue' => $validationBag->getValueByName('serverId'),
-        ]) ?>
+    <?= $this->fetch('partial::input/text', [
+        'id'         => 'name',
+        'label'      => $this->t('Project name'),
+        'autofocus'  => 'autofocus',
+        'validation' => $validationBag ?? null,
+    ]) ?>
 
-        <?php
-            $registryOptions = [];
-            foreach ($registries as $registry) {
-                $registryOptions[$registry->id->toString()] = $registry->name . ' (' . $registry->url . ')';
-            }
-        ?>
-        <?= $this->fetch('partial::input/select', [
-            'id'           => 'registryId',
-            'label'        => $this->t('Container registry'),
-            'validation'   => $validationBag,
-            'options'      => $registryOptions,
-            'defaultValue' => $validationBag->getValueByName('registryId'),
-        ]) ?>
+    <?php
+        $serverOptions = [];
+        foreach ($servers as $server) {
+            $count = $serverProjectCounts[$server->id->toString()] ?? 0;
+            $serverOptions[$server->id->toString()] = $count > 0
+                ? $server->name . ' (' . $count . ' ' . ($count === 1 ? $this->t('project') : $this->t('projects')) . ')'
+                : $server->name;
+        }
+    ?>
+    <?= $this->fetch('partial::input/select', [
+        'id'                 => 'serverId',
+        'label'              => $this->t('Server'),
+        'validation'         => $validationBag ?? null,
+        'options'            => $serverOptions,
+        'defaultOptionLabel' => $this->t('— select a server —'),
+    ]) ?>
 
-        <div class="d-flex gap-2">
-            <?= $this->fetch('partial::input/button', [
-                'label' => $this->t('Save'),
-            ]) ?>
-
-            <?= $this->fetch('partial::link', [
+    <?php
+        $registryOptions = [];
+        foreach ($registries as $registry) {
+            $registryOptions[$registry->id->toString()] = $registry->name . ' (' . $registry->url . ')';
+        }
+    ?>
+    <?= $this->fetch('partial::input/select', [
+        'id'                 => 'registryId',
+        'label'              => $this->t('Container registry'),
+        'validation'         => $validationBag ?? null,
+        'options'            => $registryOptions,
+        'defaultOptionLabel' => $this->t('— select a registry —'),
+    ]) ?>
+    </div>
+    <div class="tw-card__head justify-content-end border-top">
+        <?= $this->fetch('partial::link', [
                 'label'   => $this->t('Cancel'),
                 'href'    => $this->url('project.show', ['id' => $project->id->toString()]),
-                'classes' => 'btn btn-secondary',
-            ]) ?>
+                'classes' => 'btn btn-ghost',
+        ]) ?>
+        <?= $this->fetch('partial::input/button', [
+            'label' => $this->t('Save changes'),
+            'icon'  => 'bi bi-check-lg',
+        ]) ?>
+    </div>
+</form>
 
-            <?= $this->fetch('partial::input/button', [
-                'classes'      => 'btn btn-outline-danger',
-                'icon'         => 'bi bi-trash3',
-                'type'         => 'button',
-                'dataBsToggle' => 'modal',
-                'dataBsTarget' => '#tw-delete-project-modal',
-            ]) ?>
+<!-- Danger zone -->
+<section id="danger" class="mt-4">
+    <div class="tw-card" style="border-color:var(--danger-soft)">
+        <div class="tw-card__head" style="border-color:var(--danger-soft)">
+            <h2 style="color:var(--danger-text)"><?= $this->e($this->t('Danger zone')) ?></h2>
         </div>
-
-    </form>
-<?php $this->stop() ?>
+        <div class="tw-card__body d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+                <div class="fw-semibold" style="font-size:.92rem"><?= $this->e($this->t('Delete project')) ?></div>
+                <div class="text-muted-2" style="font-size:.82rem"><?= $this->e($this->t('Permanently removes the project and all associated resources.')) ?></div>
+            </div>
+            <button type="button" class="btn btn-outline-secondary"
+                    style="color:var(--danger-text);border-color:var(--danger-soft)"
+                    data-bs-toggle="modal" data-bs-target="#tw-delete-project-modal">
+                <i class="bi bi-trash3"></i> <?= $this->e($this->t('Delete project')) ?>
+            </button>
+        </div>
+    </div>
+</section>
 
 <?= $this->fetch('partial::modal', [
     'id'            => 'tw-delete-project-modal',
