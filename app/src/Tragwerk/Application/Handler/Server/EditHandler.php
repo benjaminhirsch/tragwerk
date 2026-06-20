@@ -155,6 +155,7 @@ final readonly class EditHandler implements RequestHandlerInterface
             'server'        => $server,
             'validationBag' => $validationBag,
             'credentials'   => $credentials,
+            'isAssigned'    => $this->serverRepository->isAssignedToProject($server->id),
         ]);
     }
 
