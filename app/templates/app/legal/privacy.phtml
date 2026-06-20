@@ -1,0 +1,50 @@
+<?php $this->layout('layout::legal', ['title' => $this->t('Privacy Policy')]) ?>
+
+<p class="doc__eyebrow"><?= $this->e($this->t('Legal')) ?></p>
+<h1><?= $this->e($this->t('Privacy Policy')) ?></h1>
+<p class="doc__meta"><?= $this->e($this->t('Last updated: June 20, 2026')) ?></p>
+
+<div class="doc__note">
+    <i class="bi bi-info-circle-fill"></i>
+    <span><?= $this->t('{strong} This is sample copy to illustrate structure and layout. Replace it with a policy reviewed by your legal team before publishing.', ['strong' => '<strong>' . $this->e($this->t('Placeholder content.')) . '</strong>']) ?></span>
+</div>
+
+<div class="doc__toc">
+    <div><?= $this->e($this->t('On this page')) ?></div>
+    <ol>
+        <li><a href="#overview"><?= $this->e($this->t('Overview')) ?></a></li>
+        <li><a href="#data"><?= $this->e($this->t('Data we collect')) ?></a></li>
+        <li><a href="#use"><?= $this->e($this->t('How we use data')) ?></a></li>
+        <li><a href="#sharing"><?= $this->e($this->t('Sharing & processors')) ?></a></li>
+        <li><a href="#retention"><?= $this->e($this->t('Retention')) ?></a></li>
+        <li><a href="#rights"><?= $this->e($this->t('Your rights')) ?></a></li>
+        <li><a href="#contact"><?= $this->e($this->t('Contact')) ?></a></li>
+    </ol>
+</div>
+
+<h2 id="overview">1. <?= $this->e($this->t('Overview')) ?></h2>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. This placeholder policy describes how Tragwerk Placeholder Inc. ("we", "us") processes personal data when you use our platform-as-a-service product.</p>
+
+<h2 id="data">2. <?= $this->e($this->t('Data we collect')) ?></h2>
+<p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo. We may process the following categories of data:</p>
+<ul>
+    <li><strong>Account data</strong> — name, email address, and authentication details.</li>
+    <li><strong>Usage data</strong> — projects, environments, deployments, and log metadata.</li>
+    <li><strong>Technical data</strong> — IP address, browser type, and device information.</li>
+    <li><strong>Billing data</strong> — plan, invoices, and payment references.</li>
+</ul>
+
+<h2 id="use">3. <?= $this->e($this->t('How we use data')) ?></h2>
+<p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. We use data to provide and secure the service, process deployments, communicate with you, and meet legal obligations.</p>
+
+<h2 id="sharing">4. <?= $this->e($this->t('Sharing & processors')) ?></h2>
+<p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. We engage sub-processors (e.g. infrastructure and email providers) under appropriate data processing agreements and do not sell personal data.</p>
+
+<h2 id="retention">5. <?= $this->e($this->t('Retention')) ?></h2>
+<p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium. We retain data only as long as necessary for the purposes described, or as required by law.</p>
+
+<h2 id="rights">6. <?= $this->e($this->t('Your rights')) ?></h2>
+<p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit. Depending on your jurisdiction, you may have rights to access, rectify, delete, or port your data, and to object to certain processing.</p>
+
+<h2 id="contact">7. <?= $this->e($this->t('Contact')) ?></h2>
+<p>For privacy requests, contact us at <a href="mailto:privacy@example.com">privacy@example.com</a>. Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit.</p>

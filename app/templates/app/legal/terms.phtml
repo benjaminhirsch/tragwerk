@@ -1,0 +1,49 @@
+<?php $this->layout('layout::legal', ['title' => $this->t('Terms & Conditions')]) ?>
+
+<p class="doc__eyebrow"><?= $this->e($this->t('Legal')) ?></p>
+<h1><?= $this->e($this->t('Terms & Conditions')) ?></h1>
+<p class="doc__meta"><?= $this->e($this->t('Last updated: June 20, 2026')) ?></p>
+
+<div class="doc__note">
+    <i class="bi bi-info-circle-fill"></i>
+    <span><?= $this->t('{strong} The clauses below are sample text for layout purposes only and are not legally binding. Replace them with terms reviewed by your legal team.', ['strong' => '<strong>' . $this->e($this->t('Placeholder content.')) . '</strong>']) ?></span>
+</div>
+
+<div class="doc__toc">
+    <div><?= $this->e($this->t('On this page')) ?></div>
+    <ol>
+        <li><a href="#acceptance"><?= $this->e($this->t('Acceptance of terms')) ?></a></li>
+        <li><a href="#service"><?= $this->e($this->t('Use of the service')) ?></a></li>
+        <li><a href="#accounts"><?= $this->e($this->t('Accounts')) ?></a></li>
+        <li><a href="#billing"><?= $this->e($this->t('Billing')) ?></a></li>
+        <li><a href="#availability"><?= $this->e($this->t('Availability')) ?></a></li>
+        <li><a href="#liability"><?= $this->e($this->t('Limitation of liability')) ?></a></li>
+        <li><a href="#changes"><?= $this->e($this->t('Changes to these terms')) ?></a></li>
+    </ol>
+</div>
+
+<h2 id="acceptance">1. <?= $this->e($this->t('Acceptance of terms')) ?></h2>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. By accessing or using Tragwerk, you agree to be bound by these placeholder terms.</p>
+
+<h2 id="service">2. <?= $this->e($this->t('Use of the service')) ?></h2>
+<p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. You agree not to misuse the service, including:</p>
+<ul>
+    <li>Attempting to gain unauthorized access to systems or data.</li>
+    <li>Deploying unlawful, harmful, or infringing content.</li>
+    <li>Interfering with or disrupting the integrity of the platform.</li>
+</ul>
+
+<h2 id="accounts">3. <?= $this->e($this->t('Accounts')) ?></h2>
+<p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. You are responsible for safeguarding your credentials and for all activity under your account.</p>
+
+<h2 id="billing">4. <?= $this->e($this->t('Billing')) ?></h2>
+<p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Paid plans are billed in advance and are non-refundable except where required by law.</p>
+
+<h2 id="availability">5. <?= $this->e($this->t('Availability')) ?></h2>
+<p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam. The service is provided "as is" without warranties of uninterrupted availability.</p>
+
+<h2 id="liability">6. <?= $this->e($this->t('Limitation of liability')) ?></h2>
+<p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores. To the maximum extent permitted by law, we are not liable for indirect or consequential damages.</p>
+
+<h2 id="changes">7. <?= $this->e($this->t('Changes to these terms')) ?></h2>
+<p>At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium. We may update these terms from time to time; continued use after changes constitutes acceptance.</p>

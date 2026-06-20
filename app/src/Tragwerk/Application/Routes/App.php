@@ -86,5 +86,25 @@ final readonly class App
             ]),
             'home',
         )->setOptions([Middleware\AuthenticationMiddleware::OPTION_REQUIRE_AUTHENTICATION => false]);
+
+        $routes
+            ->get('/imprint', $this->middlewareFactory->prepare([Handler\Legal\ImprintHandler::class]), 'imprint')
+            ->setOptions([Middleware\AuthenticationMiddleware::OPTION_REQUIRE_AUTHENTICATION => false]);
+
+        $routes
+            ->get(
+                '/privacy-policy',
+                $this->middlewareFactory->prepare([Handler\Legal\PrivacyPolicyHandler::class]),
+                'privacy-policy',
+            )
+            ->setOptions([Middleware\AuthenticationMiddleware::OPTION_REQUIRE_AUTHENTICATION => false]);
+
+        $routes
+            ->get(
+                '/terms-and-conditions',
+                $this->middlewareFactory->prepare([Handler\Legal\TermsHandler::class]),
+                'terms-and-conditions',
+            )
+            ->setOptions([Middleware\AuthenticationMiddleware::OPTION_REQUIRE_AUTHENTICATION => false]);
     }
 }

@@ -750,6 +750,161 @@ body:has(> .tw-footer) > main { flex: 1 0 auto; width: 100% }
 .field-help { font-size: .8rem; color: var(--text-muted); margin-top: .35rem; }
 .key-input { font-family: var(--font-mono); text-transform: uppercase; }
 
+/* ============================================================
+   METRICS PAGE (chart cards + uPlot theming)
+   ============================================================ */
+.tw-chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: .85rem; box-shadow: var(--shadow-sm); height: 100%; display: flex; flex-direction: column; }
+.tw-chart-card__head { padding: .9rem 1.1rem .4rem; display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.tw-chart-card__head h3 { font-size: .92rem; margin: 0; }
+.tw-chart-card__head .sub { font-size: .76rem; color: var(--text-faint); }
+.tw-chart-card__body { padding: .4rem 1.1rem 1rem; flex: 1; min-height: 0; }
+.tw-chart-box { position: relative; width: 100%; }
+.tw-legend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: .78rem; color: var(--text-muted); }
+.tw-legend span { display: inline-flex; align-items: center; gap: .4rem; }
+.tw-legend i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+.tw-spark { font-variant-numeric: tabular-nums; }
+.tw-live { display: inline-flex; align-items: center; gap: .4rem; font-size: .76rem; font-weight: 600; color: var(--ok-text); }
+.tw-live .tw-dot { width: 7px; height: 7px; border-radius: 99px; background: var(--ok); animation: tw-pulse 1.4s ease-in-out infinite; }
+/* uPlot theming */
+.uplot, .uplot *, .uplot *::before, .uplot *::after { font-family: var(--font-ui); }
+.uplot .u-title { display: none; }
+.u-tooltip {
+  position: absolute; pointer-events: none; z-index: 100; transform: translate(-50%, -115%);
+  background: var(--surface); border: 1px solid var(--border-strong); border-radius: .5rem;
+  box-shadow: var(--shadow-lg); padding: .4rem .55rem; font-size: .74rem; white-space: nowrap; display: none;
+}
+.u-tooltip .tt-t { color: var(--text-faint); font-size: .68rem; margin-bottom: .15rem; }
+.u-tooltip .tt-row { display: flex; align-items: center; gap: .4rem; color: var(--text); font-weight: 600; }
+.u-tooltip .tt-row i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+/* status stacked bar */
+.tw-stack-bar { display: flex; height: 14px; border-radius: 99px; overflow: hidden; gap: 2px; }
+.tw-stack-bar > span { display: block; }
+.tw-status-ring { position: relative; width: 150px; height: 150px; }
+
+/* ============================================================
+   SHARED MODAL (themed Bootstrap modal)
+   ============================================================ */
+.modal-content { background: var(--surface); border: 1px solid var(--border); border-radius: .85rem; color: var(--text); box-shadow: var(--shadow-lg); }
+.modal-header, .modal-footer { border-color: var(--border); }
+.modal-title { font-size: 1.05rem; }
+
+/* ============================================================
+   CONFIGURATION PAGE
+   ============================================================ */
+.cfg-h { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; color: var(--text-faint); margin: 0 0 .6rem; display: flex; align-items: center; gap: .5rem; }
+.cfg-h .bi { font-size: .95rem; color: var(--text-muted); }
+.cfg-row { display: flex; justify-content: space-between; gap: 1rem; padding: .6rem 0; border-bottom: 1px solid var(--border); font-size: .875rem; align-items: center; }
+.cfg-row:first-child { padding-top: 0; }
+.cfg-row:last-child { border-bottom: none; padding-bottom: 0; }
+.cfg-row .k { color: var(--text-muted); display: flex; align-items: center; gap: .5rem; }
+.cfg-row .v { font-weight: 600; text-align: right; }
+.hook-block + .hook-block { margin-top: .85rem; }
+.hook-label { font-size: .8rem; font-weight: 700; color: var(--text); margin-bottom: .35rem; display: flex; align-items: center; gap: .4rem; }
+.hook-label .tw-tag { font-weight: 500; }
+.rel-pill { font-family: var(--font-mono); font-size: .74rem; background: var(--accent-soft); color: var(--accent-text); border: 1px solid var(--accent-border); border-radius: .4rem; padding: .1rem .4rem; }
+
+/* ============================================================
+   DOMAINS PAGE
+   ============================================================ */
+.ph-chip { display: inline-flex; align-items: center; gap: .5rem; background: var(--surface-2); border: 1px solid var(--border); border-radius: .55rem; padding: .32rem .55rem; font-size: .82rem; }
+.ph-chip .mono { color: var(--accent-text); font-weight: 600; }
+.ph-chip .ph-count { color: var(--text-faint); font-size: .74rem; }
+.ph-chip button { border: none; background: none; color: var(--text-faint); padding: 0; line-height: 1; display: grid; place-items: center; }
+.ph-chip button:hover { color: var(--danger-text); }
+.prim-check { cursor: pointer; }
+.map-select { background: var(--surface); border: 1px solid var(--border-strong); color: var(--text); border-radius: .45rem; font-size: .8rem; padding: .25rem .5rem; font-family: var(--font-mono); }
+.map-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+
+/* ============================================================
+   VARIABLES PAGE
+   ============================================================ */
+.var-value { display: flex; align-items: center; gap: .5rem; max-width: 340px; }
+.var-value code { font-family: var(--font-mono); font-size: .8rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.var-value .reveal { border: none; background: none; color: var(--text-faint); padding: .1rem .25rem; border-radius: .35rem; flex: none; }
+.var-value .reveal:hover { color: var(--text); background: var(--surface-hover); }
+
+/* ============================================================
+   SETTINGS PAGE (sub-navigation)
+   ============================================================ */
+.tw-snav { display: flex; flex-direction: column; gap: .1rem; position: sticky; top: 128px; }
+.tw-snav a { display: flex; align-items: center; gap: .6rem; padding: .5rem .7rem; border-radius: .5rem; color: var(--text-muted); font-size: .875rem; font-weight: 550; }
+.tw-snav a:hover { background: var(--surface-hover); color: var(--text); }
+.tw-snav a.active { background: var(--accent-soft); color: var(--accent-text); }
+.tw-snav a .bi { font-size: .95rem; }
+
+/* ============================================================
+   ACCOUNT PAGE
+   ============================================================ */
+.acct { max-width: 720px; }
+.acct section { scroll-margin-top: 116px; }
+.card-foot { border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: .6rem; padding: .85rem 1.25rem; }
+/* account uses a slightly roomier prop-switch than the form/edit default */
+.acct .prop-switch { gap: .85rem; padding: .9rem 1rem; border-radius: .7rem; }
+.acct .prop-switch .form-check-input { margin-top: .1rem; margin-left: 0; }
+.acct .prop-switch .ttl { font-size: .92rem; }
+.acct .prop-switch .dsc { font-size: .82rem; }
+.rec-codes { display: grid; grid-template-columns: repeat(2, 1fr); gap: .5rem; }
+.rec-codes span { font-family: var(--font-mono); font-size: .85rem; background: var(--surface-2); border: 1px solid var(--border); border-radius: .45rem; padding: .4rem .6rem; text-align: center; letter-spacing: .05em; }
+.qr-box { width: 140px; height: 140px; border-radius: .6rem; border: 1px solid var(--border-strong); background:
+  conic-gradient(from 0deg, var(--surface-2) 25%, var(--surface) 0 50%, var(--surface-2) 0 75%, var(--surface) 0) 0 0/20px 20px; display: grid; place-items: center; color: var(--text-faint); font-size: .72rem; flex: none; }
+
+/* ============================================================
+   STYLEGUIDE PAGE (reference scaffolding)
+   ============================================================ */
+.sg-head { position: sticky; top: 0; z-index: 1030; background: color-mix(in oklch, var(--surface) 85%, transparent); backdrop-filter: saturate(180%) blur(14px); border-bottom: 1px solid var(--border); }
+.sg-head__row { display: flex; align-items: center; gap: 1rem; height: 56px; padding: 0 1.5rem; max-width: 1200px; margin: 0 auto; }
+.sg-nav { display: flex; gap: .25rem; overflow-x: auto; scrollbar-width: none; }
+.sg-nav::-webkit-scrollbar { display: none; }
+.sg-nav a { padding: .35rem .6rem; border-radius: .5rem; font-size: .84rem; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+.sg-nav a:hover { background: var(--surface-hover); color: var(--text); }
+.sg-section { padding-top: 2.5rem; margin-top: 1rem; border-top: 1px solid var(--border); }
+.sg-section:first-of-type { border-top: none; }
+.sg-section > h2 { font-size: 1.25rem; margin: 0 0 .35rem; }
+.sg-section > .lead { color: var(--text-muted); font-size: .9rem; margin: 0 0 1.5rem; }
+.sg-sub { font-size: .74rem; text-transform: uppercase; letter-spacing: .07em; font-weight: 700; color: var(--text-faint); margin: 1.5rem 0 .8rem; }
+.sg-panel { background: var(--surface); border: 1px solid var(--border); border-radius: .85rem; padding: 1.5rem; box-shadow: var(--shadow-sm); }
+.sg-row { display: flex; flex-wrap: wrap; gap: .8rem; align-items: center; }
+.sw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .8rem; }
+.sw { border: 1px solid var(--border); border-radius: .7rem; overflow: hidden; background: var(--surface); }
+.sw__chip { height: 58px; }
+.sw__meta { padding: .5rem .6rem; }
+.sw__name { font-size: .78rem; font-weight: 650; }
+.sw__var { font-family: var(--font-mono); font-size: .7rem; color: var(--text-faint); }
+.type-row { display: flex; align-items: baseline; gap: 1rem; padding: .6rem 0; border-bottom: 1px solid var(--border); }
+.type-row:last-child { border-bottom: none; }
+.type-row .tag { font-family: var(--font-mono); font-size: .72rem; color: var(--text-faint); width: 120px; flex: none; }
+.spec { font-family: var(--font-mono); font-size: .74rem; color: var(--text-faint); }
+
+/* ============================================================
+   LEGAL / DOCUMENT PAGES (imprint, privacy, terms)
+   ============================================================ */
+.doc-bar {
+  position: sticky; top: 0; z-index: 1030;
+  background: color-mix(in oklch, var(--surface) 85%, transparent);
+  backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+.doc-bar__row { display: flex; align-items: center; gap: 1rem; height: 56px; padding: 0 1.5rem; max-width: 880px; margin: 0 auto; }
+.doc { max-width: 760px; margin: 0 auto; padding: 2.5rem 1.5rem 3rem; }
+.doc__eyebrow { font-size: .72rem; text-transform: uppercase; letter-spacing: .09em; font-weight: 700; color: var(--text-faint); }
+.doc h1 { font-size: 2rem; margin: .4rem 0 .6rem; }
+.doc__meta { color: var(--text-faint); font-size: .85rem; margin-bottom: 2.5rem; }
+.doc h2 { font-size: 1.15rem; margin: 2.2rem 0 .7rem; }
+.doc h3 { font-size: .98rem; margin: 1.5rem 0 .5rem; }
+.doc p, .doc li { color: var(--text-muted); font-size: .94rem; line-height: 1.7; }
+.doc p { margin: 0 0 1rem; }
+.doc ul { margin: 0 0 1rem; padding-left: 1.2rem; }
+.doc li { margin-bottom: .35rem; }
+.doc a { color: var(--accent-text); font-weight: 600; }
+.doc strong { color: var(--text); font-weight: 650; }
+.doc__toc { background: var(--surface-2); border: 1px solid var(--border); border-radius: .7rem; padding: 1rem 1.2rem; margin-bottom: 2.5rem; }
+.doc__toc div { font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; font-weight: 700; color: var(--text-faint); margin-bottom: .5rem; }
+.doc__toc ol { margin: 0; padding-left: 1.1rem; }
+.doc__toc li { font-size: .88rem; margin-bottom: .25rem; }
+.doc__note { background: var(--warn-soft); border-radius: .6rem; padding: .7rem .85rem; display: flex; gap: .55rem; align-items: flex-start; margin-bottom: 2rem; }
+.doc__note .bi { color: var(--warn-text); }
+.doc__note span { font-size: .82rem; color: var(--warn-text); line-height: 1.5; }
+
 /* responsive */
 @media (max-width: 1120px) {
   .tw-hide-md { display: none !important; }
@@ -765,16 +920,3 @@ body:has(> .tw-footer) > main { flex: 1 0 auto; width: 100% }
   .tw-page { padding: 1.25rem 1rem 3rem; }
   .tw-switcher__name { max-width: 96px; }
 }
-
-/* Configuration page */
-.cfg-h { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; color: var(--text-faint); margin: 0 0 .6rem; display: flex; align-items: center; gap: .5rem; }
-.cfg-h .bi { font-size: .95rem; color: var(--text-muted); }
-.cfg-row { display: flex; justify-content: space-between; gap: 1rem; padding: .6rem 0; border-bottom: 1px solid var(--border); font-size: .875rem; align-items: center; }
-.cfg-row:first-child { padding-top: 0; }
-.cfg-row:last-child { border-bottom: none; padding-bottom: 0; }
-.cfg-row .k { color: var(--text-muted); display: flex; align-items: center; gap: .5rem; }
-.cfg-row .v { font-weight: 600; text-align: right; }
-.hook-block + .hook-block { margin-top: .85rem; }
-.hook-label { font-size: .8rem; font-weight: 700; color: var(--text); margin-bottom: .35rem; display: flex; align-items: center; gap: .4rem; }
-.hook-label .tw-tag { font-weight: 500; }
-.rel-pill { font-family: var(--font-mono); font-size: .74rem; background: var(--accent-soft); color: var(--accent-text); border: 1px solid var(--accent-border); border-radius: .4rem; padding: .1rem .4rem; }

@@ -1,0 +1,23 @@
+<?php $this->layout('layout::blank', ['title' => $title ?? null]) ?>
+
+<header class="doc-bar">
+    <div class="doc-bar__row">
+        <?= $this->fetch('partial::logo') ?>
+        <a href="<?= $this->url('home') ?>" class="btn btn-ghost btn-sm ms-2">
+            <i class="bi bi-arrow-left"></i> <?= $this->e($this->t('Back to app')) ?>
+        </a>
+        <button class="tw-iconbtn ms-auto" id="auth-theme-btn" title="<?= $this->e($this->t('Change theme')) ?>">
+            <i id="auth-theme-ico" class="bi bi-moon-stars"></i>
+        </button>
+    </div>
+</header>
+
+<main class="doc">
+    <?= $this->section('content') ?>
+</main>
+
+<footer class="tw-footer">
+    <a href="<?= $this->url('imprint') ?>"><?= $this->e($this->t('Imprint')) ?></a>
+    <a href="<?= $this->url('privacy-policy') ?>"><?= $this->e($this->t('Privacy Policy')) ?></a>
+    <a href="<?= $this->url('terms-and-conditions') ?>"><?= $this->e($this->t('Terms & Conditions')) ?></a>
+</footer>
