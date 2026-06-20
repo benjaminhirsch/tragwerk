@@ -5,16 +5,31 @@
     // each button reloads the panel via HTMX and the active state is rendered
     // server-side. No JS involved there.
 
-    // Active highlight on log selection
+    // Active highlight on log selection. The list (#log-items) is periodically swapped by
+    // SSE/polling, which drops the JS-applied class — so we remember the selected entry by its
+    // (unique) hx-get URL and re-apply the active state after each swap.
+    var selectedKey = null;
+
+    function markActive() {
+        document.querySelectorAll('#log-items .log-item').forEach(function (i) {
+            i.classList.toggle('active', selectedKey !== null && i.getAttribute('hx-get') === selectedKey);
+        });
+    }
+
     document.addEventListener('click', function (e) {
         var item = e.target.closest('#log-items .log-item');
         if (!item) {
             return;
         }
-        document.querySelectorAll('#log-items .log-item').forEach(function (i) {
-            i.classList.remove('active');
-        });
-        item.classList.add('active');
+        selectedKey = item.getAttribute('hx-get');
+        markActive();
+    });
+
+    document.body.addEventListener('htmx:afterSwap', function (evt) {
+        var t = evt.detail && evt.detail.target;
+        if (t && (t.id === 'log-items' || t.querySelector('#log-items') !== null || t.closest('#log-items') !== null)) {
+            markActive();
+        }
     });
 
     function terminalText() {
