@@ -12,7 +12,6 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Tragwerk\Application\Helper\ListHelper;
-use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
@@ -24,7 +23,6 @@ final readonly class ToDefaultTeam implements MiddlewareInterface
     public function __construct(
         private UrlHelper $urlHelper,
         private TeamRepository $teamRepository,
-        private ResponseRenderer $responseRenderer,
     ) {
     }
 
@@ -40,7 +38,9 @@ final readonly class ToDefaultTeam implements MiddlewareInterface
         )->current();
 
         if (! $team instanceof Team) {
-            return $this->responseRenderer->render($request, 'page::error/404', [], 404);
+            // A logged-in user without any team (e.g. seeded account, or default-team creation
+            // failed) lands on team creation rather than a dead-end error page.
+            return new RedirectResponse($this->urlHelper->generate('team.create'));
         }
 
         return new RedirectResponse($this->urlHelper->generate('team.show', [
