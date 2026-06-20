@@ -71,7 +71,9 @@ final readonly class EditHandler implements RequestHandlerInterface
                     UserIdentifier::fromString($user->getIdentity()),
                 ));
 
-                return new RedirectResponse($this->urlHelper->generate('team'));
+                return new RedirectResponse(
+                    $this->urlHelper->generate('team.show', ['id' => $team->id->toString()]),
+                );
             }
         }
 

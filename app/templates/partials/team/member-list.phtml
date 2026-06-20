@@ -8,35 +8,65 @@ $usersToRemove = $usersToRemove ?? [];
 $teamId        = $teamId ?? '';
 $ownerId       = $ownerId ?? '';
 ?>
-<div id="tw-member-list" class="d-flex flex-column gap-2 mb-4">
+<div id="tw-member-list" class="tw-table-wrap">
     <?php foreach ($usersToRemove as $removedId): ?>
-    <input type="hidden" name="usersToRemove[]" value="<?= $this->e($removedId) ?>">
-    <?php endforeach; ?>
+        <input type="hidden" name="usersToRemove[]" value="<?= $this->e($removedId) ?>">
+    <?php endforeach ?>
 
-    <?php foreach ($members as $member): ?>
-    <div class="tw-member-row d-flex gap-2 align-items-center">
-        <div class="flex-grow-1">
-            <span class="form-control-plaintext">
-                <?= $this->e($member->fullName()) ?>
-                <span class="text-muted small">&lt;<?= $this->e($member->email) ?>&gt;</span>
-                <?php if ($member->id->toString() === $ownerId): ?>
-                    <span class="badge text-bg-primary ms-1"><?= $this->t('Owner') ?></span>
-                <?php endif; ?>
-            </span>
-        </div>
-        <?php if ($member->id->toString() !== $ownerId): ?>
-        <?= $this->fetch('partial::input/button', [
-            'classes'   => 'btn btn-outline-danger flex-shrink-0',
-            'icon'      => 'bi bi-x-lg',
-            'hxPost'    => $this->url('team.members.remove', ['id' => $teamId]),
-            'hxTarget'  => '#tw-member-list',
-            'hxSwap'    => 'outerHTML',
-            'hxInclude' => 'closest form',
-            'hxVals'    => '{"userId": "' . $this->e($member->id->toString()) . '"}',
-            'label'     => '',
-            'type'      => 'button',
-        ]) ?>
-        <?php endif; ?>
-    </div>
-    <?php endforeach; ?>
+    <table class="tw-table">
+        <thead>
+        <tr>
+            <th><?= $this->e($this->t('Member')) ?></th>
+            <th><?= $this->e($this->t('Role')) ?></th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php if ($members === []): ?>
+            <tr>
+                <td colspan="3" class="tw-cell-muted"><?= $this->e($this->t('No members in this team.')) ?></td>
+            </tr>
+        <?php else: ?>
+            <?php foreach ($members as $member): ?>
+                <?php $isOwner = $member->id->toString() === $ownerId ?>
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="tw-ava" style="width:32px;height:32px;border-radius:8px;font-size:.72rem;background:<?= $member->abbreviation()->oklch() ?>">
+                                <?= $this->e($member->abbreviation()->forString()) ?>
+                            </span>
+                            <div>
+                                <div class="tw-cell-strong"><?= $this->e($member->fullName()) ?></div>
+                                <div class="text-faint" style="font-size:.76rem"><?= $this->e($member->email) ?></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <?php if ($isOwner): ?>
+                            <span class="tw-badge tw-badge--purple"><span class="tw-dot"></span><?= $this->e($this->t('Owner')) ?></span>
+                        <?php else: ?>
+                            <span class="tw-badge tw-badge--neutral"><span class="tw-dot"></span><?= $this->e($this->t('Member')) ?></span>
+                        <?php endif ?>
+                    </td>
+                    <td class="text-end">
+                        <?php if (! $isOwner): ?>
+                            <?= $this->fetch('partial::input/button', [
+                                'classes'   => 'btn btn-ghost btn-sm btn-del',
+                                'icon'      => 'bi bi-trash3',
+                                'title'     => $this->t('Remove member'),
+                                'hxPost'    => $this->url('team.members.remove', ['id' => $teamId]),
+                                'hxTarget'  => '#tw-member-list',
+                                'hxSwap'    => 'outerHTML',
+                                'hxInclude' => 'closest form',
+                                'hxVals'    => '{"userId": "' . $this->e($member->id->toString()) . '"}',
+                                'label'     => '',
+                                'type'      => 'button',
+                            ]) ?>
+                        <?php endif ?>
+                    </td>
+                </tr>
+            <?php endforeach ?>
+        <?php endif ?>
+        </tbody>
+    </table>
 </div>

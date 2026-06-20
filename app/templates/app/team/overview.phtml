@@ -11,6 +11,15 @@ $this->layout('layout::default', [
         ),
 ]) ?>
 
+<?php $this->start('pageHeadButtons') ?>
+<?= $this->fetch('partial::link', [
+        'label'   => $this->t('Settings'),
+        'href'    => $this->url('team.edit', ['id' => $this->activeTeam()->id->toString()]),
+        'icon'    => 'bi bi-gear',
+        'classes' => 'btn btn-outline-secondary btn-sm',
+]) ?>
+<?php $this->stop() ?>
+
 <?= $this->fetch('partial::card/container', [
         [
             'label' => $this->t('Active projects'),
