@@ -49,6 +49,7 @@ use function file_put_contents;
 use function glob;
 use function implode;
 use function is_dir;
+use function iterator_to_array;
 use function mkdir;
 use function rtrim;
 use function usort;
@@ -279,7 +280,7 @@ final readonly class BuildEnvironment
 
         // Inherited vars: iterate from farthest ancestor to closest so closer ancestor wins
         $ancestorOrder   = array_flip($ancestors);
-        $sortedInherited = $inheritedVars;
+        $sortedInherited = iterator_to_array($inheritedVars, false);
         usort($sortedInherited, static function ($a, $b) use ($ancestorOrder): int {
             return ($ancestorOrder[$b->branch] ?? PHP_INT_MAX) <=> ($ancestorOrder[$a->branch] ?? PHP_INT_MAX);
         });
