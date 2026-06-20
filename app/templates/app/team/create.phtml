@@ -8,7 +8,7 @@
  */
 
 $this->layout('layout::default', [
-        'pageType' =>  $this->activeTeam()->name,
+        'pageType' =>  $this->activeTeam()?->name ?? $this->t('Teams'),
         'pageTitle' => $this->t('Create team'),
         'pageSubTitle' => $this->t('A new team contains its own projects which own environments, servers and registries'),
         'wide' => false,

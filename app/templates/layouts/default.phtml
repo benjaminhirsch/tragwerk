@@ -11,6 +11,7 @@ $this->layout('layout::blank') ?>
         <span class="tw-crumb-sep tw-hide-sm" style="margin:0 .2rem">/</span>
 
         <div class="tw-crumbs">
+            <?php if($this->activeTeam() !== null): ?>
             <div class="dropdown">
                 <button type="button" class="tw-switcher" aria-haspopup="menu">
                     <span class="tw-ava" style="background:<?= $this->activeTeam()->abbreviation()->oklch() ?>"><?= $this->e($this->activeTeam()->abbreviation()->forString()) ?></span>
@@ -34,7 +35,13 @@ $this->layout('layout::blank') ?>
                     <li><a class="dropdown-item" href="<?= $this->url('team.create')?>"><i class="bi bi-plus-lg"></i> <?= $this->t('Create team') ?></a></li>
                 </ul>
             </div>
-            <?php if($this->activeProject() !== null): ?>
+            <?php else: ?>
+                <a class="tw-switcher" href="<?= $this->url('team.create') ?>">
+                    <i class="bi bi-plus-lg"></i>
+                    <span class="tw-switcher__name"><?= $this->e($this->t('Create team')) ?></span>
+                </a>
+            <?php endif ?>
+            <?php if($this->activeTeam() !== null && $this->activeProject() !== null): ?>
             <span class="tw-crumb-sep">/</span>
                 <div class="dropdown">
                     <button type="button" class="tw-switcher" aria-haspopup="menu">
@@ -136,6 +143,8 @@ $this->layout('layout::blank') ?>
     <!-- Contextual tabs (static links) -->
 
     <?php
+
+    $tabs = [];
 
     if ($this->activeTeam() !== null) {
         $tabs = [
