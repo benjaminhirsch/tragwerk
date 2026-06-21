@@ -1,0 +1,53 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @var string      $branch
+ * @var string      $host
+ * @var string      $placeholder
+ * @var string|null $error
+ */
+
+$this->layout('layout::default', [
+    'wide' => false,
+    'pageType' => $this->activeTeam()->name . ' / ' . $this->activeEnvironment(),
+    'pageTitle' => $this->t('Add domain'),
+    'pageSubTitle' => $this->t('Connect a custom domain and map it to a routing placeholder.'),
+]) ?>
+
+<form action="<?= $this->url('domain.create') ?>" method="post" class="tw-card">
+    <div class="tw-card__body d-flex flex-column gap-3">
+        <?= $this->fetch('partial::input/csrf') ?>
+
+        <?php if ($error !== null): ?>
+            <div class="alert alert-danger mb-0" role="alert"><?= $this->e($this->t($error)) ?></div>
+        <?php endif ?>
+
+        <div>
+            <label class="form-label" for="host"><?= $this->t('Domain') ?></label>
+            <input id="host" name="host" type="text" autocomplete="off" autofocus
+                   class="form-control mono<?= $error !== null ? ' is-invalid' : '' ?>"
+                   placeholder="<?= $this->e($this->t('e.g. shop.my-company.com')) ?>"
+                   value="<?= $this->e($host) ?>">
+            <div class="field-help"><?= $this->t('Without https:// — hostname only.') ?></div>
+        </div>
+
+        <div>
+            <label class="form-label" for="placeholder"><?= $this->t('Target placeholder') ?></label>
+            <input id="placeholder" name="placeholder" type="text" autocomplete="off"
+                   class="form-control mono"
+                   pattern="[a-z][a-z0-9_-]*"
+                   value="<?= $this->e($placeholder !== '' ? $placeholder : 'default') ?>">
+            <div class="field-help">
+                <?= $this->t('Corresponds to the placeholder in config.xml, e.g.') ?>
+                <code>{default}</code>, <code>{frontend}</code>, <code>{api}</code>
+            </div>
+        </div>
+    </div>
+
+    <div class="tw-card__head" style="border-top:1px solid var(--border);border-bottom:none;justify-content:flex-end;gap:.6rem">
+        <a href="<?= $this->url('domain') ?>" class="btn btn-ghost"><?= $this->t('Cancel') ?></a>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> <?= $this->t('Add domain') ?></button>
+    </div>
+</form>
