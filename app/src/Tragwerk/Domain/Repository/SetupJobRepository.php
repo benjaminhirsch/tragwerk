@@ -31,6 +31,15 @@ interface SetupJobRepository
      */
     public function getCompletedServerIds(array $serverIds): array;
 
+    /**
+     * Most recent setup jobs across the given servers, newest first.
+     *
+     * @param list<string> $serverIds
+     *
+     * @return list<SetupJob>
+     */
+    public function getRecentByServers(array $serverIds, int $limit): array;
+
     /** @throws EntityCreationFailed */
     public function create(SetupJob $entity): void;
 

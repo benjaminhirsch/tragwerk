@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tragwerk\Domain\Repository;
 
+use DateTimeImmutable;
 use Tragwerk\Domain\Entity\DeployJob;
 use Tragwerk\Domain\Entity\Entity;
 use Tragwerk\Domain\Enum\DeployJobStatus;
@@ -23,6 +24,27 @@ interface DeployJobRepository
     public function getById(DeployJobIdentifier $id): Entity;
 
     public function getLatestByProjectAndBranch(ProjectIdentifier $projectId, string $branch): DeployJob|null;
+
+    /** Latest deploy job for the project across all branches, or null. */
+    public function getLatestByProject(ProjectIdentifier $projectId): DeployJob|null;
+
+    /**
+     * Counts deploy jobs for the given projects created since the given moment.
+     *
+     * @param list<string> $projectIds
+     *
+     * @return array{total: int, completed: int, failed: int}
+     */
+    public function countByProjectsSince(array $projectIds, DateTimeImmutable $since): array;
+
+    /**
+     * Most recent deploy jobs across the given projects, newest first.
+     *
+     * @param list<string> $projectIds
+     *
+     * @return list<DeployJob>
+     */
+    public function getRecentByProjects(array $projectIds, int $limit): array;
 
     /**
      * Returns all pending and running jobs, ordered oldest-first (i.e. deploy order).

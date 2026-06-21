@@ -47,6 +47,35 @@ final class SetupJobRepository extends GenericRepository implements SetupJobRepo
         }
     }
 
+    /**
+     * @param list<string> $serverIds
+     *
+     * @return list<SetupJob>
+     */
+    #[Override]
+    public function getRecentByServers(array $serverIds, int $limit): array
+    {
+        if ($serverIds === []) {
+            return [];
+        }
+
+        $qb = $this->connection->createQueryBuilder();
+        $qb->select('*')
+            ->from(EntityHelper::getDbTableName(EntityType::SETUP_JOB))
+            ->where($qb->expr()->in('server_id', ':server_ids'))
+            ->setParameter('server_ids', $serverIds, ArrayParameterType::STRING)
+            ->orderBy('created_at', 'DESC')
+            ->setMaxResults($limit);
+
+        try {
+            $rows = $qb->executeQuery()->fetchAllAssociative();
+
+            return array_map(fn (array $row) => $this->map($row, SetupJob::class), $rows);
+        } catch (MappingError | Exception) {
+            return [];
+        }
+    }
+
     #[Override]
     public function getCompletedServerIds(array $serverIds): array
     {

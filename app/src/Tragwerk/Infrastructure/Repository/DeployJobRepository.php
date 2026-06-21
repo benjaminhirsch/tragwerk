@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tragwerk\Infrastructure\Repository;
 
 use CuyZ\Valinor\Mapper\MappingError;
+use DateTimeImmutable;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Exception;
 use Override;
@@ -21,6 +22,7 @@ use Tragwerk\Domain\ValueObject\TimestampImmutable;
 use Tragwerk\Infrastructure\Helper\EntityHelper;
 
 use function array_map;
+use function is_numeric;
 use function is_string;
 
 final class DeployJobRepository extends GenericRepository implements DeployJobRepositoryInterface
@@ -47,6 +49,107 @@ final class DeployJobRepository extends GenericRepository implements DeployJobRe
             return $this->map($row, DeployJob::class);
         } catch (MappingError | Exception $e) {
             throw EntityHydrationFailed::create(DeployJob::class, $e);
+        }
+    }
+
+    #[Override]
+    public function getLatestByProject(ProjectIdentifier $projectId): DeployJob|null
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb->select('*')
+            ->from(EntityHelper::getDbTableName(EntityType::DEPLOY_JOB))
+            ->where($qb->expr()->eq('project_id', ':project_id'))
+            ->setParameter('project_id', $projectId->toString())
+            ->orderBy('created_at', 'DESC')
+            ->setMaxResults(1);
+
+        try {
+            $row = $qb->executeQuery()->fetchAssociative();
+            if ($row === false) {
+                return null;
+            }
+
+            return $this->map($row, DeployJob::class);
+        } catch (MappingError | Exception $e) {
+            throw EntityHydrationFailed::create(DeployJob::class, $e);
+        }
+    }
+
+    /**
+     * @param list<string> $projectIds
+     *
+     * @return array{total: int, completed: int, failed: int}
+     */
+    #[Override]
+    public function countByProjectsSince(array $projectIds, DateTimeImmutable $since): array
+    {
+        $empty = ['total' => 0, 'completed' => 0, 'failed' => 0];
+        if ($projectIds === []) {
+            return $empty;
+        }
+
+        try {
+            $row = $this->connection->fetchAssociative(
+                'SELECT
+                    COUNT(*) AS total,
+                    COUNT(*) FILTER (WHERE status = :completed) AS completed,
+                    COUNT(*) FILTER (WHERE status = :failed) AS failed
+                 FROM ' . EntityHelper::getDbTableName(EntityType::DEPLOY_JOB) . '
+                 WHERE project_id IN (:project_ids) AND created_at >= :since',
+                [
+                    'project_ids' => $projectIds,
+                    'since'       => $since->format('Y-m-d H:i:s.uP'),
+                    'completed'   => DeployJobStatus::Completed->value,
+                    'failed'      => DeployJobStatus::Failed->value,
+                ],
+                ['project_ids' => ArrayParameterType::STRING],
+            );
+        } catch (Exception) {
+            return $empty;
+        }
+
+        if ($row === false) {
+            return $empty;
+        }
+
+        return [
+            'total'     => $this->toInt($row['total']),
+            'completed' => $this->toInt($row['completed']),
+            'failed'    => $this->toInt($row['failed']),
+        ];
+    }
+
+    private function toInt(mixed $value): int
+    {
+        return is_numeric($value) ? (int) $value : 0;
+    }
+
+    /**
+     * @param list<string> $projectIds
+     *
+     * @return list<DeployJob>
+     */
+    #[Override]
+    public function getRecentByProjects(array $projectIds, int $limit): array
+    {
+        if ($projectIds === []) {
+            return [];
+        }
+
+        $qb = $this->connection->createQueryBuilder();
+        $qb->select('*')
+            ->from(EntityHelper::getDbTableName(EntityType::DEPLOY_JOB))
+            ->where($qb->expr()->in('project_id', ':project_ids'))
+            ->setParameter('project_ids', $projectIds, ArrayParameterType::STRING)
+            ->orderBy('created_at', 'DESC')
+            ->setMaxResults($limit);
+
+        try {
+            $rows = $qb->executeQuery()->fetchAllAssociative();
+
+            return array_map(fn (array $row) => $this->map($row, DeployJob::class), $rows);
+        } catch (MappingError | Exception) {
+            return [];
         }
     }
 

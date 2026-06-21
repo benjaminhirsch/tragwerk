@@ -11,6 +11,10 @@ if (($numerical ?? false) === true) {
     $formatter = 'datetime-numerical';
 }
 
+if (($relative ?? false) === true) {
+    $formatter = 'relative';
+}
+
 ?>
 <time datetime="<?= $this->e($date->format($dateFormat)) ?>" title="<?= $this->e($date->format($dateFormat)) ?>" data-formatter="<?= $formatter ?>"
       <?php if(($classes ?? null) !== null): ?>class="<?= $classes ?>"<?php endif ?>>

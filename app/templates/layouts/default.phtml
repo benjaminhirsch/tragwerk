@@ -169,6 +169,14 @@ $this->layout('layout::blank') ?>
             ],
             [
                 'route' => [
+                    'routeName' => 'credential',
+                    'routeParams' => [],
+                ],
+                'label' => $this->t('Credentials'),
+                'icon' => 'bi bi-key',
+            ],
+            [
+                'route' => [
                     'routeName' => 'registry',
                     'routeParams' => [],
                 ],
@@ -354,6 +362,27 @@ $this->layout('layout::blank') ?>
                         minute: '2-digit'
                     },
                 );
+        });
+
+        initElements('time[data-formatter="relative"]', (element) => {
+            const diffSeconds = Math.round((Date.now() - new Date(element.dateTime).getTime()) / 1000);
+            const rtf = new Intl.RelativeTimeFormat(document.documentElement.lang, {numeric: 'auto'});
+            const units = [
+                ['year', 31536000],
+                ['month', 2592000],
+                ['day', 86400],
+                ['hour', 3600],
+                ['minute', 60],
+            ];
+
+            for (const [unit, seconds] of units) {
+                if (Math.abs(diffSeconds) >= seconds) {
+                    element.textContent = rtf.format(-Math.round(diffSeconds / seconds), unit);
+                    return;
+                }
+            }
+
+            element.textContent = rtf.format(-diffSeconds, 'second');
         });
     })();
 </script>
