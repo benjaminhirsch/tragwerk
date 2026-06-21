@@ -1,0 +1,57 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @var string                                                                              $branch
+ * @var list<array{time: string, level: string, logger: string, msg: string, raw: string}> $entries
+ * @var string|null                                                                         $error
+ */
+
+$badgeType = static fn (string $level): string => match ($level) {
+    'error', 'fatal', 'panic' => 'danger',
+    'warn', 'warning'         => 'warn',
+    'info'                    => 'info',
+    default                   => 'neutral',
+};
+?>
+<div hx-get="<?= $this->e($this->url('log.tail')) ?>"
+     hx-trigger="every 10s"
+     hx-target="#log-tail"
+     hx-swap="innerHTML">
+
+    <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="tw-cell-muted" style="font-size:.8rem">
+            <?= count($entries) ?> <?= $this->e($this->t('entries')) ?> &middot; <?= $this->e($this->t('last 500 lines')) ?>
+        </span>
+    </div>
+
+    <?php if ($error !== null): ?>
+        <div class="tw-card"><div class="tw-card__body d-flex align-items-center gap-2 text-muted-2" style="font-size:.85rem">
+            <i class="bi bi-exclamation-triangle" style="color:var(--warn)"></i>
+            <span><?= $this->e($error) ?></span>
+        </div></div>
+    <?php elseif ($entries === []): ?>
+        <div class="tw-card"><div class="tw-card__body text-muted-2" style="font-size:.85rem">
+            <i class="bi bi-info-circle me-1"></i><?= $this->e($this->t('No log entries.')) ?>
+        </div></div>
+    <?php else: ?>
+        <div class="tw-table-wrap" style="max-height:600px;overflow-y:auto">
+            <table class="tw-table mono" style="font-size:.78rem">
+                <tbody>
+                <?php foreach (array_reverse($entries) as $entry): ?>
+                    <tr>
+                        <td class="tw-cell-muted text-nowrap" style="width:5rem"><?= $this->e($entry['time']) ?></td>
+                        <td class="text-nowrap" style="width:5rem"><?= $this->fetch('partial::badge', [
+                            'type'  => $badgeType($entry['level']),
+                            'label' => $entry['level'],
+                        ]) ?></td>
+                        <td class="tw-cell-muted text-nowrap" style="max-width:10rem;overflow:hidden;text-overflow:ellipsis"><?= $this->e($entry['logger']) ?></td>
+                        <td style="word-break:break-all"><?= $this->e($entry['msg']) ?></td>
+                    </tr>
+                <?php endforeach ?>
+                </tbody>
+            </table>
+        </div>
+    <?php endif ?>
+</div>
