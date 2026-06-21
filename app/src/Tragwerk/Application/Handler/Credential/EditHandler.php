@@ -28,6 +28,7 @@ use Tragwerk\Domain\ValueObject\UserIdentifier;
 
 use function assert;
 use function is_string;
+use function iterator_to_array;
 
 final readonly class EditHandler implements RequestHandlerInterface
 {
@@ -68,9 +69,7 @@ final readonly class EditHandler implements RequestHandlerInterface
                     UserIdentifier::fromString($user->getIdentity()),
                 ));
 
-                $url = $this->urlHelper->generate('credential.show', ['id' => $credential->id->toString()]);
-
-                return new RedirectResponse($url);
+                return new RedirectResponse($this->urlHelper->generate('credential'));
             }
         }
 
@@ -82,13 +81,14 @@ final readonly class EditHandler implements RequestHandlerInterface
             ]);
         }
 
-        $queryParams = $request->getQueryParams();
-
         return $this->renderer->render($request, 'page::credential/edit', [
             'credential'    => $credential,
             'validationBag' => $validationBag,
             'isAssigned'    => $this->serverRepository->isCredentialAssigned($credential->id),
-            'deleteBlocked' => isset($queryParams['assigned']),
+            'servers'       => iterator_to_array(
+                $this->serverRepository->getAll(credentialId: $credential->id),
+                false,
+            ),
         ]);
     }
 
