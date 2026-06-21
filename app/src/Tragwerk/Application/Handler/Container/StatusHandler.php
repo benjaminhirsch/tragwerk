@@ -7,6 +7,7 @@ namespace Tragwerk\Application\Handler\Container;
 use phpseclib3\Crypt\PublicKeyLoader;
 use phpseclib3\Exception\NoKeyLoadedException;
 use phpseclib3\Net\SFTP;
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -23,9 +24,12 @@ use function assert;
 use function escapeshellarg;
 use function explode;
 use function is_array;
+use function is_numeric;
 use function is_string;
 use function json_decode;
+use function md5;
 use function preg_replace;
+use function str_replace;
 use function strtolower;
 use function substr;
 use function trim;
@@ -36,29 +40,42 @@ final readonly class StatusHandler implements RequestHandlerInterface
         private ResponseRenderer $renderer,
         private CredentialRepository $credentialRepository,
         private ServerRepository $serverRepository,
+        private CacheItemPoolInterface $cache,
     ) {
     }
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $containers = [];
-        $error      = null;
-        $project    = $request->getAttribute('active_project');
+        $project = $request->getAttribute('active_project');
         assert($project instanceof Project);
 
         $branch = $request->getAttribute('active_environment');
         assert(is_string($branch));
 
-        try {
-            $containers = $this->fetchContainers($project, $branch);
-        } catch (Throwable $e) {
-            $error = $e->getMessage();
+        // Cache the SSH result briefly. The pool holds a blocking lock per key, so
+        // concurrent pollers (multiple tabs/users) wait for a single SSH call instead
+        // of each opening their own connection.
+        $item = $this->cache->getItem('containers_' . $project->id->toString() . '_' . md5($branch));
+
+        if ($item->isHit()) {
+            /** @var array{containers: list<array<string, mixed>>, error: string|null} $result */
+            $result = $item->get();
+        } else {
+            try {
+                $result = ['containers' => $this->fetchContainers($project, $branch), 'error' => null];
+                $item->set($result)->expiresAfter(15);
+            } catch (Throwable $e) {
+                $result = ['containers' => [], 'error' => $e->getMessage()];
+                $item->set($result)->expiresAfter(5);
+            }
+
+            $this->cache->save($item);
         }
 
         return $this->renderer->render($request, 'page::container/status', [
             'branch'     => $branch,
-            'containers' => $containers,
-            'error'      => $error,
+            'containers' => $result['containers'],
+            'error'      => $result['error'],
         ]);
     }
 
@@ -105,7 +122,72 @@ final readonly class StatusHandler implements RequestHandlerInterface
         );
         $output         = trim(is_string($raw) ? $raw : '');
 
-        return $this->parseContainers($output);
+        $containers = $this->parseContainers($output);
+
+        $statsRaw = $sftp->exec("docker stats --no-stream --format '{{json .}}' 2>/dev/null");
+        $stats    = $this->parseStats(trim(is_string($statsRaw) ? $statsRaw : ''));
+
+        foreach ($containers as &$container) {
+            $name = is_string($container['Name'] ?? null) ? $container['Name'] : '';
+            $stat = $stats[$name] ?? null;
+
+            $container['Cpu']      = $stat['cpu'] ?? null;
+            $container['Mem']      = $stat['mem'] ?? null;
+            $container['MemUsage'] = $stat['memUsage'] ?? '';
+        }
+
+        unset($container);
+
+        return $containers;
+    }
+
+    /**
+     * Parses `docker stats --format '{{json .}}'` output into a map keyed by container name.
+     *
+     * @return array<string, array{cpu: float|null, mem: float|null, memUsage: string}>
+     */
+    private function parseStats(string $output): array
+    {
+        if ($output === '') {
+            return [];
+        }
+
+        $stats = [];
+
+        foreach (explode("\n", $output) as $line) {
+            $line = trim($line);
+
+            if ($line === '' || $line[0] !== '{') {
+                continue;
+            }
+
+            /** @var array<string, mixed>|null $obj */
+            $obj = json_decode($line, true);
+
+            if (! is_array($obj) || ! isset($obj['Name']) || ! is_string($obj['Name'])) {
+                continue;
+            }
+
+            $stats[$obj['Name']] = [
+                'cpu'      => $this->toPercent($obj['CPUPerc'] ?? null),
+                'mem'      => $this->toPercent($obj['MemPerc'] ?? null),
+                'memUsage' => is_string($obj['MemUsage'] ?? null) ? $obj['MemUsage'] : '',
+            ];
+        }
+
+        return $stats;
+    }
+
+    /** Parses a docker stats percentage like "0.50%" into a float, or null if not numeric. */
+    private function toPercent(mixed $value): float|null
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $value = str_replace('%', '', trim($value));
+
+        return is_numeric($value) ? (float) $value : null;
     }
 
     /** @return list<array<string, mixed>> */
