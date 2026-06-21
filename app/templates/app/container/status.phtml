@@ -63,21 +63,31 @@
                     'type' => $badgeCss,
                     'label' => $badgeLabel,
                 ]) ?></td>
-            <td class="tw-hide-sm" data-sort="38">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="tw-bar" style="width:58px">
-                        <span style="width:38%;background:var(--accent)"></span>
+            <?php $cpu = $container['Cpu'] ?? null; ?>
+            <td class="tw-hide-sm" data-sort="<?= $cpu !== null ? $this->e((string) $cpu) : '-1' ?>">
+                <?php if ($cpu !== null): ?>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="tw-bar" style="width:58px">
+                            <span style="width:<?= $this->e((string) min(100, max(0, (int) round($cpu)))) ?>%;background:var(--accent)"></span>
+                        </div>
+                        <span class="tw-cell-muted mono" style="font-size:.74rem"><?= $this->e((string) round($cpu, 1)) ?>%</span>
                     </div>
-                    <span class="tw-cell-muted mono" style="font-size:.74rem">38%</span>
-                </div>
+                <?php else: ?>
+                    <span class="tw-cell-muted mono" style="font-size:.74rem">—</span>
+                <?php endif ?>
             </td>
-            <td class="tw-hide-sm" data-sort="61">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="tw-bar" style="width:58px">
-                        <span style="width:61%;background:var(--purple)"></span>
+            <?php $mem = $container['Mem'] ?? null; ?>
+            <td class="tw-hide-sm" data-sort="<?= $mem !== null ? $this->e((string) $mem) : '-1' ?>">
+                <?php if ($mem !== null): ?>
+                    <div class="d-flex align-items-center gap-2" title="<?= $this->e((string) ($container['MemUsage'] ?? '')) ?>">
+                        <div class="tw-bar" style="width:58px">
+                            <span style="width:<?= $this->e((string) min(100, max(0, (int) round($mem)))) ?>%;background:var(--purple)"></span>
+                        </div>
+                        <span class="tw-cell-muted mono" style="font-size:.74rem"><?= $this->e((string) round($mem, 1)) ?>%</span>
                     </div>
-                    <span class="tw-cell-muted mono" style="font-size:.74rem">61%</span>
-                </div>
+                <?php else: ?>
+                    <span class="tw-cell-muted mono" style="font-size:.74rem">—</span>
+                <?php endif ?>
             </td>
             <td class="tw-hide-sm tw-cell-muted"><?= $this->e($status) ?></td>
         </tr>

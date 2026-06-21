@@ -50,6 +50,7 @@ use Tragwerk\Factory\Event\DispatcherFactory;
 use Tragwerk\Factory\EventListener\Project\DeleteProjectDataFactory;
 use Tragwerk\Factory\EventListener\SshKey\UpdateAuthorizedKeysFactory;
 use Tragwerk\Factory\Git\BareRepositoryFactory;
+use Tragwerk\Factory\Handler\Container\StatusHandlerFactory;
 use Tragwerk\Factory\Handler\Project\DownloadBuildHandlerFactory;
 use Tragwerk\Factory\Handler\Project\TabHandlerFactory;
 use Tragwerk\Factory\Mercure\MercurePublisherFactory;
@@ -94,6 +95,7 @@ final readonly class ConfigProvider
                     Invoker::class        => Factory\Invoker\InvokerFactory::class,
                     BareRepository::class => BareRepositoryFactory::class,
                     Application\Handler\Project\TabHandler::class         => TabHandlerFactory::class,
+                    Application\Handler\Container\StatusHandler::class    => StatusHandlerFactory::class,
                     Application\Handler\Project\DownloadBuildHandler::class => DownloadBuildHandlerFactory::class,
                     Application\Queue\Handler\BuildEnvironment::class         => BuildEnvironmentFactory::class,
                     Application\Cli\Command\DeployEnvironmentCommand::class   => DeployEnvironmentCommandFactory::class,
