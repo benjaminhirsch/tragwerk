@@ -32,4 +32,5 @@ return static function (Application $app, MiddlewareFactory $factory, ContainerI
     new Routes\Integration($middlewareFactory)->registerRoutes($routeCollector);
     new Routes\Metrics($middlewareFactory)->registerRoutes($routeCollector);
     new Routes\Log($middlewareFactory)->registerRoutes($routeCollector);
+    new Routes\Domain($middlewareFactory)->registerRoutes($routeCollector);
 };
