@@ -162,7 +162,7 @@ $liveUrl = $this->url('server.metrics.live', ['id' => $server->id->toString()]);
             <div class="cfg-row"><span class="k"><?= $this->t('SSH port') ?></span><span class="v mono"><?= $this->e((string) $server->port) ?></span></div>
             <div class="cfg-row"><span class="k"><?= $this->t('Credential') ?></span><span class="v">
                 <?php if ($credential !== null): ?>
-                    <?= $this->fetch('partial::link', ['href' => $this->url('credential.show', ['id' => $credential->id->toString()]), 'label' => $credential->name]) ?>
+                    <?= $this->fetch('partial::link', ['href' => $this->url('credential.edit', ['id' => $credential->id->toString()]), 'label' => $credential->name]) ?>
                 <?php else: ?><span class="text-body-secondary">—</span><?php endif ?>
             </span></div>
             <div class="cfg-row"><span class="k"><?= $this->t('Docker') ?></span><span class="v mono" style="font-size:.8rem"><?= $server->dockerVersion !== null ? $this->e($server->dockerVersion) : '—' ?></span></div>

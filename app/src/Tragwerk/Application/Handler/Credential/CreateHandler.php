@@ -58,9 +58,7 @@ final readonly class CreateHandler implements RequestHandlerInterface
                     $credentialId,
                 ));
 
-                $url = $this->urlHelper->generate('credential.show', ['id' => $credentialId->toString()]);
-
-                return new RedirectResponse($url);
+                return new RedirectResponse($this->urlHelper->generate('credential'));
             }
         }
 
