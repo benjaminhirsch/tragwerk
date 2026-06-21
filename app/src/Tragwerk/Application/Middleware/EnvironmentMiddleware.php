@@ -70,10 +70,6 @@ final readonly class EnvironmentMiddleware implements MiddlewareInterface
             $session->set(self::SESSION_KEY, $request->getQueryParams()['id'] ?? null);
         }
 
-        if ($route->getMatchedRouteName() === 'project.show') {
-            $session->unset(self::SESSION_KEY);
-        }
-
         $sessionEnvironmentId = $session->get(self::SESSION_KEY);
 
         if (is_string($sessionEnvironmentId) && array_key_exists($sessionEnvironmentId, $environmentMap)) {
