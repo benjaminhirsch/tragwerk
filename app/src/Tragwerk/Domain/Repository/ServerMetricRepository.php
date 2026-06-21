@@ -15,6 +15,9 @@ interface ServerMetricRepository
     /** @return list<ServerMetricSample> */
     public function getRange(ServerIdentifier $serverId, DateTimeImmutable $from, DateTimeImmutable $to): array;
 
+    /** Most recent sample for the server, or null if none recorded. */
+    public function getLatest(ServerIdentifier $serverId): ServerMetricSample|null;
+
     /** @return int Number of pruned rows */
     public function pruneOlderThan(DateTimeImmutable $threshold): int;
 }

@@ -1,6 +1,12 @@
 <?php
 
+use Tragwerk\Application\ReadModel\ActivityEntry;
 use Tragwerk\Domain\Entity\Project;
+use Tragwerk\Domain\Enum\DeployJobStatus;
+
+/** @var array<string, DeployJobStatus|null> $deployStatus */
+/** @var array<string, \Tragwerk\Domain\ValueObject\TimestampImmutable|null> $lastDeploy */
+/** @var list<ActivityEntry> $activity */
 
 $this->layout('layout::default', [
         'pageType' => $this->t('Team overview'),
@@ -20,37 +26,19 @@ $this->layout('layout::default', [
 ]) ?>
 <?php $this->stop() ?>
 
-<?= $this->fetch('partial::card/container', [
-        [
-            'label' => $this->t('Active projects'),
-            'labelIcon' => 'bi bi-box-seam',
-            'value' => 1,
-            'delta' => '2 this month',
-            'deltaIcon' => 'bi bi-arrow-up-short',
-            'deltaColorVar' => '--ok-text',
-        ],
-        [
-            'label' => $this->t('Environments'),
-            'labelIcon' => 'bi bi-diagram-3',
-            'value' => 19,
-            'text' => '4 in preview branches',
-        ],
-        [
-            'label' => $this->t('Deployments / 24 h'),
-            'labelIcon' => 'bi bi-rocket-takeoff',
-            'value' => 37,
-            'delta' => '98.1 % successful',
-            'deltaIcon' => 'bi bi-check2-circle',
-            'deltaColorVar' => '--ok-text',
-        ],
-        [
-            'label' => $this->t('Server utilization'),
-            'labelIcon' => 'bi bi-hdd-stack',
-            'value' => 61,
-            'bar' => 61,
-        ],
-    ]
-) ?>
+<?php
+$statusBadge = static function (?DeployJobStatus $status): array {
+    return match ($status) {
+        DeployJobStatus::Completed => ['tw-badge--ok', 'Active'],
+        DeployJobStatus::Failed    => ['tw-badge--danger', 'Failed'],
+        DeployJobStatus::Running   => ['tw-badge--building', 'Deploying'],
+        DeployJobStatus::Pending   => ['tw-badge--neutral', 'Pending'],
+        default                    => ['tw-badge--neutral', 'Never deployed'],
+    };
+};
+?>
+
+<?= $this->fetch('partial::card/container', $cards) ?>
 
 <div class="row g-4">
     <div class="col-lg-8">
@@ -71,7 +59,10 @@ $this->layout('layout::default', [
                 <tbody id="proj-rows">
                 <?php
                 /** @var $project Project */
-                foreach ($projects as $project): ?>
+                foreach ($projects as $project):
+                    $id = $project->id->toString();
+                    [$badgeClass, $badgeLabel] = $statusBadge($deployStatus[$id] ?? null);
+                    ?>
                     <tr>
                         <td>
                             <div class="d-flex align-items-center gap-2">
@@ -85,73 +76,42 @@ $this->layout('layout::default', [
                             </div>
                         </td>
                         <td class="tw-hide-sm tw-cell-muted">PHP 8.5</td>
-                        <td><span class="tw-badge tw-badge--ok"><span class="tw-dot"></span>Active</span></td>
-                        <td class="tw-hide-sm tw-cell-muted">12m ago</td>
+                        <td><span class="tw-badge <?= $badgeClass ?>"><span class="tw-dot"></span><?= $this->e($this->t($badgeLabel)) ?></span></td>
+                        <td class="tw-hide-sm tw-cell-muted">
+                            <?php if (($lastDeploy[$id] ?? null) !== null): ?>
+                                <?= $this->fetch('partial::datetime', ['date' => $lastDeploy[$id], 'relative' => true]) ?>
+                            <?php else: ?>
+                                &mdash;
+                            <?php endif ?>
+                        </td>
                     </tr>
                 <?php endforeach ?>
                 </tbody>
             </table>
         </div>
     </div>
-    <div class="col-lg-4" data-om-id="1dfe22bb:169">
-        <h2 style="font-size:1.05rem;margin:0 0 .5rem" data-om-id="1dfe22bb:170">Activity</h2>
-        <div class="tw-card" data-om-id="1dfe22bb:171">
-            <div class="tw-card__body" style="padding:0.4rem 0" data-om-id="1dfe22bb:172">
-                <ul class="list-unstyled m-0" id="activity-feed" data-om-id="1dfe22bb:173">
+    <div class="col-lg-4">
+        <h2 style="font-size:1.05rem;margin:0 0 .5rem">Activity</h2>
+        <div class="tw-card">
+            <div class="tw-card__body" style="padding:0.4rem 0">
+                <ul class="list-unstyled m-0" id="activity-feed">
+                    <?php if ($activity === []): ?>
+                        <li class="d-flex gap-3 px-3 py-2 text-faint" style="font-size:.85rem"><?= $this->e($this->t('No activity yet.')) ?></li>
+                    <?php endif ?>
+                    <?php
+                    /** @var ActivityEntry $entry */
+                    foreach ($activity as $entry): ?>
                     <li class="d-flex gap-3 px-3 py-2" style="border-bottom:1px solid var(--border)">
-        <span class="tw-iconbtn" style="background:var(--surface-2);flex:none;width:30px;height:30px">
-          <i class="bi bi-rocket-takeoff" style="color:var(--accent);font-size:.85rem"></i>
-        </span>
+                        <span class="tw-iconbtn" style="background:var(--surface-2);flex:none;width:30px;height:30px">
+                          <i class="<?= $this->e($entry->icon) ?>" style="color:var(<?= $this->e($entry->iconColorVar) ?>);font-size:.85rem"></i>
+                        </span>
                         <div class="flex-grow-1" style="min-width:0">
-                            <div style="font-size:.85rem;line-height:1.35"><b>CI · main</b> deployed <b>storefront</b> to <span class="mono">production</span></div>
-                            <div class="text-faint" style="font-size:.75rem">12 min ago</div>
+                            <div style="font-size:.85rem;line-height:1.35"><b><?= $this->e($entry->subject) ?></b> <?= $this->e($entry->detail) ?></div>
+                            <div class="text-faint" style="font-size:.75rem"><?= $this->fetch('partial::datetime', ['date' => $entry->occurredAt, 'relative' => true]) ?></div>
                         </div>
                     </li>
-                    <li class="d-flex gap-3 px-3 py-2" style="border-bottom:1px solid var(--border)">
-        <span class="tw-iconbtn" style="background:var(--surface-2);flex:none;width:30px;height:30px">
-          <i class="bi bi-git" style="color:var(--purple);font-size:.85rem"></i>
-        </span>
-                        <div class="flex-grow-1" style="min-width:0">
-                            <div style="font-size:.85rem;line-height:1.35"><b>M. Sayed</b> pushed to <span class="mono">feature/checkout-v2</span></div>
-                            <div class="text-faint" style="font-size:.75rem">18 min ago</div>
-                        </div>
-                    </li>
-                    <li class="d-flex gap-3 px-3 py-2" style="border-bottom:1px solid var(--border)">
-        <span class="tw-iconbtn" style="background:var(--surface-2);flex:none;width:30px;height:30px">
-          <i class="bi bi-exclamation-triangle" style="color:var(--warn);font-size:.85rem"></i>
-        </span>
-                        <div class="flex-grow-1" style="min-width:0">
-                            <div style="font-size:.85rem;line-height:1.35"><b>System</b> high load on <b>us-app-01</b></div>
-                            <div class="text-faint" style="font-size:.75rem">42 min ago</div>
-                        </div>
-                    </li>
-                    <li class="d-flex gap-3 px-3 py-2" style="border-bottom:1px solid var(--border)">
-        <span class="tw-iconbtn" style="background:var(--surface-2);flex:none;width:30px;height:30px">
-          <i class="bi bi-person-plus" style="color:var(--ok);font-size:.85rem"></i>
-        </span>
-                        <div class="flex-grow-1" style="min-width:0">
-                            <div style="font-size:.85rem;line-height:1.35"><b>L. Brandt</b> invited <b>Ada Reyes</b></div>
-                            <div class="text-faint" style="font-size:.75rem">1 hr ago</div>
-                        </div>
-                    </li>
-                    <li class="d-flex gap-3 px-3 py-2" style="border-bottom:1px solid var(--border)">
-        <span class="tw-iconbtn" style="background:var(--surface-2);flex:none;width:30px;height:30px">
-          <i class="bi bi-archive" style="color:var(--accent);font-size:.85rem"></i>
-        </span>
-                        <div class="flex-grow-1" style="min-width:0">
-                            <div style="font-size:.85rem;line-height:1.35"><b>CI · build</b> pushed <span class="mono">acme-production:1.8.2</span></div>
-                            <div class="text-faint" style="font-size:.75rem">2 hr ago</div>
-                        </div>
-                    </li>
-                    <li class="d-flex gap-3 px-3 py-2" style="border-bottom: medium;">
-        <span class="tw-iconbtn" style="background:var(--surface-2);flex:none;width:30px;height:30px">
-          <i class="bi bi-pause-circle" style="color:var(--neutral);font-size:.85rem"></i>
-        </span>
-                        <div class="flex-grow-1" style="min-width:0">
-                            <div style="font-size:.85rem;line-height:1.35"><b>J. Okoro</b> paused <span class="mono">hotfix/cart</span></div>
-                            <div class="text-faint" style="font-size:.75rem">5 hr ago</div>
-                        </div>
-                    </li></ul>
+                    <?php endforeach ?>
+                </ul>
             </div>
         </div>
     </div>

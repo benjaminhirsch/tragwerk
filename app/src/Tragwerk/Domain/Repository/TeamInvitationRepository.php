@@ -8,6 +8,7 @@ use Tragwerk\Domain\Entity\TeamInvitation;
 use Tragwerk\Domain\Exception\Repository\EntityCreationFailed;
 use Tragwerk\Domain\Exception\Repository\EntityDeletionFailed;
 use Tragwerk\Domain\Exception\Repository\EntityNotFound;
+use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\TeamInvitationIdentifier;
 
 interface TeamInvitationRepository
@@ -17,6 +18,13 @@ interface TeamInvitationRepository
      * @throws EntityCreationFailed
      */
     public function getByToken(string $token): TeamInvitation;
+
+    /**
+     * Most recent invitations for the team, newest first.
+     *
+     * @return list<TeamInvitation>
+     */
+    public function getRecentByTeam(TeamIdentifier $teamId, int $limit): array;
 
     /** @throws EntityCreationFailed */
     public function create(TeamInvitation $invitation): void;

@@ -74,6 +74,27 @@ final readonly class ServerMetricRepository implements ServerMetricRepositoryInt
     }
 
     #[Override]
+    public function getLatest(ServerIdentifier $serverId): ServerMetricSample|null
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb->select('*')
+            ->from(self::TABLE)
+            ->where($qb->expr()->eq('server_id', ':sid'))
+            ->orderBy('sampled_at', 'DESC')
+            ->setMaxResults(1)
+            ->setParameter('sid', $serverId->toString());
+
+        /** @var list<RowShape> $rows */
+        $rows = $qb->executeQuery()->fetchAllAssociative();
+
+        if ($rows === []) {
+            return null;
+        }
+
+        return $this->hydrate($rows[0]);
+    }
+
+    #[Override]
     public function pruneOlderThan(DateTimeImmutable $threshold): int
     {
         return (int) $this->connection->executeStatement(
