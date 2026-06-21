@@ -1,0 +1,16 @@
+<?php
+
+$this->layout('layout::default', [
+    'pageType' =>  $this->activeTeam()->name . ' / ' . $this->activeEnvironment(),
+    'pageTitle' => $this->t('Logs'),
+    'pageSubTitle' => $this->t('Live FrankenPHP runtime log of the running application container in this environment.'),
+]) ?>
+
+<div id="log-tail"
+     hx-get="<?= $this->e($this->url('log.tail')) ?>"
+     hx-trigger="load"
+     hx-target="#log-tail"
+     hx-swap="innerHTML">
+    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+    <?= $this->t('Loading...') ?>
+</div>
