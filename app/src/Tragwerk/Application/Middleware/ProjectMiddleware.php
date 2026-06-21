@@ -68,10 +68,6 @@ final readonly class ProjectMiddleware implements MiddlewareInterface
             $session->set(self::SESSION_KEY, $request->getAttribute('id'));
         }
 
-        if ($route->getMatchedRouteName() === 'team.show') {
-            $session->unset(self::SESSION_KEY);
-        }
-
         $sessionProjectId = $session->get(self::SESSION_KEY);
 
         if (is_string($sessionProjectId) && array_key_exists($sessionProjectId, $projectMap)) {

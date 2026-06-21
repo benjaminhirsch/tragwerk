@@ -66,6 +66,9 @@ $this->layout('layout::blank') ?>
                         <li><a class="dropdown-item" href="<?= $this->url('project.create')?>"><i class="bi bi-plus-lg"></i> <?= $this->t('Create project') ?></a></li>
                     </ul>
                 </div>
+            <?php else: ?>
+                <span class="tw-crumb-sep">/</span>
+                <a class="dropdown-item tw-switcher" href="<?= $this->url('project.create')?>"><i class="bi bi-plus-lg"></i> <?= $this->t('Create project') ?></a>
             <?php endif ?>
             <?php if($this->activeEnvironment() !== null): ?>
             <span class="tw-crumb-sep">/</span>
@@ -156,22 +159,12 @@ $this->layout('layout::blank') ?>
                 'label' => $this->t('Overview'),
                 'icon' => 'bi bi-grid-1x2',
             ],
-           [
-                'route' => [
-                    'routeName' => 'project',
-                    'routeParams' => [],
-                ],
-                'label' => $this->t('Projects'),
-                'count' => 6,
-                'icon' => 'bi bi-box-seam',
-            ],
             [
                 'route' => [
                     'routeName' => 'server',
                     'routeParams' => [],
                 ],
                 'label' => $this->t('Servers'),
-                'count' => 6,
                 'icon' => 'bi bi-hdd-stack',
             ],
             [
@@ -180,101 +173,67 @@ $this->layout('layout::blank') ?>
                     'routeParams' => [],
                 ],
                 'label' => $this->t('Registries'),
-                'count' => 1,
                 'icon' => 'bi bi-archive',
             ],
         ];
     }
 
     if ($this->activeProject() !== null) {
-        $tabs = [
-            [
-                'route' => [
-                    'routeName' => 'project.show',
-                    'routeParams' => ['id' => $this->activeProject()->id],
+        $tabs = array_merge($tabs, [
+                [
+                        'route' => [
+                                'routeName' => 'integration',
+                                'routeParams' => [],
+                        ],
+                        'label' => $this->t('Integrations'),
+                        'icon' => 'bi bi-link-45deg',
                 ],
-                'label' => $this->t('Overview'),
-                'icon' => 'bi bi-grid-1x2',
-            ],
-            [
-                'route' => [
-                    'routeName' => 'environment',
-                    'routeParams' => [],
-                ],
-                'label' => $this->t('Environments'),
-                'icon' => 'bi bi-diagram-3',
-                'count' => 2
-            ],
-            [
-                'route' => [
-                    'routeName' => 'integration',
-                    'routeParams' => [],
-                ],
-                'label' => $this->t('Integrations'),
-                'icon' => 'bi bi-link-45deg',
-            ],
-            [
-                'route' => [
-                    'routeName' => 'metric',
-                    'routeParams' => [],
-                ],
-                'label' => $this->t('Metrics'),
-                'icon' => 'bi bi-graph-up',
-            ],
-        ];
+        ]);
     }
 
     if ($this->activeEnvironment() !== null) {
-        $tabs = [
-            [
-                'route' => [
-                    'routeName' => 'environment.show',
-                    'queryParams' => ['id' => $this->activeEnvironment()],
+        $tabs = array_merge($tabs, [
+                [
+                        'route' => [
+                                'routeName' => 'container',
+                                'routeParams' => [],
+                        ],
+                        'label' => $this->t('Containers'),
+                        'icon' => 'bi bi-boxes',
                 ],
-                'label' => $this->t('Overview'),
-                'icon' => 'bi bi-grid-1x2',
-            ],
-            [
-                'route' => [
-                    'routeName' => 'container',
-                    'routeParams' => [],
+                [
+                        'route' => [
+                                'routeName' => 'deployment',
+                                'routeParams' => [],
+                        ],
+                        'label' => $this->t('Deployments'),
+                        'icon' => 'bi bi-rocket-takeoff',
                 ],
-                'label' => $this->t('Containers'),
-                'icon' => 'bi bi-boxes',
-            ],
-            [
-                'route' => [
-                    'routeName' => 'deployment',
-                    'routeParams' => [],
+                [
+                        'route' => [
+                                'routeName' => 'variable',
+                                'routeParams' => [],
+                        ],
+                        'label' => $this->t('Variables'),
+                        'icon' => 'bi bi-sliders',
                 ],
-                'label' => $this->t('Deployments'),
-                'icon' => 'bi bi-rocket-takeoff',
-            ],
-            [
-                'route' => [
-                    'routeName' => 'variable',
-                    'routeParams' => [],
+                [
+                        'route' => [
+                                'routeName' => 'metric',
+                                'routeParams' => [],
+                        ],
+                        'label' => $this->t('Metrics'),
+                        'icon' => 'bi bi-graph-up',
                 ],
-                'label' => $this->t('Variables'),
-                'icon' => 'bi bi-sliders',
-            ],
-            [
-                'route' => [
-                        'routeName' => 'metric',
-                        'routeParams' => [],
+                [
+                        'route' => [
+                                'routeName' => 'configuration',
+                                'routeParams' => [],
+                        ],
+                        'label' => $this->t('Configuration'),
+                        'icon' => 'bi bi-file-earmark-code',
                 ],
-                'label' => $this->t('Metrics'),
-                'icon' => 'bi bi-graph-up',
-            ],
-            [
-                'route' => [
-                    'routeName' => 'configuration',
-                    'routeParams' => [],
-                ],
-                'label' => $this->t('Configuration'),
-                'icon' => 'bi bi-file-earmark-code',
-            ],
-        ];
+        ]);
     }
     ?>
 
@@ -282,7 +241,6 @@ $this->layout('layout::blank') ?>
         <?php foreach ($tabs as $tab): ?>
             <a class="tw-tab<?= ($this->routeDoesMatch($tab['route']['routeName'])) ? ' active' : '' ?>" href="<?= $this->url(...$tab['route']) ?>">
                 <i class="<?= $tab['icon'] ?>"></i> <?= $tab['label'] ?>
-                <?= (isset($tab['count']) ? '<span class="tw-tab__count">' . $tab['count'] . '</span>' : '') ?>
             </a>
         <?php endforeach ?>
     </nav>

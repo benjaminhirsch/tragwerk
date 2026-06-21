@@ -12,7 +12,7 @@ $this->layout('layout::default', [
     'pageType'     => $this->activeProject()->name,
     'pageTitle'    => $this->t('Integrations'),
     'pageSubTitle' => $this->t('Git forge webhook that triggers deployments on push.'),
-    'wide'         => false,
+    'wide'         => true,
 ]) ?>
 
 <?php if ($integration === null): ?>

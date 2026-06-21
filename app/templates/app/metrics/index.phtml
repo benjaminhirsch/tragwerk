@@ -21,7 +21,7 @@ $subtitle = '<span class="tw-live"><span class="tw-dot"></span>' . $this->e($thi
 
 $this->layout('layout::default', [
     'wide'         => true,
-    'pageType'     => $this->activeProject()->name . ' / Metrics',
+        'pageType' => $this->activeTeam()->name . ' / ' . $this->activeEnvironment(),
     'pageTitle'    => $this->t('Metrics'),
     'pageSubTitle' => '<span class="d-inline-flex align-items-center gap-2 flex-wrap">' . $subtitle . '</span>',
 ]);
