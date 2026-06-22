@@ -1,0 +1,90 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @var \Tragwerk\Domain\Entity\Project $project
+ * @var list<array{name: string, isRoot: bool, hasParent: bool, status: string|null, commit: string|null, deployedAt: \Tragwerk\Domain\ValueObject\TimestampImmutable|null}> $environments
+ */
+
+$statusBadge = static function (?string $status): array {
+    return match ($status) {
+        'completed' => ['tw-badge--ok', 'Running'],
+        'failed'    => ['tw-badge--danger', 'Failed'],
+        'running'   => ['tw-badge--info tw-badge--building', 'Building'],
+        'pending'   => ['tw-badge--neutral', 'Pending'],
+        default     => ['tw-badge--neutral', 'Never deployed'],
+    };
+};
+?>
+<div class="tw-table-wrap">
+    <table class="tw-table">
+        <thead>
+        <tr>
+            <th class="sortable"><?= $this->e($this->t('Environment')) ?></th>
+            <th><?= $this->e($this->t('Type')) ?></th>
+            <th><?= $this->e($this->t('Status')) ?></th>
+            <th class="tw-hide-sm"><?= $this->e($this->t('Commit')) ?></th>
+            <th class="tw-hide-sm"><?= $this->e($this->t('Deploy')) ?></th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($environments as $i => $env): ?>
+            <?php [$badgeCss, $badgeLabel] = $statusBadge($env['status']); ?>
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi <?= $env['isRoot'] ? 'bi-shield-check' : 'bi-git' ?>" style="color:var(--text-faint)"></i>
+                        <a class="tw-cell-strong mono" style="color:var(--text)" href="<?= $this->url('environment.show', queryParams: ['id' => $env['name']]) ?>"><?= $this->e($env['name']) ?></a>
+                    </div>
+                </td>
+                <td>
+                    <?php if ($env['isRoot']): ?>
+                        <span class="tw-badge tw-badge--purple"><span class="tw-dot"></span><?= $this->e($this->t('Production')) ?></span>
+                    <?php else: ?>
+                        <span class="tw-badge tw-badge--neutral"><span class="tw-dot"></span><?= $this->e($this->t('Preview')) ?></span>
+                    <?php endif ?>
+                </td>
+                <td><span class="tw-badge <?= $badgeCss ?>"><span class="tw-dot"></span><?= $this->e($this->t($badgeLabel)) ?></span></td>
+                <td class="tw-hide-sm mono tw-cell-muted"><?= $this->e($env['commit'] ?? '—') ?></td>
+                <td class="tw-hide-sm tw-cell-muted">
+                    <?php if ($env['deployedAt'] !== null): ?>
+                        <?= $this->fetch('partial::datetime', ['date' => $env['deployedAt'], 'relative' => true]) ?>
+                    <?php else: ?>&mdash;<?php endif ?>
+                </td>
+                <td class="text-end">
+                    <div class="d-flex justify-content-end gap-1">
+                        <button type="button" class="btn btn-ghost btn-sm" data-bs-toggle="modal" data-bs-target="#tw-redeploy-modal-<?= $i ?>" title="<?= $this->e($this->t('Redeploy')) ?>"><i class="bi bi-arrow-clockwise"></i></button>
+                        <?php if ($env['hasParent']): ?>
+                            <button type="button" class="btn btn-ghost btn-sm" data-bs-toggle="modal" data-bs-target="#tw-sync-modal-<?= $i ?>" title="<?= $this->e($this->t('Sync data from parent')) ?>"><i class="bi bi-arrow-down-up"></i></button>
+                        <?php endif ?>
+                    </div>
+                    <?= $this->fetch('partial::modal', [
+                        'id'            => 'tw-redeploy-modal-' . $i,
+                        'header'        => $this->t('Redeploy environment'),
+                        'body'          => $this->t('Redeploy {branch}? This triggers a new deployment of the latest commit on this branch.', ['branch' => '<b class="mono">' . $this->e($env['name']) . '</b>']),
+                        'actionUrl'     => $this->url('project.environment.redeploy', ['id' => $project->id->toString()]),
+                        'actionLabel'   => $this->t('Redeploy'),
+                        'actionClasses' => 'btn btn-primary',
+                        'actionIcon'    => 'bi bi-arrow-clockwise',
+                        'extraFields'   => ['branch' => $env['name']],
+                    ]) ?>
+                    <?php if ($env['hasParent']): ?>
+                        <?= $this->fetch('partial::modal', [
+                            'id'            => 'tw-sync-modal-' . $i,
+                            'header'        => $this->t('Sync data from parent'),
+                            'body'          => $this->t('Sync data into {branch} from its parent branch? Existing data volumes in this environment will be overwritten.', ['branch' => '<b class="mono">' . $this->e($env['name']) . '</b>']),
+                            'actionUrl'     => $this->url('project.environment.sync-data', ['id' => $project->id->toString()]),
+                            'actionLabel'   => $this->t('Sync data'),
+                            'actionClasses' => 'btn btn-danger',
+                            'actionIcon'    => 'bi bi-arrow-down-up',
+                            'extraFields'   => ['branch' => $env['name']],
+                        ]) ?>
+                    <?php endif ?>
+                </td>
+            </tr>
+        <?php endforeach ?>
+        </tbody>
+    </table>
+</div>
