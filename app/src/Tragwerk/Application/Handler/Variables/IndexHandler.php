@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace Tragwerk\Application\Handler\Variables;
 
-use AppendIterator;
+use ArrayIterator;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Tragwerk\Application\Helper\ListHelper;
 use Tragwerk\Application\Response\ResponseRenderer;
+use Tragwerk\Application\Service\BranchAncestorResolver;
+use Tragwerk\Domain\Entity\EnvVar;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Repository\EnvVarRepository;
-use Tragwerk\Infrastructure\Git\BareRepository;
 
 use function assert;
 use function is_string;
@@ -23,7 +24,7 @@ final readonly class IndexHandler implements RequestHandlerInterface
     public function __construct(
         private ResponseRenderer $renderer,
         private EnvVarRepository $envVarRepository,
-        private BareRepository $bareRepository,
+        private BranchAncestorResolver $branchAncestorResolver,
     ) {
     }
 
@@ -35,18 +36,18 @@ final readonly class IndexHandler implements RequestHandlerInterface
         $activeBranch = $request->getAttribute('active_environment');
         assert(is_string($activeBranch));
 
+        $ancestors     = $this->branchAncestorResolver->getAncestors($activeProject->id->toString(), $activeBranch);
         $branchVars    = $this->envVarRepository->findByBranch($activeProject->id, $activeBranch);
-        $inheritedVars = $this->envVarRepository->findInheritedFromAncestors(
-            $activeProject->id,
-            $this->bareRepository->getBranchParents($activeProject->id->toString()),
-        );
+        $inheritedVars = $this->envVarRepository->findInheritedFromAncestors($activeProject->id, $ancestors);
 
-        $vars = new AppendIterator();
-        $vars->append($branchVars);
-        $vars->append($inheritedVars);
+        /** @var list<EnvVar> $vars */
+        $vars = [
+            ...iterator_to_array($branchVars, false),
+            ...iterator_to_array($inheritedVars, false),
+        ];
 
         return $this->renderer->render($request, 'page::variable/index', [
-            'vars' => iterator_to_array(ListHelper::sort($vars, 'key')),
+            'vars' => iterator_to_array(ListHelper::sort(new ArrayIterator($vars), 'key'), false),
         ]);
     }
 }

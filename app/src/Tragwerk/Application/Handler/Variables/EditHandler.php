@@ -98,7 +98,6 @@ final readonly class EditHandler implements RequestHandlerInterface
 
         try {
             $var = $this->envVarRepository->getById(EnvVarIdentifier::fromString($routeId));
-            assert($var instanceof EnvVar);
 
             if ($var->projectId->toString() !== $activeProject->id->toString()) {
                 return null;

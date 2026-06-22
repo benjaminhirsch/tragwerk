@@ -12,13 +12,11 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Entity\Team;
-use Tragwerk\Domain\Repository\TeamRepository;
 
 final readonly class ToActiveTeam implements MiddlewareInterface
 {
     public function __construct(
         private UrlHelper $urlHelper,
-        private TeamRepository $teamRepository,
         private ResponseRenderer $responseRenderer,
     ) {
     }
