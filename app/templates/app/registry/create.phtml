@@ -1,64 +1,81 @@
-<?php $this->layout('layout::default', ['title' => $this->t('Add registry')]) ?>
+<?php
 
-<h1><?= $this->t('Add registry') ?></h1>
+declare(strict_types=1);
 
-<?php $this->start('card-content') ?>
-    <form action="<?= $this->url('registry.create') ?>" method="post">
+/** @var \Tragwerk\Application\Validation\ValidationBag|null $validationBag */
+
+$this->layout('layout::default', [
+    'pageType'     => $this->activeTeam()->name,
+    'pageTitle'    => $this->t('Add registry'),
+    'pageSubTitle' => $this->t('Private or public container image registry for the team.'),
+    'wide'         => false,
+]);
+?>
+
+<form class="tw-card" action="<?= $this->url('registry.create') ?>" method="post">
+    <div class="tw-card__body d-flex flex-column gap-3">
         <?= $this->fetch('partial::input/csrf') ?>
+
         <?= $this->fetch('partial::input/text', [
-            'id'        => 'name',
-            'label'     => $this->t('Name'),
-            'autofocus' => 'autofocus',
+            'id'         => 'name',
+            'label'      => $this->t('Name'),
+            'autofocus'  => 'autofocus',
             'validation' => $validationBag ?? null,
         ]) ?>
+
         <?= $this->fetch('partial::input/text', [
             'id'          => 'url',
             'label'       => $this->t('Registry URL'),
             'placeholder' => 'docker.io',
             'validation'  => $validationBag ?? null,
         ]) ?>
+
         <?= $this->fetch('partial::input/text', [
             'id'          => 'repository',
             'label'       => $this->t('Repository'),
             'placeholder' => 'benjaminhirsch/myapp',
             'validation'  => $validationBag ?? null,
         ]) ?>
+
         <?= $this->fetch('partial::input/text', [
             'id'         => 'username',
             'label'      => $this->t('Username'),
             'validation' => $validationBag ?? null,
         ]) ?>
+
         <?= $this->fetch('partial::input/text', [
             'id'         => 'password',
             'label'      => $this->t('Password / Token'),
             'type'       => 'password',
             'validation' => $validationBag ?? null,
         ]) ?>
-        <hr>
-        <p class="text-body-secondary small mb-2">
-            <?= $this->t('Image pruning is supported for Docker Hub (<code>docker.io</code>) and OCI-compatible registries. AWS ECR, Azure ACR and Quay.io are not supported.') ?>
-        </p>
-        <div class="mb-3 form-check">
-            <input type="checkbox" class="form-check-input" id="pruningEnabled" name="pruningEnabled" value="1">
-            <label class="form-check-label" for="pruningEnabled">
-                <?= $this->t('Enable image pruning after deploy') ?>
-            </label>
+
+        <div class="prop-switch">
+            <input id="pruningEnabled" name="pruningEnabled" value="1" class="form-check-input" type="checkbox">
+            <div>
+                <label class="ttl d-block" for="pruningEnabled"><?= $this->t('Enable image pruning after deploy') ?></label>
+                <div class="dsc"><?= $this->t('Supported for Docker Hub (docker.io) and OCI-compatible registries. AWS ECR, Azure ACR and Quay.io are not supported.') ?></div>
+            </div>
         </div>
+
         <?= $this->fetch('partial::input/text', [
-            'id'          => 'keepTags',
-            'name'        => 'keepTags',
-            'label'       => $this->t('Tags to keep'),
-            'placeholder' => '10',
-            'defaultValue'       => '10',
-            'validation'  => $validationBag ?? null,
+            'id'           => 'keepTags',
+            'name'         => 'keepTags',
+            'label'        => $this->t('Tags to keep'),
+            'placeholder'  => '10',
+            'defaultValue' => '10',
+            'validation'   => $validationBag ?? null,
         ]) ?>
-        <div class="d-flex gap-2">
-            <?= $this->fetch('partial::input/button', ['label' => $this->t('Save')]) ?>
-            <?= $this->fetch('partial::link', [
-                'label'   => $this->t('Cancel'),
-                'href'    => $this->url('registry'),
-                'classes' => 'btn btn-secondary',
-            ]) ?>
-        </div>
-    </form>
-<?php $this->stop() ?>
+    </div>
+    <div class="tw-card__head justify-content-end border-top">
+        <?= $this->fetch('partial::link', [
+            'label'   => $this->t('Cancel'),
+            'href'    => $this->url('registry'),
+            'classes' => 'btn btn-ghost',
+        ]) ?>
+        <?= $this->fetch('partial::input/button', [
+            'label' => $this->t('Save'),
+            'icon'  => 'bi bi-check-lg',
+        ]) ?>
+    </div>
+</form>

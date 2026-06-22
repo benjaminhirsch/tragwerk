@@ -1,38 +1,50 @@
 <?php
+
+declare(strict_types=1);
+
 /**
- * @var \Tragwerk\Domain\Entity\Registry          $registry
+ * @var \Tragwerk\Domain\Entity\Registry              $registry
  * @var \Tragwerk\Application\Validation\ValidationBag $validationBag
- * @var bool                                      $isAssigned
+ * @var bool                                          $isAssigned
  */
-$this->layout('layout::default', ['title' => $this->t('Edit registry')]);
+
+$this->layout('layout::default', [
+    'pageType'     => $this->activeTeam()->name,
+    'pageTitle'    => $this->t('Edit registry'),
+    'pageSubTitle' => $this->t('Update connection and pruning settings for this registry.'),
+    'wide'         => false,
+]);
 ?>
 
-<h1><?= $this->e($registry->name) ?></h1>
-
-<?php $this->start('card-content') ?>
-    <form action="<?= $this->url('registry.edit', ['id' => $registry->id->toString()]) ?>" method="post">
+<form class="tw-card" action="<?= $this->url('registry.edit', ['id' => $registry->id->toString()]) ?>" method="post">
+    <div class="tw-card__body d-flex flex-column gap-3">
         <?= $this->fetch('partial::input/csrf') ?>
+
         <?= $this->fetch('partial::input/text', [
-            'id'        => 'name',
-            'label'     => $this->t('Name'),
-            'autofocus' => 'autofocus',
+            'id'         => 'name',
+            'label'      => $this->t('Name'),
+            'autofocus'  => 'autofocus',
             'validation' => $validationBag,
         ]) ?>
+
         <?= $this->fetch('partial::input/text', [
             'id'         => 'url',
             'label'      => $this->t('Registry URL'),
             'validation' => $validationBag,
         ]) ?>
+
         <?= $this->fetch('partial::input/text', [
             'id'         => 'repository',
             'label'      => $this->t('Repository'),
             'validation' => $validationBag,
         ]) ?>
+
         <?= $this->fetch('partial::input/text', [
             'id'         => 'username',
             'label'      => $this->t('Username'),
             'validation' => $validationBag,
         ]) ?>
+
         <?= $this->fetch('partial::input/text', [
             'id'          => 'password',
             'label'       => $this->t('Password / Token'),
@@ -41,17 +53,14 @@ $this->layout('layout::default', ['title' => $this->t('Edit registry')]);
             'validation'  => $validationBag,
         ]) ?>
 
-        <hr>
-        <p class="text-body-secondary small mb-2">
-            <?= $this->t('Image pruning is supported for Docker Hub (<code>docker.io</code>) and OCI-compatible registries. AWS ECR, Azure ACR and Quay.io are not supported.') ?>
-        </p>
-        <div class="mb-3 form-check">
-            <input type="checkbox" class="form-check-input" id="pruningEnabled" name="pruningEnabled" value="1"
-                <?= $validationBag->getValueByName('pruning_enabled') ? 'checked' : '' ?>>
-            <label class="form-check-label" for="pruningEnabled">
-                <?= $this->t('Enable image pruning after deploy') ?>
-            </label>
+        <div class="prop-switch">
+            <input id="pruningEnabled" name="pruningEnabled" value="1" class="form-check-input" type="checkbox"<?= $validationBag->getValueByName('pruning_enabled') ? ' checked' : '' ?>>
+            <div>
+                <label class="ttl d-block" for="pruningEnabled"><?= $this->t('Enable image pruning after deploy') ?></label>
+                <div class="dsc"><?= $this->t('Supported for Docker Hub (docker.io) and OCI-compatible registries. AWS ECR, Azure ACR and Quay.io are not supported.') ?></div>
+            </div>
         </div>
+
         <?= $this->fetch('partial::input/text', [
             'id'          => 'keepTags',
             'name'        => 'keepTags',
@@ -59,39 +68,58 @@ $this->layout('layout::default', ['title' => $this->t('Edit registry')]);
             'placeholder' => '10',
             'validation'  => $validationBag,
         ]) ?>
+    </div>
+    <div class="tw-card__head justify-content-end border-top">
+        <?= $this->fetch('partial::link', [
+            'label'   => $this->t('Cancel'),
+            'href'    => $this->url('registry'),
+            'classes' => 'btn btn-ghost',
+        ]) ?>
+        <?= $this->fetch('partial::input/button', [
+            'label' => $this->t('Save changes'),
+            'icon'  => 'bi bi-check-lg',
+        ]) ?>
+    </div>
+</form>
 
-        <?php if ($isAssigned): ?>
-            <div class="alert alert-warning" role="alert">
-                <?= $this->t('This registry is assigned to one or more projects. Remove the assignment before deleting.') ?>
+<section id="danger" class="mt-4">
+    <div class="tw-card" style="border-color:var(--danger-soft)">
+        <div class="tw-card__head" style="border-color:var(--danger-soft)">
+            <h2 style="color:var(--danger-text)"><?= $this->e($this->t('Danger zone')) ?></h2>
+        </div>
+        <div class="tw-card__body d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+                <div class="fw-semibold" style="font-size:.92rem"><?= $this->e($this->t('Delete registry')) ?></div>
+                <div class="text-muted-2" style="font-size:.82rem">
+                    <?= $isAssigned
+                        ? $this->e($this->t('This registry is assigned to one or more projects and cannot be deleted.'))
+                        : $this->e($this->t('Permanently removes the registry.')) ?>
+                </div>
             </div>
-        <?php endif ?>
-
-        <div class="d-flex gap-2">
-            <?= $this->fetch('partial::input/button', ['label' => $this->t('Save')]) ?>
-            <?= $this->fetch('partial::link', [
-                'label'   => $this->t('Cancel'),
-                'href'    => $this->url('registry'),
-                'classes' => 'btn btn-secondary',
-            ]) ?>
-            <?php if (! $isAssigned): ?>
-                <?= $this->fetch('partial::input/button', [
-                    'classes'      => 'btn btn-outline-danger',
-                    'icon'         => 'bi bi-trash3',
-                    'type'         => 'button',
-                    'dataBsToggle' => 'modal',
-                    'dataBsTarget' => '#tw-delete-registry-modal',
-                ]) ?>
+            <?php if ($isAssigned): ?>
+                <button type="button" class="btn btn-outline-secondary" disabled
+                        title="<?= $this->e($this->t('Cannot delete: registry is assigned to projects')) ?>">
+                    <i class="bi bi-trash3"></i> <?= $this->e($this->t('Delete registry')) ?>
+                </button>
+            <?php else: ?>
+                <button type="button" class="btn btn-outline-secondary"
+                        style="color:var(--danger-text);border-color:var(--danger-soft)"
+                        data-bs-toggle="modal" data-bs-target="#tw-delete-registry-modal">
+                    <i class="bi bi-trash3"></i> <?= $this->e($this->t('Delete registry')) ?>
+                </button>
             <?php endif ?>
         </div>
-    </form>
-<?php $this->stop() ?>
+    </div>
+</section>
 
-<?= $this->fetch('partial::modal', [
-    'id'            => 'tw-delete-registry-modal',
-    'header'        => $this->t('Delete registry'),
-    'body'          => $this->t('Are you sure you want to delete {name}? This action cannot be undone.', ['name' => '<strong>' . $this->e($registry->name) . '</strong>']),
-    'actionUrl'     => $this->url('registry.delete', ['id' => $registry->id->toString()]),
-    'actionLabel'   => $this->t('Delete registry'),
-    'actionClasses' => 'btn btn-danger',
-    'actionIcon'    => 'bi bi-trash3',
-]) ?>
+<?php if (! $isAssigned): ?>
+    <?= $this->fetch('partial::modal', [
+        'id'            => 'tw-delete-registry-modal',
+        'header'        => $this->t('Delete registry'),
+        'body'          => $this->t('Are you sure you want to delete {name}? This action cannot be undone.', ['name' => '<strong>' . $this->e($registry->name) . '</strong>']),
+        'actionUrl'     => $this->url('registry.delete', ['id' => $registry->id->toString()]),
+        'actionLabel'   => $this->t('Delete registry'),
+        'actionClasses' => 'btn btn-danger',
+        'actionIcon'    => 'bi bi-trash3',
+    ]) ?>
+<?php endif ?>
