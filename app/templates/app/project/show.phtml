@@ -1,69 +1,194 @@
 <?php
 
-use Tragwerk\Domain\Entity\Project;
+declare(strict_types=1);
+
+use Tragwerk\Domain\Entity\DeployJob;
+
+/**
+ * @var \Tragwerk\Domain\Entity\Project       $project
+ * @var \Tragwerk\Domain\Entity\Server|null   $server
+ * @var \Tragwerk\Domain\Entity\Registry|null $registry
+ * @var list<array{name: string, isRoot: bool, hasParent: bool, status: string|null, commit: string|null, deployedAt: \Tragwerk\Domain\ValueObject\TimestampImmutable|null}> $environments
+ * @var string|null $productionUrl
+ * @var string|null $productionStatus
+ * @var string      $cloneUrl
+ * @var list<DeployJob> $activity
+ */
+
+$statusBadge = static function (?string $status): array {
+    return match ($status) {
+        'completed' => ['tw-badge--ok', 'Running'],
+        'failed'    => ['tw-badge--danger', 'Failed'],
+        'running'   => ['tw-badge--info tw-badge--building', 'Building'],
+        'pending'   => ['tw-badge--neutral', 'Pending'],
+        default     => ['tw-badge--neutral', 'Never deployed'],
+    };
+};
+
+// Production row drives the stat strip.
+$prod = null;
+foreach ($environments as $e) {
+    if ($e['isRoot']) {
+        $prod = $e;
+        break;
+    }
+}
+$prod ??= $environments[0] ?? null;
 
 $this->layout('layout::default', [
-        'pageType' =>  $this->activeTeam()->name,
-        'pageTitle' => $project->name,
-        'pageSubTitle' => $this->t('Lorem ipsuim....'),
+    'pageType' => $this->activeTeam()->name,
+    'pageTitle' => $project->name,
+    'pageSubTitle' => $server !== null
+        ? sprintf($this->t('PHP 8.5 · %s'), $server->name)
+        : $this->t('PHP 8.5'),
 ]) ?>
 
-<?php $this->start('pageHeadButtons') ?>
-<?= $this->fetch('partial::link', [
-        'label'   => $this->t('Edit'),
-        'href'    => $this->url('project.edit', ['id' => $project->id->toString()]),
-        'icon'    => 'bi bi-pencil',
-        'classes' => 'btn btn-outline-secondary btn-sm',
-]) ?>
-<?php $this->stop() ?>
 
-<ul class="nav nav-tabs" id="projectDetailTabs" role="tablist">
-    <li class="nav-item" role="presentation">
-        <?= $this->fetch('partial::input/button', [
-            'classes'      => 'nav-link active',
-            'type'         => 'button',
-            'role'         => 'tab',
-            'id'           => 'tab-overview-btn',
-            'dataBsToggle' => 'tab',
-            'dataBsTarget' => '#tab-overview',
-            'icon'         => 'bi bi-info-circle me-1',
-            'label'        => $this->t('Overview'),
-        ]) ?>
-    </li>
-    <li class="nav-item" role="presentation">
-        <?= $this->fetch('partial::input/button', [
-            'classes'      => 'nav-link',
-            'type'         => 'button',
-            'role'         => 'tab',
-            'id'           => 'tab-environments-btn',
-            'dataBsToggle' => 'tab',
-            'dataBsTarget' => '#tab-environments',
-            'hxGet'        => $this->url('project.show.tab', ['id' => $project->id->toString(), 'tab' => 'environments']),
-            'hxTarget'     => '#tab-environments',
-            'hxSwap'       => 'innerHTML',
-            'hxTrigger'    => 'shown.bs.tab once',
-            'icon'         => 'bi bi-diagram-2 me-1',
-            'label'        => $this->t('Environments'),
-        ]) ?>
-    </li>
-</ul>
-
-<div class="tab-content tw-card tw-card-tabs">
-    <div class="tab-pane fade show active" id="tab-overview" role="tabpanel"
-         hx-get="<?= $this->url('project.show.tab', ['id' => $project->id->toString(), 'tab' => 'overview']) ?>"
-         hx-trigger="load"
-         hx-swap="innerHTML">
-    </div>
-    <div class="tab-pane fade" id="tab-environments" role="tabpanel"></div>
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3"><div class="tw-stat">
+        <div class="tw-stat__label"><i class="bi bi-globe"></i> <?= $this->e($this->t('Production URL')) ?></div>
+        <?php if ($productionUrl !== null): ?>
+            <a href="<?= $this->e($productionUrl) ?>" target="_blank" rel="noopener" class="mono d-block mt-2" style="font-size:.9rem;font-weight:600"><?= $this->e(preg_replace('#^https?://#', '', $productionUrl) ?? $productionUrl) ?> <i class="bi bi-box-arrow-up-right" style="font-size:.75rem"></i></a>
+        <?php else: ?>
+            <div class="tw-cell-muted mt-2" style="font-size:.85rem">&mdash;</div>
+        <?php endif ?>
+    </div></div>
+    <div class="col-6 col-lg-3"><div class="tw-stat">
+        <div class="tw-stat__label"><i class="bi bi-diagram-3"></i> <?= $this->e($this->t('Environments')) ?></div>
+        <div class="tw-stat__value" style="font-size:1.5rem"><?= count($environments) ?></div>
+    </div></div>
+    <div class="col-6 col-lg-3"><div class="tw-stat">
+        <div class="tw-stat__label"><i class="bi bi-git"></i> <?= $this->e($this->t('Last commit')) ?></div>
+        <div class="mono mt-2" style="font-size:.85rem;font-weight:600"><?= $this->e($prod['commit'] ?? '—') ?></div>
+    </div></div>
+    <div class="col-6 col-lg-3"><div class="tw-stat">
+        <div class="tw-stat__label"><i class="bi bi-clock-history"></i> <?= $this->e($this->t('Last deploy')) ?></div>
+        <div class="mt-2" style="font-size:.9rem;font-weight:600">
+            <?php if (($prod['deployedAt'] ?? null) !== null): ?>
+                <?= $this->fetch('partial::datetime', ['date' => $prod['deployedAt'], 'relative' => true]) ?>
+            <?php else: ?>&mdash;<?php endif ?>
+        </div>
+    </div></div>
 </div>
 
-<div id="tw-env-modal-container"></div>
+<div class="d-flex align-items-center justify-content-between mb-2">
+    <div>
+        <h2 style="font-size:1.1rem;margin:0"><?= $this->e($this->t('Environments')) ?></h2>
+        <p class="text-faint m-0" style="font-size:.82rem"><?= $this->e($this->t('Any branch can be deployed as an isolated environment.')) ?></p>
+    </div>
+</div>
 
-<?php $this->start('javascript') ?>
-<link rel="stylesheet" href="/css/uPlot.min.css">
-<script src="/js/detail-tabs.js"></script>
-<script src="/js/domain-delete-modal.js"></script>
-<script src="/js/env-var-delete-modal.js"></script>
-<script src="/js/uPlot.iife.min.js"></script>
-<script src="/js/app-metrics.js"></script>
-<?php $this->stop() ?>
+<div class="tw-table-wrap">
+    <table class="tw-table">
+        <thead>
+        <tr>
+            <th class="sortable"><?= $this->e($this->t('Environment')) ?></th>
+            <th><?= $this->e($this->t('Type')) ?></th>
+            <th><?= $this->e($this->t('Status')) ?></th>
+            <th class="tw-hide-sm"><?= $this->e($this->t('Commit')) ?></th>
+            <th class="tw-hide-sm"><?= $this->e($this->t('Deploy')) ?></th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($environments as $i => $env): ?>
+            <?php [$badgeCss, $badgeLabel] = $statusBadge($env['status']); ?>
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi <?= $env['isRoot'] ? 'bi-shield-check' : 'bi-git' ?>" style="color:var(--text-faint)"></i>
+                        <a class="tw-cell-strong mono" style="color:var(--text)" href="<?= $this->url('environment.show', queryParams: ['id' => $env['name']]) ?>"><?= $this->e($env['name']) ?></a>
+                    </div>
+                </td>
+                <td>
+                    <?php if ($env['isRoot']): ?>
+                        <span class="tw-badge tw-badge--purple"><span class="tw-dot"></span><?= $this->e($this->t('Production')) ?></span>
+                    <?php else: ?>
+                        <span class="tw-badge tw-badge--neutral"><span class="tw-dot"></span><?= $this->e($this->t('Preview')) ?></span>
+                    <?php endif ?>
+                </td>
+                <td><span class="tw-badge <?= $badgeCss ?>"><span class="tw-dot"></span><?= $this->e($this->t($badgeLabel)) ?></span></td>
+                <td class="tw-hide-sm mono tw-cell-muted"><?= $this->e($env['commit'] ?? '—') ?></td>
+                <td class="tw-hide-sm tw-cell-muted">
+                    <?php if ($env['deployedAt'] !== null): ?>
+                        <?= $this->fetch('partial::datetime', ['date' => $env['deployedAt'], 'relative' => true]) ?>
+                    <?php else: ?>&mdash;<?php endif ?>
+                </td>
+                <td class="text-end">
+                    <div class="d-flex justify-content-end gap-1">
+                        <button type="button" class="btn btn-ghost btn-sm" data-bs-toggle="modal" data-bs-target="#tw-redeploy-modal-<?= $i ?>" title="<?= $this->e($this->t('Redeploy')) ?>"><i class="bi bi-arrow-clockwise"></i></button>
+                        <?php if ($env['hasParent']): ?>
+                            <button type="button" class="btn btn-ghost btn-sm" data-bs-toggle="modal" data-bs-target="#tw-sync-modal-<?= $i ?>" title="<?= $this->e($this->t('Sync data from parent')) ?>"><i class="bi bi-arrow-down-up"></i></button>
+                        <?php endif ?>
+                    </div>
+                    <?= $this->fetch('partial::modal', [
+                        'id'            => 'tw-redeploy-modal-' . $i,
+                        'header'        => $this->t('Redeploy environment'),
+                        'body'          => $this->t('Redeploy {branch}? This triggers a new deployment of the latest commit on this branch.', ['branch' => '<b class="mono">' . $this->e($env['name']) . '</b>']),
+                        'actionUrl'     => $this->url('project.environment.redeploy', ['id' => $project->id->toString()]),
+                        'actionLabel'   => $this->t('Redeploy'),
+                        'actionClasses' => 'btn btn-primary',
+                        'actionIcon'    => 'bi bi-arrow-clockwise',
+                        'extraFields'   => ['branch' => $env['name']],
+                    ]) ?>
+                    <?php if ($env['hasParent']): ?>
+                        <?= $this->fetch('partial::modal', [
+                            'id'            => 'tw-sync-modal-' . $i,
+                            'header'        => $this->t('Sync data from parent'),
+                            'body'          => $this->t('Sync data into {branch} from its parent branch? Existing data volumes in this environment will be overwritten.', ['branch' => '<b class="mono">' . $this->e($env['name']) . '</b>']),
+                            'actionUrl'     => $this->url('project.environment.sync-data', ['id' => $project->id->toString()]),
+                            'actionLabel'   => $this->t('Sync data'),
+                            'actionClasses' => 'btn btn-danger',
+                            'actionIcon'    => 'bi bi-arrow-down-up',
+                            'extraFields'   => ['branch' => $env['name']],
+                        ]) ?>
+                    <?php endif ?>
+                </td>
+            </tr>
+        <?php endforeach ?>
+        </tbody>
+    </table>
+</div>
+
+<div class="row g-4 mt-1">
+    <div class="col-lg-7">
+        <h2 style="font-size:1.05rem;margin:1rem 0 .5rem"><?= $this->e($this->t('Activity')) ?></h2>
+        <div class="tw-card"><div class="tw-card__body" style="padding:.4rem 0">
+            <ul class="list-unstyled m-0">
+                <?php if ($activity === []): ?>
+                    <li class="d-flex gap-3 px-3 py-2 text-faint" style="font-size:.85rem"><?= $this->e($this->t('No activity yet.')) ?></li>
+                <?php endif ?>
+                <?php
+                /** @var DeployJob $job */
+                foreach ($activity as $job): ?>
+                    <li class="d-flex gap-3 px-3 py-2" style="border-bottom:1px solid var(--border)">
+                        <span class="tw-iconbtn" style="background:var(--surface-2);flex:none;width:30px;height:30px"><i class="bi bi-rocket-takeoff" style="color:var(<?= $job->status->value === 'failed' ? '--danger' : '--accent' ?>);font-size:.85rem"></i></span>
+                        <div class="flex-grow-1" style="min-width:0">
+                            <div style="font-size:.85rem;line-height:1.35"><b><?= $this->e($job->branch) ?></b> <?= $this->e($this->t('deployed')) ?> <span class="mono"><?= $this->e(substr($job->commitSha, 0, 7)) ?></span> · <?= $this->e($this->t(ucfirst($job->status->value))) ?></div>
+                            <div class="text-faint" style="font-size:.75rem"><?= $this->fetch('partial::datetime', ['date' => $job->createdAt, 'relative' => true]) ?></div>
+                        </div>
+                    </li>
+                <?php endforeach ?>
+            </ul>
+        </div></div>
+    </div>
+    <div class="col-lg-5">
+        <h2 style="font-size:1.05rem;margin:1rem 0 .5rem"><?= $this->e($this->t('Configuration')) ?></h2>
+        <div class="tw-card"><div class="tw-card__body d-flex flex-column gap-3">
+            <div class="d-flex justify-content-between"><span class="text-muted-2" style="font-size:.85rem"><?= $this->e($this->t('Stack')) ?></span><span>PHP 8.5</span></div>
+            <hr class="m-0" style="border-color:var(--border)">
+            <div class="d-flex justify-content-between"><span class="text-muted-2" style="font-size:.85rem"><?= $this->e($this->t('Server')) ?></span>
+                <?php if ($server !== null): ?>
+                    <?= $this->fetch('partial::link', ['href' => $this->url('server.show', ['id' => $server->id->toString()]), 'label' => $server->name]) ?>
+                <?php else: ?><span class="tw-cell-muted">&mdash;</span><?php endif ?>
+            </div>
+            <hr class="m-0" style="border-color:var(--border)">
+            <div class="d-flex justify-content-between"><span class="text-muted-2" style="font-size:.85rem"><?= $this->e($this->t('Registry')) ?></span><span><?= $registry !== null ? $this->e($registry->name) : '<span class="tw-cell-muted">—</span>' ?></span></div>
+            <hr class="m-0" style="border-color:var(--border)">
+            <div>
+                <div class="text-muted-2 mb-1" style="font-size:.85rem"><?= $this->e($this->t('Git clone URL')) ?></div>
+                <code class="mono" style="font-size:.78rem;word-break:break-all"><?= $this->e($cloneUrl) ?></code>
+            </div>
+        </div></div>
+    </div>
+</div>

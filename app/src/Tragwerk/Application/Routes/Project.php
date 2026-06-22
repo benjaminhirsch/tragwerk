@@ -32,12 +32,6 @@ final readonly class Project
         );
 
         $routes->get(
-            '/projects/{id}/tabs/{tab}',
-            $this->middlewareFactory->prepare([Handler\Project\TabHandler::class]),
-            'project.show.tab',
-        );
-
-        $routes->get(
             '/projects/{id}',
             $this->middlewareFactory->prepare([Handler\Project\ShowHandler::class]),
             'project.show',
@@ -50,12 +44,6 @@ final readonly class Project
             'project.edit',
         );
 
-        $routes->get(
-            '/projects/{id}/environments',
-            $this->middlewareFactory->prepare([Handler\Project\EnvironmentHandler::class]),
-            'project.environment',
-        );
-
         $routes->post(
             '/projects/{id}/environments/redeploy',
             $this->middlewareFactory->prepare([Handler\Project\RedeployEnvironmentHandler::class]),
@@ -66,96 +54,6 @@ final readonly class Project
             '/projects/{id}/environments/sync-data',
             $this->middlewareFactory->prepare([Handler\Project\SyncEnvironmentDataHandler::class]),
             'project.environment.sync-data',
-        );
-
-        $routes->get(
-            '/projects/{id}/environments/branch-list',
-            $this->middlewareFactory->prepare([Handler\Project\BranchListHandler::class]),
-            'project.environment.branch-list',
-        );
-
-        $routes->get(
-            '/projects/{id}/environments/deploy-log',
-            $this->middlewareFactory->prepare([Handler\Project\DeployLogHandler::class]),
-            'project.environment.deploy-log',
-        );
-
-        $routes->get(
-            '/projects/{id}/environments/deploy-jobs/{jobId}/output',
-            $this->middlewareFactory->prepare([Handler\Project\DeployJobOutputHandler::class]),
-            'project.environment.deploy-job-output',
-        );
-
-        $routes->get(
-            '/projects/{id}/environments/container-status',
-            $this->middlewareFactory->prepare([Handler\Project\ContainerStatusHandler::class]),
-            'project.environment.container-status',
-        );
-
-        $routes->get(
-            '/projects/{id}/environments/logs',
-            $this->middlewareFactory->prepare([Handler\Project\EnvironmentLogsHandler::class]),
-            'project.environment.logs',
-        );
-
-        $routes->get(
-            '/projects/{id}/environments/metrics-live',
-            $this->middlewareFactory->prepare([Handler\Project\EnvironmentMetricsLiveHandler::class]),
-            'project.environment.metrics-live',
-        );
-
-        $routes->get(
-            '/projects/{id}/environments/metrics-data',
-            $this->middlewareFactory->prepare([Handler\Project\EnvironmentMetricsDataHandler::class]),
-            'project.environment.metrics-data',
-        );
-
-        $routes->get(
-            '/projects/{id}/environments/volume-sizes',
-            $this->middlewareFactory->prepare([Handler\Project\VolumeSizesHandler::class]),
-            'project.environment.volume-sizes',
-        );
-
-        $routes->get(
-            '/projects/{id}/environments/download',
-            $this->middlewareFactory->prepare([Handler\Project\DownloadBuildHandler::class]),
-            'project.environment.download',
-        );
-
-        $routes->post(
-            '/projects/{id}/environments/{branch}/domains',
-            $this->middlewareFactory->prepare([Handler\Project\Domain\AddDomainHandler::class]),
-            'project.domain.add',
-        );
-
-        $routes->post(
-            '/projects/{id}/environments/{branch}/domains/{domainId}/delete',
-            $this->middlewareFactory->prepare([Handler\Project\Domain\DeleteDomainHandler::class]),
-            'project.domain.delete',
-        );
-
-        $routes->post(
-            '/projects/{id}/environments/{branch}/domains/{domainId}/primary',
-            $this->middlewareFactory->prepare([Handler\Project\Domain\SetPrimaryDomainHandler::class]),
-            'project.domain.primary',
-        );
-
-        $routes->post(
-            '/projects/{id}/environments/{branch}/env-vars',
-            $this->middlewareFactory->prepare([Handler\Project\EnvVar\CreateEnvVarHandler::class]),
-            'project.env-var.create',
-        );
-
-        $routes->post(
-            '/projects/{id}/environments/{branch}/env-vars/{varId}/update',
-            $this->middlewareFactory->prepare([Handler\Project\EnvVar\UpdateEnvVarHandler::class]),
-            'project.env-var.update',
-        );
-
-        $routes->post(
-            '/projects/{id}/environments/{branch}/env-vars/{varId}/delete',
-            $this->middlewareFactory->prepare([Handler\Project\EnvVar\DeleteEnvVarHandler::class]),
-            'project.env-var.delete',
         );
 
         $routes->post(
