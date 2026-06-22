@@ -27,11 +27,11 @@ $this->layout('layout::default', [
             <tbody>
                 <?php foreach ($registries as $registry): ?>
                     <tr>
-                        <td>
+                        <td><span class="tw-cell-strong">
                             <?= $this->fetch('partial::link', [
                                 'href'  => $this->url('registry.edit', ['id' => $registry->id->toString()]),
                                 'label' => $registry->name,
-                            ]) ?>
+                            ]) ?></span>
                         </td>
                         <td><?= $this->e($registry->url) ?></td>
                         <td><?= $this->e($registry->username) ?></td>
