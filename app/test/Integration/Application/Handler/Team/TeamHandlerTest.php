@@ -113,7 +113,7 @@ final class TeamHandlerTest extends AppIntegrationTestCase
     }
 
     #[Test]
-    public function editPostWithValidDataRedirectsToTeamList(): void
+    public function editPostWithValidDataRedirectsToTeamOverview(): void
     {
         $team     = $this->seedTeam();
         $response = $this->dispatch(
@@ -124,7 +124,10 @@ final class TeamHandlerTest extends AppIntegrationTestCase
         );
 
         self::assertSame(302, $response->getStatusCode());
-        self::assertSame($this->url('team'), $response->getHeaderLine('Location'));
+        self::assertSame(
+            $this->url('team.show', ['id' => $team->id->toString()]),
+            $response->getHeaderLine('Location'),
+        );
     }
 
     #[Test]

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace TragwerkTest\Unit\Application\Dto;
 
-use phpseclib3\Crypt\EC;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Tragwerk\Application\Dto\SshKeyCreation;
@@ -50,7 +49,6 @@ final class SshKeyCreationTest extends TestCase
 
     private static function publicKey(): string
     {
-        // phpseclib types getPublicKey() loosely; the OpenSSH export is a string.
-        return EC::createKey('Ed25519')->getPublicKey()->toString('OpenSSH'); // @phpstan-ignore method.nonObject, return.type
+        return 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMq/C6zGnmJzH/rYZinBoKF0PG0MjBnAmP23poG8zhuN test-key';
     }
 }

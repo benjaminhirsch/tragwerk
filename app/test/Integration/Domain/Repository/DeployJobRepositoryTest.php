@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TragwerkTest\Integration\Domain\Repository;
 
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\Test;
 use Tragwerk\Domain\Entity\DeployJob;
 use Tragwerk\Domain\Entity\Project;
@@ -98,7 +99,7 @@ final class DeployJobRepositoryTest extends IntegrationTestCase
 
         $counts = $this->repository->countByProjectsSince(
             [$this->projectId->toString()],
-            new \DateTimeImmutable('2026-01-05T00:00:00+00:00'),
+            new DateTimeImmutable('2026-01-05T00:00:00+00:00'),
         );
 
         self::assertSame(3, $counts['total']);

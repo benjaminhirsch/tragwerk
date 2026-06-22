@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tragwerk\Application\Handler\Team;
 
 use DateTimeImmutable;
+use Laminas\Diactoros\Response\RedirectResponse;
+use Mezzio\Helper\UrlHelper;
 use Override;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -22,7 +24,6 @@ use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Infrastructure\Git\BareRepository;
 
 use function array_map;
-use function assert;
 use function count;
 use function iterator_to_array;
 use function round;
@@ -37,6 +38,7 @@ final readonly class OverviewHandler implements RequestHandlerInterface
         private ServerMetricRepository $serverMetricRepository,
         private BareRepository $bareRepository,
         private TeamActivityFeed $activityFeed,
+        private UrlHelper $urlHelper,
     ) {
     }
 
@@ -44,7 +46,9 @@ final readonly class OverviewHandler implements RequestHandlerInterface
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $activeTeam = $request->getAttribute('active_team');
-        assert($activeTeam instanceof Team);
+        if (! $activeTeam instanceof Team) {
+            return new RedirectResponse($this->urlHelper->generate('team'));
+        }
 
         /** @var list<Project> $projects */
         $projects = iterator_to_array($this->projectRepository->getAll($activeTeam->id), false);
