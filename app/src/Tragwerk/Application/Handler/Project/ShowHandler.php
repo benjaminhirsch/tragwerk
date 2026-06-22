@@ -79,6 +79,13 @@ final readonly class ShowHandler implements RequestHandlerInterface
             ];
         }
 
+        if (($request->getQueryParams()['fragment'] ?? null) === 'environments') {
+            return $this->renderer->render($request, 'page::project/_environments', [
+                'project'      => $project,
+                'environments' => $environments,
+            ]);
+        }
+
         $productionBranch = $this->productionBranch($branches);
         $productionUrl    = $productionBranch !== null ? $this->primaryDomain($project, $productionBranch) : null;
         $productionStatus = $productionBranch !== null ? ($statuses[$productionBranch] ?? null)?->value : null;
