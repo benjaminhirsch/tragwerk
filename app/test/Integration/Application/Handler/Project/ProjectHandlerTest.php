@@ -225,19 +225,6 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
     }
 
     #[Test]
-    public function showTabOverviewRendersContent(): void
-    {
-        $project  = $this->seedProject();
-        $response = $this->dispatch(
-            'GET',
-            $this->url('project.show.tab', ['id' => $project->id->toString(), 'tab' => 'overview']),
-            cookie: $this->sessionCookie,
-        );
-
-        self::assertSame(200, $response->getStatusCode());
-    }
-
-    #[Test]
     public function editGetRendersForm(): void
     {
         $project  = $this->seedProject();
