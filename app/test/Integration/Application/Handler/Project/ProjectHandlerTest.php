@@ -74,7 +74,7 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
     }
 
     #[Test]
-    public function createPostWithValidDataRedirectsToProjectShow(): void
+    public function createPostWithValidDataRedirectsToProjectList(): void
     {
         $response = $this->dispatch(
             'POST',
@@ -88,10 +88,7 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
         );
 
         self::assertSame(302, $response->getStatusCode());
-        self::assertMatchesRegularExpression(
-            '#^/projects/[0-9a-f-]{36}$#',
-            $response->getHeaderLine('Location'),
-        );
+        self::assertSame($this->url('project'), $response->getHeaderLine('Location'));
     }
 
     #[Test]

@@ -13,13 +13,13 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Throwable;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Infrastructure\Git\BareRepository;
 
 use function array_key_exists;
 use function assert;
 use function is_string;
-use function iterator_to_array;
 
 final readonly class EnvironmentMiddleware implements MiddlewareInterface
 {
@@ -51,7 +51,12 @@ final readonly class EnvironmentMiddleware implements MiddlewareInterface
             return $handler->handle($request);
         }
 
-        $environments = iterator_to_array($this->bareRepository->getBranches($project->id->toString()), false);
+        // A missing or unreadable git repository must not break the request.
+        try {
+            $environments = $this->bareRepository->getBranches($project->id->toString());
+        } catch (Throwable) {
+            $environments = [];
+        }
 
         if ($environments === []) {
             return $handler->handle(
@@ -78,7 +83,7 @@ final readonly class EnvironmentMiddleware implements MiddlewareInterface
 
         return $handler->handle(
             $request
-                ->withAttribute('project_environments-', $environments)
+                ->withAttribute('project_environments', $environments)
                 ->withAttribute('active_environment', $activeEnvironment ?? null),
         );
     }
