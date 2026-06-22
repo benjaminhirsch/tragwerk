@@ -8,6 +8,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Tragwerk\Application\Dto\Server\Server;
 use Tragwerk\Application\Exception\ValidationCollection;
+use Tragwerk\Application\Exception\ValidationError;
+
+use function array_map;
 
 final class ServerTest extends TestCase
 {
@@ -48,13 +51,13 @@ final class ServerTest extends TestCase
         self::assertContains('port', $this->errorFields('web', '203.0.113.10', 0));
     }
 
-    /** @return list<string> */
+    /** @return array<string> */
     private function errorFields(string $name, string $host, int $port): array
     {
         try {
             new Server($name, $host, $port);
         } catch (ValidationCollection $e) {
-            return array_map(static fn ($v) => $v->name, $e->validations);
+            return array_map(static fn (ValidationError $v): string => $v->name, $e->validations);
         }
 
         self::fail('Expected ValidationCollection');

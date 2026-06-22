@@ -6,6 +6,7 @@ namespace TragwerkTest\Unit\Application\Middleware;
 
 use Generator;
 use Mezzio\Authentication\UserInterface;
+use Mezzio\Router\RouteResult;
 use Mezzio\Session\SessionInterface;
 use Mezzio\Session\SessionMiddleware;
 use Nyholm\Psr7\Factory\Psr17Factory;
@@ -204,10 +205,13 @@ final class ActiveTeamMiddlewareTest extends TestCase
 
         $session ??= $this->createMock(SessionInterface::class);
 
+        $route = RouteResult::fromRouteFailure(null);
+
         return (new Psr17Factory())
             ->createServerRequest('GET', '/')
             ->withAttribute(UserInterface::class, $user)
-            ->withAttribute(SessionMiddleware::SESSION_ATTRIBUTE, $session);
+            ->withAttribute(SessionMiddleware::SESSION_ATTRIBUTE, $session)
+            ->withAttribute(RouteResult::class, $route);
     }
 
     /** @param Team[] $teams */
