@@ -24,7 +24,7 @@ final readonly class CreateDefaultTeam
         $nameGenerator
             ->setDictionaries([
                 'adjectives',
-                'colos',
+                'colors',
                 'animals',
             ])
             ->setSeparator(' ');

@@ -279,20 +279,20 @@ final class BuildEnvironmentTest extends TestCase
             {
             }
 
-            /** @return list<EnvVar> */
-            public function findByBranch(ProjectIdentifier $projectId, string $branch): array
+            /** @return Generator<EnvVar> */
+            public function findByBranch(ProjectIdentifier $projectId, string $branch): Generator
             {
-                return [];
+                yield from [];
             }
 
             /**
              * @param list<string> $ancestorBranches
              *
-             * @return list<EnvVar>
+             * @return Generator<EnvVar>
              */
-            public function findInheritedFromAncestors(ProjectIdentifier $projectId, array $ancestorBranches): array
+            public function findInheritedFromAncestors(ProjectIdentifier $projectId, array $ancestorBranches): Generator
             {
-                return [];
+                yield from [];
             }
         };
 

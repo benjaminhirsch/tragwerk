@@ -45,7 +45,9 @@ final readonly class ProjectMiddleware implements MiddlewareInterface
         assert($session instanceof SessionInterface);
 
         $team = $request->getAttribute('active_team');
-        assert($team instanceof Team);
+        if (! $team instanceof Team) {
+            return $handler->handle($request);
+        }
 
         $route = $request->getAttribute(RouteResult::class);
         assert($route instanceof RouteResult);

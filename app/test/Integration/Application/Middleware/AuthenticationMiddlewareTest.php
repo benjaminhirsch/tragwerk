@@ -36,8 +36,7 @@ final class AuthenticationMiddlewareTest extends AppIntegrationTestCase
     {
         $response = $this->dispatch(
             'GET',
-            $this->url('project.environment.deploy-log', ['id' => 'aaaaaaaa-0000-7000-8000-aaaaaaaaaaaa'])
-            . '?branch=main',
+            $this->url('container.status'),
             headers: ['HX-Request' => 'true'],
         );
 
