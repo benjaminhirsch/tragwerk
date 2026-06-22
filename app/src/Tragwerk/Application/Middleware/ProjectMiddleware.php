@@ -17,8 +17,10 @@ use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Repository\ProjectRepository;
 
+use function array_first;
 use function array_key_exists;
 use function assert;
+use function count;
 use function is_string;
 use function iterator_to_array;
 
@@ -72,6 +74,10 @@ final readonly class ProjectMiddleware implements MiddlewareInterface
 
         if (is_string($sessionProjectId) && array_key_exists($sessionProjectId, $projectMap)) {
             $activeProject = $projectMap[$sessionProjectId];
+        }
+
+        if (count($projectMap) === 1) {
+            $activeProject = array_first($projectMap);
         }
 
         return $handler->handle(

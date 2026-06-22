@@ -19,7 +19,7 @@ $this->layout('layout::blank') ?>
                     <i class="bi bi-chevron-expand"></i>
                 </button>
                 <ul class="dropdown-menu tw-switch-menu">
-                    <li class="dropdown-header">Teams</li>
+                    <li class="dropdown-header"><?= $this->e($this->t('Teams')) ?></li>
                     <?php
                     /** @var Team $team */
                     foreach ($this->userTeams() as $team): ?>
@@ -41,23 +41,34 @@ $this->layout('layout::blank') ?>
                     <span class="tw-switcher__name"><?= $this->e($this->t('Create team')) ?></span>
                 </a>
             <?php endif ?>
-            <?php if($this->activeTeam() !== null && $this->activeProject() !== null): ?>
+            <?php if($this->activeTeam() !== null): ?>
             <span class="tw-crumb-sep">/</span>
                 <div class="dropdown">
+                    <?php if($this->activeProject() !== null): ?>
                     <button type="button" class="tw-switcher" aria-haspopup="menu">
                         <span class="tw-ava" style="background:<?= $this->activeProject()->abbreviation()->oklch() ?>"><?= $this->e($this->activeProject()->abbreviation()->forString()) ?></span>
                         <span class="tw-switcher__name"><?= $this->e($this->activeProject()->name) ?></span>
                         <i class="bi bi-chevron-expand"></i>
                     </button>
+                    <?php endif ?>
+                    <?php if(count($this->getTeamProjects()) > 0 && $this->activeProject() === null): ?>
+                    <button type="button" class="tw-switcher" aria-haspopup="menu">
+                        <span class="tw-switcher__name"><?= $this->e($this->t('Select Project')) ?></span>
+                        <i class="bi bi-chevron-expand"></i>
+                    </button>
+                    <?php endif ?>
+                    <?php if(count($this->getTeamProjects()) === 0): ?>
+                        <a class="dropdown-item tw-switcher" href="<?= $this->url('project.create')?>"><i class="bi bi-plus-lg"></i> <?= $this->t('Create project') ?></a>
+                    <?php endif ?>
                     <ul class="dropdown-menu tw-switch-menu">
-                        <li class="dropdown-header">Teams</li>
+                        <li class="dropdown-header"><?= $this->e($this->t('Projects')) ?></li>
                         <?php
                         /** @var Project $project */
                         foreach ($this->getTeamProjects() as $project): ?>
-                            <li><a class="dropdown-item<?= ($project->id->isEqualTo($this->activeProject()->id)) ? ' active' : '' ?>"
+                            <li><a class="dropdown-item<?= ($this->activeProject() !== null && $project->id->isEqualTo($this->activeProject()->id)) ? ' active' : '' ?>"
                                    href="<?= $this->url('project.show', ['id' => $project->id])?>">
                                     <span class="flex-grow-1"><?= $this->e($project->name) ?></span>
-                                    <?php if($project->id->isEqualTo($this->activeProject()->id)): ?>
+                                    <?php if($this->activeProject() !== null && $project->id->isEqualTo($this->activeProject()->id)): ?>
                                         <i class="bi bi-check2"></i>
                                     <?php endif ?>
                                 </a></li>
@@ -66,9 +77,6 @@ $this->layout('layout::blank') ?>
                         <li><a class="dropdown-item" href="<?= $this->url('project.create')?>"><i class="bi bi-plus-lg"></i> <?= $this->t('Create project') ?></a></li>
                     </ul>
                 </div>
-            <?php else: ?>
-                <span class="tw-crumb-sep">/</span>
-                <a class="dropdown-item tw-switcher" href="<?= $this->url('project.create')?>"><i class="bi bi-plus-lg"></i> <?= $this->t('Create project') ?></a>
             <?php endif ?>
             <?php if($this->activeEnvironment() !== null): ?>
             <span class="tw-crumb-sep">/</span>

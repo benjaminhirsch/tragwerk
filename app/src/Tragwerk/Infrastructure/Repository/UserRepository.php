@@ -6,6 +6,7 @@ namespace Tragwerk\Infrastructure\Repository;
 
 use CuyZ\Valinor\Mapper\MappingError;
 use CuyZ\Valinor\Normalizer\Format;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Exception;
 use Generator;
 use JsonException;
@@ -22,8 +23,8 @@ use Tragwerk\Domain\Repository\UserRepository as UserRepositoryInterface;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
+use function array_map;
 use function assert;
-use function implode;
 use function is_array;
 use function is_string;
 use function password_verify;
@@ -68,12 +69,16 @@ final class UserRepository extends GenericRepository implements UserRepositoryIn
 
         if ($ids !== null) {
             $qb->andWhere($qb->expr()->in('id', ':ids'));
-            $qb->setParameter('ids', $ids);
+            $qb->setParameter(
+                'ids',
+                array_map(static fn (UserIdentifier $id): string => $id->toString(), $ids),
+                ArrayParameterType::STRING,
+            );
         }
 
         if ($emails !== null) {
             $qb->andWhere($qb->expr()->in('email', ':emails'));
-            $qb->setParameter('emails', implode(',', $emails));
+            $qb->setParameter('emails', $emails, ArrayParameterType::STRING);
         }
 
         try {
