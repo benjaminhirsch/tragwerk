@@ -40,7 +40,11 @@ final readonly class MountSizesHandler implements RequestHandlerInterface
 
         $projectConfig = $this->configLoader->load($project->id, $branch);
         $app           = $projectConfig?->applications[0] ?? null;
-        $services      = $projectConfig?->services ?? [];
+
+        $services = [];
+        if ($projectConfig !== null) {
+            $services = $projectConfig->services;
+        }
 
         $hasMounts = $app instanceof ApplicationConfig && $app->mounts !== [];
 

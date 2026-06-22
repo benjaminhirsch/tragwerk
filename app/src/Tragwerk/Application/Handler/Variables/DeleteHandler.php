@@ -18,7 +18,6 @@ use Tragwerk\Domain\Event\EnvVarDeleted;
 use Tragwerk\Domain\Repository\EnvVarRepository;
 use Tragwerk\Domain\ValueObject\EnvVarIdentifier;
 
-use function assert;
 use function is_string;
 
 final readonly class DeleteHandler implements RequestHandlerInterface
@@ -61,7 +60,6 @@ final readonly class DeleteHandler implements RequestHandlerInterface
 
         try {
             $var = $this->envVarRepository->getById(EnvVarIdentifier::fromString($routeId));
-            assert($var instanceof EnvVar);
 
             if ($var->projectId->toString() !== $activeProject->id->toString()) {
                 return null;
