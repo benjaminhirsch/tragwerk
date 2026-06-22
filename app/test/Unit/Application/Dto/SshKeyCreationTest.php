@@ -50,6 +50,7 @@ final class SshKeyCreationTest extends TestCase
 
     private static function publicKey(): string
     {
-        return EC::createKey('Ed25519')->getPublicKey()->toString('OpenSSH');
+        // phpseclib types getPublicKey() loosely; the OpenSSH export is a string.
+        return EC::createKey('Ed25519')->getPublicKey()->toString('OpenSSH'); // @phpstan-ignore method.nonObject, return.type
     }
 }

@@ -8,6 +8,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Tragwerk\Application\Dto\UserRegistration;
 use Tragwerk\Application\Exception\ValidationCollection;
+use Tragwerk\Application\Exception\ValidationError;
+
+use function array_map;
 
 final class UserRegistrationTest extends TestCase
 {
@@ -33,13 +36,13 @@ final class UserRegistrationTest extends TestCase
         self::assertContains('password1', $this->errorFields('a', 'b', 'e@x.de', 'short', 'short'));
     }
 
-    /** @return list<string> */
+    /** @return array<string> */
     private function errorFields(string $f, string $l, string $email, string $p1, string $p2): array
     {
         try {
             new UserRegistration($f, $l, $email, $p1, $p2);
         } catch (ValidationCollection $e) {
-            return array_map(static fn ($v) => $v->name, $e->validations);
+            return array_map(static fn (ValidationError $v): string => $v->name, $e->validations);
         }
 
         self::fail('Expected ValidationCollection');

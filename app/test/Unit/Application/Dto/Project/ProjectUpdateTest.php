@@ -8,8 +8,11 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Tragwerk\Application\Dto\Project\ProjectUpdate;
 use Tragwerk\Application\Exception\ValidationCollection;
+use Tragwerk\Application\Exception\ValidationError;
 use Tragwerk\Domain\ValueObject\RegistryIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
+
+use function array_map;
 
 final class ProjectUpdateTest extends TestCase
 {
@@ -31,7 +34,7 @@ final class ProjectUpdateTest extends TestCase
         try {
             new ProjectUpdate('', 'x', 'y');
         } catch (ValidationCollection $e) {
-            $fields = array_map(static fn ($v) => $v->name, $e->validations);
+            $fields = array_map(static fn (ValidationError $v): string => $v->name, $e->validations);
             self::assertContains('name', $fields);
             self::assertContains('serverId', $fields);
             self::assertContains('registryId', $fields);
