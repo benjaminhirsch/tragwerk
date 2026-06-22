@@ -114,14 +114,38 @@ final class UserRepositoryTest extends IntegrationTestCase
         $this->repository->create($this->makeUser(email: 'a@example.com'));
         $this->repository->create($this->makeUser(email: 'b@example.com'));
 
-        // Note: getAll(emails:) uses implode(',', $emails) as a single parameter,
-        // which only works correctly for exactly one email. Filtering by multiple
-        // emails is broken in the current UserRepository implementation.
         $results = iterator_to_array($this->repository->getAll(emails: ['a@example.com']));
 
         self::assertCount(1, $results);
         self::assertInstanceOf(User::class, $results[0]);
         self::assertSame('a@example.com', $results[0]->email);
+    }
+
+    #[Test]
+    public function getAllFiltersByMultipleEmails(): void
+    {
+        $this->repository->create($this->makeUser(email: 'a@example.com'));
+        $this->repository->create($this->makeUser(email: 'b@example.com'));
+        $this->repository->create($this->makeUser(email: 'c@example.com'));
+
+        $results = iterator_to_array($this->repository->getAll(emails: ['a@example.com', 'c@example.com']));
+
+        self::assertCount(2, $results);
+    }
+
+    #[Test]
+    public function getAllFiltersByIds(): void
+    {
+        $wanted = $this->makeUser(email: 'wanted@example.com');
+        $other  = $this->makeUser(email: 'other@example.com');
+        $this->repository->create($wanted);
+        $this->repository->create($other);
+
+        $results = iterator_to_array($this->repository->getAll(ids: [$wanted->id]));
+
+        self::assertCount(1, $results);
+        self::assertInstanceOf(User::class, $results[0]);
+        self::assertSame('wanted@example.com', $results[0]->email);
     }
 
     private function makeUser(
