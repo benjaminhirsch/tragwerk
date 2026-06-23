@@ -1,10 +1,16 @@
-<?php $this->layout('layout::default', ['title' => 'Confirmation Failed · Tragwerk']) ?>
+<?php $this->layout('layout::auth', ['title' => 'Confirmation Failed · Tragwerk']) ?>
 
-<h4 class="card-title mb-1"><?= $this->t('Confirmation failed') ?></h4>
-<p class="text-body-secondary small mb-4">
-    <?= $this->t('This confirmation link is invalid or has expired. Please register again.') ?>
-</p>
+<div class="auth-card">
+    <div class="auth-card__logo">
+        <?= $this->fetch('partial::logo') ?>
+    </div>
+    <div class="auth-head">
+        <h1><?= $this->e($this->t('Confirmation failed')) ?></h1>
+        <p><?= $this->e($this->t('This confirmation link is invalid or has expired. Please register again.')) ?></p>
+    </div>
 
-<a href="<?= $this->url('register') ?>" class="btn btn-primary d-block w-100">
-    <?= $this->t('Back to registration') ?>
-</a>
+    <?= $this->fetch('partial::link', [
+        'href'  => $this->url('register'),
+        'label' => $this->e($this->t('Back to registration')),
+    ]) ?>
+</div>
