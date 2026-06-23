@@ -7,13 +7,13 @@ declare(strict_types=1);
  * @var list<array{name: string, isRoot: bool, hasParent: bool, status: string|null, commit: string|null, deployedAt: \Tragwerk\Domain\ValueObject\TimestampImmutable|null}> $environments
  */
 
-$statusBadge = static function (?string $status): array {
+$statusBadge = function (?string $status): array {
     return match ($status) {
-        'completed' => ['tw-badge--ok', 'Running'],
-        'failed'    => ['tw-badge--danger', 'Failed'],
-        'running'   => ['tw-badge--info tw-badge--building', 'Building'],
-        'pending'   => ['tw-badge--neutral', 'Pending'],
-        default     => ['tw-badge--neutral', 'Never deployed'],
+        'completed' => ['tw-badge--ok', $this->t('Running')],
+        'failed'    => ['tw-badge--danger', $this->t('Failed')],
+        'running'   => ['tw-badge--info tw-badge--building', $this->t('Building')],
+        'pending'   => ['tw-badge--neutral', $this->t('Pending')],
+        default     => ['tw-badge--neutral', $this->t('Never deployed')],
     };
 };
 ?>
@@ -46,7 +46,7 @@ $statusBadge = static function (?string $status): array {
                         <span class="tw-badge tw-badge--neutral"><span class="tw-dot"></span><?= $this->e($this->t('Preview')) ?></span>
                     <?php endif ?>
                 </td>
-                <td><span class="tw-badge <?= $badgeCss ?>"><span class="tw-dot"></span><?= $this->e($this->t($badgeLabel)) ?></span></td>
+                <td><span class="tw-badge <?= $badgeCss ?>"><span class="tw-dot"></span><?= $this->e($badgeLabel) ?></span></td>
                 <td class="tw-hide-sm mono tw-cell-muted"><?= $this->e($env['commit'] ?? '—') ?></td>
                 <td class="tw-hide-sm tw-cell-muted">
                     <?php if ($env['deployedAt'] !== null): ?>

@@ -38,10 +38,10 @@ $this->layout('layout::default', [
     <?php endif ?>
     <?php if ($branch !== null): ?>
         <div class="tw-seg" id="range-seg">
-            <button data-range="1h">1 hr</button>
-            <button data-range="6h">6 hr</button>
-            <button class="active" data-range="24h">24 hr</button>
-            <button data-range="7d">7 days</button>
+            <button data-range="1h"><?= $this->t('1 hr') ?></button>
+            <button data-range="6h"><?= $this->t('6 hr') ?></button>
+            <button class="active" data-range="24h"><?= $this->t('24 hr') ?></button>
+            <button data-range="7d"><?= $this->t('7 days') ?></button>
         </div>
     <?php endif ?>
 <?php $this->stop() ?>

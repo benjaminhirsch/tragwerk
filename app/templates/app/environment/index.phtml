@@ -10,12 +10,12 @@ $this->layout('layout::default', [
     <table class="tw-table">
         <thead>
         <tr>
-            <th class="sortable">Environment <i class="bi bi-chevron-expand"></i></th>
-            <th class="sortable">Type <i class="bi bi-chevron-expand"></i></th>
-            <th class="sortable">Status <i class="bi bi-chevron-expand"></i></th>
-            <th class="sortable tw-hide-sm">Branch <i class="bi bi-chevron-expand"></i></th>
-            <th class="sortable tw-hide-sm">Commit <i class="bi bi-chevron-expand"></i></th>
-            <th class="sortable tw-hide-sm">Deploy <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable"><?= $this->t('Environment') ?> <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable"><?= $this->t('Type') ?> <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable"><?= $this->t('Status') ?> <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable tw-hide-sm"><?= $this->t('Branch') ?> <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable tw-hide-sm"><?= $this->t('Commit') ?> <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable tw-hide-sm"><?= $this->t('Deploy') ?> <i class="bi bi-chevron-expand"></i></th>
         </tr>
         </thead>
         <tbody id="env-rows">
@@ -30,8 +30,8 @@ $this->layout('layout::default', [
                         ]) ?></span>
                 </div>
             </td>
-            <td><span class="tw-badge tw-badge--purple"><span class="tw-dot"></span>Production</span></td>
-            <td><span class="tw-badge tw-badge--ok"><span class="tw-dot"></span>Running</span></td>
+            <td><span class="tw-badge tw-badge--purple"><span class="tw-dot"></span><?= $this->t('Production') ?></span></td>
+            <td><span class="tw-badge tw-badge--ok"><span class="tw-dot"></span><?= $this->t('Running') ?></span></td>
             <td class="tw-hide-sm"><span class="tw-tag">main</span></td>
             <td class="tw-hide-sm mono tw-cell-muted">a91f3c2</td>
             <td class="tw-hide-sm tw-cell-muted">12m ago</td>

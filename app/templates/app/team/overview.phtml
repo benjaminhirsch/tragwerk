@@ -27,13 +27,13 @@ $this->layout('layout::default', [
 <?php $this->stop() ?>
 
 <?php
-$statusBadge = static function (?DeployJobStatus $status): array {
+$statusBadge = function (?DeployJobStatus $status): array {
     return match ($status) {
-        DeployJobStatus::Completed => ['tw-badge--ok', 'Active'],
-        DeployJobStatus::Failed    => ['tw-badge--danger', 'Failed'],
-        DeployJobStatus::Running   => ['tw-badge--building', 'Deploying'],
-        DeployJobStatus::Pending   => ['tw-badge--neutral', 'Pending'],
-        default                    => ['tw-badge--neutral', 'Never deployed'],
+        DeployJobStatus::Completed => ['tw-badge--ok', $this->t('Active')],
+        DeployJobStatus::Failed    => ['tw-badge--danger', $this->t('Failed')],
+        DeployJobStatus::Running   => ['tw-badge--building', $this->t('Deploying')],
+        DeployJobStatus::Pending   => ['tw-badge--neutral', $this->t('Pending')],
+        default                    => ['tw-badge--neutral', $this->t('Never deployed')],
     };
 };
 ?>
@@ -43,17 +43,17 @@ $statusBadge = static function (?DeployJobStatus $status): array {
 <div class="row g-4">
     <div class="col-lg-8">
         <div class="d-flex align-items-center justify-content-between mb-2">
-            <h6>Projects</h6>
-            <a href="<?= $this->url('project') ?>" class="btn btn-ghost btn-sm">View all <i class="bi bi-arrow-right"></i></a>
+            <h6><?= $this->t('Projects') ?></h6>
+            <a href="<?= $this->url('project') ?>" class="btn btn-ghost btn-sm"><?= $this->t('View all') ?> <i class="bi bi-arrow-right"></i></a>
         </div>
         <div class="tw-table-wrap">
             <table class="tw-table">
                 <thead>
                 <tr>
-                    <th class="sortable">Project <i class="bi bi-chevron-expand"></i></th>
-                    <th class="sortable tw-hide-sm">Stack <i class="bi bi-chevron-expand"></i></th>
-                    <th class="sortable">Status <i class="bi bi-chevron-expand"></i></th>
-                    <th class="sortable tw-hide-sm">Last deploy <i class="bi bi-chevron-expand"></i></th>
+                    <th class="sortable"><?= $this->t('Project') ?> <i class="bi bi-chevron-expand"></i></th>
+                    <th class="sortable tw-hide-sm"><?= $this->t('Stack') ?> <i class="bi bi-chevron-expand"></i></th>
+                    <th class="sortable"><?= $this->t('Status') ?> <i class="bi bi-chevron-expand"></i></th>
+                    <th class="sortable tw-hide-sm"><?= $this->t('Last deploy') ?> <i class="bi bi-chevron-expand"></i></th>
                 </tr>
                 </thead>
                 <tbody id="proj-rows">
@@ -76,7 +76,7 @@ $statusBadge = static function (?DeployJobStatus $status): array {
                             </div>
                         </td>
                         <td class="tw-hide-sm tw-cell-muted">PHP 8.5</td>
-                        <td><span class="tw-badge <?= $badgeClass ?>"><span class="tw-dot"></span><?= $this->e($this->t($badgeLabel)) ?></span></td>
+                        <td><span class="tw-badge <?= $badgeClass ?>"><span class="tw-dot"></span><?= $this->e($badgeLabel) ?></span></td>
                         <td class="tw-hide-sm tw-cell-muted">
                             <?php if (($lastDeploy[$id] ?? null) !== null): ?>
                                 <?= $this->fetch('partial::datetime', ['date' => $lastDeploy[$id], 'relative' => true]) ?>
@@ -91,7 +91,7 @@ $statusBadge = static function (?DeployJobStatus $status): array {
         </div>
     </div>
     <div class="col-lg-4">
-        <h2 style="font-size:1.05rem;margin:0 0 .5rem">Activity</h2>
+        <h2 style="font-size:1.05rem;margin:0 0 .5rem"><?= $this->t('Activity') ?></h2>
         <div class="tw-card">
             <div class="tw-card__body" style="padding:0.4rem 0">
                 <ul class="list-unstyled m-0" id="activity-feed">
