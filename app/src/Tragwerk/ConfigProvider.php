@@ -135,6 +135,7 @@ final readonly class ConfigProvider
                     'mail' => ['templates/mail'],
                 ],
                 'extensions' => [
+                    Template\Extension\Csp::class,
                     Template\Extension\Authentication::class,
                     Template\Extension\Translator::class,
                     Template\Extension\Locale::class,

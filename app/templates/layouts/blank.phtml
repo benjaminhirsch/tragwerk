@@ -8,7 +8,9 @@
         <?= (($title ?? null) !== null) ? $this->e($title) . ' - ' : '' ?>
         <?= $this->e($siteName ?? 'Deploy without friction - Tragwerk') ?>
     </title>
-    <script>(function(){var t=localStorage.getItem('tw-theme')||'light';document.documentElement.setAttribute('data-bs-theme',t);})();</script>
+    <script nonce="<?= $this->e($this->cspNonce()) ?>">(function(){var t=localStorage.getItem('tw-theme')||'light';document.documentElement.setAttribute('data-bs-theme',t);})();</script>
+    <?php $cspNonce = $this->e($this->cspNonce()) ?>
+    <meta name="htmx-config" content='{"inlineStyleNonce":"<?= $cspNonce ?>","inlineScriptNonce":"<?= $cspNonce ?>"}'>
     <script src="/js/htmx.min.js"></script>
     <script src="/js/htmx-ext-sse.js"></script>
     <!-- Favicons & home-screen icons -->
