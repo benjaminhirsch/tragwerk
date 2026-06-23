@@ -10,6 +10,13 @@
     // (unique) hx-get URL and re-apply the active state after each swap.
     var selectedKey = null;
 
+    // On a deep link (?selected=…) the server renders the active item; adopt it
+    // so periodic SSE/poll swaps of #log-items keep the highlight.
+    var initiallyActive = document.querySelector('#log-items .log-item.active');
+    if (initiallyActive) {
+        selectedKey = initiallyActive.getAttribute('hx-get');
+    }
+
     function markActive() {
         document.querySelectorAll('#log-items .log-item').forEach(function (i) {
             i.classList.toggle('active', selectedKey !== null && i.getAttribute('hx-get') === selectedKey);

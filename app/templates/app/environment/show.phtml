@@ -121,9 +121,10 @@ $this->layout('layout::default', [
             <tr>
                 <td>
                     <div class="d-flex align-items-center gap-2">
-                        <span class="mono tw-cell-strong">
+                        <span class="tw-cell-strong">
+                        <a href="<?= $this->e($this->url('deployment') . '?selected=' . urlencode($deployment->id->toString())) ?>">
                             <?= $deployment->commitSha !== '' ? $this->e(substr($deployment->commitSha, 0, 7)) : $this->e($this->t('(sync)')) ?>
-                        </span>
+                        </a></span>
                         <?php if ($index === 0 && $deployment->status === DeployJobStatus::Completed): ?>
                             <span class="tw-badge tw-badge--info" style="font-size:.68rem"><?= $this->t('live') ?></span>
                         <?php endif ?>
