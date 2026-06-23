@@ -83,7 +83,7 @@ $this->layout('layout::blank') ?>
             <?php endif ?>
             <?php if($this->activeEnvironment() !== null): ?>
             <span class="tw-crumb-sep">/</span>
-                <?php if(count($this->getProjectEnvironments()) > 0): ?>
+                <?php if(count($this->getProjectEnvironments()) > 1): ?>
                 <div class="dropdown">
                     <button type="button" class="tw-switcher" aria-haspopup="menu">
                         <span class="tw-switcher__name"><?= $this->e($this->activeEnvironment()) ?></span>
@@ -104,9 +104,9 @@ $this->layout('layout::blank') ?>
                     </ul>
                 </div>
                 <?php else: ?>
-                    <button type="button" class="tw-switcher" aria-haspopup="menu">
+                    <a href="<?= $this->url('environment.show', queryParams: ['id' => $this->activeEnvironment()])?>" class="tw-switcher" aria-haspopup="menu">
                         <span class="tw-switcher__name"><?= $this->e($this->activeEnvironment()) ?></span>
-                    </button>
+                    </a>
                 <?php endif ?>
             <?php endif ?>
         </div>
