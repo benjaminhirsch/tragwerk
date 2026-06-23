@@ -1,30 +1,55 @@
-<?php $this->layout('layout::default', ['title' => $this->t('Teams')]) ?>
+<?php
 
-<h1><?= $this->t('Teams') ?></h1>
+use Tragwerk\Domain\Entity\Team;
 
-<div class="tw-card">
+$this->layout('layout::default', [
+    'pageTitle'    => $this->t('Teams'),
+    'pageSubTitle' => $this->t('Teams group your projects, environments and members.'),
+]) ?>
+
+
+<?php $this->start('pageHeadButtons') ?>
     <?= $this->fetch('partial::link', [
         'label'   => $this->t('Create Team'),
         'icon'    => 'bi bi-plus-circle',
         'classes' => 'btn btn-primary',
         'href'    => $this->url('team.create'),
     ]) ?>
+<?php $this->stop() ?>
 
-    <hr />
 
-    <table class="table table-striped table-hover">
+<div class="tw-table-wrap">
+    <table class="tw-table">
         <thead>
         <tr>
-            <th><?= $this->t('Name') ?></th>
+            <th class="sortable"><?= $this->t('Name') ?> <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable tw-hide-sm"><?= $this->t('Created') ?> <i class="bi bi-chevron-expand"></i></th>
         </tr>
         </thead>
-        <tbody>
-        <?php foreach ($teams as $team): ?>
+        <tbody id="team-rows">
+        <?php if ($teams === []): ?>
+            <tr><td colspan="2" class="text-body-secondary small">
+                <i class="bi bi-info-circle me-1"></i><?= $this->t('No teams yet.') ?>
+            </td></tr>
+        <?php endif ?>
+        <?php
+        /** @var Team $team */
+        foreach ($teams as $team): ?>
             <tr>
-                <td><?= $this->fetch('partial::link', [
-                        'href'  => $this->url('team.show', ['id' => $team->id]),
-                        'label' => $team->name,
-                    ]) ?></td>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="tw-stack__ico" style="background:<?= $team->abbreviation()->oklch() ?>"><?= $team->abbreviation()->forString() ?></span>
+                        <span class="tw-cell-strong">
+                            <?= $this->fetch('partial::link', [
+                                'label' => $team->name,
+                                'href'  => $this->url('team.show', ['id' => $team->id]),
+                            ]) ?>
+                        </span>
+                    </div>
+                </td>
+                <td class="tw-hide-sm tw-cell-muted">
+                    <?= $this->fetch('partial::datetime', ['date' => $team->createdAt, 'relative' => true]) ?>
+                </td>
             </tr>
         <?php endforeach ?>
         </tbody>
