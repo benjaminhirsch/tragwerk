@@ -725,7 +725,7 @@ body:has(> .tw-footer) > main { flex: 1 0 auto; width: 100% }
 .term-meta { display: flex; flex-wrap: wrap; gap: .4rem 1.1rem; padding: .7rem .9rem; background: var(--surface); border-bottom: 1px solid var(--border); font-size: .8rem; }
 .term-meta .m { display: flex; align-items: center; gap: .4rem; color: var(--text-muted); }
 .term-meta .m b { color: var(--text); font-weight: 600; }
-.term-body { background: oklch(0.16 0.008 270); padding: 1rem 1.1rem; font-family: var(--font-mono); font-size: .8rem; line-height: 1.7; max-height: 560px; overflow: auto; }
+.term-body { background: oklch(0.16 0.008 270); color: oklch(0.86 0.01 270); padding: 1rem 1.1rem; font-family: var(--font-mono); font-size: .8rem; line-height: 1.7; max-height: 560px; overflow: auto; }
 [data-bs-theme="light"] .term-body { background: oklch(0.21 0.01 270); }
 .term-body .ln { display: flex; gap: 1rem; white-space: pre-wrap; }
 .term-body .lt { color: oklch(0.55 0.02 270); flex: none; user-select: none; }
