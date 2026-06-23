@@ -1,8 +1,222 @@
 <?php
 
+declare(strict_types=1);
+
+use Tragwerk\Domain\Entity\DeployJob;
+use Tragwerk\Domain\Entity\Domain;
+use Tragwerk\Domain\Entity\EnvVar;
+use Tragwerk\Domain\Enum\DeployJobStatus;
+
+/**
+ * @var string|null         $branch
+ * @var list<DeployJob>     $deployments
+ * @var Domain|null         $primaryDomain
+ * @var list<EnvVar>        $vars
+ */
+
+$latest       = $deployments[0] ?? null;
+$statusBadge  = match ($latest?->status) {
+    DeployJobStatus::Completed => ['ok', $this->t('Running')],
+    DeployJobStatus::Failed    => ['danger', $this->t('Failed')],
+    DeployJobStatus::Running, DeployJobStatus::Pending => ['info', $this->t('Deploying')],
+    default => ['neutral', $this->t('Not deployed')],
+};
+
+$subtitle = '';
+if ($branch !== null) {
+    $parts = [];
+    if ($primaryDomain !== null) {
+        $parts[] = '<a href="https://' . $this->e($primaryDomain->host) . '" target="_blank" rel="noopener" class="mono">'
+            . $this->e($primaryDomain->host) . '</a>';
+    }
+    $parts[] = '<span class="tw-badge tw-badge--' . $this->e($statusBadge[0]) . '"><span class="tw-dot"></span>'
+        . $this->e($statusBadge[1]) . '</span>';
+    $parts[] = $this->e($this->t('Branch')) . ' <span class="tw-tag mono">' . $this->e($branch) . '</span>';
+    $subtitle = '<span class="d-inline-flex align-items-center gap-2 flex-wrap">' . implode(' · ', $parts) . '</span>';
+}
+
 $this->layout('layout::default', [
-    'pageType' =>  $this->activeTeam()->name . ' / ' . $this->activeEnvironment(),
-    'pageTitle' => $this->activeEnvironment(),
-    'pageTitleIcon' => 'bi bi-git'
+    'wide'          => true,
+    'pageType'      => ($this->activeProject()?->name ?? $this->activeTeam()?->name ?? '') . ' / ' . $this->t('Environment'),
+    'pageTitle'     => $branch ?? $this->t('Environment'),
+    'pageTitleIcon' => 'bi bi-git',
+    'pageSubTitle'  => $subtitle,
+]);
+?>
+
+<?php if ($branch === null): ?>
+    <div class="tw-card">
+        <div class="tw-card__body text-center text-body-secondary">
+            <i class="bi bi-info-circle me-1"></i>
+            <?= $this->t('No environment selected. Pick a branch to deploy as an isolated environment.') ?>
+        </div>
+    </div>
+<?php else: ?>
+
+<?php $this->start('pageHeadButtons') ?>
+    <?php if ($primaryDomain !== null): ?>
+        <?= $this->fetch('partial::link', [
+            'label'   => $this->t('Open'),
+            'href'    => 'https://' . $primaryDomain->host,
+            'target'  => '_blank',
+            'icon'    => 'bi bi-box-arrow-up-right',
+            'classes' => 'btn btn-primary',
+        ]) ?>
+    <?php endif ?>
+    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#tw-redeploy-modal">
+        <i class="bi bi-arrow-clockwise"></i> <?= $this->e($this->t('Redeploy')) ?>
+    </button>
+<?php $this->stop() ?>
+
+<!-- KPIs (live) -->
+<div class="mb-4"
+     hx-get="<?= $this->e($this->url('metric.live') . '?branch=' . urlencode($branch)) ?>"
+     hx-trigger="load"
+     hx-swap="innerHTML">
+    <div class="tw-card"><div class="tw-card__body text-body-secondary small">
+        <i class="bi bi-hourglass-split me-1"></i><?= $this->t('Loading live metrics…') ?>
+    </div></div>
+</div>
+
+<!-- Deployments -->
+<h2 id="deployments" style="font-size:1.1rem;margin:0 0 .5rem"><?= $this->t('Deployments') ?></h2>
+<div class="tw-table-wrap mb-4">
+    <table class="tw-table">
+        <thead>
+        <tr>
+            <th class="sortable"><?= $this->t('Commit') ?></th>
+            <th class="sortable"><?= $this->t('Status') ?></th>
+            <th class="sortable tw-hide-sm"><?= $this->t('Duration') ?></th>
+            <th class="sortable"><?= $this->t('Time') ?></th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php if ($deployments === []): ?>
+            <tr><td colspan="4" class="text-body-secondary small">
+                <i class="bi bi-info-circle me-1"></i><?= $this->t('No deployments yet.') ?>
+            </td></tr>
+        <?php endif ?>
+        <?php
+        /** @var DeployJob $deployment */
+        foreach ($deployments as $index => $deployment):
+            $statusType = match ($deployment->status) {
+                DeployJobStatus::Completed => 'ok',
+                DeployJobStatus::Failed    => 'danger',
+                DeployJobStatus::Running, DeployJobStatus::Pending => 'info',
+            };
+            $statusLabel = match ($deployment->status) {
+                DeployJobStatus::Completed => $this->t('Successful'),
+                DeployJobStatus::Failed    => $this->t('Failed'),
+                DeployJobStatus::Running   => $this->t('Running'),
+                DeployJobStatus::Pending   => $this->t('Pending'),
+            };
+            $showDuration = $deployment->status === DeployJobStatus::Completed
+                || $deployment->status === DeployJobStatus::Failed;
+            $diff     = $deployment->createdAt->toDateTime()->diff($deployment->updatedAt->toDateTime());
+            $seconds  = $diff->days * 86400 + $diff->h * 3600 + $diff->i * 60 + $diff->s;
+            $duration = $seconds >= 60
+                ? sprintf('%dm %02ds', intdiv($seconds, 60), $seconds % 60)
+                : $seconds . 's';
+            ?>
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="mono tw-cell-strong">
+                            <?= $deployment->commitSha !== '' ? $this->e(substr($deployment->commitSha, 0, 7)) : $this->e($this->t('(sync)')) ?>
+                        </span>
+                        <?php if ($index === 0 && $deployment->status === DeployJobStatus::Completed): ?>
+                            <span class="tw-badge tw-badge--info" style="font-size:.68rem"><?= $this->t('live') ?></span>
+                        <?php endif ?>
+                    </div>
+                </td>
+                <td><?= $this->fetch('partial::badge', ['type' => $statusType, 'label' => $statusLabel]) ?></td>
+                <td class="tw-hide-sm tw-cell-muted mono"><?= $showDuration ? $this->e($duration) : '—' ?></td>
+                <td class="tw-cell-muted"><time data-formatter="relative" datetime="<?= $this->e($deployment->createdAt->format('c')) ?>"><?= $this->e($deployment->createdAt->format('Y-m-d H:i')) ?></time></td>
+            </tr>
+        <?php endforeach ?>
+        </tbody>
+    </table>
+</div>
+
+<div class="row g-4">
+    <!-- Logs -->
+    <div class="col-lg-7" id="logs">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <h2 style="font-size:1.1rem;margin:0"><?= $this->t('Logs') ?></h2>
+            <?= $this->fetch('partial::link', [
+                'label'   => $this->t('Open logs'),
+                'href'    => $this->url('log'),
+                'icon'    => 'bi bi-box-arrow-up-right',
+                'classes' => 'btn btn-outline-secondary btn-sm',
+            ]) ?>
+        </div>
+        <div id="log-tail"
+             hx-get="<?= $this->e($this->url('log.tail')) ?>"
+             hx-trigger="load"
+             hx-target="#log-tail"
+             hx-swap="innerHTML">
+            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            <?= $this->t('Loading...') ?>
+        </div>
+    </div>
+
+    <!-- Variables -->
+    <div class="col-lg-5" id="variables">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <h2 style="font-size:1.1rem;margin:0"><?= $this->t('Variables') ?></h2>
+            <?= $this->fetch('partial::link', [
+                'label'   => $this->t('Add'),
+                'href'    => $this->url('variable.create'),
+                'icon'    => 'bi bi-plus-lg',
+                'classes' => 'btn btn-outline-secondary btn-sm',
+            ]) ?>
+        </div>
+        <div class="tw-table-wrap">
+            <table class="tw-table">
+                <thead><tr><th><?= $this->t('Key') ?></th><th><?= $this->t('Value') ?></th><th></th></tr></thead>
+                <tbody>
+                <?php if ($vars === []): ?>
+                    <tr><td colspan="3" class="text-body-secondary small">
+                        <i class="bi bi-info-circle me-1"></i><?= $this->t('No variables defined.') ?>
+                    </td></tr>
+                <?php endif ?>
+                <?php
+                /** @var EnvVar $var */
+                foreach ($vars as $var): ?>
+                    <tr>
+                        <td class="mono tw-cell-strong" style="font-size:.8rem"><?= $this->e($var->key) ?></td>
+                        <td class="mono tw-cell-muted" style="font-size:.8rem">
+                            <?php if ($var->isSecret): ?>
+                                <i class="bi bi-lock-fill" style="color:var(--text-faint)"></i>
+                                <?= $this->e(substr(str_repeat('*', strlen($var->value)), 0, 10)) ?>
+                            <?php else: ?>
+                                <?= $this->e(substr($var->value, 0, 40)) ?>
+                            <?php endif ?>
+                        </td>
+                        <td class="text-end">
+                            <?php if ($var->branch === $branch && $var->isInherited === false): ?>
+                                <a class="btn btn-ghost btn-sm" href="<?= $this->url('variable.edit', ['id' => $var->id->toString()]) ?>" title="<?= $this->e($this->t('Edit')) ?>"><i class="bi bi-pencil"></i></a>
+                            <?php elseif ($var->isInherited): ?>
+                                <span class="tw-badge tw-badge--info" style="font-size:.62rem"><i class="bi bi-diagram-2"></i><?= $this->t('Inherited') ?></span>
+                            <?php endif ?>
+                        </td>
+                    </tr>
+                <?php endforeach ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<?= $this->fetch('partial::modal', [
+    'id'            => 'tw-redeploy-modal',
+    'header'        => $this->t('Redeploy environment'),
+    'body'          => $this->t('Redeploy {branch}? This triggers a new deployment of the latest commit on this branch.', ['branch' => '<b class="mono">' . $this->e($branch) . '</b>']),
+    'actionUrl'     => $this->url('project.environment.redeploy', ['id' => $this->activeProject()->id->toString()]),
+    'actionLabel'   => $this->t('Redeploy'),
+    'actionClasses' => 'btn btn-primary',
+    'actionIcon'    => 'bi bi-arrow-clockwise',
+    'extraFields'   => ['branch' => $branch],
 ]) ?>
 
+<?php endif ?>
