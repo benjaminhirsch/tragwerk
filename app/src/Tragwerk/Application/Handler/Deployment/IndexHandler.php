@@ -12,8 +12,10 @@ use Tragwerk\Application\Dto\Deployment\LogListEntry;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Entity\DeployJob;
 use Tragwerk\Domain\Entity\Project;
+use Tragwerk\Domain\Exception\Repository\EntityNotFound;
 use Tragwerk\Domain\Repository\BuildLogRepository;
 use Tragwerk\Domain\Repository\DeployJobRepository;
+use Tragwerk\Domain\ValueObject\DeployJobIdentifier;
 
 use function array_slice;
 use function assert;
@@ -94,7 +96,13 @@ final readonly class IndexHandler implements RequestHandlerInterface
             'branch'     => $activeBranch,
             'entries'    => $entries,
             'activeJobs' => $activeJobs,
-            'selected'   => $this->resolveSelected($entries, $activeJobs),
+            'selected'   => $this->resolveSelected(
+                $entries,
+                $activeJobs,
+                $activeProject,
+                $activeBranch,
+                $params['selected'] ?? null,
+            ),
             'offset'     => $offset,
             'hasMore'    => $hasMore,
             'type'       => $type,
@@ -139,14 +147,33 @@ final readonly class IndexHandler implements RequestHandlerInterface
     }
 
     /**
-     * The initially shown terminal entry: prefer the first active deploy job,
-     * otherwise the newest entry in the list.
+     * The initially shown terminal entry: an explicitly requested deploy job
+     * (e.g. when linked from the environment overview), otherwise the first
+     * active deploy job, otherwise the newest entry in the list.
      *
      * @param list<LogListEntry> $entries
      * @param list<DeployJob>    $activeJobs
      */
-    private function resolveSelected(array $entries, array $activeJobs): LogListEntry|null
-    {
+    private function resolveSelected(
+        array $entries,
+        array $activeJobs,
+        Project $project,
+        string $branch,
+        mixed $requestedId,
+    ): LogListEntry|null {
+        if (is_string($requestedId) && DeployJobIdentifier::isValid($requestedId)) {
+            try {
+                $job = $this->deployJobRepository->getById(DeployJobIdentifier::fromString($requestedId));
+                assert($job instanceof DeployJob);
+
+                if ($job->projectId->toString() === $project->id->toString() && $job->branch === $branch) {
+                    return LogListEntry::fromDeployJob($job);
+                }
+            } catch (EntityNotFound) {
+                // Fall through to the default selection below.
+            }
+        }
+
         if ($activeJobs !== []) {
             return LogListEntry::fromDeployJob($activeJobs[0]);
         }

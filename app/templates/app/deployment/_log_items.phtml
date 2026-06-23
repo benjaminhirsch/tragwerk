@@ -9,8 +9,11 @@ use Tragwerk\Domain\Enum\DeployJobStatus;
  * @var list<\Tragwerk\Application\Dto\Deployment\LogListEntry> $entries
  * @var int                                                 $offset
  * @var bool                                                $hasMore
- * @var string                                              $type     'all'|'build'|'deploy'
+ * @var string                                              $type       'all'|'build'|'deploy'
+ * @var string|null                                         $selectedId currently selected entry id
  */
+
+$selectedId ??= null;
 
 $terminalUrl = $this->url('deployment.terminal');
 $listUrl     = $this->url('deployment');
@@ -55,7 +58,7 @@ $buildIcon = static fn (string $type): string => match ($type) {
         $isActive = $job->status === DeployJobStatus::Running || $job->status === DeployJobStatus::Pending;
         $loadUrl  = $terminalUrl . '?kind=deploy&id=' . urlencode($job->id->toString());
         ?>
-        <div class="log-item" data-f="deploy"
+        <div class="log-item<?= $selectedId === $job->id->toString() ? ' active' : '' ?>" data-f="deploy"
              hx-get="<?= $this->e($loadUrl) ?>"
              hx-target="#tw-terminal"
              hx-swap="outerHTML">
@@ -87,7 +90,7 @@ $buildIcon = static fn (string $type): string => match ($type) {
         $log     = $entry->buildLog;
         $loadUrl = $terminalUrl . '?kind=build&id=' . urlencode($log->id->toString());
         ?>
-        <div class="log-item" data-f="build"
+        <div class="log-item<?= $selectedId === $log->id->toString() ? ' active' : '' ?>" data-f="build"
              hx-get="<?= $this->e($loadUrl) ?>"
              hx-target="#tw-terminal"
              hx-swap="outerHTML">

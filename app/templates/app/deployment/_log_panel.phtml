@@ -9,10 +9,12 @@ declare(strict_types=1);
  * @var list<\Tragwerk\Domain\Entity\DeployJob>                  $activeJobs
  * @var int                                                      $offset
  * @var bool                                                     $hasMore
- * @var string                                                   $type     'all'|'build'|'deploy'
+ * @var string                                                   $type       'all'|'build'|'deploy'
+ * @var string|null                                              $selectedId currently selected entry id
  */
 
-$listUrl = $this->url('deployment');
+$selectedId ??= null;
+$listUrl     = $this->url('deployment');
 
 $filters = [
     'all'    => $this->t('All'),
@@ -43,10 +45,11 @@ $sseTopic  = urlencode($topicBase . '/project/' . $project->id->toString() . '/d
      hx-target="#log-items"
      hx-swap="innerHTML">
     <?= $this->fetch('page::deployment/_log_items', [
-        'branch'  => $branch,
-        'entries' => $entries,
-        'offset'  => $offset,
-        'hasMore' => $hasMore,
-        'type'    => $type,
+        'branch'     => $branch,
+        'entries'    => $entries,
+        'offset'     => $offset,
+        'hasMore'    => $hasMore,
+        'type'       => $type,
+        'selectedId' => $selectedId,
     ]) ?>
 </div>
