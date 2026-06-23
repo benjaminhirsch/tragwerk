@@ -23,12 +23,12 @@ $this->layout('layout::default', [
     <table class="tw-table">
         <thead>
         <tr>
-            <th class="sortable">Project <i class="bi bi-chevron-expand"></i></th>
-            <th class="sortable tw-hide-sm">Stack <i class="bi bi-chevron-expand"></i></th>
-            <th class="sortable tw-hide-sm">Applications <i class="bi bi-chevron-expand"></i></th>
-            <th class="sortable tw-hide-sm">Server <i class="bi bi-chevron-expand"></i></th>
-            <th class="sortable">Status <i class="bi bi-chevron-expand"></i></th>
-            <th class="sortable tw-hide-sm">Last deploy <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable"><?= $this->t('Project') ?> <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable tw-hide-sm"><?= $this->t('Stack') ?> <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable tw-hide-sm"><?= $this->t('Applications') ?> <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable tw-hide-sm"><?= $this->t('Server') ?> <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable"><?= $this->t('Status') ?> <i class="bi bi-chevron-expand"></i></th>
+            <th class="sortable tw-hide-sm"><?= $this->t('Last deploy') ?> <i class="bi bi-chevron-expand"></i></th>
         </tr>
         </thead>
         <tbody id="proj-rows">
@@ -57,8 +57,8 @@ $this->layout('layout::default', [
                         ]) ?>
                     <?php endif ?>
                 </td>
-                <td><span class="tw-badge tw-badge--ok"><span class="tw-dot"></span>Active</span></td>
-                <td class="tw-hide-sm tw-cell-muted">12m ago</td>
+                <td><span class="tw-badge tw-badge--ok"><span class="tw-dot"></span><?= $this->t('Active') ?></span></td>
+                <td class="tw-hide-sm tw-cell-muted">—</td>
             </tr>
         <?php endforeach ?>
         </tbody>
