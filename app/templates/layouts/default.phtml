@@ -317,7 +317,7 @@ $this->layout('layout::blank') ?>
 
 <?php $this->push('javascript') ?>
 <script src="/js/init-elements.js"></script>
-<script>
+<script nonce="<?= $this->e($this->cspNonce()) ?>">
     (function() {
 
         initElements('time[data-formatter="year-month"]', (element) => {

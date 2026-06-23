@@ -37,6 +37,9 @@ return static function (
     $app->pipe(Middleware\ParseRawJsonBody::class);
     $app->pipe(Middleware\SetServerUrl::class);
 
+    // Security headers (CSP nonce must be generated before templates render).
+    $app->pipe(Template\Extension\Csp::class);
+
     // Pipe more middleware here that you want to execute on every request:
     // - bootstrapping
     // - pre-conditions
