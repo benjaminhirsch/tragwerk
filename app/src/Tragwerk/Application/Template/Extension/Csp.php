@@ -65,7 +65,7 @@ final class Csp implements MiddlewareInterface, ExtensionInterface
 
         $directives = [
             'default-src'     => "'self'",
-            'img-src'         => "'self'",
+            'img-src'         => "'self' data:",
             'script-src'      => "'self' " . $nonceSrc,
             'style-src'       => "'self' " . $nonceSrc,
             // style="..." attributes cannot carry a nonce; allow them explicitly.
