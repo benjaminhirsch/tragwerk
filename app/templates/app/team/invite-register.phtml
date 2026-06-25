@@ -4,56 +4,63 @@ use Tragwerk\Domain\Entity\TeamInvitation;
 
 assert(isset($invitation) && $invitation instanceof TeamInvitation);
 
-$this->layout('layout::default', ['title' => $this->t('Complete registration')]);
+$this->layout('layout::auth', ['title' => $this->t('Complete registration')]);
 ?>
 
-<h4 class="card-title mb-1"><?= $this->t('Complete registration') ?></h4>
-<p class="text-body-secondary small mb-4">
-    <?= $this->t('You have been invited to join a team. Create your account to continue.') ?>
-</p>
-
-<form action="<?= $this->url('team.invite', ['token' => $invitation->token]) ?>" method="post">
-    <?= $this->fetch('partial::input/csrf') ?>
-
-    <div class="form-group mb-3">
-        <label class="form-label"><?= $this->t('E-Mail') ?></label>
-        <input class="form-control" type="email" value="<?= $this->e($invitation->email) ?>" disabled>
+<div class="auth-card">
+    <div class="auth-card__logo">
+        <?= $this->fetch('partial::logo') ?>
+    </div>
+    <div class="auth-head">
+        <h1><?= $this->e($this->t('Complete registration')) ?></h1>
+        <p><?= $this->e($this->t('You have been invited to join a team. Create your account to continue.')) ?></p>
     </div>
 
-    <div class="row g-2">
-        <div class="col-6">
-            <?= $this->fetch('partial::input/text', [
-                'id'         => 'firstname',
-                'label'      => $this->t('Firstname'),
-                'required'   => true,
-                'validation' => $validationBag ?? null,
-            ]) ?>
+    <form class="auth-form" action="<?= $this->url('team.invite', ['token' => $invitation->token]) ?>" method="post">
+        <?= $this->fetch('partial::input/csrf') ?>
+
+        <div>
+            <label class="form-label" for="email"><?= $this->t('E-Mail') ?></label>
+            <input class="form-control" type="email" id="email" value="<?= $this->e($invitation->email) ?>" disabled>
         </div>
-        <div class="col-6">
-            <?= $this->fetch('partial::input/text', [
-                'id'         => 'lastname',
-                'label'      => $this->t('Lastname'),
-                'required'   => true,
-                'validation' => $validationBag ?? null,
-            ]) ?>
+
+        <div class="row g-2">
+            <div class="col-6">
+                <?= $this->fetch('partial::input/text', [
+                    'id'         => 'firstname',
+                    'label'      => $this->t('Firstname'),
+                    'required'   => true,
+                    'validation' => $validationBag ?? null,
+                    'autofocus'  => true,
+                ]) ?>
+            </div>
+            <div class="col-6">
+                <?= $this->fetch('partial::input/text', [
+                    'id'         => 'lastname',
+                    'label'      => $this->t('Lastname'),
+                    'required'   => true,
+                    'validation' => $validationBag ?? null,
+                ]) ?>
+            </div>
         </div>
-    </div>
 
-    <?= $this->fetch('partial::input/password', [
-        'id'         => 'password1',
-        'label'      => $this->t('Password'),
-        'required'   => true,
-        'validation' => $validationBag ?? null,
-    ]) ?>
+        <?= $this->fetch('partial::input/password', [
+            'id'         => 'password1',
+            'label'      => $this->t('Password'),
+            'required'   => true,
+            'validation' => $validationBag ?? null,
+        ]) ?>
 
-    <?= $this->fetch('partial::input/password', [
-        'id'         => 'password2',
-        'label'      => $this->t('Password repeat'),
-        'required'   => true,
-        'validation' => $validationBag ?? null,
-    ]) ?>
+        <?= $this->fetch('partial::input/password', [
+            'id'         => 'password2',
+            'label'      => $this->t('Password repeat'),
+            'required'   => true,
+            'validation' => $validationBag ?? null,
+        ]) ?>
 
-    <div class="form-actions d-grid">
-        <?= $this->fetch('partial::input/button', ['label' => $this->t('Create account'), 'classes' => 'btn btn-primary']) ?>
-    </div>
-</form>
+        <?= $this->fetch('partial::input/button', [
+            'label'   => $this->t('Create account'),
+            'classes' => 'btn btn-primary btn-block',
+        ]) ?>
+    </form>
+</div>

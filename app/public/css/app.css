@@ -564,7 +564,7 @@ a.tw-card:hover {
 
 /* Forms */
 .form-control, .form-select {
-  background: var(--surface);
+  background-color: var(--surface);
   border-color: var(--border-strong);
   color: var(--text);
   border-radius: 0.55rem;
