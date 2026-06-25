@@ -163,8 +163,8 @@ $this->layout('layout::blank') ?>
         $tabs = [
             [
                 'route' => [
-                    'routeName' => 'team.show',
-                    'routeParams' => ['id' => $this->activeTeam()->id],
+                    'routeName' => $this->activeProject() === null ? 'team.show' : 'project.show',
+                    'routeParams' => ['id' => $this->activeProject() === null ? $this->activeTeam()->id : $this->activeProject()->id],
                 ],
                 'label' => $this->t('Overview'),
                 'icon' => 'bi bi-grid-1x2',
