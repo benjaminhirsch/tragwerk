@@ -127,7 +127,7 @@ $this->layout('layout::blank') ?>
             <!-- User menu (no JS) -->
             <div class="dropdown">
                 <button type="button" class="tw-iconbtn" aria-haspopup="menu" style="width:auto;padding:0 .15rem">
-                    <span class="tw-ava" style="width:30px;height:30px;border-radius:8px"><?= $this->e($this->user()->getDetail('abbreviation')) ?></span>
+                    <span class="tw-ava" style="width:30px;height:30px;border-radius:8px;background:<?= $this->user()->getDetail('oklch') ?>"><?= $this->e($this->user()->getDetail('abbreviation')) ?></span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" style="min-width:230px">
                     <li class="px-2 py-1">
