@@ -49,6 +49,12 @@
             </div>
         <?php endif ?>
 
+        <?php if ($emailChanged ?? false): ?>
+            <div class="alert alert-success small mb-3">
+                <?= $this->t('Your email address has been changed. Please sign in with your new address.') ?>
+            </div>
+        <?php endif ?>
+
         <?php if ($notConfirmed ?? false): ?>
             <div class="alert alert-warning small mb-3">
                 <?= $this->t('Please confirm your email address before signing in. Check your inbox for the confirmation link.') ?>

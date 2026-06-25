@@ -16,6 +16,7 @@ final class EmailConfirmation implements Entity
         public string $token,
         public TimestampImmutable $expiresAt,
         public TimestampImmutable $createdAt,
+        public string|null $newEmail = null,
     ) {
     }
 }

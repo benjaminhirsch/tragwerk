@@ -21,6 +21,9 @@ final readonly class ValidationBag implements ValidationBagInterface
         'password',
         'password1',
         'password2',
+        'currentPassword',
+        'newPassword',
+        'confirmPassword',
     ];
 
     /** @param array<array-key, mixed> $passedValues */

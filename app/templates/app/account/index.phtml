@@ -3,38 +3,187 @@
 use Tragwerk\Domain\Entity\User;
 
 /**
- * @var User                          $user
- * @var bool                          $twoFactorEnabled
- * @var \Tragwerk\Domain\ValueObject\TimestampImmutable|null $twoFactorSince
- * @var int                           $remainingRecovery
- * @var bool                          $disableError
- * @var bool                          $enabled
+ * @var User                                                  $user
+ * @var \Tragwerk\Domain\Entity\SshKey[]                      $keys
+ * @var bool                                                  $twoFactorEnabled
+ * @var \Tragwerk\Domain\ValueObject\TimestampImmutable|null  $twoFactorSince
+ * @var int                                                   $remainingRecovery
+ * @var \Tragwerk\Application\Validation\ValidationBag        $profileValidation
+ * @var \Tragwerk\Application\Validation\ValidationBag|null   $passwordValidation
+ * @var \Tragwerk\Application\Validation\ValidationBag|null   $sshValidation
  */
 $this->layout('layout::default', [
     'title'        => $this->t('Account settings'),
     'pageTitle'    => $this->t('Account settings'),
     'pageType'     => $this->t('My account'),
-    'pageSubTitle' => $this->t('Manage two-factor authentication for your account.'),
+    'pageSubTitle' => $this->t('Personal details, password, SSH keys and two-factor authentication.'),
     'wide'         => false,
 ]);
 ?>
 
 <div class="acct">
 
-    <?php if ($enabled ?? false): ?>
-        <?= $this->fetch('partial::alert', [
-            'content' => $this->t('Two-factor authentication is now active.'),
-            'type'    => 'success',
-        ]) ?>
-    <?php endif ?>
+    <?php foreach ([
+        'profileSaved'    => [$this->t('Your profile has been updated.'), 'success'],
+        'emailPending'    => [$this->t('Almost done — confirm the change via the link we sent to your new email address.'), 'info'],
+        'passwordChanged' => [$this->t('Your password has been changed.'), 'success'],
+        'enabled'         => [$this->t('Two-factor authentication is now active.'), 'success'],
+        'disableError'    => [$this->t('The password you entered is incorrect. Two-factor authentication was not disabled.'), 'danger'],
+    ] as $flag => [$message, $type]): ?>
+        <?php if ($$flag ?? false): ?>
+            <?= $this->fetch('partial::alert', ['content' => $message, 'type' => $type]) ?>
+        <?php endif ?>
+    <?php endforeach ?>
 
-    <?php if ($disableError ?? false): ?>
-        <?= $this->fetch('partial::alert', [
-            'content' => $this->t('The password you entered is incorrect. Two-factor authentication was not disabled.'),
-            'type'    => 'danger',
-        ]) ?>
-    <?php endif ?>
+    <!-- PROFILE -->
+    <section id="profile" class="mb-4">
+        <form class="tw-card" method="post" action="<?= $this->url('account.profile') ?>">
+            <?= $this->fetch('partial::input/csrf') ?>
+            <div class="tw-card__head"><h2><?= $this->t('Profile') ?></h2></div>
+            <div class="tw-card__body">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <span class="tw-ava" style="width:60px;height:60px;border-radius:16px;font-size:1.2rem;background:<?= $user->abbreviation()->oklch() ?>">
+                        <?= $this->e($user->abbreviation()->forString()) ?>
+                    </span>
+                    <div>
+                        <div class="fw-semibold" style="font-size:.95rem"><?= $this->e($user->fullName()) ?></div>
+                        <div class="text-body-secondary" style="font-size:.82rem"><?= $this->e($user->email) ?></div>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <?= $this->fetch('partial::input/text', [
+                            'id'         => 'firstname',
+                            'label'      => $this->t('First name'),
+                            'validation' => $profileValidation,
+                        ]) ?>
+                    </div>
+                    <div class="col-md-6">
+                        <?= $this->fetch('partial::input/text', [
+                            'id'         => 'lastname',
+                            'label'      => $this->t('Last name'),
+                            'validation' => $profileValidation,
+                        ]) ?>
+                    </div>
+                    <div class="col-12">
+                        <?= $this->fetch('partial::input/email', [
+                            'id'         => 'email',
+                            'label'      => $this->t('Email address'),
+                            'validation' => $profileValidation,
+                        ]) ?>
+                        <div class="form-text"><?= $this->t('Changing your email requires confirmation via a link sent to the new address.') ?></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-foot">
+                <?= $this->fetch('partial::input/button', [
+                    'label' => $this->t('Save profile'),
+                    'icon'  => 'bi bi-check-lg',
+                ]) ?>
+            </div>
+        </form>
+    </section>
 
+    <!-- PASSWORD -->
+    <section id="password" class="mb-4">
+        <form class="tw-card" method="post" action="<?= $this->url('account.password') ?>">
+            <?= $this->fetch('partial::input/csrf') ?>
+            <div class="tw-card__head"><h2><?= $this->t('Change password') ?></h2></div>
+            <div class="tw-card__body d-flex flex-column gap-3">
+                <?= $this->fetch('partial::input/password', [
+                    'id'         => 'currentPassword',
+                    'label'      => $this->t('Current password'),
+                    'validation' => $passwordValidation ?? null,
+                ]) ?>
+                <?= $this->fetch('partial::input/password', [
+                    'id'         => 'newPassword',
+                    'label'      => $this->t('New password'),
+                    'validation' => $passwordValidation ?? null,
+                ]) ?>
+                <div>
+                    <?= $this->fetch('partial::input/password', [
+                        'id'         => 'confirmPassword',
+                        'label'      => $this->t('Confirm new password'),
+                        'validation' => $passwordValidation ?? null,
+                    ]) ?>
+                    <div class="form-text"><?= $this->t('At least 8 characters; a number and symbol recommended.') ?></div>
+                </div>
+            </div>
+            <div class="card-foot">
+                <?= $this->fetch('partial::input/button', [
+                    'label' => $this->t('Update password'),
+                    'icon'  => 'bi bi-check-lg',
+                ]) ?>
+            </div>
+        </form>
+    </section>
+
+    <!-- SSH KEYS -->
+    <section id="ssh-keys" class="mb-4">
+        <div class="tw-card">
+            <div class="tw-card__head"><h2><?= $this->t('SSH Keys') ?></h2></div>
+            <div class="tw-card__body">
+                <?php if ($keys !== []): ?>
+                    <table class="table table-borderless mb-4">
+                        <thead>
+                            <tr>
+                                <th><?= $this->t('Name') ?></th>
+                                <th><?= $this->t('Added') ?></th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($keys as $key): ?>
+                                <tr>
+                                    <td class="align-middle">
+                                        <i class="bi bi-key me-1 text-body-secondary"></i>
+                                        <?= $this->e($key->name) ?>
+                                    </td>
+                                    <td class="align-middle text-body-secondary">
+                                        <?= $this->e($key->createdAt->format('Y-m-d')) ?>
+                                    </td>
+                                    <td class="text-end">
+                                        <?= $this->fetch('partial::input/button', [
+                                            'classes'      => 'btn btn-outline-danger btn-sm',
+                                            'icon'         => 'bi bi-trash3',
+                                            'type'         => 'button',
+                                            'dataBsToggle' => 'modal',
+                                            'dataBsTarget' => '#tw-delete-key-modal-' . $key->id->toString(),
+                                        ]) ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach ?>
+                        </tbody>
+                    </table>
+                <?php else: ?>
+                    <p class="text-body-secondary mb-4"><?= $this->t('No SSH keys added yet.') ?></p>
+                <?php endif ?>
+
+                <h3 class="h6 mb-3"><?= $this->t('Add SSH key') ?></h3>
+                <form method="post" action="<?= $this->url('account.ssh-keys.add') ?>">
+                    <?= $this->fetch('partial::input/csrf') ?>
+                    <?= $this->fetch('partial::input/text', [
+                        'id'         => 'name',
+                        'label'      => $this->t('Name'),
+                        'validation' => $sshValidation ?? null,
+                    ]) ?>
+                    <?= $this->fetch('partial::input/textarea', [
+                        'id'          => 'publicKey',
+                        'label'       => $this->t('Public key'),
+                        'placeholder' => 'ssh-ed25519 AAAA...',
+                        'rows'        => 4,
+                        'validation'  => $sshValidation ?? null,
+                    ]) ?>
+                    <?= $this->fetch('partial::input/button', [
+                        'label' => $this->t('Add key'),
+                        'icon'  => 'bi bi-plus-lg',
+                    ]) ?>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECURITY / 2FA -->
     <section id="security" class="mb-4">
         <div class="tw-card">
             <div class="tw-card__head">
@@ -105,6 +254,19 @@ $this->layout('layout::default', [
         </div>
     </section>
 </div>
+
+<?php foreach ($keys as $key): ?>
+    <?= $this->fetch('partial::modal', [
+        'id'            => 'tw-delete-key-modal-' . $key->id->toString(),
+        'header'        => $this->t('Delete SSH key'),
+        'body'          => $this->t('Are you sure you want to delete the SSH key {name}? This action cannot be undone.', ['name' => '<strong>' . $this->e($key->name) . '</strong>']),
+        'actionUrl'     => $this->url('account.ssh-keys.delete'),
+        'actionLabel'   => $this->t('Delete key'),
+        'actionClasses' => 'btn btn-danger',
+        'actionIcon'    => 'bi bi-trash3',
+        'extraFields'   => ['keyId' => $key->id->toString()],
+    ]) ?>
+<?php endforeach ?>
 
 <?php if ($twoFactorEnabled): ?>
     <div class="modal fade" id="tw-disable-2fa-modal" tabindex="-1" aria-hidden="true">

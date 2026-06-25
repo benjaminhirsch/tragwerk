@@ -26,6 +26,30 @@ final readonly class User
             'account',
         );
 
+        $routes->post(
+            '/account/profile',
+            $this->middlewareFactory->prepare([Handler\User\UpdateProfileHandler::class]),
+            'account.profile',
+        );
+
+        $routes->post(
+            '/account/password',
+            $this->middlewareFactory->prepare([Handler\User\ChangePasswordHandler::class]),
+            'account.password',
+        );
+
+        $routes->post(
+            '/account/ssh-keys',
+            $this->middlewareFactory->prepare([Handler\User\AddSshKeyHandler::class]),
+            'account.ssh-keys.add',
+        );
+
+        $routes->post(
+            '/account/ssh-keys/delete',
+            $this->middlewareFactory->prepare([Handler\User\DeleteSshKeyHandler::class]),
+            'account.ssh-keys.delete',
+        );
+
         $routes->route(
             '/account/2fa',
             $this->middlewareFactory->prepare([Handler\User\TwoFactorSetupHandler::class]),
