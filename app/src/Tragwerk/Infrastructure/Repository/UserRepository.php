@@ -6,6 +6,7 @@ namespace Tragwerk\Infrastructure\Repository;
 
 use CuyZ\Valinor\Mapper\MappingError;
 use CuyZ\Valinor\Normalizer\Format;
+use DateTimeImmutable;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Exception;
 use Generator;
@@ -161,6 +162,37 @@ final class UserRepository extends GenericRepository implements UserRepositoryIn
         } catch (Exception $e) {
             throw EntityUpdateFailed::create($id, $e);
         }
+    }
+
+    public function updateProfile(UserIdentifier $id, string $firstname, string $lastname): void
+    {
+        try {
+            $this->connection->update(
+                'users',
+                ['firstname' => $firstname, 'lastname' => $lastname, 'updated_at' => $this->now()],
+                ['id' => $id->toString()],
+            );
+        } catch (Exception $e) {
+            throw EntityUpdateFailed::create($id, $e);
+        }
+    }
+
+    public function updateEmail(UserIdentifier $id, string $email): void
+    {
+        try {
+            $this->connection->update(
+                'users',
+                ['email' => $email, 'updated_at' => $this->now()],
+                ['id' => $id->toString()],
+            );
+        } catch (Exception $e) {
+            throw EntityUpdateFailed::create($id, $e);
+        }
+    }
+
+    private function now(): string
+    {
+        return (new DateTimeImmutable())->format('Y-m-d H:i:s.u');
     }
 
     public function getByEmail(string $email): User

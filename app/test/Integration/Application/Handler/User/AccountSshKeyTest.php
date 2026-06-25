@@ -2,20 +2,17 @@
 
 declare(strict_types=1);
 
-namespace TragwerkTest\Integration\Application\Handler\Profile;
+namespace TragwerkTest\Integration\Application\Handler\User;
 
 use phpseclib3\Crypt\EC;
 use phpseclib3\Crypt\EC\PublicKey as ECPublicKey;
 use PHPUnit\Framework\Attributes\Test;
 use Tragwerk\Domain\Entity\SshKey;
-use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\Repository\SshKeyRepository;
-use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\Repository\UserRepository;
 use Tragwerk\Domain\ValueObject\PasswordHash;
 use Tragwerk\Domain\ValueObject\SshKeyIdentifier;
-use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 use TragwerkTest\Integration\Support\AppIntegrationTestCase;
@@ -23,9 +20,9 @@ use TragwerkTest\Integration\Support\AppIntegrationTestCase;
 use function assert;
 use function iterator_to_array;
 
-final class ProfileHandlerTest extends AppIntegrationTestCase
+final class AccountSshKeyTest extends AppIntegrationTestCase
 {
-    private const string EMAIL    = 'profile-test@example.com';
+    private const string EMAIL    = 'account-ssh@example.com';
     private const string PASSWORD = 'secure-password-123';
 
     private User $user;
@@ -35,15 +32,14 @@ final class ProfileHandlerTest extends AppIntegrationTestCase
     {
         parent::setUp();
 
-        $this->user = $this->seedUser();
-        $this->seedTeam();
+        $this->user          = $this->seedUser();
         $this->sessionCookie = $this->loginAndGetCookie();
     }
 
     #[Test]
-    public function getRendersProfilePage(): void
+    public function getRendersAccountPage(): void
     {
-        $response = $this->dispatch('GET', $this->url('profile'), cookie: $this->sessionCookie);
+        $response = $this->dispatch('GET', $this->url('account'), cookie: $this->sessionCookie);
 
         self::assertSame(200, $response->getStatusCode());
     }
@@ -51,65 +47,38 @@ final class ProfileHandlerTest extends AppIntegrationTestCase
     #[Test]
     public function getRedirectsUnauthenticatedUserToLogin(): void
     {
-        $response = $this->dispatch('GET', $this->url('profile'));
+        $response = $this->dispatch('GET', $this->url('account'));
 
         self::assertSame(302, $response->getStatusCode());
         self::assertSame($this->url('login'), $response->getHeaderLine('Location'));
     }
 
     #[Test]
-    public function createSshKeyWithValidDataRedirectsToProfile(): void
+    public function addingAValidSshKeyPersistsItAndRedirects(): void
     {
         $response = $this->dispatch(
             'POST',
-            $this->url('profile'),
-            ['name' => 'My Key', 'publicKey' => self::makePublicKey()],
+            $this->url('account.ssh-keys.add'),
+            ['name' => 'Deploy Key', 'publicKey' => self::makePublicKey()],
             $this->sessionCookie,
         );
 
         self::assertSame(302, $response->getStatusCode());
-        self::assertSame($this->url('profile'), $response->getHeaderLine('Location'));
-    }
-
-    #[Test]
-    public function createSshKeyPersistsKeyInDatabase(): void
-    {
-        $publicKey = self::makePublicKey();
-
-        $this->dispatch(
-            'POST',
-            $this->url('profile'),
-            ['name' => 'Deploy Key', 'publicKey' => $publicKey],
-            $this->sessionCookie,
-        );
+        self::assertStringContainsString('/account', $response->getHeaderLine('Location'));
 
         $repository = $this->container->get(SshKeyRepository::class);
         assert($repository instanceof SshKeyRepository);
-
         $keys = iterator_to_array($repository->getByUserId($this->user->id), false);
         self::assertCount(1, $keys);
         self::assertSame('Deploy Key', $keys[0]->name);
     }
 
     #[Test]
-    public function createSshKeyWithEmptyNameReRendersForm(): void
+    public function addingAnInvalidSshKeyReRendersTheForm(): void
     {
         $response = $this->dispatch(
             'POST',
-            $this->url('profile'),
-            ['name' => '', 'publicKey' => self::makePublicKey()],
-            $this->sessionCookie,
-        );
-
-        self::assertSame(200, $response->getStatusCode());
-    }
-
-    #[Test]
-    public function createSshKeyWithInvalidKeyReRendersForm(): void
-    {
-        $response = $this->dispatch(
-            'POST',
-            $this->url('profile'),
+            $this->url('account.ssh-keys.add'),
             ['name' => 'My Key', 'publicKey' => 'not-a-valid-key'],
             $this->sessionCookie,
         );
@@ -118,65 +87,35 @@ final class ProfileHandlerTest extends AppIntegrationTestCase
     }
 
     #[Test]
-    public function createSshKeyWithPrivateKeyReRendersForm(): void
+    public function deletingAnSshKeyRemovesItFromTheDatabase(): void
     {
-        $privateKey = EC::createKey('Ed25519')->toString('OpenSSH');
+        $key = $this->seedSshKey();
 
         $response = $this->dispatch(
             'POST',
-            $this->url('profile'),
-            ['name' => 'My Key', 'publicKey' => $privateKey],
-            $this->sessionCookie,
-        );
-
-        self::assertSame(200, $response->getStatusCode());
-    }
-
-    #[Test]
-    public function deleteSshKeyRedirectsToProfile(): void
-    {
-        $key      = $this->seedSshKey();
-        $response = $this->dispatch(
-            'POST',
-            $this->url('profile'),
-            ['action' => 'delete', 'keyId' => $key->id->toString()],
+            $this->url('account.ssh-keys.delete'),
+            ['keyId' => $key->id->toString()],
             $this->sessionCookie,
         );
 
         self::assertSame(302, $response->getStatusCode());
-        self::assertSame($this->url('profile'), $response->getHeaderLine('Location'));
-    }
-
-    #[Test]
-    public function deleteSshKeyRemovesKeyFromDatabase(): void
-    {
-        $key = $this->seedSshKey();
-        $this->dispatch(
-            'POST',
-            $this->url('profile'),
-            ['action' => 'delete', 'keyId' => $key->id->toString()],
-            $this->sessionCookie,
-        );
 
         $repository = $this->container->get(SshKeyRepository::class);
         assert($repository instanceof SshKeyRepository);
-
-        $remaining = iterator_to_array($repository->getByUserId($this->user->id), false);
-        self::assertCount(0, $remaining);
+        self::assertCount(0, iterator_to_array($repository->getByUserId($this->user->id), false));
     }
 
     #[Test]
-    public function deleteWithUnknownKeyIdRedirectsToProfile(): void
+    public function deletingAnUnknownKeyIdStillRedirects(): void
     {
         $response = $this->dispatch(
             'POST',
-            $this->url('profile'),
-            ['action' => 'delete', 'keyId' => SshKeyIdentifier::create()->toString()],
+            $this->url('account.ssh-keys.delete'),
+            ['keyId' => SshKeyIdentifier::create()->toString()],
             $this->sessionCookie,
         );
 
         self::assertSame(302, $response->getStatusCode());
-        self::assertSame($this->url('profile'), $response->getHeaderLine('Location'));
     }
 
     private function seedUser(): User
@@ -185,7 +124,7 @@ final class ProfileHandlerTest extends AppIntegrationTestCase
         $user = new User(
             UserIdentifier::create(),
             self::EMAIL,
-            'Profile',
+            'Account',
             'Tester',
             PasswordHash::create(self::PASSWORD),
             $now,
@@ -198,27 +137,6 @@ final class ProfileHandlerTest extends AppIntegrationTestCase
         $repository->confirm($user->id);
 
         return $user;
-    }
-
-    private function seedTeam(): Team
-    {
-        $now  = TimestampImmutable::now();
-        $team = new Team(
-            TeamIdentifier::create(),
-            'Test Team',
-            $this->user->id,
-            $now,
-            $this->user->id,
-            $now,
-            $this->user->id,
-        );
-
-        $repository = $this->container->get(TeamRepository::class);
-        assert($repository instanceof TeamRepository);
-        $repository->create($team);
-        $repository->assignUsers($team->id, [$this->user->id]);
-
-        return $team;
     }
 
     private function seedSshKey(string $name = 'Test Key'): SshKey

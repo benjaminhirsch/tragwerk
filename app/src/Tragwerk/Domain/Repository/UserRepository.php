@@ -54,4 +54,8 @@ interface UserRepository extends UserRepositoryInterface
     public function confirm(UserIdentifier $id): void;
 
     public function updatePassword(UserIdentifier $id, string $passwordHash): void;
+
+    public function updateProfile(UserIdentifier $id, string $firstname, string $lastname): void;
+
+    public function updateEmail(UserIdentifier $id, string $email): void;
 }

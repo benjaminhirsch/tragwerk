@@ -10,19 +10,17 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Tragwerk\Application\Response\ResponseRenderer;
-use Tragwerk\Domain\Repository\RecoveryCodeRepository;
-use Tragwerk\Domain\Repository\UserRepository;
+use Tragwerk\Application\Service\AccountView;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
+use function array_merge;
 use function assert;
-use function iterator_count;
 
 final readonly class AccountHandler implements RequestHandlerInterface
 {
     public function __construct(
         private ResponseRenderer $renderer,
-        private UserRepository $userRepository,
-        private RecoveryCodeRepository $recoveryCodeRepository,
+        private AccountView $accountView,
     ) {
     }
 
@@ -33,21 +31,17 @@ final readonly class AccountHandler implements RequestHandlerInterface
         assert($user instanceof UserInterface);
         $userId = UserIdentifier::fromString($user->getIdentity());
 
-        $entity            = $this->userRepository->getById($userId);
-        $twoFactorEnabled  = $entity->hasTwoFactorEnabled();
-        $remainingRecovery = $twoFactorEnabled
-            ? iterator_count($this->recoveryCodeRepository->getActiveByUserId($userId))
-            : 0;
-
         $queryParams = $request->getQueryParams();
 
-        return $this->renderer->render($request, 'page::account/index', [
-            'user'              => $entity,
-            'twoFactorEnabled'  => $twoFactorEnabled,
-            'twoFactorSince'    => $twoFactorEnabled ? $entity->twoFactorConfirmedAt : null,
-            'remainingRecovery' => $remainingRecovery,
-            'disableError'      => isset($queryParams['disable-error']),
-            'enabled'           => isset($queryParams['enabled']),
-        ]);
+        return $this->renderer->render($request, 'page::account/index', array_merge(
+            $this->accountView->build($userId),
+            [
+                'profileSaved'    => isset($queryParams['profile-saved']),
+                'emailPending'    => isset($queryParams['email-pending']),
+                'passwordChanged' => isset($queryParams['password-changed']),
+                'disableError'    => isset($queryParams['disable-error']),
+                'enabled'         => isset($queryParams['enabled']),
+            ],
+        ));
     }
 }

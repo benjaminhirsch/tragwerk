@@ -259,6 +259,14 @@ final class BuildEnvironmentTest extends TestCase
             public function updatePassword(UserIdentifier $id, string $passwordHash): void
             {
             }
+
+            public function updateProfile(UserIdentifier $id, string $firstname, string $lastname): void
+            {
+            }
+
+            public function updateEmail(UserIdentifier $id, string $email): void
+            {
+            }
         };
 
         $nullEnvVarRepo = new class implements EnvVarRepository {
