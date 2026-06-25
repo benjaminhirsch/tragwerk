@@ -298,3 +298,21 @@ msgstr "Delivery-ID"
 
 msgid "Yes"
 msgstr "Ja"
+
+msgid "Language"
+msgstr "Sprache"
+
+msgid "Automatic (browser language)"
+msgstr "Automatisch (Browsersprache)"
+
+msgid "Save language"
+msgstr "Sprache speichern"
+
+msgid "Your language has been updated."
+msgstr "Deine Sprache wurde aktualisiert."
+
+msgid "Invalid language"
+msgstr "Ungültige Sprache"
+
+msgid "Choose your preferred language, or let it follow your browser settings."
+msgstr "Wähle deine bevorzugte Sprache oder lass sie deinen Browsereinstellungen folgen."

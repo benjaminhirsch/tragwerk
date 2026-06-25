@@ -36,10 +36,16 @@ final class Locale implements MiddlewareInterface, ExtensionInterface
     public function register(Engine $engine): void
     {
         $engine->registerFunction('getLocale', $this->getLocale(...));
+        $engine->registerFunction('getLanguageCode', $this->getLanguageCode(...));
     }
 
     public function getLocale(): string|null
     {
         return $this->locale?->value;
+    }
+
+    public function getLanguageCode(): string
+    {
+        return $this->locale?->getLanguageCode() ?? 'en';
     }
 }

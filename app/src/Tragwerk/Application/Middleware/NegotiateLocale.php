@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tragwerk\Application\Middleware;
 
+use Mezzio\Authentication\UserInterface;
 use Mezzio\Session\SessionInterface;
 use Mezzio\Session\SessionMiddleware;
 use Negotiation\AcceptLanguage;
@@ -18,6 +19,7 @@ use Tragwerk\Domain\Enum\Locale;
 
 use function array_find;
 use function assert;
+use function is_string;
 
 class NegotiateLocale implements MiddlewareInterface
 {
@@ -33,13 +35,30 @@ class NegotiateLocale implements MiddlewareInterface
 
     private function determineLocale(ServerRequestInterface $request): Locale
     {
+        // 1. Explicit override set this session when the user saved a language.
         $session = $request->getAttribute(SessionMiddleware::SESSION_ATTRIBUTE);
         assert($session instanceof SessionInterface);
-        $locale = $session->get('locale');
-        if ($locale instanceof Locale) {
-            return $locale;
+        $sessionLocale = $session->get('locale');
+        if (is_string($sessionLocale)) {
+            $locale = Locale::tryFrom($sessionLocale);
+            if ($locale !== null) {
+                return $locale;
+            }
         }
 
+        // 2. The authenticated user's persisted preference (from the auth details).
+        $user = $request->getAttribute(UserInterface::class);
+        if ($user instanceof UserInterface) {
+            $userLocale = $user->getDetail('locale');
+            if (is_string($userLocale)) {
+                $locale = Locale::tryFrom($userLocale);
+                if ($locale !== null) {
+                    return $locale;
+                }
+            }
+        }
+
+        // 3. Browser-preferred language via Accept-Language.
         $acceptLanguageHeader = $request->getHeaderLine('Accept-Language');
         if ($acceptLanguageHeader !== '') {
             $negotiatedLocale = $this->tryNegotiateLocale($acceptLanguageHeader);

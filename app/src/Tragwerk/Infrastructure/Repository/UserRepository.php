@@ -17,6 +17,7 @@ use Override;
 use SensitiveParameter;
 use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\Enum\EntityType;
+use Tragwerk\Domain\Enum\Locale;
 use Tragwerk\Domain\Exception\Repository\EntityHydrationFailed;
 use Tragwerk\Domain\Exception\Repository\EntityNotFound;
 use Tragwerk\Domain\Exception\Repository\EntityUpdateFailed;
@@ -183,6 +184,19 @@ final class UserRepository extends GenericRepository implements UserRepositoryIn
             $this->connection->update(
                 'users',
                 ['email' => $email, 'updated_at' => $this->now()],
+                ['id' => $id->toString()],
+            );
+        } catch (Exception $e) {
+            throw EntityUpdateFailed::create($id, $e);
+        }
+    }
+
+    public function updateLocale(UserIdentifier $id, Locale|null $locale): void
+    {
+        try {
+            $this->connection->update(
+                'users',
+                ['locale' => $locale?->value, 'updated_at' => $this->now()],
                 ['id' => $id->toString()],
             );
         } catch (Exception $e) {

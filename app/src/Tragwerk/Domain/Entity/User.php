@@ -6,6 +6,7 @@ namespace Tragwerk\Domain\Entity;
 
 use SensitiveParameter;
 use Tragwerk\Application\Helper\AbbreviationHelper;
+use Tragwerk\Domain\Enum\Locale;
 use Tragwerk\Domain\ValueObject\PasswordHash;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
@@ -25,6 +26,7 @@ final class User implements Entity, Abbreviation
         public TeamIdentifier|null $lastActiveTeamId = null,
         public TimestampImmutable|null $confirmedAt = null,
         public TimestampImmutable|null $twoFactorConfirmedAt = null,
+        public Locale|null $locale = null,
     ) {
     }
 

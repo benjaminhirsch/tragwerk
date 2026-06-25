@@ -37,6 +37,7 @@ final readonly class AccountHandler implements RequestHandlerInterface
             $this->accountView->build($userId),
             [
                 'profileSaved'    => isset($queryParams['profile-saved']),
+                'languageSaved'   => isset($queryParams['language-saved']),
                 'emailPending'    => isset($queryParams['email-pending']),
                 'passwordChanged' => isset($queryParams['password-changed']),
                 'disableError'    => isset($queryParams['disable-error']),

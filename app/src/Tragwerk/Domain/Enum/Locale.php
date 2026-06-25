@@ -6,17 +6,17 @@ namespace Tragwerk\Domain\Enum;
 
 enum Locale: string
 {
-    public const Locale DEFAULT = self::DE_DE;
+    public const Locale DEFAULT = self::EN_US;
 
     case DE_DE = 'de_DE';
-    case EN_EN = 'en_EN';
+    case EN_US = 'en_US';
 
     /** @psalm-pure */
     public function getNativeName(): string
     {
         return match ($this) {
             self::DE_DE => 'Deutsch',
-            self::EN_EN => 'English'
+            self::EN_US => 'English'
         };
     }
 
@@ -31,7 +31,7 @@ enum Locale: string
     {
         return match ($this) {
             self::DE_DE => 'de',
-            self::EN_EN => 'en'
+            self::EN_US => 'en'
         };
     }
 }

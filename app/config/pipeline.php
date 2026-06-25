@@ -83,9 +83,12 @@ return static function (
     // - etc.
     // Debugging
     $app->pipe(SessionMiddleware::class);
-    $app->pipe(Middleware\NegotiateLocale::class);
     $app->pipe(Middleware\TwoFactorPendingMiddleware::class);
     $app->pipe(Middleware\AuthenticationMiddleware::class);
+    // NegotiateLocale runs after authentication so it can read the user's persisted
+    // locale preference from the auth details, but before the translator/template
+    // extensions that consume the negotiated Locale request attribute.
+    $app->pipe(Middleware\NegotiateLocale::class);
     $app->pipe(Middleware\SetTranslatorLocale::class);
     $app->pipe(Template\Extension\Csrf::class);
     $app->pipe(Template\Extension\Authentication::class);

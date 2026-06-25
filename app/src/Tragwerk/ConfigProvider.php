@@ -380,6 +380,7 @@ final readonly class ConfigProvider
                     EventListener\User\SendPasswordResetMail::class,
                 ],
                 Event\UserProfileUpdated::class => [EventListener\User\UpdateUserProfile::class],
+                Event\UserLocaleUpdated::class => [EventListener\User\UpdateUserLocale::class],
                 Event\UserPasswordChanged::class => [EventListener\User\ChangeUserPassword::class],
                 Event\EmailChangeRequested::class => [EventListener\User\CreateEmailChangeConfirmation::class],
                 Event\EmailChangeConfirmationCreated::class => [EventListener\User\SendEmailChangeMail::class],
