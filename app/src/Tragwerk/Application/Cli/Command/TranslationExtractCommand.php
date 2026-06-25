@@ -38,9 +38,16 @@ final class TranslationExtractCommand extends Command
             '--keyword=t',
             '--keyword=tp:1,2',
             '--no-location',
-            '--omit-header',
+            // Keep the PO header: it declares charset=UTF-8, without which xgettext
+            // transcodes the output to ASCII and strips non-ASCII msgids (em-dash etc.).
             '--sort-by-file',
             ...explode("\n", trim($findCommand)),
+        ], env: [
+            // xgettext's PHP lexer decodes source using the locale charset, not
+            // --from-code. Without a UTF-8 locale it strips non-ASCII characters
+            // (e.g. the em-dash) from msgids, corrupting them. Force UTF-8.
+            'LC_ALL' => 'C.UTF-8',
+            'LANG'   => 'C.UTF-8',
         ]);
 
         $process->setTimeout(300);

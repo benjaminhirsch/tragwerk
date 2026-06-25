@@ -171,7 +171,7 @@ msgid "Your profile has been updated."
 msgstr ""
 
 msgid ""
-"Almost done  confirm the change via the link we sent to your new email "
+"Almost done — confirm the change via the link we sent to your new email "
 "address."
 msgstr ""
 
@@ -334,7 +334,7 @@ msgstr ""
 
 msgid ""
 "Recovery codes let you sign in if you lose access to your authenticator app. "
-"Existing codes cannot be shown again  generating new ones replaces the "
+"Existing codes cannot be shown again — generating new ones replaces the "
 "entire set."
 msgstr ""
 
@@ -354,7 +354,7 @@ msgid "Your recovery codes"
 msgstr ""
 
 msgid ""
-"These codes are shown only once. Save them now  you will not be able to see "
+"These codes are shown only once. Save them now — you will not be able to see "
 "them again."
 msgstr ""
 
@@ -396,7 +396,8 @@ msgstr ""
 
 #, php-format
 msgid ""
-"Complete definition of this environment  generated from %s in the repository."
+"Complete definition of this environment — generated from %s in the "
+"repository."
 msgstr ""
 
 msgid ""
@@ -502,7 +503,8 @@ msgstr ""
 msgid "Containers"
 msgstr ""
 
-msgid "All running containers in this environment  apps, workers and services."
+msgid ""
+"All running containers in this environment — apps, workers and services."
 msgstr ""
 
 msgid "Loading..."
@@ -589,7 +591,7 @@ msgstr ""
 msgid "Credentials"
 msgstr ""
 
-msgid "SSH credentials used to connect to servers  shared across the team."
+msgid "SSH credentials used to connect to servers — shared across the team."
 msgstr ""
 
 msgid "No logs yet."
@@ -654,7 +656,7 @@ msgstr ""
 msgid "e.g. shop.my-company.com"
 msgstr ""
 
-msgid "Without https://  hostname only."
+msgid "Without https:// — hostname only."
 msgstr ""
 
 msgid "Target placeholder"
@@ -679,7 +681,7 @@ msgid "Remove"
 msgstr ""
 
 msgid ""
-"Exactly one primary domain is allowed  it is used for absolute links and "
+"Exactly one primary domain is allowed — it is used for absolute links and "
 "redirects. Point a CNAME/A record at the server; SSL certificates are issued "
 "automatically."
 msgstr ""
@@ -728,7 +730,7 @@ msgstr ""
 msgid "Redeploy"
 msgstr ""
 
-msgid "Loading live metrics"
+msgid "Loading live metrics…"
 msgstr ""
 
 msgid "Duration"
@@ -787,7 +789,7 @@ msgstr ""
 msgid "Git forge"
 msgstr ""
 
-msgid " select a git forge "
+msgid "— select a git forge —"
 msgstr ""
 
 msgid "A secure webhook secret is generated automatically."
@@ -1019,8 +1021,8 @@ msgid "Cancel and sign out"
 msgstr ""
 
 msgid ""
-"No FrankenPHP worker metrics available  environment is not running or not in "
-"worker mode."
+"No FrankenPHP worker metrics available — environment is not running or not "
+"in worker mode."
 msgstr ""
 
 msgid "No data."
@@ -1084,7 +1086,7 @@ msgid ""
 "No environment deployed yet. Metrics appear once an environment is running."
 msgstr ""
 
-msgid "No data yet  history appears as the metrics ticker runs."
+msgid "No data yet — history appears as the metrics ticker runs."
 msgstr ""
 
 msgid "Requests per second"
@@ -1099,7 +1101,7 @@ msgstr ""
 msgid "Status codes"
 msgstr ""
 
-msgid "Loading"
+msgid "Loading…"
 msgstr ""
 
 msgid "Average latency, ms"
@@ -1141,7 +1143,7 @@ msgstr ""
 msgid "Reset password"
 msgstr ""
 
-msgid "Enter your email  we'll send you a reset link."
+msgid "Enter your email — we'll send you a reset link."
 msgstr ""
 
 msgid "Send reset link"
@@ -1182,13 +1184,13 @@ msgstr ""
 msgid "projects"
 msgstr ""
 
-msgid " select a server "
+msgid "— select a server —"
 msgstr ""
 
 msgid "Container registry"
 msgstr ""
 
-msgid " select a registry "
+msgid "— select a registry —"
 msgstr ""
 
 msgid "Edit project"
@@ -1227,7 +1229,7 @@ msgid "Last deploy"
 msgstr ""
 
 #, php-format
-msgid "PHP 8.5  %s"
+msgid "PHP 8.5 · %s"
 msgstr ""
 
 msgid "PHP 8.5"
@@ -1414,7 +1416,7 @@ msgstr ""
 msgid "SSH port"
 msgstr ""
 
-msgid " no credential "
+msgid "— no credential —"
 msgstr ""
 
 msgid "Edit server"
@@ -1447,7 +1449,7 @@ msgid "Servers"
 msgstr ""
 
 msgid ""
-"Compute and database instances for the team  shared across all projects."
+"Compute and database instances for the team — shared across all projects."
 msgstr ""
 
 msgid "IP address"
@@ -1491,7 +1493,7 @@ msgid ""
 "delete them first."
 msgstr ""
 
-msgid "No data yet  samples appear as the metrics ticker runs."
+msgid "No data yet — samples appear as the metrics ticker runs."
 msgstr ""
 
 msgid "CPU utilization"
@@ -1613,7 +1615,7 @@ msgstr ""
 msgid "Uppercase letters, digits and underscores."
 msgstr ""
 
-msgid "Enter value"
+msgid "Enter value…"
 msgstr ""
 
 msgid "Value is stored encrypted and masked in the UI and in logs."
@@ -1636,7 +1638,8 @@ msgid "Environment variables"
 msgstr ""
 
 #, php-format
-msgid "%d variables  %d secret  %d inherited  injected at build and runtime."
+msgid ""
+"%d variables · %d secret · %d inherited — injected at build and runtime."
 msgstr ""
 
 msgid "This environment only"
@@ -1650,7 +1653,7 @@ msgid ""
 "available after the next deploy."
 msgstr ""
 
-msgid "Error 400  Bad Request"
+msgid "Error 400 · Bad Request"
 msgstr ""
 
 msgid "Something went wrong"
@@ -1662,7 +1665,7 @@ msgstr ""
 msgid "Homepage"
 msgstr ""
 
-msgid "Error 404  Not found"
+msgid "Error 404 · Not found"
 msgstr ""
 
 msgid "This route doesn't exist"
@@ -1694,8 +1697,24 @@ msgstr ""
 msgid "No vendor lock-in"
 msgstr ""
 
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
 msgid ""
 msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-25 19:56+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
 
 msgid "Change theme"
 msgstr ""
