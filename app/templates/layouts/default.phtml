@@ -33,6 +33,9 @@ $this->layout('layout::blank') ?>
                     <?php endforeach ?>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="<?= $this->url('team.create')?>"><i class="bi bi-plus-lg"></i> <?= $this->t('Create team') ?></a></li>
+                    <?php if($this->activeTeam() !== null): ?>
+                        <li><a class="dropdown-item" href="<?= $this->url('team.edit', ['id' => $this->activeTeam()->id])?>"><i class="bi bi-gear"></i> <?= $this->t('Team settings') ?></a></li>
+                    <?php endif ?>
                 </ul>
             </div>
             <?php else: ?>

@@ -60,6 +60,7 @@ final readonly class InviteRegistration implements DtoInterface
             PasswordHash::create($this->password1),
             $now,
             $now,
+            confirmedAt: $now,
         );
     }
 }

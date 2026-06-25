@@ -12,6 +12,7 @@ use Mezzio\Plates\ConfigProvider;
 $cacheConfig = ['config_cache_path' => 'data/cache/config-cache.php'];
 
 $aggregator = new ConfigAggregator([
+    \Mezzio\Authorization\ConfigProvider::class,
     ConfigProvider::class,
     \Mezzio\Authentication\Session\ConfigProvider::class,
     \Laminas\I18n\ConfigProvider::class,

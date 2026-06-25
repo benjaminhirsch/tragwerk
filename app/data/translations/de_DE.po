@@ -1800,3 +1800,10 @@ msgstr ""
 
 msgid "Remove member"
 msgstr ""
+
+msgid "You have been added to a team on Tragwerk."
+msgstr "Sie wurden zu einem Team bei Tragwerk hinzugefügt."
+
+#, php-format
+msgid "You have been added to the team \"%s\" on Tragwerk."
+msgstr "Sie wurden zum Team \"%s\" bei Tragwerk hinzugefügt."
