@@ -27,6 +27,9 @@ final readonly class EntityHelper
             EntityType::PASSWORD_RESET     => 'password_resets',
             EntityType::WEBHOOK_INTEGRATION => 'project_webhooks',
             EntityType::ENV_VAR             => 'project_env_vars',
+            EntityType::USER_TWO_FACTOR     => 'user_two_factor',
+            EntityType::RECOVERY_CODE       => 'user_recovery_codes',
+            EntityType::TRUSTED_DEVICE      => 'user_trusted_devices',
         };
     }
 }

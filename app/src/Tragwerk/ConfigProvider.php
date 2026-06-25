@@ -103,6 +103,8 @@ final readonly class ConfigProvider
                     EventListener\SshKey\UpdateAuthorizedKeys::class        => UpdateAuthorizedKeysFactory::class,
                     ConfigValidator::class                              => ConfigValidatorFactory::class,
                     EventListener\Project\DeleteProjectData::class     => DeleteProjectDataFactory::class,
+                    Application\Service\TwoFactor\TwoFactorService::class =>
+                        Factory\Service\TwoFactorServiceFactory::class,
                 ],
                 'abstract_factories' => [Factory\Invoker\InvokerAbstractFactory::class],
             ],
@@ -310,6 +312,12 @@ final readonly class ConfigProvider
                         Infrastructure\Repository\ProjectWebhookRepository::class,
                     Domain\Repository\EnvVarRepository::class =>
                         Infrastructure\Repository\EnvVarRepository::class,
+                    Domain\Repository\UserTwoFactorRepository::class =>
+                        Infrastructure\Repository\UserTwoFactorRepository::class,
+                    Domain\Repository\RecoveryCodeRepository::class =>
+                        Infrastructure\Repository\RecoveryCodeRepository::class,
+                    Domain\Repository\TrustedDeviceRepository::class =>
+                        Infrastructure\Repository\TrustedDeviceRepository::class,
                 ],
             ],
         ];
@@ -439,6 +447,14 @@ final readonly class ConfigProvider
                 Event\TeamInvitationCreated::class =>
                     [EventListener\Team\SendTeamInvitation::class],
                 Event\UserSwitchedTeam::class => [EventListener\User\PersistLastActiveTeam::class],
+                Event\TwoFactorEnrollmentStarted::class => [
+                    EventListener\TwoFactor\PersistTwoFactorEnrollment::class,
+                ],
+                Event\TwoFactorEnabled::class => [EventListener\TwoFactor\ConfirmTwoFactor::class],
+                Event\RecoveryCodesGenerated::class => [EventListener\TwoFactor\PersistRecoveryCodes::class],
+                Event\RecoveryCodeConsumed::class => [EventListener\TwoFactor\MarkRecoveryCodeUsed::class],
+                Event\TwoFactorDisabled::class => [EventListener\TwoFactor\DisableTwoFactor::class],
+                Event\TrustedDeviceAdded::class => [EventListener\TwoFactor\PersistTrustedDevice::class],
             ],
         ];
     }

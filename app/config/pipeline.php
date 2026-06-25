@@ -84,6 +84,7 @@ return static function (
     // Debugging
     $app->pipe(SessionMiddleware::class);
     $app->pipe(Middleware\NegotiateLocale::class);
+    $app->pipe(Middleware\TwoFactorPendingMiddleware::class);
     $app->pipe(Middleware\AuthenticationMiddleware::class);
     $app->pipe(Middleware\SetTranslatorLocale::class);
     $app->pipe(Template\Extension\Csrf::class);

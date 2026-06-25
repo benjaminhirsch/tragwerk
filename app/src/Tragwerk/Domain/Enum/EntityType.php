@@ -27,6 +27,9 @@ enum EntityType: string implements Translatable
     case PASSWORD_RESET      = 'PASSWORD_RESET';
     case WEBHOOK_INTEGRATION = 'WEBHOOK_INTEGRATION';
     case ENV_VAR             = 'ENV_VAR';
+    case USER_TWO_FACTOR     = 'USER_TWO_FACTOR';
+    case RECOVERY_CODE       = 'RECOVERY_CODE';
+    case TRUSTED_DEVICE      = 'TRUSTED_DEVICE';
 
     /** @phpstan-pure  */
     #[Override]
@@ -49,6 +52,9 @@ enum EntityType: string implements Translatable
             self::PASSWORD_RESET      => _('Password Reset'),
             self::WEBHOOK_INTEGRATION => _('Webhook Integration'),
             self::ENV_VAR             => _('Environment Variable'),
+            self::USER_TWO_FACTOR     => _('Two-Factor Authentication'),
+            self::RECOVERY_CODE       => _('Recovery Code'),
+            self::TRUSTED_DEVICE      => _('Trusted Device'),
         };
     }
 
@@ -76,6 +82,9 @@ enum EntityType: string implements Translatable
             self::PASSWORD_RESET      => Entity\PasswordReset::class,
             self::WEBHOOK_INTEGRATION => Entity\ProjectWebhook::class,
             self::ENV_VAR             => Entity\EnvVar::class,
+            self::USER_TWO_FACTOR     => Entity\UserTwoFactor::class,
+            self::RECOVERY_CODE       => Entity\RecoveryCode::class,
+            self::TRUSTED_DEVICE      => Entity\TrustedDevice::class,
         };
     }
 }

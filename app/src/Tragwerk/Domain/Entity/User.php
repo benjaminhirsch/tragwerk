@@ -24,7 +24,13 @@ final class User implements Entity, Abbreviation
         public TimestampImmutable $updatedAt,
         public TeamIdentifier|null $lastActiveTeamId = null,
         public TimestampImmutable|null $confirmedAt = null,
+        public TimestampImmutable|null $twoFactorConfirmedAt = null,
     ) {
+    }
+
+    public function hasTwoFactorEnabled(): bool
+    {
+        return $this->twoFactorConfirmedAt !== null;
     }
 
     public function fullName(): string

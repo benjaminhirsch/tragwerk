@@ -1,0 +1,49 @@
+<?php
+
+/**
+ * @var list<string> $codes
+ * @var bool         $justEnabled
+ */
+$this->layout('layout::default', [
+    'title'        => $this->t('Recovery codes'),
+    'pageTitle'    => $this->t('Recovery codes'),
+    'pageType'     => $this->t('My account'),
+    'pageSubTitle' => $this->t('Store these one-time codes somewhere safe. Each can be used once.'),
+    'wide'         => false,
+]);
+?>
+
+<div class="acct">
+    <div class="tw-card">
+        <div class="tw-card__head">
+            <h2><?= $this->t('Your recovery codes') ?></h2>
+        </div>
+        <div class="tw-card__body">
+
+            <?php if ($justEnabled ?? false): ?>
+                <?= $this->fetch('partial::alert', [
+                    'content' => $this->t('Two-factor authentication is now active.'),
+                    'type'    => 'success',
+                ]) ?>
+            <?php endif ?>
+
+            <div class="d-flex gap-2 align-items-start mb-3"
+                 style="background:var(--warn-soft);border-radius:.6rem;padding:.7rem .85rem">
+                <i class="bi bi-exclamation-triangle-fill" style="color:var(--warn-text)"></i>
+                <span style="font-size:.84rem;color:var(--warn-text)">
+                    <?= $this->t('These codes are shown only once. Save them now — you will not be able to see them again.') ?>
+                </span>
+            </div>
+
+            <div class="rec-codes mb-3">
+                <?php foreach ($codes as $code): ?>
+                    <span><?= $this->e($code) ?></span>
+                <?php endforeach ?>
+            </div>
+
+            <a class="btn btn-primary" href="<?= $this->url('account') ?>">
+                <i class="bi bi-check-lg"></i> <?= $this->t('I have saved my codes') ?>
+            </a>
+        </div>
+    </div>
+</div>
