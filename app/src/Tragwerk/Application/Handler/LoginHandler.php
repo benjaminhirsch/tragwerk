@@ -14,8 +14,12 @@ use Override;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Tragwerk\Application\Helper\TrustedDeviceCookie;
 use Tragwerk\Application\Response\ResponseRenderer;
+use Tragwerk\Application\Service\TwoFactor\TwoFactorSession;
+use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\Exception\Repository\EntityNotFound;
+use Tragwerk\Domain\Repository\TrustedDeviceRepository;
 use Tragwerk\Domain\Repository\UserRepository;
 
 use function assert;
@@ -28,6 +32,7 @@ final readonly class LoginHandler implements RequestHandlerInterface
         private ResponseRenderer $renderer,
         private AuthenticationInterface $authentication,
         private UserRepository $userRepository,
+        private TrustedDeviceRepository $trustedDeviceRepository,
         private UrlHelper $urlHelper,
     ) {
     }
@@ -49,6 +54,7 @@ final readonly class LoginHandler implements RequestHandlerInterface
             'confirmed'      => isset($queryParams['confirmed']),
             'resetRequested' => isset($queryParams['reset-requested']),
             'passwordReset'  => isset($queryParams['password-reset']),
+            'twoFactorError' => isset($queryParams['2fa-failed']) || isset($queryParams['2fa-expired']),
         ]);
     }
 
@@ -57,6 +63,7 @@ final readonly class LoginHandler implements RequestHandlerInterface
         SessionInterface $session,
     ): ResponseInterface {
         $session->unset(UserInterface::class);
+        TwoFactorSession::clear($session);
 
         $body = $request->getParsedBody();
         assert(is_array($body));
@@ -70,6 +77,10 @@ final readonly class LoginHandler implements RequestHandlerInterface
 
                     return $this->renderer->render($request, 'page::login', ['notConfirmed' => true]);
                 }
+
+                if ($user->hasTwoFactorEnabled() && ! $this->deviceIsTrusted($request, $user)) {
+                    return $this->enterTwoFactorChallenge($session);
+                }
             } catch (EntityNotFound) {
             }
 
@@ -77,5 +88,32 @@ final readonly class LoginHandler implements RequestHandlerInterface
         }
 
         return $this->renderer->render($request, 'page::login', ['loginError' => true]);
+    }
+
+    private function deviceIsTrusted(ServerRequestInterface $request, User $user): bool
+    {
+        $token = TrustedDeviceCookie::readToken($request);
+        if ($token === null) {
+            return false;
+        }
+
+        return $this->trustedDeviceRepository->findValidByTokenHash(
+            TrustedDeviceCookie::hash($token),
+            $user->id,
+        ) !== null;
+    }
+
+    private function enterTwoFactorChallenge(SessionInterface $session): ResponseInterface
+    {
+        $payload = $session->get(UserInterface::class);
+        assert(is_array($payload));
+
+        // Revoke the full session PhpSession just granted; the user stays
+        // "pending" until the second factor is confirmed.
+        $session->unset(UserInterface::class);
+        TwoFactorSession::begin($session, $payload);
+        $session->regenerate();
+
+        return new RedirectResponse($this->urlHelper->generate('2fa.challenge'));
     }
 }

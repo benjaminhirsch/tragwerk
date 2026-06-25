@@ -1,0 +1,69 @@
+<?php
+
+/**
+ * @var string $qrCode    Data URI of the provisioning QR code.
+ * @var string $secret    The TOTP secret, grouped for manual entry.
+ * @var bool   $codeError Whether the previously submitted code was invalid.
+ */
+$this->layout('layout::default', [
+    'title'        => $this->t('Set up two-factor'),
+    'pageTitle'    => $this->t('Set up two-factor'),
+    'pageType'     => $this->t('My account'),
+    'pageSubTitle' => $this->t('Scan the code with an authenticator app, then enter the generated code.'),
+    'wide'         => false,
+]);
+?>
+
+<div class="acct">
+    <div class="tw-card">
+        <div class="tw-card__head">
+            <h2><?= $this->t('Authenticator app') ?></h2>
+        </div>
+        <div class="tw-card__body">
+
+            <?php if ($codeError ?? false): ?>
+                <?= $this->fetch('partial::alert', [
+                    'content' => $this->t('That code was not correct. Please try again with the current code from your app.'),
+                    'type'    => 'danger',
+                ]) ?>
+            <?php endif ?>
+
+            <div class="d-flex gap-4 flex-wrap align-items-start p-3 mb-3"
+                 style="border:1px solid var(--border);border-radius:.6rem">
+                <img class="qr-box" style="object-fit:contain" alt="<?= $this->e($this->t('QR code')) ?>"
+                     src="<?= $this->e($qrCode) ?>">
+                <div style="flex:1;min-width:220px">
+                    <div class="fw-semibold mb-1" style="font-size:.9rem"><?= $this->t('1. Scan the code') ?></div>
+                    <div class="text-body-secondary mb-2" style="font-size:.8rem">
+                        <?= $this->t('Scan it with a TOTP app such as 1Password, Authy or Google Authenticator.') ?>
+                    </div>
+                    <div class="text-body-secondary mb-1" style="font-size:.8rem"><?= $this->t('Or enter this secret manually:') ?></div>
+                    <div class="tw-tag mb-3"><?= $this->e($secret) ?></div>
+
+                    <div class="fw-semibold mb-1" style="font-size:.9rem"><?= $this->t('2. Enter the 6-digit code') ?></div>
+                    <form action="<?= $this->url('2fa.enable') ?>" method="post">
+                        <?= $this->fetch('partial::input/csrf') ?>
+                        <div class="d-flex gap-2" style="max-width:320px">
+                            <?= $this->fetch('partial::input/text', [
+                                'id'          => 'code',
+                                'classes'     => 'form-control mono',
+                                'placeholder' => $this->t('6-digit code'),
+                                'inputmode'   => 'numeric',
+                                'autofocus'   => true,
+                            ]) ?>
+                            <?= $this->fetch('partial::input/button', [
+                                'label'   => $this->t('Enable'),
+                                'icon'    => 'bi bi-check-lg',
+                                'classes' => 'btn btn-primary',
+                            ]) ?>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <a class="btn btn-link btn-sm px-0" href="<?= $this->url('account') ?>">
+                <i class="bi bi-arrow-left"></i> <?= $this->t('Back to account') ?>
+            </a>
+        </div>
+    </div>
+</div>

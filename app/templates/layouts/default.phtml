@@ -135,9 +135,8 @@ $this->layout('layout::blank') ?>
                         <div class="text-faint" style="font-size:.78rem"><?= $this->e($this->user()->getDetail('email')) ?></div>
                     </li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="account.html"><i class="bi bi-person"></i> <?= $this->t('Account') ?></a></li>
-                    <li><a class="dropdown-item" href="account.html#security"><i class="bi bi-shield-lock"></i> <?= $this->t('Security') ?></a></li>
-                    <li><a class="dropdown-item" href="#"><i class="bi bi-credit-card"></i> <?= $this->t('Billing') ?></a></li>
+                    <li><a class="dropdown-item" href="<?= $this->url('account') ?>"><i class="bi bi-person"></i> <?= $this->t('Account') ?></a></li>
+                    <li><a class="dropdown-item" href="<?= $this->url('account') ?>#security"><i class="bi bi-shield-lock"></i> <?= $this->t('Security') ?></a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li>
                         <form action="<?= $this->url('logout') ?>" method="post">

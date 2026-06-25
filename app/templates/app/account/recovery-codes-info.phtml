@@ -1,0 +1,56 @@
+<?php
+
+/**
+ * @var int  $remaining
+ * @var bool $passwordError
+ */
+$this->layout('layout::default', [
+    'title'        => $this->t('Recovery codes'),
+    'pageTitle'    => $this->t('Recovery codes'),
+    'pageType'     => $this->t('My account'),
+    'pageSubTitle' => $this->t('Generate a fresh set of one-time recovery codes.'),
+    'wide'         => false,
+]);
+?>
+
+<div class="acct">
+    <div class="tw-card">
+        <div class="tw-card__head">
+            <h2><?= $this->t('Recovery codes') ?></h2>
+            <?= $this->fetch('partial::badge', [
+                'type'  => $remaining > 0 ? 'ok' : 'warning',
+                'label' => $this->t('{count} remaining', ['count' => (string) $remaining]),
+            ]) ?>
+        </div>
+        <div class="tw-card__body">
+
+            <?php if ($passwordError ?? false): ?>
+                <?= $this->fetch('partial::alert', [
+                    'content' => $this->t('The password you entered is incorrect.'),
+                    'type'    => 'danger',
+                ]) ?>
+            <?php endif ?>
+
+            <p class="text-body-secondary mb-3">
+                <?= $this->t('Recovery codes let you sign in if you lose access to your authenticator app. Existing codes cannot be shown again — generating new ones replaces the entire set.') ?>
+            </p>
+
+            <form action="<?= $this->url('2fa.recovery-codes') ?>" method="post" style="max-width:360px">
+                <?= $this->fetch('partial::input/csrf') ?>
+                <?= $this->fetch('partial::input/password', [
+                    'id'    => 'password',
+                    'label' => $this->t('Confirm with your current password'),
+                ]) ?>
+                <?= $this->fetch('partial::input/button', [
+                    'label'   => $this->t('Generate new codes'),
+                    'icon'    => 'bi bi-arrow-repeat',
+                    'classes' => 'btn btn-primary mt-3',
+                ]) ?>
+            </form>
+
+            <a class="btn btn-link btn-sm px-0 mt-2" href="<?= $this->url('account') ?>">
+                <i class="bi bi-arrow-left"></i> <?= $this->t('Back to account') ?>
+            </a>
+        </div>
+    </div>
+</div>

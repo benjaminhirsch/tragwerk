@@ -23,6 +23,7 @@
         <env name="TEST_DB_NAME" value="app_test" force="true"/>
         <env name="TEST_DB_USER" value="app" force="true"/>
         <env name="TEST_DB_PASSWORD" value="app" force="true"/>
+        <env name="TWO_FACTOR_KEY" value="w0DMz5++tsts3oR2P6t++8WXnTOeM0GGHU8FQrZ15Ok=" force="true"/>
     </php>
 
     <source ignoreIndirectDeprecations="true">

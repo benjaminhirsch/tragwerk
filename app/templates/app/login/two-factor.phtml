@@ -1,0 +1,91 @@
+<?php
+
+/**
+ * @var bool $useRecovery       Show the recovery-code form instead of the TOTP form.
+ * @var bool $error             Whether the previous attempt failed.
+ * @var int  $trustedDeviceDays Number of days a trusted device skips the challenge.
+ */
+$this->layout('layout::auth');
+?>
+
+<div class="auth-card">
+    <div class="auth-card__logo">
+        <?= $this->fetch('partial::logo') ?>
+    </div>
+    <div class="auth-head">
+        <h1><?= $this->e($this->t('Two-factor authentication')) ?></h1>
+        <p>
+            <?php if ($useRecovery ?? false): ?>
+                <?= $this->t('Enter one of your recovery codes.') ?>
+            <?php else: ?>
+                <?= $this->t('Enter the 6-digit code from your authenticator app.') ?>
+            <?php endif ?>
+        </p>
+    </div>
+
+    <?php if ($error ?? false): ?>
+        <?= $this->fetch('partial::alert', [
+            'content' => $this->t('That code was not correct. Please try again.'),
+            'type'    => 'danger',
+        ]) ?>
+    <?php endif ?>
+
+    <form class="auth-form" action="<?= $this->url('2fa.challenge') ?>" method="post">
+        <?= $this->fetch('partial::input/csrf') ?>
+
+        <?php if ($useRecovery ?? false): ?>
+            <?= $this->fetch('partial::input/text', [
+                'id'          => 'recovery_code',
+                'classes'     => 'form-control mono',
+                'label'       => $this->t('Recovery code'),
+                'placeholder' => 'XXXXX-XXXXX',
+                'autofocus'   => true,
+            ]) ?>
+        <?php else: ?>
+            <?= $this->fetch('partial::input/text', [
+                'id'          => 'code',
+                'classes'     => 'form-control mono',
+                'label'       => $this->t('Authentication code'),
+                'placeholder' => $this->t('6-digit code'),
+                'inputmode'   => 'numeric',
+                'autofocus'   => true,
+            ]) ?>
+        <?php endif ?>
+
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" role="switch" id="trust_device" name="trust_device" value="1">
+            <label class="form-check-label" for="trust_device" style="font-size:.85rem">
+                <?= $this->t("Don't ask again on this device for {days} days", ['days' => (string) $trustedDeviceDays]) ?>
+            </label>
+        </div>
+
+        <?= $this->fetch('partial::input/button', [
+            'label'   => $this->t('Verify'),
+            'classes' => 'btn btn-primary btn-block',
+        ]) ?>
+    </form>
+
+    <div class="mt-3 text-center">
+        <?php if ($useRecovery ?? false): ?>
+            <?= $this->fetch('partial::link', [
+                'href'    => $this->url('2fa.challenge'),
+                'label'   => $this->t('Use your authenticator app instead'),
+                'classes' => 'small',
+            ]) ?>
+        <?php else: ?>
+            <?= $this->fetch('partial::link', [
+                'href'    => $this->url('2fa.challenge', [], ['recovery' => '1']),
+                'label'   => $this->t('Use a recovery code instead'),
+                'classes' => 'small',
+            ]) ?>
+        <?php endif ?>
+    </div>
+
+    <form action="<?= $this->url('logout') ?>" method="post" class="mt-2 text-center">
+        <?= $this->fetch('partial::input/csrf') ?>
+        <?= $this->fetch('partial::input/button', [
+            'label'   => $this->t('Cancel and sign out'),
+            'classes' => 'btn btn-link btn-sm small',
+        ]) ?>
+    </form>
+</div>
