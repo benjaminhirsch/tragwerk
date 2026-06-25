@@ -27,7 +27,7 @@ final class SendMailTest extends IntegrationTestCase
         $handler->handle(new Message\SendMail(
             'recipient@example.com',
             'Test subject',
-            '<p>Hello</p>',
+            'Hello',
         ));
 
         self::assertContains('Sent mail', $logger->messages);

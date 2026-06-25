@@ -1,6 +1,4 @@
 <?php $this->layout('layout::mail') ?>
-<?= $this->t('You have been invited to join a team on Tragwerk.') ?><br /><br />
+<?= $this->t('You have been invited to join a team on Tragwerk.') ?>
 
-<a href="<?= $this->serverurl($this->url('team.invite', ['token' => $invitation->token])) ?>">
-    <?= $this->t('Accept invitation') ?>
-</a>
+<?= $this->serverurl($this->url('team.invite', ['token' => $invitation->token])) ?>

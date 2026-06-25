@@ -21,7 +21,7 @@ final class SendMail
         $email = $this->mailer->makeEmail(
             $message->to,
             $message->subject,
-            $message->html,
+            $message->text,
         );
 
         $this->mailer->sendEmail($email, $message->sender);
