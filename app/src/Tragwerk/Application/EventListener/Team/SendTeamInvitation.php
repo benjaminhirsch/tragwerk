@@ -24,7 +24,7 @@ final readonly class SendTeamInvitation
         $this->producer->sendMessage(new Message\SendMail(
             to: $event->invitation->email,
             subject: $this->translator->translate('mail.teamInvitation.subject'),
-            html: $this->templateRenderer->render('mail::teamInvitation', [
+            text: $this->templateRenderer->render('mail::teamInvitation', [
                 'invitation' => $event->invitation,
             ]),
         ), priority: 6);

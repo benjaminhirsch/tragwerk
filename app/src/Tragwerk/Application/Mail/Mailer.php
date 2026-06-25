@@ -46,7 +46,7 @@ final class Mailer
     public function makeEmail(
         string|Address $to,
         string $subject,
-        string|null $html,
+        string|null $text,
         array $attachments = [],
     ): Email {
         $email = $this->makeDefaultEmail();
@@ -54,8 +54,8 @@ final class Mailer
         $email->to($to);
         $email->subject($subject);
 
-        if ($html !== null) {
-            $email->html($html);
+        if ($text !== null) {
+            $email->text($text);
         }
 
         foreach ($attachments as $attachmentName => $attachment) {

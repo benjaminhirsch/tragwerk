@@ -24,7 +24,7 @@ final readonly class SendEmailChangeMail
         $this->producer->sendMessage(new Message\SendMail(
             to: $event->newEmail,
             subject: _('Confirm your new email address'),
-            html: $this->templateRenderer->render('mail::emailChange', [
+            text: $this->templateRenderer->render('mail::emailChange', [
                 'user'         => $event->user,
                 'confirmation' => $event->confirmation,
                 'newEmail'     => $event->newEmail,

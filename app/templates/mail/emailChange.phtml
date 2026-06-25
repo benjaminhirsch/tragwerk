@@ -1,11 +1,9 @@
 <?php $this->layout('layout::mail') ?>
-<?= $this->e($user->firstname) ?>,<br /><br />
+<?= $user->firstname ?>,
 
-<?= $this->t('We received a request to change the email address of your Tragwerk account to {email}. Please confirm it by clicking the link below.', ['email' => $this->e($newEmail)]) ?><br /><br />
+<?= $this->t('We received a request to change the email address of your Tragwerk account to {email}. Please confirm it by clicking the link below.', ['email' => $newEmail]) ?>
 
-<a href="<?= $this->serverurl($this->url('email.confirm', ['token' => $confirmation->token])) ?>">
-    <?= $this->t('Confirm new email address') ?>
-</a><br /><br />
+<?= $this->serverurl($this->url('email.confirm', ['token' => $confirmation->token])) ?>
 
-<?= $this->t('If you did not request this change, you can ignore this email.') ?><br />
+<?= $this->t('If you did not request this change, you can ignore this email.') ?>
 <?= $this->t('This link expires in 24 hours.') ?>

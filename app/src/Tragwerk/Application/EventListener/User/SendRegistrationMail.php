@@ -24,7 +24,7 @@ final readonly class SendRegistrationMail
         $this->producer->sendMessage(new Message\SendMail(
             to: $event->user->email,
             subject: $this->translator->translate('mail.emailConfirmation.subject'),
-            html: $this->templateRenderer->render('mail::userRegistered', [
+            text: $this->templateRenderer->render('mail::userRegistered', [
                 'user'         => $event->user,
                 'confirmation' => $event->confirmation,
             ]),
