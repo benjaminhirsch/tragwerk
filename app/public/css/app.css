@@ -643,6 +643,7 @@ a.tw-card:hover {
   align-items: flex-start;
   gap: 0.7rem;
   padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
   border-radius: 0.7rem;
   border: 1px solid var(--border);
   background: var(--surface-2);

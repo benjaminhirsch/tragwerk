@@ -12,6 +12,8 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Tragwerk\Domain\Enum\Locale;
 
+use function assert;
+
 final readonly class SetTranslatorLocale implements MiddlewareInterface
 {
     public function __construct(
@@ -25,11 +27,8 @@ final readonly class SetTranslatorLocale implements MiddlewareInterface
         $oldLocale = $this->translator->getLocale();
 
         $locale = $request->getAttribute(Locale::class);
-        // For the moment
-        $locale = Locale::DE_DE;
-        //if ($locale instanceof Locale) {
+        assert($locale instanceof Locale);
         $this->translator->setLocale($locale->getLocaleCode());
-        //}
 
         try {
             $response = $handler->handle($request);

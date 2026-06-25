@@ -39,6 +39,12 @@ final readonly class User
         );
 
         $routes->post(
+            '/account/language',
+            $this->middlewareFactory->prepare([Handler\User\UpdateLanguageHandler::class]),
+            'account.language',
+        );
+
+        $routes->post(
             '/account/ssh-keys',
             $this->middlewareFactory->prepare([Handler\User\AddSshKeyHandler::class]),
             'account.ssh-keys.add',

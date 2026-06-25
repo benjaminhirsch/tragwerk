@@ -23,7 +23,7 @@ $this->layout('layout::default', [
             <?php if ($justEnabled ?? false): ?>
                 <?= $this->fetch('partial::alert', [
                     'content' => $this->t('Two-factor authentication is now active.'),
-                    'type'    => 'success',
+                    'type'    => 'ok',
                 ]) ?>
             <?php endif ?>
 

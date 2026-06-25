@@ -1,223 +1,1316 @@
-msgid "mail.userInvited.subject"
+msgid "Enter your current password"
+msgstr ""
+
+#, php-format
+msgid "Password does not met the required minimum length of %d characters"
+msgstr ""
+
+msgid "Passwords are not identical"
+msgstr ""
+
+msgid "Field can't be empty"
+msgstr ""
+
+msgid "An SSH private key is required"
+msgstr ""
+
+msgid "Invalid SSH private key. Must be a PEM-encoded private key."
+msgstr ""
+
+msgid "Please select a git forge"
+msgstr ""
+
+msgid "Please select a server"
+msgstr ""
+
+msgid "Please select a registry"
+msgstr ""
+
+msgid "Invalid IP address"
+msgstr ""
+
+msgid "Port must be between 1 and 65535"
+msgstr ""
+
+msgid "Name is required"
+msgstr ""
+
+msgid "Invalid SSH public key"
+msgstr ""
+
+#, php-format
+msgid "Password must be at least %d characters"
+msgstr ""
+
+msgid "Invalid email address"
+msgstr ""
+
+msgid "Enter the 6-digit code from your authenticator app"
+msgstr ""
+
+msgid "Invalid language"
+msgstr ""
+
+msgid "First name is required"
+msgstr ""
+
+msgid "Last name is required"
+msgstr ""
+
+msgid "Please enter a valid email address"
+msgstr ""
+
+msgid ""
+"Key must start with an uppercase letter and contain only uppercase letters, "
+"digits and underscores"
+msgstr ""
+
+msgid "mail.teamInvitation.subject"
+msgstr ""
+
+msgid "Confirm your new email address"
+msgstr ""
+
+msgid "mail.passwordReset.subject"
+msgstr ""
+
+msgid "mail.emailConfirmation.subject"
+msgstr ""
+
+msgid "IP address is already in use"
+msgstr ""
+
+msgid "Invalid credential"
+msgstr ""
+
+msgid "Credential not found"
+msgstr ""
+
+msgid "IP address already exists"
+msgstr ""
+
+msgid "Your current password is incorrect"
+msgstr ""
+
+msgid "This email address is already in use"
+msgstr ""
+
+msgid "This email address is already registered"
+msgstr ""
+
+msgid "A variable with this key already exists for this environment"
 msgstr ""
 
 msgid "User"
 msgstr ""
 
-msgid "enum.entityType.CHARACTER"
+msgid "Server"
 msgstr ""
 
-msgid "Briton"
+msgid "Team"
 msgstr ""
 
-msgid "Saracen"
+msgid "Team Invitation"
 msgstr ""
 
-msgid "Avalonian"
+msgid "Credential"
 msgstr ""
 
-msgid "Highlander"
+msgid "Setup Job"
 msgstr ""
 
-msgid "Inconnu"
+msgid "Project"
 msgstr ""
 
-msgid "Half Ogre"
+msgid "SSH Key"
 msgstr ""
 
-msgid "Celt"
+msgid "Build Log"
 msgstr ""
 
-msgid "Lurikeen"
+msgid "Deploy Job"
 msgstr ""
 
-msgid "Firbolg"
+msgid "Domain"
 msgstr ""
 
-msgid "Elf"
+msgid "Registry"
 msgstr ""
 
-msgid "Sylvan"
+msgid "Email Confirmation"
 msgstr ""
 
-msgid "Shar"
+msgid "Password Reset"
 msgstr ""
 
-msgid "Norseman"
+msgid "Webhook Integration"
 msgstr ""
 
-msgid "Troll"
+msgid "Environment Variable"
 msgstr ""
 
-msgid "Valkyn"
+msgid "Two-Factor Authentication"
 msgstr ""
 
-msgid "Frostalf"
+msgid "Recovery Code"
 msgstr ""
 
-msgid "Kobold"
+msgid "Trusted Device"
 msgstr ""
 
-msgid "Dwarf"
+msgid "Account settings"
 msgstr ""
 
-msgid "Albion"
+msgid "My account"
 msgstr ""
 
-msgid "Midgard"
+msgid "Personal details, password, SSH keys and two-factor authentication."
 msgstr ""
 
-msgid "Hibernia"
+msgid "Your profile has been updated."
 msgstr ""
 
-msgid "Armsman"
+msgid ""
+"Almost done  confirm the change via the link we sent to your new email "
+"address."
 msgstr ""
 
-msgid "Mercenary"
+msgid "Your language has been updated."
 msgstr ""
 
-msgid "Paladin"
+msgid "Your password has been changed."
 msgstr ""
 
-msgid "Reaver"
+msgid "Two-factor authentication is now active."
 msgstr ""
 
-msgid "Cabalist"
+msgid ""
+"The password you entered is incorrect. Two-factor authentication was not "
+"disabled."
 msgstr ""
 
-msgid "Sorcerer"
+msgid "Profile"
 msgstr ""
 
-msgid "Theurgist"
+msgid "First name"
 msgstr ""
 
-msgid "Wizard"
+msgid "Last name"
 msgstr ""
 
-msgid "Cleric"
+msgid "Email address"
 msgstr ""
 
-msgid "Friar"
+msgid ""
+"Changing your email requires confirmation via a link sent to the new address."
 msgstr ""
 
-msgid "Infiltrator"
+msgid "Save profile"
 msgstr ""
 
-msgid "Minstrel"
+msgid "Change password"
 msgstr ""
 
-msgid "Scout"
+msgid "Current password"
 msgstr ""
 
-msgid "Nercomancer"
+msgid "New password"
 msgstr ""
 
-msgid "Berserker"
+msgid "Confirm new password"
 msgstr ""
 
-msgid "Savage"
+msgid "At least 8 characters; a number and symbol recommended."
 msgstr ""
 
-msgid "Skald"
+msgid "Update password"
 msgstr ""
 
-msgid "Thane"
+msgid "Language"
 msgstr ""
 
-msgid "Warrior"
+msgid "Automatic (browser language)"
 msgstr ""
 
-msgid "Hunter"
+msgid "Choose your preferred language, or let it follow your browser settings."
 msgstr ""
 
-msgid "Shadowblade"
+msgid "Save language"
 msgstr ""
 
-msgid "Bonedancer"
+msgid "SSH Keys"
 msgstr ""
 
-msgid "Runemaster"
+msgid "Name"
 msgstr ""
 
-msgid "Spiritmast"
+msgid "Added"
 msgstr ""
 
-msgid "Healer"
+msgid "No SSH keys added yet."
 msgstr ""
 
-msgid "Shaman"
+msgid "Add SSH key"
 msgstr ""
 
-msgid "Valkyrie"
+msgid "Public key"
 msgstr ""
 
-msgid "Warlock"
+msgid "Add key"
 msgstr ""
 
-msgid "Animist"
+msgid "Two-factor authentication"
 msgstr ""
 
-msgid "Valewalker"
+msgid "Active"
 msgstr ""
 
-msgid "Blademaster"
+msgid "Inactive"
 msgstr ""
 
-msgid "Campion"
+msgid ""
+"Protects your account with an additional code from an authenticator app "
+"(TOTP) on every sign-in."
 msgstr ""
 
-msgid "Hero"
+msgid "Authenticator app"
 msgstr ""
 
-msgid "Eldrich"
+msgid "Set up on {date}"
 msgstr ""
 
-msgid "Enchanter"
+msgid "Verified"
 msgstr ""
 
-msgid "Mentalist"
+msgid "Recovery codes"
 msgstr ""
 
-msgid "Bard"
+msgid ""
+"{count} unused codes remaining. Use them if you lose access to your app."
 msgstr ""
 
-msgid "Druid"
+msgid "Manage codes"
 msgstr ""
 
-msgid "Warden"
+msgid "Disable two-factor"
 msgstr ""
 
-msgid "Nightshade"
+msgid "Two-factor is disabled. Enable it for an extra layer of protection."
 msgstr ""
 
-msgid "Ranger"
+msgid "Set up two-factor"
 msgstr ""
 
-msgid "Vampiir"
+msgid "Delete SSH key"
 msgstr ""
 
-msgid "Bainshee"
+msgid ""
+"Are you sure you want to delete the SSH key {name}? This action cannot be "
+"undone."
 msgstr ""
 
-msgid "Create character"
+msgid "Delete key"
 msgstr ""
 
-msgid "Select character"
+msgid ""
+"Without a second factor your account is protected by password only. Confirm "
+"with your current password to disable it."
 msgstr ""
 
-msgid "Level"
+msgid "Cancel"
 msgstr ""
 
-msgid "Logout"
+msgid "Disable"
 msgstr ""
 
-msgid "Login"
+msgid "Generate a fresh set of one-time recovery codes."
 msgstr ""
 
-msgid "Register"
+msgid "{count} remaining"
+msgstr ""
+
+msgid "The password you entered is incorrect."
+msgstr ""
+
+msgid ""
+"Recovery codes let you sign in if you lose access to your authenticator app. "
+"Existing codes cannot be shown again  generating new ones replaces the "
+"entire set."
+msgstr ""
+
+msgid "Confirm with your current password"
+msgstr ""
+
+msgid "Generate new codes"
+msgstr ""
+
+msgid "Back to account"
+msgstr ""
+
+msgid "Store these one-time codes somewhere safe. Each can be used once."
+msgstr ""
+
+msgid "Your recovery codes"
+msgstr ""
+
+msgid ""
+"These codes are shown only once. Save them now  you will not be able to see "
+"them again."
+msgstr ""
+
+msgid "I have saved my codes"
+msgstr ""
+
+msgid "Scan the code with an authenticator app, then enter the generated code."
+msgstr ""
+
+msgid ""
+"That code was not correct. Please try again with the current code from your "
+"app."
+msgstr ""
+
+msgid "QR code"
+msgstr ""
+
+msgid "1. Scan the code"
+msgstr ""
+
+msgid ""
+"Scan it with a TOTP app such as 1Password, Authy or Google Authenticator."
+msgstr ""
+
+msgid "Or enter this secret manually:"
+msgstr ""
+
+msgid "2. Enter the 6-digit code"
+msgstr ""
+
+msgid "6-digit code"
+msgstr ""
+
+msgid "Enable"
+msgstr ""
+
+msgid "Configuration"
+msgstr ""
+
+#, php-format
+msgid ""
+"Complete definition of this environment  generated from %s in the repository."
+msgstr ""
+
+msgid ""
+"No configuration found for this environment. Add a .tragwerk/config.xml to "
+"the repository and deploy."
+msgstr ""
+
+msgid "Runtime"
+msgstr ""
+
+msgid "Web server"
+msgstr ""
+
+msgid "Workers"
+msgstr ""
+
+msgid "Hooks"
+msgstr ""
+
+msgid "Mounts & Volumes"
+msgstr ""
+
+msgid "Path"
+msgstr ""
+
+msgid "Type"
+msgstr ""
+
+msgid "Source"
+msgstr ""
+
+msgid "Disk"
+msgstr ""
+
+msgid "Mode"
+msgstr ""
+
+msgid "Volume"
+msgstr ""
+
+msgid "read-write"
+msgstr ""
+
+msgid "Services"
+msgstr ""
+
+msgid "Service"
+msgstr ""
+
+msgid "Relationship"
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+msgid "Running"
+msgstr ""
+
+msgid "Routes"
+msgstr ""
+
+msgid "Route"
+msgstr ""
+
+msgid "Target / upstream"
+msgstr ""
+
+msgid "Cache"
+msgstr ""
+
+msgid "upstream"
+msgstr ""
+
+msgid "redirect"
+msgstr ""
+
+#, php-format
+msgid "Domains are mapped to the %s placeholder in the Domains tab."
+msgstr ""
+
+msgid "Cron jobs"
+msgstr ""
+
+msgid "Schedule"
+msgstr ""
+
+msgid "Command"
+msgstr ""
+
+msgid "No workers configured."
+msgstr ""
+
+msgid "Confirmation failed"
+msgstr ""
+
+msgid ""
+"This confirmation link is invalid or has expired. Please register again."
+msgstr ""
+
+msgid "Back to registration"
+msgstr ""
+
+msgid "Containers"
+msgstr ""
+
+msgid "All running containers in this environment  apps, workers and services."
+msgstr ""
+
+msgid "Loading..."
+msgstr ""
+
+msgid "CPU"
+msgstr ""
+
+msgid "RAM"
+msgstr ""
+
+msgid "Uptime"
+msgstr ""
+
+msgid "Healthy"
+msgstr ""
+
+msgid "Unhealthy"
+msgstr ""
+
+msgid "Starting"
+msgstr ""
+
+msgid "Restarting"
+msgstr ""
+
+msgid "Stopped"
+msgstr ""
+
+msgid "Create credential"
+msgstr ""
+
+msgid "Store an SSH key so servers can be connected to."
+msgstr ""
+
+msgid "Username"
+msgstr ""
+
+msgid "Private key"
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "Edit credential"
+msgstr ""
+
+msgid "Update name, username and SSH key for this credential."
+msgstr ""
+
+msgid "Save changes"
+msgstr ""
+
+msgid "Servers using this credential"
+msgstr ""
+
+msgid "No servers are using this credential."
+msgstr ""
+
+msgid "Host"
+msgstr ""
+
+msgid "Danger zone"
+msgstr ""
+
+msgid "Delete credential"
+msgstr ""
+
+msgid ""
+"This credential is assigned to one or more servers and cannot be deleted."
+msgstr ""
+
+msgid "Permanently removes the credential."
+msgstr ""
+
+msgid "Cannot delete: credential is assigned to servers"
+msgstr ""
+
+msgid ""
+"Are you sure you want to delete the credential {name}? This action cannot be "
+"undone."
+msgstr ""
+
+msgid "Credentials"
+msgstr ""
+
+msgid "SSH credentials used to connect to servers  shared across the team."
+msgstr ""
+
+msgid "No logs yet."
+msgstr ""
+
+msgid "Deploy"
+msgstr ""
+
+msgid "(sync)"
+msgstr ""
+
+msgid "live"
+msgstr ""
+
+msgid "Build"
+msgstr ""
+
+msgid "All"
+msgstr ""
+
+msgid "Builds"
+msgstr ""
+
+msgid "Deploys"
+msgstr ""
+
+msgid "Completed"
+msgstr ""
+
+msgid "Failed"
+msgstr ""
+
+msgid "Pending"
+msgstr ""
+
+msgid "Copy"
+msgstr ""
+
+msgid "Download"
+msgstr ""
+
+msgid "Commit"
+msgstr ""
+
+msgid "Deployments"
+msgstr ""
+
+msgid ""
+"Build and deployment logs for this environment. Select an entry for the "
+"terminal view."
+msgstr ""
+
+msgid "Select a log entry to view its output."
+msgstr ""
+
+msgid "Add domain"
+msgstr ""
+
+msgid "Connect a custom domain and map it to a routing placeholder."
+msgstr ""
+
+msgid "e.g. shop.my-company.com"
+msgstr ""
+
+msgid "Without https://  hostname only."
+msgstr ""
+
+msgid "Target placeholder"
+msgstr ""
+
+msgid "Corresponds to the placeholder in config.xml, e.g."
+msgstr ""
+
+msgid "Domains"
+msgstr ""
+
+msgid "Connect custom domains and map them to a routing placeholder."
+msgstr ""
+
+msgid "Primary"
+msgstr ""
+
+msgid "Set as primary"
+msgstr ""
+
+msgid "Remove"
+msgstr ""
+
+msgid ""
+"Exactly one primary domain is allowed  it is used for absolute links and "
+"redirects. Point a CNAME/A record at the server; SSL certificates are issued "
+"automatically."
+msgstr ""
+
+msgid ""
+"Are you sure you want to remove {host}? It will no longer be routed to this "
+"project."
+msgstr ""
+
+msgid ""
+"This is the primary domain. After removal, another domain will be set as "
+"primary automatically."
+msgstr ""
+
+msgid "Remove domain"
+msgstr ""
+
+msgid "Environments"
+msgstr ""
+
+msgid "Any branch can be deployed as an isolated environment."
+msgstr ""
+
+msgid "Environment"
+msgstr ""
+
+msgid "Branch"
+msgstr ""
+
+msgid "Production"
+msgstr ""
+
+msgid "Deploying"
+msgstr ""
+
+msgid "Not deployed"
+msgstr ""
+
+msgid ""
+"No environment selected. Pick a branch to deploy as an isolated environment."
+msgstr ""
+
+msgid "Open"
+msgstr ""
+
+msgid "Redeploy"
+msgstr ""
+
+msgid "Loading live metrics"
+msgstr ""
+
+msgid "Duration"
+msgstr ""
+
+msgid "Time"
+msgstr ""
+
+msgid "No deployments yet."
+msgstr ""
+
+msgid "Successful"
+msgstr ""
+
+msgid "Logs"
+msgstr ""
+
+msgid "Open logs"
+msgstr ""
+
+msgid "Variables"
+msgstr ""
+
+msgid "Add"
+msgstr ""
+
+msgid "Key"
+msgstr ""
+
+msgid "Value"
+msgstr ""
+
+msgid "No variables defined."
+msgstr ""
+
+msgid "Edit"
+msgstr ""
+
+msgid "Inherited"
+msgstr ""
+
+msgid "Redeploy environment"
+msgstr ""
+
+msgid ""
+"Redeploy {branch}? This triggers a new deployment of the latest commit on "
+"this branch."
+msgstr ""
+
+msgid "Add integration"
+msgstr ""
+
+msgid "Connect a git forge so pushes trigger a deployment"
+msgstr ""
+
+msgid "Git forge"
+msgstr ""
+
+msgid " select a git forge "
+msgstr ""
+
+msgid "A secure webhook secret is generated automatically."
+msgstr ""
+
+msgid "Integrations"
+msgstr ""
+
+msgid "Git forge webhook that triggers deployments on push."
+msgstr ""
+
+msgid ""
+"No integration configured yet. Add a git forge webhook to enable push-"
+"triggered deployments."
+msgstr ""
+
+msgid "Webhook URL"
+msgstr ""
+
+msgid "Secret"
+msgstr ""
+
+msgid "Delete integration"
+msgstr ""
+
+msgid ""
+"Are you sure you want to delete the {forge} integration? This action cannot "
+"be undone."
+msgstr ""
+
+msgid "Imprint"
+msgstr ""
+
+msgid "Legal"
+msgstr ""
+
+msgid "Last updated: June 20, 2026"
+msgstr ""
+
+msgid "Placeholder content."
+msgstr ""
+
+msgid ""
+"{strong} The text below is sample copy and must be replaced with your "
+"company's actual legal details before going live."
+msgstr ""
+
+msgid "Information pursuant to applicable law"
+msgstr ""
+
+msgid "Represented by"
+msgstr ""
+
+msgid "Contact"
+msgstr ""
+
+msgid "Phone"
+msgstr ""
+
+msgid "Email"
+msgstr ""
+
+msgid "Web"
+msgstr ""
+
+msgid "Register entry"
+msgstr ""
+
+msgid "VAT identification number"
+msgstr ""
+
+msgid "Responsible for content"
+msgstr ""
+
+msgid "Dispute resolution"
+msgstr ""
+
+msgid "Liability for content"
+msgstr ""
+
+msgid "Privacy Policy"
+msgstr ""
+
+msgid ""
+"{strong} This is sample copy to illustrate structure and layout. Replace it "
+"with a policy reviewed by your legal team before publishing."
+msgstr ""
+
+msgid "On this page"
+msgstr ""
+
+msgid "Overview"
+msgstr ""
+
+msgid "Data we collect"
+msgstr ""
+
+msgid "How we use data"
+msgstr ""
+
+msgid "Sharing & processors"
+msgstr ""
+
+msgid "Retention"
+msgstr ""
+
+msgid "Your rights"
+msgstr ""
+
+msgid "Terms & Conditions"
+msgstr ""
+
+msgid ""
+"{strong} The clauses below are sample text for layout purposes only and are "
+"not legally binding. Replace them with terms reviewed by your legal team."
+msgstr ""
+
+msgid "Acceptance of terms"
+msgstr ""
+
+msgid "Use of the service"
+msgstr ""
+
+msgid "Accounts"
+msgstr ""
+
+msgid "Billing"
+msgstr ""
+
+msgid "Availability"
+msgstr ""
+
+msgid "Limitation of liability"
+msgstr ""
+
+msgid "Changes to these terms"
+msgstr ""
+
+msgid ""
+"Live FrankenPHP runtime log of the running application container in this "
+"environment."
+msgstr ""
+
+msgid "entries"
+msgstr ""
+
+msgid "last 500 lines"
+msgstr ""
+
+msgid "No log entries."
+msgstr ""
+
+msgid "Welcome back"
+msgstr ""
+
+msgid "No account yet?"
+msgstr ""
+
+msgid "Register now"
+msgstr ""
+
+msgid ""
+"Registration successful. Please check your email to confirm your account."
+msgstr ""
+
+msgid "Your email address has been confirmed. You can now sign in."
+msgstr ""
+
+msgid ""
+"If an account exists for that email, a password reset link has been sent."
+msgstr ""
+
+msgid ""
+"Your password has been updated. You can now sign in with your new password."
+msgstr ""
+
+msgid ""
+"Your email address has been changed. Please sign in with your new address."
+msgstr ""
+
+msgid ""
+"Please confirm your email address before signing in. Check your inbox for "
+"the confirmation link."
+msgstr ""
+
+msgid "Invalid email address or password."
 msgstr ""
 
 msgid "E-Mail"
+msgstr ""
+
+msgid "Password"
+msgstr ""
+
+msgid "Forgot your password?"
+msgstr ""
+
+msgid "Sign in"
+msgstr ""
+
+msgid "Enter one of your recovery codes."
+msgstr ""
+
+msgid "Enter the 6-digit code from your authenticator app."
+msgstr ""
+
+msgid "That code was not correct. Please try again."
+msgstr ""
+
+msgid "Recovery code"
+msgstr ""
+
+msgid "Authentication code"
+msgstr ""
+
+msgid "Don't ask again on this device for {days} days"
+msgstr ""
+
+msgid "Verify"
+msgstr ""
+
+msgid "Use your authenticator app instead"
+msgstr ""
+
+msgid "Use a recovery code instead"
+msgstr ""
+
+msgid "Cancel and sign out"
+msgstr ""
+
+msgid ""
+"No FrankenPHP worker metrics available  environment is not running or not in "
+"worker mode."
+msgstr ""
+
+msgid "No data."
+msgstr ""
+
+msgid "HTTP requests"
+msgstr ""
+
+msgid "In-flight"
+msgstr ""
+
+msgid "Avg response time"
+msgstr ""
+
+msgid "Cumulative average"
+msgstr ""
+
+msgid "Active workers"
+msgstr ""
+
+msgid "Queue depth"
+msgstr ""
+
+msgid "Crashes"
+msgstr ""
+
+msgid "Restarts"
+msgstr ""
+
+msgid "No requests recorded yet."
+msgstr ""
+
+msgid "Provided by the {runtime} runtime (worker mode)"
+msgstr ""
+
+msgid "Provided by the {runtime} runtime (classic mode)"
+msgstr ""
+
+msgid "Provided by the {runtime} runtime"
+msgstr ""
+
+msgid "Live"
+msgstr ""
+
+msgid "Metrics"
+msgstr ""
+
+msgid "1 hr"
+msgstr ""
+
+msgid "6 hr"
+msgstr ""
+
+msgid "24 hr"
+msgstr ""
+
+msgid "7 days"
+msgstr ""
+
+msgid ""
+"No environment deployed yet. Metrics appear once an environment is running."
+msgstr ""
+
+msgid "No data yet  history appears as the metrics ticker runs."
+msgstr ""
+
+msgid "Requests per second"
+msgstr ""
+
+msgid "Throughput across all workers"
+msgstr ""
+
+msgid "Cumulative HTTP responses"
+msgstr ""
+
+msgid "Status codes"
+msgstr ""
+
+msgid "Loading"
+msgstr ""
+
+msgid "Average latency, ms"
+msgstr ""
+
+msgid "Response times"
+msgstr ""
+
+msgid "Busy vs. total FrankenPHP workers"
+msgstr ""
+
+msgid "Worker utilization"
+msgstr ""
+
+msgid "busy"
+msgstr ""
+
+msgid "total"
+msgstr ""
+
+msgid "Back to sign in"
+msgstr ""
+
+msgid "Set new password"
+msgstr ""
+
+msgid "Enter and confirm your new password."
+msgstr ""
+
+msgid "Invalid or expired link"
+msgstr ""
+
+msgid "This password reset link is invalid or has expired."
+msgstr ""
+
+msgid "Request a new link"
+msgstr ""
+
+msgid "Reset password"
+msgstr ""
+
+msgid "Enter your email  we'll send you a reset link."
+msgstr ""
+
+msgid "Send reset link"
+msgstr ""
+
+msgid "Building"
+msgstr ""
+
+msgid "Never deployed"
+msgstr ""
+
+msgid "Preview"
+msgstr ""
+
+msgid "Sync data from parent"
+msgstr ""
+
+msgid ""
+"Sync data into {branch} from its parent branch? Existing data volumes in "
+"this environment will be overwritten."
+msgstr ""
+
+msgid "Sync data"
+msgstr ""
+
+msgid "Create project"
+msgstr ""
+
+msgid "A new project contains its own environments, servers and registries"
+msgstr ""
+
+msgid "Project name"
+msgstr ""
+
+msgid "project"
+msgstr ""
+
+msgid "projects"
+msgstr ""
+
+msgid " select a server "
+msgstr ""
+
+msgid "Container registry"
+msgstr ""
+
+msgid " select a registry "
+msgstr ""
+
+msgid "Edit project"
+msgstr ""
+
+msgid "Update the server and registry this project deploys to"
+msgstr ""
+
+msgid "Delete project"
+msgstr ""
+
+msgid "Permanently removes the project and all associated resources."
+msgstr ""
+
+msgid ""
+"Are you sure you want to delete the project {name}? This action cannot be "
+"undone."
+msgstr ""
+
+msgid "Projects"
+msgstr ""
+
+msgid "Every project belongs to the team and contains its own environments."
+msgstr ""
+
+msgid "Create Project"
+msgstr ""
+
+msgid "Stack"
+msgstr ""
+
+msgid "Applications"
+msgstr ""
+
+msgid "Last deploy"
+msgstr ""
+
+#, php-format
+msgid "PHP 8.5  %s"
+msgstr ""
+
+msgid "PHP 8.5"
+msgstr ""
+
+msgid "Open production"
+msgstr ""
+
+msgid "Settings"
+msgstr ""
+
+msgid "Production URL"
+msgstr ""
+
+msgid "Last commit"
+msgstr ""
+
+msgid "Activity"
+msgstr ""
+
+msgid "No activity yet."
+msgstr ""
+
+msgid "deployed"
+msgstr ""
+
+msgid "Git clone URL"
+msgstr ""
+
+msgid "Queue Messages"
+msgstr ""
+
+msgid "Processing"
+msgstr ""
+
+msgid "Queue"
+msgstr ""
+
+msgid "Redelivered"
+msgstr ""
+
+msgid "Published"
+msgstr ""
+
+msgid "Actions"
+msgstr ""
+
+msgid "No messages in queue"
+msgstr ""
+
+msgid "Requeue"
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
+msgid "Delete queue message"
+msgstr ""
+
+msgid ""
+"Are you sure you want to delete the message {name}? This action cannot be "
+"undone."
+msgstr ""
+
+msgid "Payload"
+msgstr ""
+
+msgid "ID"
+msgstr ""
+
+msgid "Yes"
+msgstr ""
+
+msgid "Priority"
+msgstr ""
+
+msgid "Delivery ID"
+msgstr ""
+
+msgid "Create account"
+msgstr ""
+
+msgid "Already registered?"
 msgstr ""
 
 msgid "Firstname"
@@ -226,17 +1319,448 @@ msgstr ""
 msgid "Lastname"
 msgstr ""
 
-msgid "Password"
-msgstr ""
-
 msgid "Password repeat"
 msgstr ""
 
-msgid "Realm"
+msgid "By signing up you agree to our terms."
 msgstr ""
 
-msgid "Race"
+msgid "Add registry"
+msgstr ""
+
+msgid "Private or public container image registry for the team."
+msgstr ""
+
+msgid "Registry URL"
+msgstr ""
+
+msgid "Repository"
+msgstr ""
+
+msgid "Password / Token"
+msgstr ""
+
+msgid "Enable image pruning after deploy"
+msgstr ""
+
+msgid ""
+"Supported for Docker Hub (docker.io) and OCI-compatible registries. AWS ECR, "
+"Azure ACR and Quay.io are not supported."
+msgstr ""
+
+msgid "Tags to keep"
+msgstr ""
+
+msgid "Edit registry"
+msgstr ""
+
+msgid "Update connection and pruning settings for this registry."
+msgstr ""
+
+msgid "Leave empty to keep existing"
+msgstr ""
+
+msgid "Delete registry"
+msgstr ""
+
+msgid ""
+"This registry is assigned to one or more projects and cannot be deleted."
+msgstr ""
+
+msgid "Permanently removes the registry."
+msgstr ""
+
+msgid "Cannot delete: registry is assigned to projects"
+msgstr ""
+
+msgid "Are you sure you want to delete {name}? This action cannot be undone."
+msgstr ""
+
+msgid "Container Registries"
+msgstr ""
+
+msgid "Private and public image registries for the team."
+msgstr ""
+
+msgid "URL"
+msgstr ""
+
+msgid ""
+"No registries configured yet. Add a container registry to enable image-based "
+"deployments."
+msgstr ""
+
+msgid "No metrics available."
+msgstr ""
+
+msgid "Memory"
+msgstr ""
+
+msgid "Load (1m)"
+msgstr ""
+
+msgid "Create server"
+msgstr ""
+
+msgid "Register a VPS reachable over SSH to host your environments"
+msgstr ""
+
+msgid "Server name"
+msgstr ""
+
+msgid "IP address (IPv4 or IPv6)"
+msgstr ""
+
+msgid "SSH port"
+msgstr ""
+
+msgid " no credential "
+msgstr ""
+
+msgid "Edit server"
+msgstr ""
+
+msgid "Update connection details for this server"
+msgstr ""
+
+msgid "Setup server"
+msgstr ""
+
+msgid "Delete server"
+msgstr ""
+
+msgid "This server still hosts projects and cannot be deleted."
+msgstr ""
+
+msgid "Permanently removes the server."
+msgstr ""
+
+msgid "Cannot delete: server still hosts projects"
+msgstr ""
+
+msgid ""
+"Are you sure you want to delete the server {name}? This action cannot be "
+"undone."
+msgstr ""
+
+msgid "Servers"
+msgstr ""
+
+msgid ""
+"Compute and database instances for the team  shared across all projects."
+msgstr ""
+
+msgid "IP address"
+msgstr ""
+
+msgid "Credentials assigned"
+msgstr ""
+
+msgid "Docker"
+msgstr ""
+
+msgid "Docker Compose"
+msgstr ""
+
+msgid "Ready to deploy"
+msgstr ""
+
+msgid "Server Setup"
+msgstr ""
+
+msgid "Setup: {name}"
+msgstr ""
+
+msgid "Back to server"
+msgstr ""
+
+msgid "Provisioned"
+msgstr ""
+
+msgid "Setup failed"
+msgstr ""
+
+msgid "Provisioning"
+msgstr ""
+
+msgid "Not set up"
+msgstr ""
+
+msgid ""
+"This server cannot be deleted while it still hosts projects. Reassign or "
+"delete them first."
+msgstr ""
+
+msgid "No data yet  samples appear as the metrics ticker runs."
+msgstr ""
+
+msgid "CPU utilization"
+msgstr ""
+
+msgid "utilization, %"
+msgstr ""
+
+msgid "run-queue"
+msgstr ""
+
+msgid "Setup log"
+msgstr ""
+
+msgid "Provisioning & bootstrap output."
+msgstr ""
+
+msgid "No setup has been run yet."
+msgstr ""
+
+msgid "Run setup"
+msgstr ""
+
+msgid "Run setup again"
+msgstr ""
+
+msgid "Details"
+msgstr ""
+
+msgid "Created"
+msgstr ""
+
+msgid "Hosted workloads"
+msgstr ""
+
+msgid "No projects deployed to this server yet."
+msgstr ""
+
+msgid "Teams"
+msgstr ""
+
+msgid "Create team"
+msgstr ""
+
+msgid ""
+"A new team contains its own projects which own environments, servers and "
+"registries"
+msgstr ""
+
+msgid "Team name"
+msgstr ""
+
+msgid "Invite team members (optional)"
+msgstr ""
+
+msgid "Team-wide configuration, members and access."
+msgstr ""
+
+msgid "General"
+msgstr ""
+
+msgid "Members"
+msgstr ""
+
+msgid "Members of this team. The owner cannot be removed."
+msgstr ""
+
+msgid "Invite more members (optional)"
+msgstr ""
+
+msgid "Delete team"
+msgstr ""
+
+msgid "Permanently removes the team and all associated resources."
+msgstr ""
+
+msgid ""
+"Are you sure you want to delete the team {name}? This action cannot be "
+"undone. Deleting a team will delete all associated resources too!"
+msgstr ""
+
+msgid "Teams group your projects, environments and members."
+msgstr ""
+
+msgid "Create Team"
+msgstr ""
+
+msgid "No teams yet."
+msgstr ""
+
+msgid "Complete registration"
+msgstr ""
+
+msgid "You have been invited to join a team. Create your account to continue."
+msgstr ""
+
+msgid "Team overview"
+msgstr ""
+
+#, php-format
+msgid "Created at %s"
+msgstr ""
+
+msgid "View all"
+msgstr ""
+
+msgid "No members in this team."
+msgstr ""
+
+msgid "New variable"
+msgstr ""
+
+msgid "Injected into the environment at build and runtime."
+msgstr ""
+
+msgid "e.g. DATABASE_URL"
+msgstr ""
+
+msgid "Uppercase letters, digits and underscores."
+msgstr ""
+
+msgid "Enter value"
+msgstr ""
+
+msgid "Value is stored encrypted and masked in the UI and in logs."
+msgstr ""
+
+msgid ""
+"Automatically passed down to all child environments of this environment."
+msgstr ""
+
+msgid "Create variable"
+msgstr ""
+
+msgid "Edit variable"
+msgstr ""
+
+msgid "Leave blank to keep the current value."
+msgstr ""
+
+msgid "Environment variables"
+msgstr ""
+
+#, php-format
+msgid "%d variables  %d secret  %d inherited  injected at build and runtime."
+msgstr ""
+
+msgid "This environment only"
+msgstr ""
+
+msgid "Delete variable"
+msgstr ""
+
+msgid ""
+"Are you sure you want to delete {key}? The variable will no longer be "
+"available after the next deploy."
+msgstr ""
+
+msgid "Error 400  Bad Request"
+msgstr ""
+
+msgid "Something went wrong"
+msgstr ""
+
+msgid "The server was unable to process your request."
+msgstr ""
+
+msgid "Homepage"
+msgstr ""
+
+msgid "Error 404  Not found"
+msgstr ""
+
+msgid "This route doesn't exist"
+msgstr ""
+
+msgid ""
+"The page you're looking for may have been moved, renamed, or never deployed. "
+"Check the URL or head back to your dashboard."
+msgstr ""
+
+msgid "Oops"
+msgstr ""
+
+msgid "Deploy without friction"
+msgstr ""
+
+msgid "From commit to production in minutes on a server of your choice!"
+msgstr ""
+
+msgid "Isolated environments per branch"
+msgstr ""
+
+msgid "Instant data cloning for child branches"
+msgstr ""
+
+msgid "Use any Linux Server from a hoster of your choice"
+msgstr ""
+
+msgid "No vendor lock-in"
+msgstr ""
+
+msgid ""
+msgstr ""
+
+msgid "Change theme"
+msgstr ""
+
+msgid "Select Project"
+msgstr ""
+
+msgid "Project settings"
+msgstr ""
+
+msgid "Account"
+msgstr ""
+
+msgid "Security"
+msgstr ""
+
+msgid "Sign out"
+msgstr ""
+
+msgid "Registries"
+msgstr ""
+
+msgid "Back to app"
+msgstr ""
+
+msgid ""
+"We received a request to change the email address of your Tragwerk account "
+"to {email}. Please confirm it by clicking the link below."
+msgstr ""
+
+msgid "If you did not request this change, you can ignore this email."
+msgstr ""
+
+msgid "This link expires in 24 hours."
+msgstr ""
+
+msgid ""
+"You requested a password reset for your Tragwerk account. Click the link "
+"below to set a new password."
+msgstr ""
+
+msgid ""
+"This link expires in 2 hours. If you did not request a password reset, you "
+"can ignore this email."
+msgstr ""
+
+msgid "You have been invited to join a team on Tragwerk."
+msgstr ""
+
+msgid ""
+"Thank you for registering with Tragwerk. Please confirm your email address "
+"by clicking the link below."
+msgstr ""
+
+msgid "Add another email"
+msgstr ""
+
+msgid "Member"
 msgstr ""
 
 msgid "Role"
+msgstr ""
+
+msgid "Owner"
+msgstr ""
+
+msgid "Remove member"
 msgstr ""

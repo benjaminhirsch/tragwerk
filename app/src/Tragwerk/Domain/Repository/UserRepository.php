@@ -8,6 +8,7 @@ use Generator;
 use Mezzio\Authentication\UserRepositoryInterface;
 use Tragwerk\Domain\Entity\Entity;
 use Tragwerk\Domain\Entity\User;
+use Tragwerk\Domain\Enum\Locale;
 use Tragwerk\Domain\Exception\Repository\EntityCreationFailed;
 use Tragwerk\Domain\Exception\Repository\EntityHydrationFailed;
 use Tragwerk\Domain\Exception\Repository\EntityNotFound;
@@ -58,4 +59,6 @@ interface UserRepository extends UserRepositoryInterface
     public function updateProfile(UserIdentifier $id, string $firstname, string $lastname): void;
 
     public function updateEmail(UserIdentifier $id, string $email): void;
+
+    public function updateLocale(UserIdentifier $id, Locale|null $locale): void;
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tragwerk\Application\Service;
 
 use Tragwerk\Application\Validation\ValidationBag;
+use Tragwerk\Domain\Enum\Locale;
 use Tragwerk\Domain\Repository\RecoveryCodeRepository;
 use Tragwerk\Domain\Repository\SshKeyRepository;
 use Tragwerk\Domain\Repository\UserRepository;
@@ -47,6 +48,9 @@ final readonly class AccountView
                 'firstname' => $user->firstname,
                 'lastname'  => $user->lastname,
                 'email'     => $user->email,
+            ]),
+            'languageValidation' => new ValidationBag([
+                'locale' => $user->locale instanceof Locale ? $user->locale->value : '',
             ]),
         ];
     }

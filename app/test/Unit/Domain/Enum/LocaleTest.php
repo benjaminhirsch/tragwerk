@@ -14,26 +14,26 @@ final class LocaleTest extends TestCase
     public function getLocaleCodeReturnsBackingValue(): void
     {
         self::assertSame('de_DE', Locale::DE_DE->getLocaleCode());
-        self::assertSame('en_EN', Locale::EN_EN->getLocaleCode());
+        self::assertSame('en_US', Locale::EN_US->getLocaleCode());
     }
 
     #[Test]
     public function getLanguageCodeReturnsIsoLanguagePart(): void
     {
         self::assertSame('de', Locale::DE_DE->getLanguageCode());
-        self::assertSame('en', Locale::EN_EN->getLanguageCode());
+        self::assertSame('en', Locale::EN_US->getLanguageCode());
     }
 
     #[Test]
     public function getNativeNameReturnsLanguageInItsOwnTongue(): void
     {
         self::assertSame('Deutsch', Locale::DE_DE->getNativeName());
-        self::assertSame('English', Locale::EN_EN->getNativeName());
+        self::assertSame('English', Locale::EN_US->getNativeName());
     }
 
     #[Test]
-    public function defaultIsGerman(): void
+    public function defaultIsEnglish(): void
     {
-        self::assertSame('de_DE', Locale::DEFAULT->getLocaleCode());
+        self::assertSame('en_US', Locale::DEFAULT->getLocaleCode());
     }
 }

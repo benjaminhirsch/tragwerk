@@ -29,6 +29,7 @@ use Tragwerk\Domain\Entity\EnvVar;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Entity\User;
+use Tragwerk\Domain\Enum\Locale;
 use Tragwerk\Domain\Repository\DomainRepository;
 use Tragwerk\Domain\Repository\EnvVarRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
@@ -265,6 +266,10 @@ final class BuildEnvironmentTest extends TestCase
             }
 
             public function updateEmail(UserIdentifier $id, string $email): void
+            {
+            }
+
+            public function updateLocale(UserIdentifier $id, Locale|null $locale): void
             {
             }
         };
