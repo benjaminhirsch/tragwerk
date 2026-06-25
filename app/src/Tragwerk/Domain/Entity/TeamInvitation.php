@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tragwerk\Domain\Entity;
 
+use Tragwerk\Domain\Enum\TeamRole;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\TeamInvitationIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
@@ -18,6 +19,7 @@ final class TeamInvitation implements Entity
         public string $token,
         public TimestampImmutable $invitedAt,
         public UserIdentifier $invitedBy,
+        public TeamRole $role = TeamRole::Member,
     ) {
     }
 }

@@ -30,6 +30,7 @@ use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\Enum\Locale;
+use Tragwerk\Domain\Enum\TeamRole;
 use Tragwerk\Domain\Repository\DomainRepository;
 use Tragwerk\Domain\Repository\EnvVarRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
@@ -39,6 +40,7 @@ use Tragwerk\Domain\ValueObject\DomainIdentifier;
 use Tragwerk\Domain\ValueObject\EnvVarIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
+use Tragwerk\Domain\ValueObject\TeamMembership;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 use Tragwerk\Infrastructure\Git\BareRepository;
 use ZipArchive;
@@ -195,7 +197,7 @@ final class BuildEnvironmentTest extends TestCase
             }
 
             /** @param UserIdentifier[] $userIds */
-            public function assignUsers(TeamIdentifier $teamId, array $userIds): void
+            public function assignUsers(TeamIdentifier $teamId, array $userIds, TeamRole $role = TeamRole::Member): void
             {
             }
 
@@ -207,6 +209,21 @@ final class BuildEnvironmentTest extends TestCase
             public function getUsersByTeamId(TeamIdentifier $teamId): Generator
             {
                 yield from [];
+            }
+
+            public function roleOf(TeamIdentifier $teamId, UserIdentifier $userId): TeamRole|null
+            {
+                return null;
+            }
+
+            public function updateRole(TeamIdentifier $teamId, UserIdentifier $userId, TeamRole $role): void
+            {
+            }
+
+            /** @return list<TeamMembership> */
+            public function getMembersWithRoles(TeamIdentifier $teamId): array
+            {
+                return [];
             }
 
             public function removeUser(TeamIdentifier $teamId, UserIdentifier $userId): void

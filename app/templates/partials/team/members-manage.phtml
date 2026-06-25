@@ -1,0 +1,52 @@
+<?php
+
+/** @var \Tragwerk\Domain\ValueObject\TeamMembership[] $memberships */
+/** @var \Tragwerk\Domain\Entity\TeamInvitation[] $pendingInvitations */
+/** @var string $teamId */
+/** @var bool $canManage */
+/** @var bool $actorIsOwner */
+/** @var string[] $emails */
+/** @var string[] $roles */
+/** @var \Tragwerk\Application\Validation\ValidationBag|null $validation */
+$memberships        = $memberships ?? [];
+$pendingInvitations = $pendingInvitations ?? [];
+$teamId             = $teamId ?? '';
+$canManage          = $canManage ?? false;
+$actorIsOwner       = $actorIsOwner ?? false;
+$emails             = $emails ?? [''];
+$roles              = $roles ?? [];
+?>
+<div id="tw-members-manage">
+    <?= $this->fetch('partial::team/member-list', [
+        'memberships'   => $memberships,
+        'teamId'        => $teamId,
+        'canManage'     => $canManage,
+        'actorIsOwner'  => $actorIsOwner,
+        'usersToRemove' => $validation?->getArrayValueByName('usersToRemove') ?? [],
+    ]) ?>
+
+    <?= $this->fetch('partial::team/invite-list', [
+        'invitations' => $pendingInvitations,
+    ]) ?>
+
+    <?php if ($canManage): ?>
+        <div class="mt-3">
+            <label class="form-label"><?= $this->e($this->t('Invite more members (optional)')) ?></label>
+            <?= $this->fetch('partial::team/email-fields', [
+                'emails'     => $emails,
+                'roles'      => $roles,
+                'validation' => $validation,
+            ]) ?>
+            <?= $this->fetch('partial::input/button', [
+                'classes'   => 'btn btn-primary',
+                'icon'      => 'bi bi-person-plus',
+                'label'     => $this->t('Invite members'),
+                'type'      => 'button',
+                'hxPost'    => $this->url('team.members.invite', ['id' => $teamId]),
+                'hxTarget'  => '#tw-members-manage',
+                'hxSwap'    => 'outerHTML',
+                'hxInclude' => "#tw-email-list, [name='csrf_token']",
+            ]) ?>
+        </div>
+    <?php endif ?>
+</div>

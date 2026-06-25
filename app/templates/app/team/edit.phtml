@@ -2,7 +2,10 @@
 
 /** @var \Tragwerk\Domain\Entity\Team $team */
 /** @var \Tragwerk\Application\Validation\ValidationBag $validationBag */
-/** @var \Tragwerk\Domain\Entity\User[] $members */
+/** @var \Tragwerk\Domain\ValueObject\TeamMembership[] $memberships */
+/** @var \Tragwerk\Domain\Entity\TeamInvitation[] $pendingInvitations */
+/** @var bool $canManage */
+/** @var bool $actorIsOwner */
 /** @var bool $canDelete */
 
 $this->layout('layout::default', [
@@ -51,20 +54,16 @@ $nameError = $validationBag->getErrorByName('name');
             </div>
         </div>
 
-        <?= $this->fetch('partial::team/member-list', [
-            'members'       => $members,
-            'teamId'        => $team->id->toString(),
-            'ownerId'       => $team->ownerId->toString(),
-            'usersToRemove' => $validationBag->getArrayValueByName('usersToRemove'),
+        <?= $this->fetch('partial::team/members-manage', [
+            'memberships'        => $memberships,
+            'pendingInvitations' => $pendingInvitations,
+            'teamId'             => $team->id->toString(),
+            'canManage'          => $canManage,
+            'actorIsOwner'       => $actorIsOwner,
+            'emails'             => $validationBag->getArrayValueByName('emailsToInvite') ?: [''],
+            'roles'              => $validationBag->getArrayValueByName('rolesToInvite') ?: [],
+            'validation'         => $validationBag,
         ]) ?>
-
-        <div class="mt-3">
-            <label class="form-label"><?= $this->e($this->t('Invite more members (optional)')) ?></label>
-            <?= $this->fetch('partial::team/email-fields', [
-                'emails'     => $validationBag->getArrayValueByName('emailsToInvite') ?: [''],
-                'validation' => $validationBag,
-            ]) ?>
-        </div>
     </section>
 </form>
 

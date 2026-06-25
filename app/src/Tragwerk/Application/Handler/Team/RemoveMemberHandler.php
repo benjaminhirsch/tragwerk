@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 namespace Tragwerk\Application\Handler\Team;
 
+use Mezzio\Authentication\UserInterface;
 use Override;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Entity\Team;
-use Tragwerk\Domain\Entity\User;
+use Tragwerk\Domain\Enum\TeamRole;
 use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
+use Tragwerk\Domain\ValueObject\TeamMembership;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
 use function array_filter;
@@ -23,7 +25,6 @@ use function assert;
 use function in_array;
 use function is_array;
 use function is_string;
-use function iterator_to_array;
 
 final readonly class RemoveMemberHandler implements RequestHandlerInterface
 {
@@ -38,15 +39,22 @@ final readonly class RemoveMemberHandler implements RequestHandlerInterface
     {
         $team = $this->resolveTeam($request);
 
-        $members       = [];
+        $memberships   = [];
         $usersToRemove = [];
-        $ownerId       = '';
         $teamId        = '';
+        $actorIsOwner  = false;
 
         if ($team instanceof Team) {
             $teamId  = $team->id->toString();
             $ownerId = $team->ownerId->toString();
             $body    = $request->getParsedBody();
+
+            $user = $request->getAttribute(UserInterface::class);
+            assert($user instanceof UserInterface);
+            $actorIsOwner = $this->teamRepository->roleOf(
+                $team->id,
+                UserIdentifier::fromString($user->getIdentity()),
+            ) === TeamRole::Owner;
 
             $pendingRemovals = is_array($body) && is_array($body['usersToRemove'] ?? null)
                 ? $body['usersToRemove']
@@ -54,27 +62,31 @@ final readonly class RemoveMemberHandler implements RequestHandlerInterface
 
             $newRemoval = is_array($body) && is_string($body['userId'] ?? null) ? $body['userId'] : null;
 
+            // The owner can never be removed, regardless of who triggers the action.
             $allToRemove = array_unique(array_merge(
-                array_filter($pendingRemovals, static fn (mixed $v) => is_string($v) && UserIdentifier::isValid($v)),
+                array_filter(
+                    $pendingRemovals,
+                    static fn (mixed $v) => is_string($v) && UserIdentifier::isValid($v) && $v !== $ownerId,
+                ),
                 $newRemoval !== null && UserIdentifier::isValid($newRemoval) && $newRemoval !== $ownerId
                     ? [$newRemoval]
                     : [],
             ));
 
-            $allMembers = iterator_to_array($this->teamRepository->getUsersByTeamId($team->id), false);
-
-            $members = array_values(array_filter(
-                $allMembers,
-                static fn (User $u) => ! in_array($u->id->toString(), $allToRemove, true),
+            $memberships = array_values(array_filter(
+                $this->teamRepository->getMembersWithRoles($team->id),
+                static fn (TeamMembership $m) => ! in_array($m->user->id->toString(), $allToRemove, true),
             ));
 
             $usersToRemove = array_values($allToRemove);
         }
 
+        // ManageMembers is enforced by TeamAuthorizationMiddleware before this handler.
         return $this->renderer->render($request, 'partial::team/member-list', [
-            'members'       => $members,
+            'memberships'   => $memberships,
             'teamId'        => $teamId,
-            'ownerId'       => $ownerId,
+            'canManage'     => true,
+            'actorIsOwner'  => $actorIsOwner,
             'usersToRemove' => $usersToRemove,
         ]);
     }

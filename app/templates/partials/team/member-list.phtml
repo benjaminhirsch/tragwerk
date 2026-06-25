@@ -1,12 +1,17 @@
 <?php
-/** @var \Tragwerk\Domain\Entity\User[] $members */
+
+use Tragwerk\Domain\Enum\TeamRole;
+
+/** @var \Tragwerk\Domain\ValueObject\TeamMembership[] $memberships */
 /** @var string[] $usersToRemove */
 /** @var string $teamId */
-/** @var string $ownerId */
-$members       = $members ?? [];
+/** @var bool $canManage */
+/** @var bool $actorIsOwner */
+$memberships   = $memberships ?? [];
 $usersToRemove = $usersToRemove ?? [];
 $teamId        = $teamId ?? '';
-$ownerId       = $ownerId ?? '';
+$canManage     = $canManage ?? false;
+$actorIsOwner  = $actorIsOwner ?? false;
 ?>
 <div id="tw-member-list" class="tw-table-wrap">
     <?php foreach ($usersToRemove as $removedId): ?>
@@ -22,13 +27,22 @@ $ownerId       = $ownerId ?? '';
         </tr>
         </thead>
         <tbody>
-        <?php if ($members === []): ?>
+        <?php if ($memberships === []): ?>
             <tr>
                 <td colspan="3" class="tw-cell-muted"><?= $this->e($this->t('No members in this team.')) ?></td>
             </tr>
         <?php else: ?>
-            <?php foreach ($members as $member): ?>
-                <?php $isOwner = $member->id->toString() === $ownerId ?>
+            <?php foreach ($memberships as $membership): ?>
+                <?php
+                $member  = $membership->user;
+                $role    = $membership->role;
+                $isOwner = $role === TeamRole::Owner;
+                [$roleLabel, $roleClass] = match ($role) {
+                    TeamRole::Owner  => [$this->t('Owner'), 'tw-badge--info'],
+                    TeamRole::Admin  => [$this->t('Admin'), 'tw-badge--warn'],
+                    TeamRole::Member => [$this->t('Member'), 'tw-badge--neutral'],
+                };
+                ?>
                 <tr>
                     <td>
                         <div class="d-flex align-items-center gap-2">
@@ -42,14 +56,28 @@ $ownerId       = $ownerId ?? '';
                         </div>
                     </td>
                     <td>
-                        <?php if ($isOwner): ?>
-                            <span class="tw-badge tw-badge--purple"><span class="tw-dot"></span><?= $this->e($this->t('Owner')) ?></span>
+                        <?php if ($canManage && ! $isOwner): ?>
+                            <select class="form-select form-select-sm" style="width:auto;display:inline-block"
+                                    name="role"
+                                    title="<?= $this->e($this->t('Role')) ?>"
+                                    hx-post="<?= $this->url('team.members.role', ['id' => $teamId]) ?>"
+                                    hx-target="#tw-member-list"
+                                    hx-swap="outerHTML"
+                                    hx-trigger="change"
+                                    hx-include="[name='csrf_token']"
+                                    hx-vals='{"userId": "<?= $this->e($member->id->toString()) ?>"}'>
+                                <option value="<?= TeamRole::Member->value ?>"<?= $role === TeamRole::Member ? ' selected' : '' ?>><?= $this->e($this->t('Member')) ?></option>
+                                <option value="<?= TeamRole::Admin->value ?>"<?= $role === TeamRole::Admin ? ' selected' : '' ?>><?= $this->e($this->t('Admin')) ?></option>
+                                <?php if ($actorIsOwner): ?>
+                                    <option value="<?= TeamRole::Owner->value ?>"><?= $this->e($this->t('Make owner')) ?></option>
+                                <?php endif ?>
+                            </select>
                         <?php else: ?>
-                            <span class="tw-badge tw-badge--neutral"><span class="tw-dot"></span><?= $this->e($this->t('Member')) ?></span>
+                            <span class="tw-badge <?= $roleClass ?>"><span class="tw-dot"></span><?= $this->e($roleLabel) ?></span>
                         <?php endif ?>
                     </td>
                     <td class="text-end">
-                        <?php if (! $isOwner): ?>
+                        <?php if ($canManage && ! $isOwner): ?>
                             <?= $this->fetch('partial::input/button', [
                                 'classes'   => 'btn btn-ghost btn-sm btn-del',
                                 'icon'      => 'bi bi-trash3',

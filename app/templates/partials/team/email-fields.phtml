@@ -1,10 +1,17 @@
 <?php
+
+use Tragwerk\Domain\Enum\TeamRole;
+
 /** @var string[] $emails */
+/** @var string[] $roles */
 /** @var \Tragwerk\Application\Validation\ValidationBag|null $validation */
 $emails = $emails ?? [''];
+$roles  = $roles ?? [];
 ?>
 <div id="tw-email-list" class="d-flex flex-column gap-2 mb-4">
     <?php foreach ($emails as $i => $email): ?>
+    <?php $role = TeamRole::tryFrom($roles[$i] ?? '') ?? TeamRole::Member ?>
+    <?php $role = in_array($role, TeamRole::assignable(), true) ? $role : TeamRole::Member ?>
     <div class="tw-email-row d-flex gap-2 align-items-start">
         <div class="flex-grow-1">
             <?= $this->fetch('partial::input/text', [
@@ -13,6 +20,16 @@ $emails = $emails ?? [''];
                     'placeholder' => 'name@example.com',
                     'name' => 'emailsToInvite[' . $i . ']',
                     'validation' => $validation ?? null,
+            ]) ?>
+        </div>
+        <div class="flex-shrink-0" style="min-width:9rem">
+            <?= $this->fetch('partial::input/enum', [
+                    'id' => 'rolesToInvite_' . $i,
+                    'name' => 'rolesToInvite[' . $i . ']',
+                    'options' => TeamRole::assignable(),
+                    'defaultValue' => $role,
+                    'disableEmptyOption' => true,
+                    'title' => $this->t('Role'),
             ]) ?>
         </div>
         <?php if (count($emails) > 1): ?>

@@ -7,6 +7,7 @@ namespace TragwerkTest\Integration\Application\Handler\Team;
 use PHPUnit\Framework\Attributes\Test;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Entity\User;
+use Tragwerk\Domain\Enum\TeamRole;
 use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\Repository\UserRepository;
 use Tragwerk\Domain\ValueObject\PasswordHash;
@@ -301,7 +302,7 @@ final class TeamHandlerTest extends AppIntegrationTestCase
         $repository = $this->container->get(TeamRepository::class);
         assert($repository instanceof TeamRepository);
         $repository->create($team);
-        $repository->assignUsers($team->id, [$this->user->id]);
+        $repository->assignUsers($team->id, [$this->user->id], TeamRole::Owner);
 
         return $team;
     }

@@ -76,6 +76,7 @@
         "mezzio/mezzio": "^3.23.1",
         "mezzio/mezzio-authentication": "^1.13",
         "mezzio/mezzio-authentication-session": "^1.11",
+        "mezzio/mezzio-authorization": "^1.11",
         "mezzio/mezzio-fastroute": "^3.11.0",
         "mezzio/mezzio-helpers": "^5.20",
         "mezzio/mezzio-platesrenderer": "^2.14",

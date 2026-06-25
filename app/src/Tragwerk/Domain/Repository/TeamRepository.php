@@ -8,12 +8,14 @@ use Generator;
 use Tragwerk\Domain\Entity\Entity;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Entity\User;
+use Tragwerk\Domain\Enum\TeamRole;
 use Tragwerk\Domain\Exception\Repository\EntityCreationFailed;
 use Tragwerk\Domain\Exception\Repository\EntityDeletionFailed;
 use Tragwerk\Domain\Exception\Repository\EntityHydrationFailed;
 use Tragwerk\Domain\Exception\Repository\EntityNotFound;
 use Tragwerk\Domain\Exception\Repository\EntityUpdateFailed;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
+use Tragwerk\Domain\ValueObject\TeamMembership;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
 interface TeamRepository
@@ -52,13 +54,22 @@ interface TeamRepository
      *
      * @throws EntityCreationFailed
      */
-    public function assignUsers(TeamIdentifier $teamId, array $userIds): void;
+    public function assignUsers(TeamIdentifier $teamId, array $userIds, TeamRole $role = TeamRole::Member): void;
 
     /** @return Generator<Team> */
     public function getByUserId(UserIdentifier $userId): Generator;
 
     /** @return Generator<User> */
     public function getUsersByTeamId(TeamIdentifier $teamId): Generator;
+
+    /** Returns the user's role within the team, or null if not a member. */
+    public function roleOf(TeamIdentifier $teamId, UserIdentifier $userId): TeamRole|null;
+
+    /** @throws EntityUpdateFailed */
+    public function updateRole(TeamIdentifier $teamId, UserIdentifier $userId, TeamRole $role): void;
+
+    /** @return list<TeamMembership> */
+    public function getMembersWithRoles(TeamIdentifier $teamId): array;
 
     /** @throws EntityDeletionFailed */
     public function removeUser(TeamIdentifier $teamId, UserIdentifier $userId): void;

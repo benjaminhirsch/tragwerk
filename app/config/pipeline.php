@@ -94,6 +94,9 @@ return static function (
     $app->pipe(Template\Extension\Authentication::class);
     $app->pipe(Template\Extension\Locale::class);
     $app->pipe(Middleware\TeamMiddleware::class);
+    // Resource-scoped team authorization: enforces per-route TeamPermission options
+    // after TeamMiddleware has populated user_teams/active_team.
+    $app->pipe(Middleware\TeamAuthorizationMiddleware::class);
     $app->pipe(Middleware\ProjectMiddleware::class);
     $app->pipe(Middleware\EnvironmentMiddleware::class);
     $app->pipe(Template\Extension\TeamContext::class);

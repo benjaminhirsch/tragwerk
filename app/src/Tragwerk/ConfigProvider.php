@@ -20,6 +20,7 @@ use Laminas\Stratigility\Middleware\ErrorHandler;
 use Mezzio\Authentication\AuthenticationInterface;
 use Mezzio\Authentication\Session\PhpSession;
 use Mezzio\Authentication\UserRepositoryInterface;
+use Mezzio\Authorization\AuthorizationInterface;
 use Mezzio\MiddlewareFactoryInterface;
 use Mezzio\Router\FastRouteRouter;
 use Mezzio\Session\Cache\CacheSessionPersistence;
@@ -232,6 +233,8 @@ final readonly class ConfigProvider
                 'aliases' => [
                     AuthenticationInterface::class => PhpSession::class,
                     UserRepositoryInterface::class => UserRepository::class,
+                    AuthorizationInterface::class =>
+                        Application\Security\TeamAuthorization::class,
                 ],
             ],
         ];
@@ -403,6 +406,8 @@ final readonly class ConfigProvider
                 Event\TeamCreated::class         => [EventListener\Team\CreateTeam::class],
                 Event\TeamUpdated::class         => [EventListener\Team\UpdateTeam::class],
                 Event\TeamDeleted::class         => [EventListener\Team\DeleteTeam::class],
+                Event\TeamMemberRoleChanged::class => [EventListener\Team\ChangeTeamMemberRole::class],
+                Event\TeamMembersInvited::class => [EventListener\Team\InviteTeamMembers::class],
                 Event\ProjectCreated::class      => [
                     EventListener\Project\CreateProject::class,
                     EventListener\Project\CreateGitRepository::class,
@@ -452,6 +457,8 @@ final readonly class ConfigProvider
                 Event\DeployJobCreated::class  => [EventListener\DeployJob\PersistDeployJob::class],
                 Event\TeamInvitationCreated::class =>
                     [EventListener\Team\SendTeamInvitation::class],
+                Event\TeamMemberAdded::class =>
+                    [EventListener\Team\SendTeamMemberAddedNotification::class],
                 Event\UserSwitchedTeam::class => [EventListener\User\PersistLastActiveTeam::class],
                 Event\TwoFactorEnrollmentStarted::class => [
                     EventListener\TwoFactor\PersistTwoFactorEnrollment::class,

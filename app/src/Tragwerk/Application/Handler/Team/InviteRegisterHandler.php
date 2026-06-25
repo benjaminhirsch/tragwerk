@@ -54,7 +54,7 @@ final readonly class InviteRegisterHandler implements RequestHandlerInterface
 
                 $user = $registration->createUser($invitation->email);
                 $this->userRepository->create($user);
-                $this->teamRepository->assignUsers($invitation->teamId, [$user->id]);
+                $this->teamRepository->assignUsers($invitation->teamId, [$user->id], $invitation->role);
                 $this->teamInvitationRepository->delete($invitation->id);
 
                 return new RedirectResponse($this->urlHelper->generate('login'));

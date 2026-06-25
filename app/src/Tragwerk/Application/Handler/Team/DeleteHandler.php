@@ -34,6 +34,8 @@ final readonly class DeleteHandler implements RequestHandlerInterface
         $raw  = $request->getAttribute('user_teams');
         $team = $this->resolveTeam($request, $raw);
 
+        // Owner-only authorization is enforced by TeamAuthorizationMiddleware; here we
+        // additionally guard the product rule that a user must keep at least one team.
         if ($team instanceof Team && is_array($raw) && count($raw) > 1) {
             $this->eventDispatcher->dispatch(new TeamDeleted($team->id));
         }
