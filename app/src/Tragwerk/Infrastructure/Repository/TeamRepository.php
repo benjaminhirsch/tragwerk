@@ -13,15 +13,20 @@ use Override;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\Enum\EntityType;
+use Tragwerk\Domain\Enum\TeamRole;
 use Tragwerk\Domain\Exception\Repository\EntityCreationFailed;
 use Tragwerk\Domain\Exception\Repository\EntityDeletionFailed;
 use Tragwerk\Domain\Exception\Repository\EntityHydrationFailed;
+use Tragwerk\Domain\Exception\Repository\EntityUpdateFailed;
 use Tragwerk\Domain\Repository\TeamRepository as TeamRepositoryInterface;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
+use Tragwerk\Domain\ValueObject\TeamMembership;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 use Tragwerk\Infrastructure\Helper\EntityHelper;
 
+use function assert;
 use function implode;
+use function is_string;
 
 final class TeamRepository extends GenericRepository implements TeamRepositoryInterface
 {
@@ -82,7 +87,7 @@ final class TeamRepository extends GenericRepository implements TeamRepositoryIn
     }
 
     #[Override]
-    public function assignUsers(TeamIdentifier $teamId, array $userIds): void
+    public function assignUsers(TeamIdentifier $teamId, array $userIds, TeamRole $role = TeamRole::Member): void
     {
         $assignedAt = new DateTimeImmutable()->format('Y-m-d H:i:s.u');
 
@@ -92,11 +97,75 @@ final class TeamRepository extends GenericRepository implements TeamRepositoryIn
                     'team_id'     => $teamId->toString(),
                     'user_id'     => $userId->toString(),
                     'assigned_at' => $assignedAt,
+                    'role'        => $role->value,
                 ]);
             }
         } catch (Exception $e) {
             throw EntityCreationFailed::create(UserIdentifier::class, $teamId, $e);
         }
+    }
+
+    #[Override]
+    public function roleOf(TeamIdentifier $teamId, UserIdentifier $userId): TeamRole|null
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb->select('tu.role')
+            ->from(self::TEAM_USERS_TABLE, 'tu')
+            ->where($qb->expr()->eq('tu.team_id', ':team_id'))
+            ->andWhere($qb->expr()->eq('tu.user_id', ':user_id'))
+            ->setParameter('team_id', $teamId->toString())
+            ->setParameter('user_id', $userId->toString());
+
+        try {
+            $role = $qb->executeQuery()->fetchOne();
+        } catch (Exception $e) {
+            throw EntityHydrationFailed::create(Team::class, $e);
+        }
+
+        return is_string($role) ? TeamRole::from($role) : null;
+    }
+
+    #[Override]
+    public function updateRole(TeamIdentifier $teamId, UserIdentifier $userId, TeamRole $role): void
+    {
+        try {
+            $this->connection->update(
+                self::TEAM_USERS_TABLE,
+                ['role' => $role->value],
+                ['team_id' => $teamId->toString(), 'user_id' => $userId->toString()],
+            );
+        } catch (Exception $e) {
+            throw EntityUpdateFailed::create($userId, $e);
+        }
+    }
+
+    #[Override]
+    public function getMembersWithRoles(TeamIdentifier $teamId): array
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb->select('u.*', 'tu.role AS team_role')
+            ->from(EntityHelper::getDbTableName(EntityType::USER), 'u')
+            ->innerJoin('u', self::TEAM_USERS_TABLE, 'tu', 'tu.user_id = u.id')
+            ->where($qb->expr()->eq('tu.team_id', ':team_id'))
+            ->orderBy('u.lastname', 'ASC')
+            ->addOrderBy('u.firstname', 'ASC')
+            ->setParameter('team_id', $teamId->toString());
+
+        $members = [];
+
+        try {
+            foreach ($qb->executeQuery()->iterateAssociative() as $row) {
+                $role = $row['team_role'];
+                assert(is_string($role));
+                unset($row['team_role']);
+
+                $members[] = new TeamMembership($this->map($row, User::class), TeamRole::from($role));
+            }
+        } catch (MappingError | Exception $e) {
+            throw EntityHydrationFailed::create(User::class, $e);
+        }
+
+        return $members;
     }
 
     #[Override]

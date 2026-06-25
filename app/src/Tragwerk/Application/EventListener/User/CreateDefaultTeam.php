@@ -6,6 +6,7 @@ namespace Tragwerk\Application\EventListener\User;
 
 use Chypriote\UniqueNames\Generator;
 use Tragwerk\Domain\Entity\Team;
+use Tragwerk\Domain\Enum\TeamRole;
 use Tragwerk\Domain\Event;
 use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
@@ -41,6 +42,6 @@ final readonly class CreateDefaultTeam
         );
 
         $this->teamRepository->create($team);
-        $this->teamRepository->assignUsers($team->id, [$event->user->id]);
+        $this->teamRepository->assignUsers($team->id, [$event->user->id], TeamRole::Owner);
     }
 }

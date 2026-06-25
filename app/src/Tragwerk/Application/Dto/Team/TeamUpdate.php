@@ -8,6 +8,7 @@ use CuyZ\Valinor\Mapper\Http\FromBody;
 use Tragwerk\Application\Dto\DtoInterface;
 use Tragwerk\Application\Exception\ValidationCollection;
 use Tragwerk\Application\Exception\ValidationError;
+use Tragwerk\Domain\Enum\TeamRole;
 
 use function _;
 use function filter_var;
@@ -26,6 +27,9 @@ final readonly class TeamUpdate implements DtoInterface
         /** @var string[] */
         #[FromBody]
         public array $usersToRemove = [],
+        /** @var string[] */
+        #[FromBody]
+        public array $rolesToInvite = [],
     ) {
         $errors = [];
         if (trim($this->name) === '') {
@@ -48,5 +52,11 @@ final readonly class TeamUpdate implements DtoInterface
         if ($errors !== []) {
             throw ValidationCollection::fromValidations(...$errors);
         }
+    }
+
+    /** Role chosen for the invite at the given index; defaults to Member and never returns Owner. */
+    public function roleAt(int $index): TeamRole
+    {
+        return TeamRoleSelection::fromArray($this->rolesToInvite, $index);
     }
 }

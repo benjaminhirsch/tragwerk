@@ -18,10 +18,13 @@ use Tragwerk\Application\Mapper\GenericMapper;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Application\Validation\ValidationBag;
 use Tragwerk\Domain\Entity\Team;
-use Tragwerk\Domain\Entity\User;
+use Tragwerk\Domain\Enum\TeamPermission;
+use Tragwerk\Domain\Enum\TeamRole;
 use Tragwerk\Domain\Event\TeamUpdated;
+use Tragwerk\Domain\Repository\TeamInvitationRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
+use Tragwerk\Domain\ValueObject\TeamMembership;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
 use function array_filter;
@@ -31,16 +34,18 @@ use function count;
 use function in_array;
 use function is_array;
 use function is_string;
-use function iterator_to_array;
 
 final readonly class EditHandler implements RequestHandlerInterface
 {
+    private const int RECENT_INVITATIONS_LIMIT = 50;
+
     public function __construct(
         private ResponseRenderer $renderer,
         private GenericMapper $mapper,
         private EventDispatcherInterface $eventDispatcher,
         private UrlHelper $urlHelper,
         private TeamRepository $teamRepository,
+        private TeamInvitationRepository $teamInvitationRepository,
     ) {
     }
 
@@ -81,21 +86,37 @@ final readonly class EditHandler implements RequestHandlerInterface
             $validationBag = new ValidationBag(['name' => $team->name]);
         }
 
-        $raw           = $request->getAttribute('user_teams');
-        $allMembers    = iterator_to_array($this->teamRepository->getUsersByTeamId($team->id), false);
+        $user = $request->getAttribute(UserInterface::class);
+        assert($user instanceof UserInterface);
+        $actorRole = $this->teamRepository->roleOf(
+            $team->id,
+            UserIdentifier::fromString($user->getIdentity()),
+        );
+
+        $allMembers    = $this->teamRepository->getMembersWithRoles($team->id);
         $pendingRemove = $validationBag->getArrayValueByName('usersToRemove');
-        $members       = $pendingRemove !== []
+        $memberships   = $pendingRemove !== []
             ? array_values(array_filter(
                 $allMembers,
-                static fn (User $u) => ! in_array($u->id->toString(), $pendingRemove, true),
+                static fn (TeamMembership $m) => ! in_array($m->user->id->toString(), $pendingRemove, true),
             ))
             : $allMembers;
+
+        $raw = $request->getAttribute('user_teams');
 
         return $this->renderer->render($request, 'page::team/edit', [
             'team'          => $team,
             'validationBag' => $validationBag,
-            'members'       => $members,
-            'canDelete'     => is_array($raw) && count($raw) > 1,
+            'memberships'   => $memberships,
+            'pendingInvitations' => $this->teamInvitationRepository->getRecentByTeam(
+                $team->id,
+                self::RECENT_INVITATIONS_LIMIT,
+            ),
+            'canManage'     => $actorRole?->can(TeamPermission::ManageMembers) ?? false,
+            'actorIsOwner'  => $actorRole === TeamRole::Owner,
+            // Deleting requires the DeleteTeam permission and that the user keeps at least one team.
+            'canDelete'     => ($actorRole?->can(TeamPermission::DeleteTeam) ?? false)
+                && is_array($raw) && count($raw) > 1,
         ]);
     }
 

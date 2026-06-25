@@ -6,26 +6,18 @@ namespace Tragwerk\Application\EventListener\Team;
 
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Tragwerk\Domain\Entity\Team;
-use Tragwerk\Domain\Entity\TeamInvitation;
-use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\Event;
-use Tragwerk\Domain\Repository\TeamInvitationRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
-use Tragwerk\Domain\Repository\UserRepository;
-use Tragwerk\Domain\ValueObject\TeamInvitationIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
 use function assert;
 use function is_string;
-use function trim;
 
 final readonly class UpdateTeam
 {
     public function __construct(
         private TeamRepository $teamRepository,
-        private UserRepository $userRepository,
-        private TeamInvitationRepository $teamInvitationRepository,
         private EventDispatcherInterface $eventDispatcher,
     ) {
     }
@@ -55,29 +47,11 @@ final readonly class UpdateTeam
             $this->teamRepository->removeUser($team->id, $removeId);
         }
 
-        foreach ($event->teamUpdate->emailsToInvite as $rawEmail) {
-            $email = trim($rawEmail);
-            if ($email === '') {
-                continue;
-            }
-
-            $existingUser = $this->userRepository->searchByEmail($email)->current();
-            if ($existingUser instanceof User) {
-                $this->teamRepository->assignUsers($team->id, [$existingUser->id]);
-                continue;
-            }
-
-            $invitation = new TeamInvitation(
-                TeamInvitationIdentifier::create(),
-                $team->id,
-                $email,
-                TeamInvitationIdentifier::create()->toString(),
-                TimestampImmutable::now(),
-                $event->updatedBy,
-            );
-
-            $this->teamInvitationRepository->create($invitation);
-            $this->eventDispatcher->dispatch(new Event\TeamInvitationCreated($invitation));
-        }
+        $this->eventDispatcher->dispatch(new Event\TeamMembersInvited(
+            $team->id,
+            $event->teamUpdate->emailsToInvite,
+            $event->teamUpdate->rolesToInvite,
+            $event->updatedBy,
+        ));
     }
 }

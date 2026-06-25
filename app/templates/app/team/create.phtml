@@ -35,6 +35,7 @@ $this->layout('layout::default', [
 
             <?= $this->fetch('partial::team/email-fields', [
                 'emails'     => $validationBag?->getArrayValueByName('emailsToInvite') ?: [''],
+                'roles'      => $validationBag?->getArrayValueByName('rolesToInvite') ?: [],
                 'validation' => $validationBag ?? null,
             ]) ?>
     </div>

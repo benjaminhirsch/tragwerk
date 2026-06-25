@@ -8,11 +8,6 @@ use CuyZ\Valinor\Mapper\Http\FromBody;
 use Tragwerk\Application\Dto\DtoInterface;
 use Tragwerk\Application\Exception\ValidationCollection;
 use Tragwerk\Application\Exception\ValidationError;
-use Tragwerk\Domain\Entity\Team;
-use Tragwerk\Domain\Enum\TeamRole;
-use Tragwerk\Domain\ValueObject\TeamIdentifier;
-use Tragwerk\Domain\ValueObject\TimestampImmutable;
-use Tragwerk\Domain\ValueObject\UserIdentifier;
 
 use function _;
 use function filter_var;
@@ -20,11 +15,9 @@ use function trim;
 
 use const FILTER_VALIDATE_EMAIL;
 
-final readonly class TeamCreation implements DtoInterface
+final readonly class InviteMembers implements DtoInterface
 {
     public function __construct(
-        #[FromBody]
-        public string $name,
         /** @var string[] */
         #[FromBody]
         public array $emailsToInvite = [],
@@ -33,9 +26,6 @@ final readonly class TeamCreation implements DtoInterface
         public array $rolesToInvite = [],
     ) {
         $errors = [];
-        if (trim($this->name) === '') {
-            $errors[] = ValidationError::make('name', _('Field can\'t be empty'));
-        }
 
         foreach ($this->emailsToInvite as $i => $email) {
             $trimmed = trim($email);
@@ -53,26 +43,5 @@ final readonly class TeamCreation implements DtoInterface
         if ($errors !== []) {
             throw ValidationCollection::fromValidations(...$errors);
         }
-    }
-
-    /** Role chosen for the invite at the given index; defaults to Member and never returns Owner. */
-    public function roleAt(int $index): TeamRole
-    {
-        return TeamRoleSelection::fromArray($this->rolesToInvite, $index);
-    }
-
-    public function createTeam(UserIdentifier $owner): Team
-    {
-        $now = TimestampImmutable::now();
-
-        return new Team(
-            TeamIdentifier::create(),
-            $this->name,
-            $owner,
-            $now,
-            $owner,
-            $now,
-            $owner,
-        );
     }
 }
