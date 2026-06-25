@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tragwerk\Application\Middleware;
 
-use Laminas\I18n\Translator\Translator;
 use Override;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Tragwerk\Application\Translator\Translator;
 use Tragwerk\Domain\Enum\Locale;
 
 use function assert;
@@ -24,16 +24,19 @@ final readonly class SetTranslatorLocale implements MiddlewareInterface
     #[Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $oldLocale = $this->translator->getLocale();
+        // Must set the locale on the application Translator wrapper — the Plates
+        // `t()` extension resolves through it. The underlying Laminas translator is a
+        // separate instance, so calling setLocale() on it has no effect on templates.
+        $oldLocale = $this->translator->getDefaultLocale();
 
         $locale = $request->getAttribute(Locale::class);
         assert($locale instanceof Locale);
-        $this->translator->setLocale($locale->getLocaleCode());
+        $this->translator->setDefaultLocale($locale->getLocaleCode());
 
         try {
             $response = $handler->handle($request);
         } finally {
-            $this->translator->setLocale($oldLocale);
+            $this->translator->setDefaultLocale($oldLocale);
         }
 
         return $response;
