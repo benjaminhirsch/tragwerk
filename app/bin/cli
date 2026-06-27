@@ -41,6 +41,7 @@ $commands = [
         Command\DeployEnvironmentCommand::class,
         Command\SyncEnvironmentDataCommand::class,
         Command\SampleServerMetrics::class,
+        Command\SampleCronRuns::class,
         Command\CleanupProjectDockerCommand::class,
         Command\PruneOrphanedRegistryImagesCommand::class,
 

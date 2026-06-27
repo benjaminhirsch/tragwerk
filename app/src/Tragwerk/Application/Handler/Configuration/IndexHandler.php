@@ -11,6 +11,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Application\Service\ProjectConfigLoader;
 use Tragwerk\Domain\Entity\Project;
+use Tragwerk\Domain\Repository\CronRunRepository;
 use Tragwerk\Domain\Repository\DomainRepository;
 use Tragwerk\Domain\Service\DomainResolver;
 
@@ -24,6 +25,7 @@ final readonly class IndexHandler implements RequestHandlerInterface
         private ProjectConfigLoader $configLoader,
         private DomainRepository $domainRepository,
         private DomainResolver $domainResolver,
+        private CronRunRepository $cronRunRepository,
     ) {
     }
 
@@ -44,11 +46,15 @@ final readonly class IndexHandler implements RequestHandlerInterface
         // deploy pipeline does (DomainResolver).
         $hostsByPlaceholder = $this->domainResolver->resolveForEnvironment($domains, $activeBranch);
 
+        // Latest cron run per job (keyed by command) so the cron table can show last-run status.
+        $cronRuns = $this->cronRunRepository->latestPerJob($activeProject->id, $activeBranch);
+
         return $this->renderer->render($request, 'page::configuration/index', [
             'project'            => $activeProject,
             'branch'             => $activeBranch,
             'projectConfig'      => $projectConfig,
             'hostsByPlaceholder' => $hostsByPlaceholder,
+            'cronRuns'           => $cronRuns,
         ]);
     }
 }

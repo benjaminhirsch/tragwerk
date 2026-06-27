@@ -102,6 +102,8 @@ final class DockerfileGeneratorTest extends TestCase
         ]));
 
         self::assertStringContainsString('supercronic-linux-amd64', $output->dockerfileContent);
+        self::assertStringContainsString('supercronic-linux-arm64', $output->dockerfileContent);
+        self::assertStringContainsString('dpkg --print-architecture', $output->dockerfileContent);
         self::assertStringContainsString('COPY crontab.my-app /etc/supercronic/crontab', $output->dockerfileContent);
 
         self::assertSame('crontab.my-app', $output->crontabName);

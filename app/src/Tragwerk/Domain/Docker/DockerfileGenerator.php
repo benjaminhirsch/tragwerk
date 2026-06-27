@@ -275,24 +275,33 @@ final readonly class DockerfileGenerator
     /**
      * Installs supercronic, a lightweight crontab runner built for containers:
      * it runs as the unprivileged container user, logs jobs to stdout/stderr
-     * (so `docker logs` works) and needs no system cron daemon. Version is
-     * pinned for reproducible builds; bump SUPERCRONIC_SHA1 alongside the
-     * version to keep download integrity verification correct.
+     * (so `docker logs` works) and needs no system cron daemon. The binary is
+     * selected per build architecture (amd64/arm64 — matching the rest of the
+     * multi-arch stack); version + per-arch SHA1 are pinned for reproducible,
+     * integrity-checked builds (bump both together).
      */
     private function buildSupercronicRun(): string
     {
-        $version = 'v0.2.33';
-        // SHA1 published in the release's SHA1SUMS for supercronic-linux-amd64.
-        $sha1 = '71b0d58cc53f6bd72cf2f293e09e294b79c666d8';
-        $url  = 'https://github.com/aptible/supercronic/releases/download/'
-            . $version . '/supercronic-linux-amd64';
+        $version  = 'v0.2.33';
+        $base     = 'https://github.com/aptible/supercronic/releases/download/' . $version;
+        $amd64Sha = '71b0d58cc53f6bd72cf2f293e09e294b79c666d8';
+        $arm64Sha = 'e0f0c06ebc5627e43b25475711e694450489ab00';
+
+        // dpkg --print-architecture yields the Debian arch name (amd64/arm64).
+        $select = 'ARCH="$(dpkg --print-architecture)"; '
+            . 'case "$ARCH" in '
+            . 'amd64) SC=supercronic-linux-amd64; SCSHA=' . $amd64Sha . ' ;; '
+            . 'arm64) SC=supercronic-linux-arm64; SCSHA=' . $arm64Sha . ' ;; '
+            . '*) echo "unsupported architecture: $ARCH" >&2; exit 1 ;; '
+            . 'esac';
 
         $parts   = [];
         $parts[] = 'apt-get update -qq';
         $parts[] = 'apt-get install -y --no-install-recommends curl ca-certificates';
         $parts[] = 'rm -rf /var/lib/apt/lists/*';
-        $parts[] = 'curl -fsSLo /usr/local/bin/supercronic "' . $url . '"';
-        $parts[] = 'echo "' . $sha1 . '  /usr/local/bin/supercronic" | sha1sum -c -';
+        $parts[] = $select;
+        $parts[] = 'curl -fsSLo /usr/local/bin/supercronic "' . $base . '/$SC"';
+        $parts[] = 'echo "$SCSHA  /usr/local/bin/supercronic" | sha1sum -c -';
         $parts[] = 'chmod +x /usr/local/bin/supercronic';
 
         return 'RUN ' . implode(" \\\n    && ", $parts);

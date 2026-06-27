@@ -219,9 +219,15 @@ $resolveDomain = static function (string $pattern) use ($hostsByPlaceholder): st
     <?php endif ?>
 
     <!-- Crons & Workers -->
+    <?php
+    /** @var array<string, \Tragwerk\Domain\Model\CronRun> $cronRuns */
+    $cronRuns ??= [];
+    $topicBase = $_SERVER['MERCURE_TOPIC_BASE'] ?? 'https://tragwerk.build';
+    $cronTopic = urlencode($topicBase . '/project/' . $project->id->toString() . '/cron/' . $branch);
+    ?>
     <div class="row g-4">
         <div class="col-lg-7">
-            <section>
+            <section hx-ext="sse" sse-connect="/.well-known/mercure?topic=<?= $cronTopic ?>">
                 <h2 class="cfg-h"><i class="bi bi-clock-history"></i> <?= $this->t('Cron jobs') ?></h2>
                 <div class="tw-table-wrap">
                     <table class="tw-table">
@@ -230,21 +236,48 @@ $resolveDomain = static function (string $pattern) use ($hostsByPlaceholder): st
                             <th><?= $this->t('Name') ?></th>
                             <th><?= $this->t('Schedule') ?></th>
                             <th><?= $this->t('Command') ?></th>
+                            <th><?= $this->t('Last run') ?></th>
                         </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="cron-rows"
+                               hx-get="<?= $this->e($this->url('configuration')) ?>"
+                               hx-select="#cron-rows"
+                               hx-target="#cron-rows"
+                               hx-swap="outerHTML"
+                               hx-trigger="sse:message">
                         <?php if ($app !== null && $app->crons !== []): ?>
                             <?php foreach ($app->crons as $cron): ?>
+                                <?php $run = $cronRuns[trim($cron->command)] ?? null; ?>
                                 <tr>
                                     <td class="tw-cell-strong"><?= $this->e($cron->name) ?></td>
                                     <td><span class="tw-tag"><?= $this->e($cron->schedule) ?></span></td>
                                     <td class="mono tw-cell-muted"
                                         style="font-size:.78rem"><?= $this->e($cron->command) ?></td>
+                                    <td style="font-size:.78rem">
+                                        <?php if ($run === null): ?>
+                                            <span class="tw-cell-muted"><?= $this->t('No runs yet') ?></span>
+                                        <?php else: ?>
+                                            <?php
+                                            if ($run->succeeded === null) {
+                                                $runBadge = ['type' => 'warn', 'label' => $this->t('Running')];
+                                            } elseif ($run->succeeded) {
+                                                $runBadge = ['type' => 'ok', 'label' => $this->t('Succeeded')];
+                                            } else {
+                                                $runBadge = ['type' => 'danger', 'label' => $this->t('Failed')];
+                                            }
+                                            ?>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <?= $this->fetch('partial::badge', $runBadge) ?>
+                                                <span class="tw-cell-muted mono"
+                                                      title="<?= $this->e($run->startedAt->format('Y-m-d H:i:s')) ?>"><?= $this->e($run->startedAt->format('Y-m-d H:i')) ?></span>
+                                            </div>
+                                        <?php endif ?>
+                                    </td>
                                 </tr>
                             <?php endforeach ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="3" class="tw-cell-muted"><?= $this->t('No cron jobs configured.') ?></td>
+                                <td colspan="4" class="tw-cell-muted"><?= $this->t('No cron jobs configured.') ?></td>
                             </tr>
                         <?php endif ?>
                         </tbody>

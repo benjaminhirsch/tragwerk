@@ -239,7 +239,8 @@ final readonly class DockerComposeGenerator
             $cron['build'] = $appService['build'];
         }
 
-        $cron['command'] = 'supercronic /etc/supercronic/crontab';
+        // -json: machine-parseable logs (consumed by the live log viewer and the cron:sample ticker).
+        $cron['command'] = 'supercronic -json /etc/supercronic/crontab';
         $cron['restart'] = 'unless-stopped';
 
         if (isset($appService['environment'])) {
@@ -250,8 +251,16 @@ final readonly class DockerComposeGenerator
             $cron['volumes'] = $appService['volumes'];
         }
 
-        $cron['read_only']   = true;
-        $cron['healthcheck'] = ['disable' => true];
+        $cron['read_only'] = true;
+        // supercronic -test validates the crontab is present and parseable — a meaningful liveness
+        // signal (a process check would be redundant since supercronic is PID 1 in this container).
+        $cron['healthcheck'] = [
+            'test'         => ['CMD', 'supercronic', '-test', '/etc/supercronic/crontab'],
+            'interval'     => '30s',
+            'timeout'      => '10s',
+            'retries'      => 3,
+            'start_period' => '5s',
+        ];
 
         if (isset($appService['tmpfs'])) {
             $cron['tmpfs'] = $appService['tmpfs'];

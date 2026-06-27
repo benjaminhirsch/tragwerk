@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 /**
  * @var string                                                                              $branch
+ * @var string                                                                              $service
  * @var list<array{time: string, level: string, logger: string, msg: string, raw: string}> $entries
  * @var string|null                                                                         $error
  */
@@ -15,8 +16,8 @@ $badgeType = static fn (string $level): string => match ($level) {
     default                   => 'neutral',
 };
 ?>
-<div hx-get="<?= $this->e($this->url('log.tail')) ?>"
-     hx-trigger="every 10s"
+<div hx-get="<?= $this->e($this->url('log.tail') . '?service=' . urlencode($service ?? '')) ?>"
+     hx-trigger="every 10s, sse:message"
      hx-target="#log-tail"
      hx-swap="innerHTML">
 

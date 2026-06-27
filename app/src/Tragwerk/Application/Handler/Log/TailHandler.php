@@ -29,8 +29,10 @@ use function is_numeric;
 use function is_string;
 use function json_decode;
 use function md5;
+use function preg_match;
 use function preg_replace;
 use function strtolower;
+use function strtotime;
 use function substr;
 use function trim;
 
@@ -52,16 +54,25 @@ final readonly class TailHandler implements RequestHandlerInterface
         $branch = $request->getAttribute('active_environment');
         assert(is_string($branch));
 
+        // Restrict to our slug shape (app / app-worker-x / app-cron); anything else falls back to
+        // the default app container and never reaches the shell.
+        $serviceParam = $request->getQueryParams()['service'] ?? '';
+        $service      = is_string($serviceParam) && preg_match('/^[a-z0-9-]+$/', $serviceParam) === 1
+            ? $serviceParam
+            : '';
+
         // Cache briefly. The pool holds a blocking lock per key, so concurrent
         // pollers (10s auto-refresh across tabs) wait for one SSH call.
-        $item = $this->cache->getItem('frankenlog_' . $project->id->toString() . '_' . md5($branch));
+        $item = $this->cache->getItem(
+            'frankenlog_' . $project->id->toString() . '_' . md5($branch . '|' . $service),
+        );
 
         if ($item->isHit()) {
             /** @var array{entries: list<array{time: string, level: string, logger: string, msg: string, raw: string}>, error: string|null} $result */
             $result = $item->get();
         } else {
             try {
-                $result = ['entries' => $this->fetchLogs($project, $branch), 'error' => null];
+                $result = ['entries' => $this->fetchLogs($project, $branch, $service), 'error' => null];
                 $item->set($result)->expiresAfter(8);
             } catch (Throwable $e) {
                 $result = ['entries' => [], 'error' => $e->getMessage()];
@@ -73,13 +84,14 @@ final readonly class TailHandler implements RequestHandlerInterface
 
         return $this->renderer->render($request, 'page::log/tail', [
             'branch'  => $branch,
+            'service' => $service,
             'entries' => $result['entries'],
             'error'   => $result['error'],
         ]);
     }
 
     /** @return list<array{time: string, level: string, logger: string, msg: string, raw: string}> */
-    private function fetchLogs(Project $project, string $branch): array
+    private function fetchLogs(Project $project, string $branch, string $service = ''): array
     {
         $server = $this->serverRepository->getById($project->serverId);
         assert($server instanceof Server);
@@ -115,25 +127,67 @@ final readonly class TailHandler implements RequestHandlerInterface
         $composeProject = 'tw-' . $shortId . '-' . $branchSlug;
         $slotDir        = '~/tragwerk/' . $projectId . '/' . $branch;
 
-        // Find the running app container: prefer blue/green slot, fall back to compose name.
-        $container = trim((string) $sftp->exec(
-            'slot=$(cat ' . $slotDir . '/.slot-* 2>/dev/null | head -1); '
-            . 'if [ -n "$slot" ]; then '
-            . '  docker ps --filter "name=' . $composeProject . '" --format "{{.Names}}" '
-            . '    | grep -E -- "-${slot}$" | head -1; '
-            . 'else '
-            . '  docker ps --filter "name=' . $composeProject . '" --format "{{.Names}}" '
-            . '    | grep -v -- "-db-" | head -1; '
-            . 'fi 2>/dev/null',
-        ));
+        // A specific compose service (worker/cron/non-primary app) is resolved by name; the primary
+        // app falls through to the blue/green slot discovery below.
+        $container = $service !== ''
+            ? $this->resolveServiceContainer($sftp, $composeProject, $service)
+            : '';
 
         if ($container === '') {
-            throw new RuntimeException('No running application container found.');
+            // Find the running app container: prefer blue/green slot, fall back to compose name.
+            $container = trim((string) $sftp->exec(
+                'slot=$(cat ' . $slotDir . '/.slot-* 2>/dev/null | head -1); '
+                . 'if [ -n "$slot" ]; then '
+                . '  docker ps --filter "name=' . $composeProject . '" --format "{{.Names}}" '
+                . '    | grep -E -- "-${slot}$" | head -1; '
+                . 'else '
+                . '  docker ps --filter "name=' . $composeProject . '" --format "{{.Names}}" '
+                . '    | grep -v -- "-db-" | head -1; '
+                . 'fi 2>/dev/null',
+            ));
+        }
+
+        if ($container === '') {
+            throw new RuntimeException('No running container found for this service.');
         }
 
         $raw = (string) $sftp->exec('docker logs --tail 500 ' . $container . ' 2>&1');
 
         return $this->parseEntries($raw);
+    }
+
+    /**
+     * Resolves a compose service name (e.g. "app-cron") to its running container name via
+     * `docker compose ps --format json`. Returns '' if the service is not running.
+     */
+    private function resolveServiceContainer(SFTP $sftp, string $composeProject, string $service): string
+    {
+        $raw = (string) $sftp->exec(
+            'docker compose --project-name ' . $composeProject
+            . ' ps --status running --format json 2>/dev/null',
+        );
+
+        foreach (explode("\n", $raw) as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+
+            /** @var array<string, mixed>|null $obj */
+            $obj = json_decode($line, true);
+            if (! is_array($obj)) {
+                continue;
+            }
+
+            $svc  = is_string($obj['Service'] ?? null) ? $obj['Service'] : '';
+            $name = is_string($obj['Name'] ?? null) ? $obj['Name'] : '';
+
+            if ($svc === $service && $name !== '') {
+                return $name;
+            }
+        }
+
+        return '';
     }
 
     /** @return list<array{time: string, level: string, logger: string, msg: string, raw: string}> */
@@ -151,12 +205,28 @@ final readonly class TailHandler implements RequestHandlerInterface
             $obj = json_decode($line, true);
 
             if (! is_array($obj)) {
+                // Non-JSON output (e.g. plain stdout) is shown verbatim rather than dropped.
+                $entries[] = ['time' => '', 'level' => 'info', 'logger' => '', 'msg' => $line, 'raw' => $line];
+
                 continue;
             }
 
-            $ts     = $obj['ts'] ?? null;
-            $time   = is_numeric($ts) ? date('H:i:s', (int) $ts) : '';
-            $logger = is_string($obj['logger'] ?? null) ? $obj['logger'] : '';
+            // FrankenPHP logs use a numeric "ts"; supercronic (-json) uses an RFC3339 "time" string
+            // and carries the job command instead of a logger name.
+            $ts   = $obj['ts'] ?? null;
+            $time = '';
+            if (is_numeric($ts)) {
+                $time = date('H:i:s', (int) $ts);
+            } else {
+                $rawTime = $obj['time'] ?? null;
+                $parsed  = is_string($rawTime) ? strtotime($rawTime) : false;
+                if ($parsed !== false) {
+                    $time = date('H:i:s', $parsed);
+                }
+            }
+
+            $logger = is_string($obj['logger'] ?? null) ? $obj['logger']
+                : (is_string($obj['job.command'] ?? null) ? $obj['job.command'] : '');
             $msg    = is_string($obj['msg'] ?? null) ? $obj['msg'] : $line;
 
             $entries[] = [
