@@ -47,14 +47,14 @@ final class DomainResolverTest extends TestCase
             ['default' => ['main.preview.example.com']],
             $this->resolver->resolveForEnvironment($domains, 'main'),
         );
-        // The environment name is slugged DNS-safe (same rule as DockerComposeGenerator::slugify):
-        // whitespace/underscores become dashes, every other non-[a-z0-9-] char is dropped.
+        // The environment name is slugged DNS-safe: whitespace/underscores/slashes become
+        // dashes, every other non-[a-z0-9-] char is dropped.
         self::assertSame(
             ['default' => ['feature-x.preview.example.com']],
             $this->resolver->resolveForEnvironment($domains, 'feature-x'),
         );
         self::assertSame(
-            ['default' => ['featurex.preview.example.com']],
+            ['default' => ['feature-x.preview.example.com']],
             $this->resolver->resolveForEnvironment($domains, 'feature/x'),
         );
     }
