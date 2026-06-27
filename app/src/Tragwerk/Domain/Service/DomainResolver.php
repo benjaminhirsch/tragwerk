@@ -81,7 +81,7 @@ final readonly class DomainResolver
 
     private function slug(string $name): string
     {
-        $slug = preg_replace('/[\s_]+/', '-', strtolower($name)) ?? '';
+        $slug = preg_replace('/[\s_\/]+/', '-', strtolower($name)) ?? '';
 
         return preg_replace('/[^a-z0-9-]/', '', $slug) ?? '';
     }
