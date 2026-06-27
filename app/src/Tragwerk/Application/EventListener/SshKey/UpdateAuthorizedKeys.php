@@ -28,7 +28,8 @@ final readonly class UpdateAuthorizedKeys
         $keys = iterator_to_array($this->sshKeyRepository->getAll(), false);
 
         $lines = array_map(
-            static fn (SshKey $key) => 'no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty '
+            static fn (SshKey $key) => 'command="/usr/local/bin/git-auth-wrapper ' . $key->id->toString() . '",'
+                . 'no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty '
                 . $key->publicKey,
             $keys,
         );

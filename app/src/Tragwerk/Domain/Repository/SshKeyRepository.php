@@ -15,6 +15,8 @@ interface SshKeyRepository
 
     public function delete(SshKeyIdentifier $id): void;
 
+    public function getById(SshKeyIdentifier $id): SshKey|null;
+
     /** @return Generator<SshKey> */
     public function getByUserId(UserIdentifier $userId): Generator;
 

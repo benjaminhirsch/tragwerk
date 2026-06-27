@@ -58,6 +58,28 @@ final readonly class SshKeyRepository implements SshKeyRepositoryInterface
     }
 
     #[Override]
+    public function getById(SshKeyIdentifier $id): SshKey|null
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb->select('*')
+            ->from(EntityHelper::getDbTableName(EntityType::SSH_KEY))
+            ->where($qb->expr()->eq('id', ':id'))
+            ->setParameter('id', $id->toString());
+
+        try {
+            $row = $qb->executeQuery()->fetchAssociative();
+
+            if ($row === false) {
+                return null;
+            }
+
+            return $this->map($row);
+        } catch (MappingError | Exception $e) {
+            throw EntityHydrationFailed::create(SshKey::class, $e);
+        }
+    }
+
+    #[Override]
     public function getByUserId(UserIdentifier $userId): Generator
     {
         $qb = $this->connection->createQueryBuilder();
