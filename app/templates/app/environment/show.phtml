@@ -94,7 +94,7 @@ $sseTopic  = urlencode($topicBase . '/project/' . $this->activeProject()->id->to
 <div id="tw-deployments-table"
      hx-ext="sse"
      sse-connect="/.well-known/mercure?topic=<?= $sseTopic ?>"
-     hx-get="<?= $this->e($this->url('environment.show') . '?fragment=deployments') ?>"
+     hx-get="<?= $this->e($this->url('environment.show') . '?id=' . urlencode($branch) . '&fragment=deployments') ?>"
      hx-trigger="sse:message, every 30s"
      hx-target="#tw-deployments-table"
      hx-swap="innerHTML">
