@@ -3,15 +3,12 @@
 declare(strict_types=1);
 
 use Tragwerk\Domain\Entity\DeployJob;
-use Tragwerk\Domain\Entity\Domain;
-use Tragwerk\Domain\Entity\EnvVar;
 use Tragwerk\Domain\Enum\DeployJobStatus;
 
 /**
  * @var string|null         $branch
  * @var list<DeployJob>     $deployments
- * @var Domain|null         $primaryDomain
- * @var list<EnvVar>        $vars
+ * @var string|null         $primaryHost
  */
 
 $latest       = $deployments[0] ?? null;
@@ -25,9 +22,9 @@ $statusBadge  = match ($latest?->status) {
 $subtitle = '';
 if ($branch !== null) {
     $parts = [];
-    if ($primaryDomain !== null) {
-        $parts[] = '<a href="https://' . $this->e($primaryDomain->host) . '" target="_blank" rel="noopener" class="mono">'
-            . $this->e($primaryDomain->host) . '</a>';
+    if ($primaryHost !== null) {
+        $parts[] = '<a href="https://' . $this->e($primaryHost) . '" target="_blank" rel="noopener" class="mono">'
+            . $this->e($primaryHost) . '</a>';
     }
     $parts[] = '<span class="tw-badge tw-badge--' . $this->e($statusBadge[0]) . '"><span class="tw-dot"></span>'
         . $this->e($statusBadge[1]) . '</span>';
@@ -54,10 +51,10 @@ $this->layout('layout::default', [
 <?php else: ?>
 
 <?php $this->start('pageHeadButtons') ?>
-    <?php if ($primaryDomain !== null): ?>
+    <?php if ($primaryHost !== null): ?>
         <?= $this->fetch('partial::link', [
             'label'   => $this->t('Open'),
-            'href'    => 'https://' . $primaryDomain->host,
+            'href'    => 'https://' . $primaryHost,
             'target'  => '_blank',
             'icon'    => 'bi bi-box-arrow-up-right',
             'classes' => 'btn btn-primary',
@@ -69,7 +66,8 @@ $this->layout('layout::default', [
 <?php $this->stop() ?>
 
 <!-- KPIs (live) -->
-<div class="mb-4"
+<div id="tw-app-metrics"
+     class="mb-4"
      hx-get="<?= $this->e($this->url('metric.live') . '?branch=' . urlencode($branch)) ?>"
      hx-trigger="load"
      hx-swap="innerHTML">
@@ -77,6 +75,14 @@ $this->layout('layout::default', [
         <i class="bi bi-hourglass-split me-1"></i><?= $this->t('Loading live metrics…') ?>
     </div></div>
 </div>
+
+<!-- Status codes (OOB target for live metrics) -->
+<div class="tw-card mb-4"><div class="tw-card__body">
+    <h2 style="font-size:1.1rem;margin:0 0 .75rem"><?= $this->t('Status codes') ?></h2>
+    <div id="tw-status">
+        <div class="text-body-secondary small"><i class="bi bi-hourglass-split me-1"></i><?= $this->t('Loading…') ?></div>
+    </div>
+</div></div>
 
 <!-- Deployments -->
 <h2 id="deployments" style="font-size:1.1rem;margin:0 0 .5rem"><?= $this->t('Deployments') ?></h2>
@@ -137,76 +143,6 @@ $this->layout('layout::default', [
         <?php endforeach ?>
         </tbody>
     </table>
-</div>
-
-<div class="row g-4">
-    <!-- Logs -->
-    <div class="col-lg-7" id="logs">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-            <h2 style="font-size:1.1rem;margin:0"><?= $this->t('Logs') ?></h2>
-            <?= $this->fetch('partial::link', [
-                'label'   => $this->t('Open logs'),
-                'href'    => $this->url('log'),
-                'icon'    => 'bi bi-box-arrow-up-right',
-                'classes' => 'btn btn-outline-secondary btn-sm',
-            ]) ?>
-        </div>
-        <div id="log-tail"
-             hx-get="<?= $this->e($this->url('log.tail')) ?>"
-             hx-trigger="load"
-             hx-target="#log-tail"
-             hx-swap="innerHTML">
-            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-            <?= $this->t('Loading...') ?>
-        </div>
-    </div>
-
-    <!-- Variables -->
-    <div class="col-lg-5" id="variables">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-            <h2 style="font-size:1.1rem;margin:0"><?= $this->t('Variables') ?></h2>
-            <?= $this->fetch('partial::link', [
-                'label'   => $this->t('Add'),
-                'href'    => $this->url('variable.create'),
-                'icon'    => 'bi bi-plus-lg',
-                'classes' => 'btn btn-outline-secondary btn-sm',
-            ]) ?>
-        </div>
-        <div class="tw-table-wrap">
-            <table class="tw-table">
-                <thead><tr><th><?= $this->t('Key') ?></th><th><?= $this->t('Value') ?></th><th></th></tr></thead>
-                <tbody>
-                <?php if ($vars === []): ?>
-                    <tr><td colspan="3" class="text-body-secondary small">
-                        <i class="bi bi-info-circle me-1"></i><?= $this->t('No variables defined.') ?>
-                    </td></tr>
-                <?php endif ?>
-                <?php
-                /** @var EnvVar $var */
-                foreach ($vars as $var): ?>
-                    <tr>
-                        <td class="mono tw-cell-strong" style="font-size:.8rem"><?= $this->e($var->key) ?></td>
-                        <td class="mono tw-cell-muted" style="font-size:.8rem">
-                            <?php if ($var->isSecret): ?>
-                                <i class="bi bi-lock-fill" style="color:var(--text-faint)"></i>
-                                <?= $this->e(substr(str_repeat('*', strlen($var->value)), 0, 10)) ?>
-                            <?php else: ?>
-                                <?= $this->e(substr($var->value, 0, 40)) ?>
-                            <?php endif ?>
-                        </td>
-                        <td class="text-end">
-                            <?php if ($var->branch === $branch && $var->isInherited === false): ?>
-                                <a class="btn btn-ghost btn-sm" href="<?= $this->url('variable.edit', ['id' => $var->id->toString()]) ?>" title="<?= $this->e($this->t('Edit')) ?>"><i class="bi bi-pencil"></i></a>
-                            <?php elseif ($var->isInherited): ?>
-                                <span class="tw-badge tw-badge--info" style="font-size:.62rem"><i class="bi bi-diagram-2"></i><?= $this->t('Inherited') ?></span>
-                            <?php endif ?>
-                        </td>
-                    </tr>
-                <?php endforeach ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
 </div>
 
 <?= $this->fetch('partial::modal', [
