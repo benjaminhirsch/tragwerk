@@ -12,6 +12,7 @@ use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Application\Service\ProjectConfigLoader;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Repository\DomainRepository;
+use Tragwerk\Domain\Service\DomainResolver;
 
 use function assert;
 use function is_string;
@@ -22,6 +23,7 @@ final readonly class IndexHandler implements RequestHandlerInterface
         private ResponseRenderer $renderer,
         private ProjectConfigLoader $configLoader,
         private DomainRepository $domainRepository,
+        private DomainResolver $domainResolver,
     ) {
     }
 
@@ -37,11 +39,16 @@ final readonly class IndexHandler implements RequestHandlerInterface
         $projectConfig = $this->configLoader->load($activeProject->id, $activeBranch);
         $domains       = $this->domainRepository->findByProject($activeProject->id);
 
+        // Resolve each route placeholder to its effective host(s) for the active
+        // environment, applying wildcard subdomain derivation the same way the
+        // deploy pipeline does (DomainResolver).
+        $hostsByPlaceholder = $this->domainResolver->resolveForEnvironment($domains, $activeBranch);
+
         return $this->renderer->render($request, 'page::configuration/index', [
-            'project'       => $activeProject,
-            'branch'        => $activeBranch,
-            'projectConfig' => $projectConfig,
-            'domains'       => $domains,
+            'project'            => $activeProject,
+            'branch'             => $activeBranch,
+            'projectConfig'      => $projectConfig,
+            'hostsByPlaceholder' => $hostsByPlaceholder,
         ]);
     }
 }

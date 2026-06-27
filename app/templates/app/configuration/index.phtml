@@ -1,12 +1,11 @@
 <?php
 
-use Tragwerk\Domain\Entity\Domain;
 use Tragwerk\Domain\Enum\MountSource;
 use Tragwerk\Domain\Model\ApplicationConfig;
 use Tragwerk\Domain\Model\ProjectConfig;
 
 /** @var ProjectConfig|null $projectConfig */
-/** @var list<Domain> $domains */
+/** @var array<string, list<string>> $hostsByPlaceholder */
 
 $this->layout('layout::default', [
         'pageType' => $this->activeTeam()->name . ' / ' . $this->activeEnvironment(),
@@ -34,20 +33,17 @@ if ($projectConfig !== null && $projectConfig->applications !== []) {
     assert($app instanceof ApplicationConfig);
 }
 
-// Map each route placeholder (e.g. {default}) to its bound domain host (primary wins).
-$hostByPlaceholder = [];
-foreach ($domains ?? [] as $domain) {
-    if (!isset($hostByPlaceholder[$domain->placeholder]) || $domain->isPrimary) {
-        $hostByPlaceholder[$domain->placeholder] = $domain->host;
-    }
-}
-
-$resolveDomain = static function (string $pattern) use ($hostByPlaceholder): string|null {
+// Resolve a route pattern's {placeholder} to its effective host(s) for this
+// environment. $hostsByPlaceholder already applies explicit-wins and wildcard
+// subdomain derivation (DomainResolver), so just join the resolved hosts.
+$resolveDomain = static function (string $pattern) use ($hostsByPlaceholder): string|null {
     if (preg_match('/\{([a-z0-9_-]+)\}/i', $pattern, $matches) !== 1) {
         return null;
     }
 
-    return $hostByPlaceholder[$matches[1]] ?? null;
+    $hosts = $hostsByPlaceholder[$matches[1]] ?? [];
+
+    return $hosts === [] ? null : implode(', ', $hosts);
 };
 ?>
 
@@ -192,7 +188,6 @@ $resolveDomain = static function (string $pattern) use ($hostByPlaceholder): str
                         <th><?= $this->t('Route') ?></th>
                         <th><?= $this->t('Type') ?></th>
                         <th><?= $this->t('Target / upstream') ?></th>
-                        <th class="tw-hide-sm"><?= $this->t('Cache') ?></th>
                         <th class="tw-hide-sm"><?= $this->t('Domain') ?></th>
                     </tr>
                     </thead>
@@ -210,8 +205,6 @@ $resolveDomain = static function (string $pattern) use ($hostByPlaceholder): str
                                 </td>
                                 <td class="tw-cell-muted">—</td>
                             <?php endif ?>
-                            <td class="tw-hide-sm"><span class="tw-badge tw-badge--neutral"
-                                                         style="font-size:.68rem">off</span></td>
                             <?php $routeHost = $resolveDomain($route->pattern); ?>
                             <td class="tw-hide-sm mono tw-cell-muted"><?= $routeHost !== null ? $this->e($routeHost) : '—' ?></td>
                         </tr>
