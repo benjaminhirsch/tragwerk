@@ -12,6 +12,7 @@ final readonly class BuildEnvironment implements Message
         public string $projectId,
         public string $branch,
         public string $commitSha,
+        public bool $forceRebuild = false,
     ) {
     }
 }

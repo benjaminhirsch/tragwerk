@@ -40,9 +40,14 @@ final readonly class RunDeployEnvironment
         $lock = $this->lockFactory->createLock('deploy:' . $projectId . ':' . $branch, ttl: 600.0);
         $lock->acquire(blocking: true);
 
+        $args = ['php', 'bin/cli', 'project:deploy', $projectId, $branch, $commitSha, $deployJobId, $acmeEmail];
+        if ($message->forceRebuild) {
+            $args[] = '--force-rebuild';
+        }
+
         try {
             $process = new Process(
-                ['php', 'bin/cli', 'project:deploy', $projectId, $branch, $commitSha, $deployJobId, $acmeEmail],
+                $args,
                 $workDir,
                 timeout: 600,
             );

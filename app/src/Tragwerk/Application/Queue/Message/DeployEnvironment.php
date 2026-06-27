@@ -14,6 +14,7 @@ final readonly class DeployEnvironment implements Message
         public string $commitSha,
         public string $deployJobId,
         public string $acmeEmail = '',
+        public bool $forceRebuild = false,
     ) {
     }
 }
