@@ -8,6 +8,7 @@ use CuyZ\Valinor\Mapper\TreeMapper;
 use Psr\Container\ContainerInterface;
 use Tragwerk\Application\Cli\Command\DeployEnvironmentCommand;
 use Tragwerk\Application\Queue\Producer;
+use Tragwerk\Application\Service\BranchAncestorResolver;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
 use Tragwerk\Domain\Docker\ServiceImageResolver;
@@ -52,6 +53,7 @@ final readonly class DeployEnvironmentCommandFactory
         $producer       = $container->get(Producer::class);
         $regPrefixes    = $container->get(RegistryPrefixRepository::class);
         $envVars        = $container->get(EnvVarRepository::class);
+        $ancestors      = $container->get(BranchAncestorResolver::class);
         $mercure        = $container->get(MercurePublisher::class);
 
         assert($projects instanceof ProjectRepository);
@@ -69,6 +71,7 @@ final readonly class DeployEnvironmentCommandFactory
         assert($producer instanceof Producer);
         assert($regPrefixes instanceof RegistryPrefixRepository);
         assert($envVars instanceof EnvVarRepository);
+        assert($ancestors instanceof BranchAncestorResolver);
         assert($mercure instanceof MercurePublisher);
 
         return new DeployEnvironmentCommand(
@@ -87,6 +90,7 @@ final readonly class DeployEnvironmentCommandFactory
             $producer,
             $regPrefixes,
             $envVars,
+            $ancestors,
             $dataPath,
             $mercure,
         );

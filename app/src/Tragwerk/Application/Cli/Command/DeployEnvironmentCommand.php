@@ -23,6 +23,7 @@ use Symfony\Component\Yaml\Yaml;
 use Throwable;
 use Tragwerk\Application\Queue\Message\PruneRegistryImages;
 use Tragwerk\Application\Queue\Producer;
+use Tragwerk\Application\Service\BranchAncestorResolver;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
 use Tragwerk\Domain\Docker\ImageReference;
@@ -48,6 +49,7 @@ use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Infrastructure\Git\BareRepository;
 use Tragwerk\Infrastructure\Mercure\MercurePublisher;
 
+use function array_flip;
 use function array_map;
 use function assert;
 use function basename;
@@ -64,6 +66,7 @@ use function is_array;
 use function is_dir;
 use function is_int;
 use function is_string;
+use function iterator_to_array;
 use function json_decode;
 use function microtime;
 use function mkdir;
@@ -81,9 +84,11 @@ use function sys_get_temp_dir;
 use function trim;
 use function uniqid;
 use function unlink;
+use function usort;
 
 use const FILTER_FLAG_IPV6;
 use const FILTER_VALIDATE_IP;
+use const PHP_INT_MAX;
 
 #[AsCommand(name: 'project:deploy', description: 'Deploy a built environment to the target server')]
 final class DeployEnvironmentCommand extends Command
@@ -108,6 +113,7 @@ final class DeployEnvironmentCommand extends Command
         private readonly Producer $producer,
         private readonly RegistryPrefixRepository $registryPrefixRepository,
         private readonly EnvVarRepository $envVarRepository,
+        private readonly BranchAncestorResolver $ancestorResolver,
         private readonly string $projectDataPath,
         private readonly MercurePublisher $mercurePublisher,
     ) {
@@ -472,10 +478,7 @@ final class DeployEnvironmentCommand extends Command
             $branch,
         );
 
-        $userEnvVars = [];
-        foreach ($this->envVarRepository->findByBranch($projectIdentifier, $branch) as $envVar) {
-            $userEnvVars[$envVar->key] = $envVar->value;
-        }
+        $userEnvVars = $this->resolveEnvVars($projectIdentifier, $branch);
 
         $compose = $this->composeGenerator->generate(
             $config,
@@ -978,6 +981,41 @@ final class DeployEnvironmentCommand extends Command
 
             throw new RuntimeException('Config mapping failed: ' . implode(', ', $errors));
         }
+    }
+
+    /**
+     * Merges branch-specific vars and inherited ancestor vars into a key→value map, mirroring
+     * BuildEnvironment::resolveEnvVars. The deploy regenerates docker-compose.yml (to inject the
+     * image: refs), so it must apply the same inheritance the build did — otherwise inherited vars
+     * (e.g. SMTP_* on the parent branch) are silently dropped and child environments deploy without
+     * them. Branch-specific vars override inherited; among inherited, the closer ancestor wins.
+     *
+     * @return array<string, string>
+     */
+    private function resolveEnvVars(ProjectIdentifier $projectId, string $branch): array
+    {
+        $ancestors     = $this->ancestorResolver->getAncestors($projectId->toString(), $branch);
+        $inheritedVars = $this->envVarRepository->findInheritedFromAncestors($projectId, $ancestors);
+
+        $resolved = [];
+
+        // Inherited vars: iterate from farthest ancestor to closest so the closer ancestor wins.
+        $ancestorOrder   = array_flip($ancestors);
+        $sortedInherited = iterator_to_array($inheritedVars, false);
+        usort($sortedInherited, static function ($a, $b) use ($ancestorOrder): int {
+            return ($ancestorOrder[$b->branch] ?? PHP_INT_MAX) <=> ($ancestorOrder[$a->branch] ?? PHP_INT_MAX);
+        });
+
+        foreach ($sortedInherited as $var) {
+            $resolved[$var->key] = $var->value;
+        }
+
+        // Branch-specific vars always win.
+        foreach ($this->envVarRepository->findByBranch($projectId, $branch) as $var) {
+            $resolved[$var->key] = $var->value;
+        }
+
+        return $resolved;
     }
 
     private function slugify(string $name): string
