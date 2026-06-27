@@ -173,7 +173,8 @@ $renderAlerts = function (string $section) use ($accountAlerts): void {
             <div class="tw-card__head"><h2><?= $this->t('SSH Keys') ?></h2></div>
             <div class="tw-card__body">
                 <?php if ($keys !== []): ?>
-                    <table class="table table-borderless mb-4">
+                <div class="tw-table-wrap mb-4">
+                    <table class="tw-table">
                         <thead>
                             <tr>
                                 <th><?= $this->t('Name') ?></th>
@@ -204,6 +205,7 @@ $renderAlerts = function (string $section) use ($accountAlerts): void {
                             <?php endforeach ?>
                         </tbody>
                     </table>
+                </div>
                 <?php else: ?>
                     <p class="text-body-secondary mb-4"><?= $this->t('No SSH keys added yet.') ?></p>
                 <?php endif ?>
