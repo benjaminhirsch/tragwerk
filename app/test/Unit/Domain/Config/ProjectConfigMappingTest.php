@@ -341,6 +341,33 @@ final class ProjectConfigMappingTest extends TestCase
     }
 
     #[Test]
+    public function cronsAreMapped(): void
+    {
+        $crons = <<<'XML'
+            <crons>
+                <cron name="cleanup" command="bin/cli app:cleanup" schedule="0 2 * * *"/>
+                <cron name="import" command="bin/cli app:import" schedule="@hourly"/>
+            </crons>
+        XML;
+
+        $config = $this->map(self::projectXml(appExtras: $crons));
+
+        self::assertCount(2, $config->applications[0]->crons);
+        self::assertSame('cleanup', $config->applications[0]->crons[0]->name);
+        self::assertSame('bin/cli app:cleanup', $config->applications[0]->crons[0]->command);
+        self::assertSame('0 2 * * *', $config->applications[0]->crons[0]->schedule);
+        self::assertSame('@hourly', $config->applications[0]->crons[1]->schedule);
+    }
+
+    #[Test]
+    public function cronsDefaultToEmptyWhenAbsent(): void
+    {
+        $config = $this->map(self::projectXml());
+
+        self::assertSame([], $config->applications[0]->crons);
+    }
+
+    #[Test]
     public function multipleHooksAreMapped(): void
     {
         $hooks = <<<'XML'

@@ -139,6 +139,12 @@ final readonly class DockerComposeGenerator
                 $services[$appSlug . '-worker-' . $this->slugify($workerDef->name)] =
                     $this->buildWorkerService($svcConfig, $workerDef);
             }
+
+            if ($app->crons === []) {
+                continue;
+            }
+
+            $services[$appSlug . '-cron'] = $this->buildCronService($svcConfig);
         }
 
         foreach ($config->services as $service) {
@@ -212,6 +218,52 @@ final readonly class DockerComposeGenerator
         $worker['networks'] = $appService['networks'];
 
         return $worker;
+    }
+
+    /**
+     * Cron sidecar: one container per application running supercronic over the
+     * crontab baked into the image (see DockerfileGenerator). Shares the app
+     * image, environment and mounts like a worker, but is scheduler-driven.
+     *
+     * @param array<string, mixed> $appService
+     *
+     * @return array<string, mixed>
+     */
+    private function buildCronService(array $appService): array
+    {
+        $cron = [];
+
+        if (isset($appService['image'])) {
+            $cron['image'] = $appService['image'];
+        } elseif (isset($appService['build'])) {
+            $cron['build'] = $appService['build'];
+        }
+
+        $cron['command'] = 'supercronic /etc/supercronic/crontab';
+        $cron['restart'] = 'unless-stopped';
+
+        if (isset($appService['environment'])) {
+            $cron['environment'] = $appService['environment'];
+        }
+
+        if (isset($appService['volumes'])) {
+            $cron['volumes'] = $appService['volumes'];
+        }
+
+        $cron['read_only']   = true;
+        $cron['healthcheck'] = ['disable' => true];
+
+        if (isset($appService['tmpfs'])) {
+            $cron['tmpfs'] = $appService['tmpfs'];
+        }
+
+        if (isset($appService['depends_on'])) {
+            $cron['depends_on'] = $appService['depends_on'];
+        }
+
+        $cron['networks'] = $appService['networks'];
+
+        return $cron;
     }
 
     public function slugify(string $name): string

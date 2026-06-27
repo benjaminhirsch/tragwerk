@@ -7,6 +7,10 @@
                 <location path="/" root="public" index="index.php" passthru="/index.php"/>
             </web>
             <workerMode count="4" max-requests="1000"/>
+            <crons>
+                <cron name="cleanup" command="bin/cli app:cleanup" schedule="0 2 * * *"/>
+                <cron name="heartbeat" command="bin/cli app:heartbeat" schedule="@hourly"/>
+            </crons>
             <hooks>
                 <hook type="build"><![CDATA[
                   composer install --no-dev --optimize-autoloader

@@ -5,17 +5,20 @@ declare(strict_types=1);
 namespace Tragwerk\Domain\Config;
 
 use DOMDocument;
+use DOMElement;
 use LibXMLError;
 
 use function array_map;
 use function libxml_get_errors;
 use function libxml_use_internal_errors;
+use function sprintf;
 use function trim;
 
 final readonly class ConfigValidator
 {
     public function __construct(
         private string $schemaPath,
+        private CronScheduleValidator $cronScheduleValidator = new CronScheduleValidator(),
     ) {
     }
 
@@ -46,7 +49,36 @@ final readonly class ConfigValidator
             return $errors !== [] ? $errors : ['Schema validation failed'];
         }
 
-        return [];
+        // XSD only checks the structural shape of a schedule (field count / descriptor),
+        // not whether field values are in range. Validate semantics here so a broken
+        // schedule fails the build instead of crash-looping the cron sidecar at runtime.
+        return $this->validateCronSchedules($doc);
+    }
+
+    /** @return string[] */
+    private function validateCronSchedules(DOMDocument $doc): array
+    {
+        $errors = [];
+
+        foreach ($doc->getElementsByTagName('cron') as $cron) {
+            if (! $cron instanceof DOMElement) {
+                continue;
+            }
+
+            $schedule = $cron->getAttribute('schedule');
+
+            if ($this->cronScheduleValidator->isValid($schedule)) {
+                continue;
+            }
+
+            $errors[] = sprintf(
+                'Invalid cron schedule "%s" for cron "%s"',
+                $schedule,
+                $cron->getAttribute('name'),
+            );
+        }
+
+        return $errors;
     }
 
     /** @return string[] */

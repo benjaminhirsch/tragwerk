@@ -13,6 +13,8 @@ final readonly class DockerfileOutput
         public string|null $entrypointContent,
         public string|null $caddyfileName,
         public string|null $caddyfileContent,
+        public string|null $crontabName = null,
+        public string|null $crontabContent = null,
     ) {
     }
 }
