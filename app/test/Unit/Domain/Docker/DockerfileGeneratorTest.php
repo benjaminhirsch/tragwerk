@@ -108,7 +108,8 @@ final class DockerfileGeneratorTest extends TestCase
 
         self::assertSame('crontab.my-app', $output->crontabName);
         self::assertStringContainsString('# cleanup', (string) $output->crontabContent);
-        self::assertStringContainsString('0 2 * * * bin/cli app:cleanup', (string) $output->crontabContent);
+        $crontab = (string) $output->crontabContent;
+        self::assertStringContainsString("0 2 * * * /bin/sh -c 'bin/cli app:cleanup'", $crontab);
     }
 
     #[Test]

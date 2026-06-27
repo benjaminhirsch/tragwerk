@@ -23,6 +23,7 @@ use function ltrim;
 use function preg_replace;
 use function rtrim;
 use function sprintf;
+use function str_replace;
 use function str_starts_with;
 use function strtolower;
 use function trim;
@@ -313,7 +314,12 @@ final readonly class DockerfileGenerator
         foreach ($app->crons as $cron) {
             // "# name" annotates each entry so supercronic's stdout logs are identifiable.
             $lines[] = '# ' . $cron->name;
-            $lines[] = $cron->schedule . ' ' . trim($cron->command);
+            // supercronic execs the command directly (no shell), so a bare relative command like
+            // "bin/cli ..." is not resolved against the workdir/PATH and fails with ENOENT. Wrap it
+            // in "sh -c" so the command runs in a shell exactly like the worker services do.
+            $command = trim($cron->command);
+            $escaped = "'" . str_replace("'", "'\\''", $command) . "'";
+            $lines[] = $cron->schedule . ' /bin/sh -c ' . $escaped;
         }
 
         return implode("\n", $lines) . "\n";
