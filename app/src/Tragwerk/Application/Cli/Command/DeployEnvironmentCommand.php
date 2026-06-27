@@ -612,19 +612,27 @@ final class DeployEnvironmentCommand extends Command
         $sftp->exec('docker logout ' . escapeshellarg($registry->url) . ' 2>/dev/null; true');
         $this->ensureServerTraefik($sftp, $acmeEmail, $jobId);
 
-        $workerServices = [];
+        $sidecarServices = [];
         foreach ($config->applications as $app) {
             $appSlug = $this->slugify($app->name);
             foreach ($app->workers as $workerDef) {
-                $workerServices[] = $appSlug . '-worker-' . $this->slugify($workerDef->name);
+                $sidecarServices[] = $appSlug . '-worker-' . $this->slugify($workerDef->name);
             }
+
+            if ($app->crons === []) {
+                continue;
+            }
+
+            // The supercronic cron sidecar ({app}-cron) is generated whenever the app declares
+            // <crons>; like workers it is not part of the blue/green swap, so start it explicitly.
+            $sidecarServices[] = $appSlug . '-cron';
         }
 
-        if ($workerServices !== []) {
-            $this->log($jobId, '[Deploy] Starting worker services: ' . implode(', ', $workerServices));
+        if ($sidecarServices !== []) {
+            $this->log($jobId, '[Deploy] Starting worker/cron services: ' . implode(', ', $sidecarServices));
             $sftp->exec(
                 'cd ~/' . $remoteDir . ' && ' . $dc . ' up --no-deps -d '
-                . implode(' ', array_map('escapeshellarg', $workerServices)) . ' 2>&1',
+                . implode(' ', array_map('escapeshellarg', $sidecarServices)) . ' 2>&1',
             );
         }
 
