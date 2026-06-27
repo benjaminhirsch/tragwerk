@@ -57,6 +57,13 @@ $this->layout('layout::default', [
                 </td>
             </tr>
         <?php endforeach ?>
+        <?php if ($servers === []): ?>
+            <tr>
+                <td class="text-center" colspan="6">
+                    <?= $this->t('No servers added yet. Add a server to use them in a project and deploy your environments') ?>
+                </td>
+            </tr>
+        <?php endif; ?>
         </tbody>
     </table>
 </div>

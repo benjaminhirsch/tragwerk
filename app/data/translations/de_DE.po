@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-25 19:58+0000\n"
+"POT-Creation-Date: 2026-06-27 14:08+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Benjamin\n"
 "Language-Team: \n"
@@ -11,238 +11,283 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 3.9\n"
+"X-Poedit-SourceCharset: UTF-8\n"
 
 msgid "Enter your current password"
-msgstr ""
+msgstr "Gib dein aktuelles Passwort ein"
 
 #, php-format
 msgid "Password does not met the required minimum length of %d characters"
 msgstr ""
+"Das Passwort erfüllt nicht die erforderliche Mindestlänge von %d Zeichen"
 
 msgid "Passwords are not identical"
-msgstr ""
+msgstr "Die Passwörter sind nicht identisch"
 
 msgid "Field can't be empty"
-msgstr ""
+msgstr "Das Feld darf nicht leer sein"
 
 msgid "An SSH private key is required"
-msgstr ""
+msgstr "Ein privater SSH-Schlüssel ist erforderlich"
 
 msgid "Invalid SSH private key. Must be a PEM-encoded private key."
 msgstr ""
+"Ungültiger privater SSH-Schlüssel. Es muss sich um einen PEM-kodierten "
+"privaten Schlüssel handeln."
 
 msgid "Please select a git forge"
-msgstr ""
+msgstr "Bitte wähle eine Git-Force aus"
 
 msgid "Please select a server"
-msgstr ""
+msgstr "Bitte wähle einen Server aus"
 
 msgid "Please select a registry"
-msgstr ""
+msgstr "Bitte wähle einen Speicherort aus"
 
 msgid "Invalid IP address"
-msgstr ""
+msgstr "Ungültige IP-Adresse"
 
 msgid "Port must be between 1 and 65535"
-msgstr ""
+msgstr "Der Port muss sich zwischen 1 und 65535 befinden"
 
 msgid "Name is required"
-msgstr ""
+msgstr "Ein Name wird benötigt"
 
 msgid "Invalid SSH public key"
-msgstr ""
+msgstr "Ungültiger öffentlicher SSH-Schlüssel"
+
+msgid "Invalid email address"
+msgstr "Ungültige E-Mail-Adresse"
 
 #, php-format
 msgid "Password must be at least %d characters"
-msgstr ""
-
-msgid "Invalid email address"
-msgstr ""
+msgstr "Das Passwort benötigt min. %d Zeichen"
 
 msgid "Enter the 6-digit code from your authenticator app"
-msgstr ""
+msgstr "Gib den sechsstelligen Zahlencode (TOTP) ein"
 
 msgid "Invalid language"
 msgstr "Ungültige Sprache"
 
 msgid "First name is required"
-msgstr ""
+msgstr "Vorname wird benötigt"
 
 msgid "Last name is required"
-msgstr ""
+msgstr "Nachname wird benötigt"
 
 msgid "Please enter a valid email address"
-msgstr ""
+msgstr "Bitte eine gültige E-Mail-Adresse eingeben"
 
 msgid ""
 "Key must start with an uppercase letter and contain only uppercase letters, "
 "digits and underscores"
 msgstr ""
+"Der Schlüssel muss mit einem Großbuchstaben beginnen und darf nur "
+"Großbuchstaben, Ziffern und Unterstriche enthalten"
 
 msgid "mail.teamInvitation.subject"
-msgstr ""
+msgstr "Du wurdest zu einem Team eingeladen"
+
+msgid "You have been added to a team on Tragwerk."
+msgstr "Du wurdest zu einem Team bei Tragwerk hinzugefügt."
 
 msgid "Confirm your new email address"
-msgstr ""
+msgstr "Bestätige deine neue E-Mail-Adresse"
 
 msgid "mail.passwordReset.subject"
-msgstr ""
+msgstr "Anfrage zum Zurücksetzen deines Passworts"
 
 msgid "mail.emailConfirmation.subject"
-msgstr ""
+msgstr "Bestätigung deiner E-Mail-Adresse"
 
 msgid "IP address is already in use"
-msgstr ""
+msgstr "IP-Adresse wird bereits verwendet"
 
 msgid "Invalid credential"
-msgstr ""
+msgstr "Ungültige Zugangsdaten"
 
 msgid "Credential not found"
-msgstr ""
+msgstr "Keine Zugangsdaten gefunden"
 
 msgid "IP address already exists"
-msgstr ""
+msgstr "IP-Adresse existiert bereits"
+
+msgid "Active projects"
+msgstr "Aktive Projekte"
+
+msgid " this month"
+msgstr " diesen Monat"
+
+msgid "Environments"
+msgstr "Umgebungen"
+
+msgid " in preview branches"
+msgstr " in vorschau-zweigen"
+
+msgid "Deployments / 24 h"
+msgstr "Bereistellungen / 24 Std."
+
+#, no-php-format
+msgid " % successful"
+msgstr "% erfolgreich"
+
+msgid "Server utilization"
+msgstr "Serverauslastung"
 
 msgid "Your current password is incorrect"
-msgstr ""
+msgstr "Dein aktuelles Passwort ist nicht korrekt"
 
 msgid "This email address is already in use"
-msgstr ""
+msgstr "Diese E-Mail-Adresse ist bereits in Verwendung"
 
 msgid "This email address is already registered"
-msgstr ""
+msgstr "Diese E-Mail-Adresse ist bereits registriert"
 
 msgid "A variable with this key already exists for this environment"
 msgstr ""
+"Eine Variable mit diesem Schlüssel existiert bereits für diese Umgebung"
 
 msgid "User"
-msgstr ""
+msgstr "Benutzer"
 
 msgid "Server"
-msgstr ""
+msgstr "Server"
 
 msgid "Team"
-msgstr ""
+msgstr "Team"
 
 msgid "Team Invitation"
-msgstr ""
+msgstr "Team-Einladung"
 
 msgid "Credential"
-msgstr ""
+msgstr "Zugangsdaten"
 
 msgid "Setup Job"
-msgstr ""
+msgstr "Servereinrichtung"
 
 msgid "Project"
-msgstr ""
+msgstr "Projekt"
 
 msgid "SSH Key"
-msgstr ""
+msgstr "SSH-Schlüssel"
 
 msgid "Build Log"
-msgstr ""
+msgstr "Erstellungsprotokoll"
 
 msgid "Deploy Job"
-msgstr ""
+msgstr "Bereitstellen"
 
 msgid "Domain"
-msgstr ""
+msgstr "Domain"
 
 msgid "Registry"
-msgstr ""
+msgstr "Register"
 
 msgid "Email Confirmation"
-msgstr ""
+msgstr "E-Mail-Adresse bestätigen"
 
 msgid "Password Reset"
-msgstr ""
+msgstr "Passwort zurücksetzen"
 
 msgid "Webhook Integration"
-msgstr ""
+msgstr "Webhook Integration"
 
 msgid "Environment Variable"
-msgstr ""
+msgstr "Umgebungsvariable"
 
 msgid "Two-Factor Authentication"
-msgstr ""
+msgstr "Zwei-Faktor-Authentifizierung"
 
 msgid "Recovery Code"
-msgstr ""
+msgstr "Wiederherstellungscode"
 
 msgid "Trusted Device"
-msgstr ""
+msgstr "Vertrauenswürdiges Gerät"
+
+msgid "Owner"
+msgstr "Besitzer"
+
+msgid "Admin"
+msgstr "Administrator"
+
+msgid "Member"
+msgstr "Mitglied"
 
 msgid "Account settings"
-msgstr ""
+msgstr "Kontoeinstellungen"
 
 msgid "My account"
-msgstr ""
+msgstr "Mein Konto"
 
 msgid "Personal details, password, SSH keys and two-factor authentication."
 msgstr ""
+"Persönliche Daten, Passwort, SSH-Schlüssel und Zwei-Faktor-Authentifizierung."
 
-#, fuzzy
-#| msgid "Your language has been updated."
 msgid "Your profile has been updated."
-msgstr "Deine Sprache wurde aktualisiert."
+msgstr "Dein Profil wurde aktualisiert."
 
 msgid ""
 "Almost done — confirm the change via the link we sent to your new email "
 "address."
 msgstr ""
+"Fast fertig – bestätige die Änderung über den Link, den wir an deine neue E-"
+"Mail-Adresse gesendet haben."
 
 msgid "Your language has been updated."
 msgstr "Deine Sprache wurde aktualisiert."
 
-#, fuzzy
-#| msgid "Your language has been updated."
 msgid "Your password has been changed."
-msgstr "Deine Sprache wurde aktualisiert."
+msgstr "Dein Passwort wurde geändert."
 
 msgid "Two-factor authentication is now active."
-msgstr ""
+msgstr "Die Zwei-Faktor-Authentifizierung ist nun aktiviert."
 
 msgid ""
 "The password you entered is incorrect. Two-factor authentication was not "
 "disabled."
 msgstr ""
+"Das von dir eingegebene Passwort ist falsch. Die Zwei-Faktor-"
+"Authentifizierung wurde nicht deaktiviert."
 
 msgid "Profile"
-msgstr ""
+msgstr "Profil"
 
 msgid "First name"
-msgstr ""
+msgstr "Vorname"
 
 msgid "Last name"
-msgstr ""
+msgstr "Nachname"
 
 msgid "Email address"
-msgstr ""
+msgstr "E-Mail-Adresse"
 
 msgid ""
 "Changing your email requires confirmation via a link sent to the new address."
 msgstr ""
+"Um deine E-Mail-Adresse zu ändern, ist eine Bestätigung über einen Link "
+"erforderlich, der an die neue Adresse gesendet wird."
 
 msgid "Save profile"
-msgstr ""
+msgstr "Profil speichern"
 
 msgid "Change password"
-msgstr ""
+msgstr "Passwort ändern"
 
 msgid "Current password"
-msgstr ""
+msgstr "Aktuelles Passwort"
 
 msgid "New password"
-msgstr ""
+msgstr "Neues Passwort"
 
 msgid "Confirm new password"
-msgstr ""
+msgstr "Neues Passwort bestätigen"
 
 msgid "At least 8 characters; a number and symbol recommended."
 msgstr ""
+"Mindestens 8 Zeichen; eine Zahl und ein Sonderzeichen werden empfohlen."
 
 msgid "Update password"
-msgstr ""
+msgstr "Passwort ändern"
 
 msgid "Language"
 msgstr "Sprache"
@@ -259,393 +304,438 @@ msgid "Save language"
 msgstr "Sprache speichern"
 
 msgid "SSH Keys"
-msgstr ""
+msgstr "SSH-Schlüssel"
 
 msgid "Name"
-msgstr ""
+msgstr "Name"
 
 msgid "Added"
-msgstr ""
+msgstr "Hinzugefügt"
 
 msgid "No SSH keys added yet."
-msgstr ""
+msgstr "Es wurden noch keine SSH-Schlüssel hinzugefügt."
 
 msgid "Add SSH key"
-msgstr ""
+msgstr "SSH-Schlüssel hinzufügen"
 
-#, fuzzy
-#| msgid "Published"
 msgid "Public key"
-msgstr "Veröffentlicht"
+msgstr "Öffentlicher Schlüssel"
 
 msgid "Add key"
-msgstr ""
+msgstr "Schlüssel hinzufügen"
 
 msgid "Two-factor authentication"
-msgstr ""
+msgstr "Zwei-Faktor-Authentifizierung"
 
-#, fuzzy
-#| msgid "Actions"
 msgid "Active"
-msgstr "Aktionen"
+msgstr "Aktiv"
 
 msgid "Inactive"
-msgstr ""
+msgstr "Inaktiv"
 
 msgid ""
 "Protects your account with an additional code from an authenticator app "
 "(TOTP) on every sign-in."
 msgstr ""
+"Schützt dein Konto bei jeder Anmeldung mit einem zusätzlichen Code aus einer "
+"Authentifizierungs-App (TOTP)."
 
 msgid "Authenticator app"
-msgstr ""
+msgstr "Authentifizierungs-App"
 
 msgid "Set up on {date}"
-msgstr ""
+msgstr "Eingerichtet am {date}"
 
 msgid "Verified"
-msgstr ""
+msgstr "Verifiziert"
 
 msgid "Recovery codes"
-msgstr ""
+msgstr "Wiederherstellungscodes"
 
 msgid ""
 "{count} unused codes remaining. Use them if you lose access to your app."
 msgstr ""
+"Es sind noch {count} ungenutzte Codes übrig. Verwende diese, falls du den "
+"Zugriff auf die App verlieren solltest."
 
 msgid "Manage codes"
-msgstr ""
+msgstr "Codes verwalten"
 
 msgid "Disable two-factor"
-msgstr ""
+msgstr "Zwei-Faktor-Authentifizierung deaktivieren"
 
 msgid "Two-factor is disabled. Enable it for an extra layer of protection."
 msgstr ""
+"Die Zwei-Faktor-Authentifizierung ist deaktiviert. Aktiviere diese, um einen "
+"zusätzlichen Schutz zu erhalten."
 
 msgid "Set up two-factor"
-msgstr ""
+msgstr "Zwei-Faktor-Authentifizierung einrichten"
 
 msgid "Delete SSH key"
-msgstr ""
+msgstr "SSH-Schlüssel löschen"
 
 msgid ""
 "Are you sure you want to delete the SSH key {name}? This action cannot be "
 "undone."
 msgstr ""
+"Möchtest du den SSH-Schlüssel {name} wirklich löschen? Dieser Vorgang kann "
+"nicht rückgängig gemacht werden."
 
 msgid "Delete key"
-msgstr ""
+msgstr "Schlüssel löschen"
 
 msgid ""
 "Without a second factor your account is protected by password only. Confirm "
 "with your current password to disable it."
 msgstr ""
+"Ohne einen zweiten Sicherheitsfaktor ist dein Konto nur durch ein Passwort "
+"geschützt. Bestätige dies mit deinem aktuellen Passwort, um diese Funktion "
+"zu deaktivieren."
 
 msgid "Cancel"
-msgstr ""
+msgstr "Abbrechen"
 
 msgid "Disable"
-msgstr ""
+msgstr "Deaktivieren"
 
 msgid "Generate a fresh set of one-time recovery codes."
-msgstr ""
+msgstr "Erstelle einen neuen Satz von Einmal-Wiederherstellungscodes."
 
 msgid "{count} remaining"
-msgstr ""
+msgstr "{count} verbleibend"
 
 msgid "The password you entered is incorrect."
-msgstr ""
+msgstr "Das von dir eingegebene Passwort ist falsch."
 
 msgid ""
 "Recovery codes let you sign in if you lose access to your authenticator app. "
 "Existing codes cannot be shown again — generating new ones replaces the "
 "entire set."
 msgstr ""
+"Mit Wiederherstellungscodes kannst du dich anmelden, falls du den Zugriff "
+"auf deine Authentifizierungs-App verlierst. Bereits generierte Codes können "
+"nicht erneut angezeigt werden – durch die Generierung neuer Codes wird der "
+"gesamte Satz ersetzt."
 
 msgid "Confirm with your current password"
-msgstr ""
+msgstr "Bestätige mit deinem aktuellen Passwort"
 
 msgid "Generate new codes"
-msgstr ""
+msgstr "Neue Codes generieren"
 
 msgid "Back to account"
-msgstr ""
+msgstr "Zurück zum Konto"
 
 msgid "Store these one-time codes somewhere safe. Each can be used once."
 msgstr ""
+"Bewahre diese Einmalcodes an einem sicheren Ort auf. Jeder Code kann nur "
+"einmal verwendet werden."
 
 msgid "Your recovery codes"
-msgstr ""
+msgstr "Deine Wiederherstellungscodes"
 
 msgid ""
 "These codes are shown only once. Save them now — you will not be able to see "
 "them again."
 msgstr ""
+"Diese Codes werden nur einmal angezeigt. Speichere diese jetzt – du kannst "
+"sie später nicht mehr einsehen."
 
 msgid "I have saved my codes"
-msgstr ""
+msgstr "Ich habe meine Codes gespeichert"
 
 msgid "Scan the code with an authenticator app, then enter the generated code."
 msgstr ""
+"Scannen den Code mit einer Authentifizierungs-App und gib anschließend den "
+"generierten Code ein."
 
 msgid ""
 "That code was not correct. Please try again with the current code from your "
 "app."
 msgstr ""
+"Dieser Code war nicht korrekt. Bitte versuche es erneut mit dem aktuellen "
+"Code aus deiner App."
 
 msgid "QR code"
-msgstr ""
+msgstr "QR-Code"
 
 msgid "1. Scan the code"
-msgstr ""
+msgstr "1. Scannen den Code"
 
 msgid ""
 "Scan it with a TOTP app such as 1Password, Authy or Google Authenticator."
 msgstr ""
+"Scanne den Code mit einer TOTP-App wie Bitwarden, 1Password, Authy oder "
+"Google Authenticator."
 
 msgid "Or enter this secret manually:"
-msgstr ""
+msgstr "Oder gib diese Zeichenfolge manuell ein:"
 
 msgid "2. Enter the 6-digit code"
-msgstr ""
+msgstr "2. Gib den 6-stelligen Code ein"
 
 msgid "6-digit code"
-msgstr ""
+msgstr "6-stelligen Code"
 
 msgid "Enable"
-msgstr ""
+msgstr "Aktivieren"
 
 msgid "Configuration"
-msgstr ""
+msgstr "Konfiguration"
 
 #, php-format
 msgid ""
 "Complete definition of this environment — generated from %s in the "
 "repository."
 msgstr ""
+"Vollständige Definition dieser Umgebung – generiert aus %s im Repository."
 
 msgid ""
 "No configuration found for this environment. Add a .tragwerk/config.xml to "
 "the repository and deploy."
 msgstr ""
+"Für diese Umgebung wurde keine Konfiguration gefunden. Füge eine Datei "
+"„.tragwerk/config.xml“ zum Repository hinzu und führe die Bereitstellung "
+"durch."
 
 msgid "Runtime"
-msgstr ""
+msgstr "Laufzeit"
 
 msgid "Web server"
-msgstr ""
+msgstr "Webserver"
 
 msgid "Workers"
-msgstr ""
+msgstr "Workers"
 
 msgid "Hooks"
-msgstr ""
+msgstr "Hooks"
 
 msgid "Mounts & Volumes"
-msgstr ""
+msgstr "Mounts & Volumes"
 
 msgid "Path"
-msgstr ""
+msgstr "Pfad"
 
 msgid "Type"
 msgstr "Typ"
 
 msgid "Source"
-msgstr ""
+msgstr "Quelle"
 
 msgid "Disk"
-msgstr ""
+msgstr "Disk"
 
 msgid "Mode"
-msgstr ""
+msgstr "Modus"
 
 msgid "Volume"
-msgstr ""
+msgstr "Volume"
 
 msgid "read-write"
-msgstr ""
+msgstr "lesen-schreiben"
 
 msgid "Services"
-msgstr ""
+msgstr "Dienste"
 
 msgid "Service"
-msgstr ""
+msgstr "Dienst"
 
 msgid "Relationship"
-msgstr ""
+msgstr "Beziehung"
 
 msgid "Status"
 msgstr "Status"
 
 msgid "Running"
-msgstr ""
+msgstr "Läuft"
 
 msgid "Routes"
-msgstr ""
+msgstr "Routen"
 
 msgid "Route"
-msgstr ""
+msgstr "Route"
 
 msgid "Target / upstream"
-msgstr ""
+msgstr "Ziel / upstream"
 
 msgid "Cache"
-msgstr ""
+msgstr "Cache"
 
 msgid "upstream"
-msgstr ""
+msgstr "upstream"
 
 msgid "redirect"
-msgstr ""
+msgstr "weiterleitung"
 
 #, php-format
 msgid "Domains are mapped to the %s placeholder in the Domains tab."
 msgstr ""
+"Domains werden dem Platzhalter %s auf der Registerkarte „Domains“ zugeordnet."
 
 msgid "Cron jobs"
-msgstr ""
+msgstr "Cron-Jobs"
 
 msgid "Schedule"
-msgstr ""
+msgstr "Zeitplan"
 
 msgid "Command"
-msgstr ""
+msgstr "Befehl"
 
 msgid "No workers configured."
-msgstr ""
+msgstr "Keine worker konfiguriert."
 
 msgid "Confirmation failed"
-msgstr ""
+msgstr "Die Bestätigung ist fehlgeschlagen"
 
 msgid ""
 "This confirmation link is invalid or has expired. Please register again."
 msgstr ""
+"Dieser Bestätigungslink ist ungültig oder abgelaufen. Bitte registriere dich "
+"erneut."
 
 msgid "Back to registration"
-msgstr ""
+msgstr "Zurück zur Registrierung"
 
 msgid "Containers"
-msgstr ""
+msgstr "Containers"
 
 msgid ""
 "All running containers in this environment — apps, workers and services."
 msgstr ""
+"Alle in dieser Umgebung ausgeführten Container – Anwendungen, Worker und "
+"Dienste."
 
 msgid "Loading..."
-msgstr ""
+msgstr "Lade..."
 
 msgid "CPU"
-msgstr ""
+msgstr "CPU"
 
 msgid "RAM"
-msgstr ""
+msgstr "RAM"
 
 msgid "Uptime"
-msgstr ""
+msgstr "Verfügbarkeit"
 
 msgid "Healthy"
-msgstr ""
+msgstr "Gesund"
 
 msgid "Unhealthy"
-msgstr ""
+msgstr "Ungesund"
 
 msgid "Starting"
-msgstr ""
+msgstr "Starte"
 
 msgid "Restarting"
-msgstr ""
+msgstr "Neustart"
 
 msgid "Stopped"
-msgstr ""
+msgstr "Angehalten"
 
 msgid "Create credential"
-msgstr ""
+msgstr "Zugangsdaten anlegen"
 
 msgid "Store an SSH key so servers can be connected to."
 msgstr ""
+"Speicher einen SSH-Schlüssel, damit eine Verbindung zu den Servern "
+"hergestellt werden kann."
 
 msgid "Username"
-msgstr ""
+msgstr "Benutzername"
 
 msgid "Private key"
-msgstr ""
+msgstr "Privater Schlüssel"
 
 msgid "Save"
-msgstr ""
+msgstr "Speichern"
 
 msgid "Edit credential"
-msgstr ""
+msgstr "Zugangsdaten bearbeiten"
 
 msgid "Update name, username and SSH key for this credential."
 msgstr ""
+"Aktualisiere den Namen, Benutzernamen und den SSH-Schlüssel für diese "
+"Zugangsdaten."
 
-#, fuzzy
-#| msgid "Save language"
 msgid "Save changes"
-msgstr "Sprache speichern"
+msgstr "Änderungen speichern"
 
 msgid "Servers using this credential"
-msgstr ""
+msgstr "Server, die diese Zugangsdaten verwenden"
 
 msgid "No servers are using this credential."
-msgstr ""
+msgstr "Keine Server verwenden diese Zugangsdaten."
 
 msgid "Host"
-msgstr ""
+msgstr "Host"
 
 msgid "Danger zone"
-msgstr ""
+msgstr "Gefahrenzone"
 
 msgid "Delete credential"
-msgstr ""
+msgstr "Zugangsdaten löschen"
 
 msgid ""
 "This credential is assigned to one or more servers and cannot be deleted."
 msgstr ""
+"Diese Berechtigung ist einem oder mehreren Servern zugewiesen und kann nicht "
+"gelöscht werden."
 
 msgid "Permanently removes the credential."
-msgstr ""
+msgstr "Entfernt die Zugangsdaten dauerhaft."
 
 msgid "Cannot delete: credential is assigned to servers"
-msgstr ""
+msgstr "Kann nicht gelöscht werden: Die Zugangsdaten sind Servern zugewiesen."
 
 msgid ""
 "Are you sure you want to delete the credential {name}? This action cannot be "
 "undone."
 msgstr ""
+"Möchtest dz die Anmeldedaten {name} wirklich löschen? Diese Aktion kann "
+"nicht rückgängig gemacht werden."
 
 msgid "Credentials"
-msgstr ""
+msgstr "Zugangsdaten"
 
 msgid "SSH credentials used to connect to servers — shared across the team."
 msgstr ""
+"SSH-Zugangsdaten für die Verbindung zu Servern – werden im Team gemeinsam "
+"genutzt."
+
+msgid ""
+"No credentials configured yet. Add credentials first to use them in the team "
+"wo setup servers."
+msgstr ""
+"Es wurden noch keine Zugangsdaten konfiguriert. Füge zunächst Zugangsdaten "
+"hinzu, um diese bei der Einrichtung der Server im Team verwenden zu können."
 
 msgid "No logs yet."
-msgstr ""
+msgstr "Noch keine Protokolle."
 
 msgid "Deploy"
-msgstr ""
+msgstr "Bereitstellen"
 
 msgid "(sync)"
-msgstr ""
+msgstr "(synchronisieren)"
 
 msgid "live"
-msgstr ""
+msgstr "echtzeit"
 
 msgid "Build"
-msgstr ""
+msgstr "Erstellung"
 
 msgid "All"
-msgstr ""
+msgstr "Alle"
 
 msgid "Builds"
-msgstr ""
+msgstr "Erstellungen"
 
 msgid "Deploys"
-msgstr ""
+msgstr "Bereitstellungen"
 
 msgid "Completed"
-msgstr ""
+msgstr "Abgeschlossen"
 
 msgid "Failed"
 msgstr "Fehlgeschlagen"
@@ -654,203 +744,223 @@ msgid "Pending"
 msgstr "Ausstehend"
 
 msgid "Copy"
-msgstr ""
+msgstr "Kopieren"
 
 msgid "Download"
-msgstr ""
+msgstr "Herunterladen"
 
 msgid "Commit"
-msgstr ""
+msgstr "Commit"
 
 msgid "Deployments"
-msgstr ""
+msgstr "Bereitstellungen"
 
 msgid ""
 "Build and deployment logs for this environment. Select an entry for the "
 "terminal view."
 msgstr ""
+"Erstellungs- und Bereitstellungsprotokolle für diese Umgebung. Wähle einen "
+"Eintrag für die Terminalansicht aus."
 
 msgid "Select a log entry to view its output."
-msgstr ""
+msgstr "Wähle einen Protokolleintrag aus, um dessen Ausgabe anzuzeigen."
 
 msgid "Add domain"
-msgstr ""
+msgstr "Domain hinzufügen"
 
 msgid "Connect a custom domain and map it to a routing placeholder."
 msgstr ""
+"Verbinde eine benutzerdefinierte Domain und ordne diese einem Routing-"
+"Platzhalter zu."
 
 msgid "e.g. shop.my-company.com"
-msgstr ""
+msgstr "z.B. shop.my-company.com"
 
 msgid "Without https:// — hostname only."
-msgstr ""
+msgstr "Ohne https:// — nur der Hostname"
 
 msgid "Target placeholder"
-msgstr ""
+msgstr "Platzhalter für das Ziel"
 
 msgid "Corresponds to the placeholder in config.xml, e.g."
-msgstr ""
+msgstr "Entspricht dem Platzhalter in der Datei „config.xml“, z. B."
 
 msgid "Domains"
-msgstr ""
+msgstr "Domains"
 
 msgid "Connect custom domains and map them to a routing placeholder."
 msgstr ""
+"Verbinde benutzerdefinierte Domains und ordnen diese einem Routing-"
+"Platzhalter zu."
 
 msgid "Primary"
-msgstr ""
+msgstr "Primär"
 
 msgid "Set as primary"
-msgstr ""
+msgstr "Als primär festlegen"
 
 msgid "Remove"
-msgstr ""
+msgstr "Entfernen"
 
 msgid ""
 "Exactly one primary domain is allowed — it is used for absolute links and "
 "redirects. Point a CNAME/A record at the server; SSL certificates are issued "
 "automatically."
 msgstr ""
+"Es ist genau eine Primärdomain zulässig – diese wird für absolute Links und "
+"Weiterleitungen verwendet. Richte einen CNAME-/A-Eintrag auf den Server aus; "
+"SSL-Zertifikate werden automatisch ausgestellt."
 
 msgid ""
 "Are you sure you want to remove {host}? It will no longer be routed to this "
 "project."
 msgstr ""
+"Möchtest du {host} wirklich entfernen? Es wird dann nicht mehr zu diesem "
+"Projekt weitergeleitet."
 
 msgid ""
 "This is the primary domain. After removal, another domain will be set as "
 "primary automatically."
 msgstr ""
+"Dies ist die primäre Domäne. Nach der Entfernung wird automatisch eine "
+"andere Domäne als primäre Domäne festgelegt."
 
 msgid "Remove domain"
-msgstr ""
-
-msgid "Environments"
-msgstr ""
+msgstr "Domain entfernen"
 
 msgid "Any branch can be deployed as an isolated environment."
-msgstr ""
+msgstr "Jeder Zweig kann als isolierte Umgebung bereitgestellt werden."
 
 msgid "Environment"
-msgstr ""
+msgstr "Umgebung"
 
 msgid "Branch"
-msgstr ""
+msgstr "Zweig"
 
 msgid "Production"
-msgstr ""
+msgstr "Produktion"
 
 msgid "Deploying"
-msgstr ""
+msgstr "Bereitstellung"
 
 msgid "Not deployed"
-msgstr ""
+msgstr "Nicht bereitgetellt"
 
 msgid ""
 "No environment selected. Pick a branch to deploy as an isolated environment."
 msgstr ""
+"Es wurde keine Umgebung ausgewählt. Wähle einen Zweig aus, der als isolierte "
+"Umgebung bereitgestellt werden soll."
 
 msgid "Open"
-msgstr ""
+msgstr "Öffnen"
 
 msgid "Redeploy"
-msgstr ""
+msgstr "Erneut bereitstellen"
 
 msgid "Loading live metrics…"
-msgstr ""
+msgstr "Live-Kennzahlen werden geladen…"
 
 msgid "Duration"
-msgstr ""
+msgstr "Dauer"
 
 msgid "Time"
-msgstr ""
+msgstr "Zeit"
 
 msgid "No deployments yet."
-msgstr ""
+msgstr "Keine Bereitstellungen bis jetzt."
 
 msgid "Successful"
-msgstr ""
+msgstr "Erfolgreich"
 
 msgid "Logs"
-msgstr ""
+msgstr "Protokolle"
 
 msgid "Open logs"
-msgstr ""
+msgstr "Protokolle öffnen"
 
 msgid "Variables"
-msgstr ""
+msgstr "Variablen"
 
 msgid "Add"
-msgstr ""
+msgstr "Hinzufügen"
 
 msgid "Key"
-msgstr ""
+msgstr "Schlüssel"
 
 msgid "Value"
-msgstr ""
+msgstr "Wert"
 
 msgid "No variables defined."
-msgstr ""
+msgstr "Es wurden keine Variablen definiert."
 
 msgid "Edit"
-msgstr ""
+msgstr "Bearbeiten"
 
 msgid "Inherited"
-msgstr ""
+msgstr "Vererbt"
 
 msgid "Redeploy environment"
-msgstr ""
+msgstr "Umgebung neu bereitstellen"
 
 msgid ""
 "Redeploy {branch}? This triggers a new deployment of the latest commit on "
 "this branch."
 msgstr ""
+"{branch} neu bereitstellen? Dies löst eine neue Bereitstellung des neuesten "
+"Commits auf diesem Zweig aus."
 
 msgid "Add integration"
-msgstr ""
+msgstr "Integration hinzufügen"
 
 msgid "Connect a git forge so pushes trigger a deployment"
 msgstr ""
+"Verbinde deine Versionskontrolle damit diese ein Ereignis für eine "
+"Bereitstellung auslösen"
 
-msgid "Git forge"
-msgstr ""
+msgid "Version control (VCS)"
+msgstr "Versionskontroller (VCS)"
 
-msgid "— select a git forge —"
-msgstr ""
+msgid "— select a git vcs —"
+msgstr "— Versionskontrolle wählen —"
 
 msgid "A secure webhook secret is generated automatically."
-msgstr ""
+msgstr "Ein sicheres Webhook-Geheimnis wird automatisch generiert."
 
 msgid "Integrations"
-msgstr ""
+msgstr "Integrationen"
 
-msgid "Git forge webhook that triggers deployments on push."
-msgstr ""
+msgid "Webhook that triggers deployments on push."
+msgstr "Webhook, der bei einem Push eine Bereitstellung auslöst."
 
 msgid ""
-"No integration configured yet. Add a git forge webhook to enable push-"
-"triggered deployments."
+"No integration configured yet. Add a webhook to enable push-triggered "
+"deployments."
 msgstr ""
+"Es wurde noch keine Integration konfiguriert. Füge einen Webhook hinzu, um "
+"durch Push-Benachrichtigungen ausgelöste Bereitstellungen zu aktivieren."
 
 msgid "Webhook URL"
-msgstr ""
+msgstr "Webhook URL"
 
 msgid "Secret"
-msgstr ""
+msgstr "Geheimnis"
 
 msgid "Delete integration"
-msgstr ""
+msgstr "Integration löschen"
 
 msgid ""
 "Are you sure you want to delete the {forge} integration? This action cannot "
 "be undone."
 msgstr ""
+"Möchtest du die {forge}-Integration wirklich löschen? Diese Aktion kann "
+"nicht rückgängig gemacht werden."
 
 msgid "Imprint"
-msgstr ""
+msgstr "Impressum"
 
 msgid "Legal"
-msgstr ""
+msgstr "Rechtliches"
 
 msgid "Last updated: June 20, 2026"
 msgstr ""
@@ -958,307 +1068,333 @@ msgid ""
 "Live FrankenPHP runtime log of the running application container in this "
 "environment."
 msgstr ""
+"Live-Protokoll der FrankenPHP-Laufzeitumgebung des laufenden "
+"Anwendungscontainers in dieser Umgebung."
 
 msgid "entries"
-msgstr ""
+msgstr "einträge"
 
 msgid "last 500 lines"
-msgstr ""
+msgstr "die letzten 500 Zeilen"
 
 msgid "No log entries."
-msgstr ""
+msgstr "Keine Protokolleinträge."
 
 msgid "Welcome back"
-msgstr ""
+msgstr "Willkommen zurück"
 
 msgid "No account yet?"
-msgstr ""
+msgstr "Noch kein Konto?"
 
 msgid "Register now"
-msgstr ""
+msgstr "Jetzt registrieren"
 
 msgid ""
 "Registration successful. Please check your email to confirm your account."
 msgstr ""
+"Die Registrierung war erfolgreich. Bitte überprüfe deine E-Mails, um dein "
+"Konto zu bestätigen."
 
 msgid "Your email address has been confirmed. You can now sign in."
-msgstr ""
+msgstr "Deine E-Mail-Adresse wurde bestätigt. Du kannst dich nun anmelden."
 
 msgid ""
 "If an account exists for that email, a password reset link has been sent."
 msgstr ""
+"Falls für diese E-Mail-Adresse ein Konto existiert, wurde ein Link zum "
+"Zurücksetzen des Passworts gesendet."
 
 msgid ""
 "Your password has been updated. You can now sign in with your new password."
 msgstr ""
+"Dein Passwort wurde aktualisiert. Du kannst dich nun mit deinem neuen "
+"Passwort anmelden."
 
 msgid ""
 "Your email address has been changed. Please sign in with your new address."
 msgstr ""
+"Deine E-Mail-Adresse wurde geändert. Bitte melden dich mit deiner neuen "
+"Adresse an."
 
 msgid ""
 "Please confirm your email address before signing in. Check your inbox for "
 "the confirmation link."
 msgstr ""
+"Bitte bestätigen deiner E-Mail-Adresse, bevor du dich anmeldest. Schau in "
+"deinem Posteingang nach dem Bestätigungslink."
 
 msgid "Invalid email address or password."
-msgstr ""
+msgstr "Ungültige E-Mail-Adresse oder ungültiges Passwort."
 
 msgid "E-Mail"
-msgstr ""
+msgstr "E-Mail"
 
 msgid "Password"
-msgstr ""
+msgstr "Passwort"
 
 msgid "Forgot your password?"
-msgstr ""
+msgstr "Passwort vergessen?"
 
 msgid "Sign in"
-msgstr ""
+msgstr "Anmelden"
 
 msgid "Enter one of your recovery codes."
-msgstr ""
+msgstr "Geben Sie einen deiner Wiederherstellungscodes ein."
 
 msgid "Enter the 6-digit code from your authenticator app."
-msgstr ""
+msgstr "Gib den 6-stelligen Code aus deiner Authentifizierungs-App ein."
 
 msgid "That code was not correct. Please try again."
-msgstr ""
+msgstr "Dieser Code war nicht korrekt. Bitte versuche es erneut."
 
 msgid "Recovery code"
-msgstr ""
+msgstr "Wiederherstellungscode"
 
 msgid "Authentication code"
-msgstr ""
+msgstr "Authentifizierungscode"
 
 msgid "Don't ask again on this device for {days} days"
-msgstr ""
+msgstr "Auf diesem Gerät {days} Tage lang nicht erneut fragen"
 
 msgid "Verify"
-msgstr ""
+msgstr "Überprüfen"
 
 msgid "Use your authenticator app instead"
-msgstr ""
+msgstr "Verwende stattdessen deine Authentifizierungs-App"
 
 msgid "Use a recovery code instead"
-msgstr ""
+msgstr "Verwende stattdessen einen Wiederherstellungscode"
 
 msgid "Cancel and sign out"
-msgstr ""
+msgstr "Abbrechen und abmelden"
 
 msgid ""
 "No FrankenPHP worker metrics available — environment is not running or not "
 "in worker mode."
 msgstr ""
+"Es sind keine FrankenPHP-Worker-Metriken verfügbar – die Umgebung läuft "
+"nicht oder befindet sich nicht im Worker-Modus."
 
 msgid "No data."
-msgstr ""
+msgstr "Keine Daten."
 
 msgid "HTTP requests"
-msgstr ""
+msgstr "HTTP-Anfragen"
 
 msgid "In-flight"
-msgstr ""
+msgstr "In-flight"
 
 msgid "Avg response time"
-msgstr ""
+msgstr "Ø Antwortzeit"
 
 msgid "Cumulative average"
-msgstr ""
+msgstr "Kumulativer Durchschnitt"
 
 msgid "Active workers"
-msgstr ""
+msgstr "Aktive worker"
 
-#, fuzzy
-#| msgid "Queue"
 msgid "Queue depth"
-msgstr "Warteschlange"
+msgstr "Warteschlangentiefe"
 
 msgid "Crashes"
-msgstr ""
+msgstr "Abstürze"
 
 msgid "Restarts"
-msgstr ""
+msgstr "Neustarts"
 
 msgid "No requests recorded yet."
-msgstr ""
+msgstr "Es wurden noch keine Anfragen erfasst."
 
 msgid "Provided by the {runtime} runtime (worker mode)"
-msgstr ""
+msgstr "Bereitgestellt von der {runtime}-Laufzeitumgebung (Worker-Modus)"
 
 msgid "Provided by the {runtime} runtime (classic mode)"
-msgstr ""
+msgstr "Bereitgestellt von der {runtime}-Laufzeitumgebung (klassischer Modus)"
 
 msgid "Provided by the {runtime} runtime"
-msgstr ""
+msgstr "Bereitgestellt von der {runtime} Laufzeitumgebung"
 
 msgid "Live"
-msgstr ""
+msgstr "Echtzeit"
 
 msgid "Metrics"
-msgstr ""
+msgstr "Metriken"
 
 msgid "1 hr"
-msgstr ""
+msgstr "1 Std."
 
 msgid "6 hr"
-msgstr ""
+msgstr "6 Std."
 
 msgid "24 hr"
-msgstr ""
+msgstr "24 Std."
 
 msgid "7 days"
-msgstr ""
+msgstr "7 Tage"
 
 msgid ""
 "No environment deployed yet. Metrics appear once an environment is running."
 msgstr ""
+"Es wurde noch keine Umgebung bereitgestellt. Metriken werden erst angezeigt, "
+"sobald eine Umgebung läuft."
 
 msgid "No data yet — history appears as the metrics ticker runs."
 msgstr ""
+"Noch keine Daten – der Verlauf wird angezeigt, sobald der Metrik-Ticker "
+"läuft."
 
 msgid "Requests per second"
-msgstr ""
+msgstr "Anfragen pro Sekunde"
 
 msgid "Throughput across all workers"
-msgstr ""
+msgstr "Durchsatz über alle Worker hinweg"
 
 msgid "Cumulative HTTP responses"
-msgstr ""
+msgstr "Kumulierte HTTP-Antworten"
 
-#, fuzzy
-#| msgid "Status"
 msgid "Status codes"
-msgstr "Status"
+msgstr "Statuscodes"
 
 msgid "Loading…"
-msgstr ""
+msgstr "Lade..."
 
 msgid "Average latency, ms"
-msgstr ""
+msgstr "Durchschnittliche Latenz, ms"
 
 msgid "Response times"
-msgstr ""
+msgstr "Antwortzeiten"
 
 msgid "Busy vs. total FrankenPHP workers"
-msgstr ""
+msgstr "Aktive gegen alle FrankenPHP-Worker"
 
 msgid "Worker utilization"
-msgstr ""
+msgstr "Worker Auslastung"
 
 msgid "busy"
-msgstr ""
+msgstr "beschäftigt"
 
 msgid "total"
-msgstr ""
+msgstr "total"
 
 msgid "Back to sign in"
-msgstr ""
+msgstr "Zurück zur Anmeldung"
 
 msgid "Set new password"
-msgstr ""
+msgstr "Neues Passwort festlegen"
 
 msgid "Enter and confirm your new password."
-msgstr ""
+msgstr "Gib dein neues Passwort ein und bestätige es."
 
 msgid "Invalid or expired link"
-msgstr ""
+msgstr "Ungültiger oder abgelaufener Link"
 
 msgid "This password reset link is invalid or has expired."
 msgstr ""
+"Dieser Link zum Zurücksetzen des Passworts ist ungültig oder abgelaufen."
 
 msgid "Request a new link"
-msgstr ""
+msgstr "Neuen Link anfordern"
 
 msgid "Reset password"
-msgstr ""
+msgstr "Passwort zurücksetzen"
 
 msgid "Enter your email — we'll send you a reset link."
 msgstr ""
+"Gib deine E-Mail-Adresse ein – wir senden dir einen Link zum Zurücksetzen zu."
 
 msgid "Send reset link"
-msgstr ""
+msgstr "Link zum Zurücksetzen senden"
 
 msgid "Building"
-msgstr ""
+msgstr "Erstellung"
 
 msgid "Never deployed"
-msgstr ""
+msgstr "Nie bereitstellt"
 
 msgid "Preview"
-msgstr ""
+msgstr "Vorschau"
 
 msgid "Sync data from parent"
-msgstr ""
+msgstr "Daten vom übergeordneten Element synchronisieren"
 
 msgid ""
 "Sync data into {branch} from its parent branch? Existing data volumes in "
 "this environment will be overwritten."
 msgstr ""
+"Daten aus dem übergeordneten Zweig in {branch} synchronisieren? Vorhandene "
+"Datenmengen in dieser Umgebung werden überschrieben."
 
 msgid "Sync data"
-msgstr ""
+msgstr "Daten synchronisieren"
 
 msgid "Create project"
-msgstr ""
+msgstr "Projekt erstellen"
 
 msgid "A new project contains its own environments, servers and registries"
 msgstr ""
+"Ein neues Projekt verfügt über eigene Umgebungen, Server und Registries."
 
 msgid "Project name"
-msgstr ""
+msgstr "Projektname"
 
 msgid "project"
-msgstr ""
+msgstr "projekt"
 
 msgid "projects"
-msgstr ""
+msgstr "projekte"
 
 msgid "— select a server —"
-msgstr ""
+msgstr "— server wählen —"
 
 msgid "Container registry"
-msgstr ""
+msgstr "Register"
 
 msgid "— select a registry —"
-msgstr ""
+msgstr "— regiter wählen —"
 
 msgid "Edit project"
-msgstr ""
+msgstr "Projekt editieren"
 
 msgid "Update the server and registry this project deploys to"
 msgstr ""
+"Aktualisiere den Server und die Registrierung, auf denen dieses Projekt "
+"bereitgestellt wird"
 
 msgid "Delete project"
-msgstr ""
+msgstr "Projekt löschen"
 
 msgid "Permanently removes the project and all associated resources."
-msgstr ""
+msgstr "Das Projekt und alle zugehörigen Ressourcen werden endgültig gelöscht."
 
 msgid ""
 "Are you sure you want to delete the project {name}? This action cannot be "
 "undone."
 msgstr ""
+"Möchtest du das Projekt {name} wirklich löschen? Diese Aktion kann nicht "
+"rückgängig gemacht werden."
 
 msgid "Projects"
-msgstr ""
+msgstr "Projekte"
 
 msgid "Every project belongs to the team and contains its own environments."
-msgstr ""
+msgstr "Jedes Projekt gehört zum Team und verfügt über eigene Umgebungen."
 
 msgid "Create Project"
-msgstr ""
+msgstr "Projekt erstellen"
 
 msgid "Stack"
-msgstr ""
+msgstr "Stack"
 
-#, fuzzy
-#| msgid "Actions"
 msgid "Applications"
-msgstr "Aktionen"
+msgstr "Anwendungen"
 
 msgid "Last deploy"
+msgstr "Letzte Bereitstellung"
+
+msgid "No projects added yet. Create a project to start deploying"
 msgstr ""
+"Es wurden noch keine Projekte hinzugefügt. Erstelle ein Projekt, um mit der "
+"Bereitstellung zu beginnen."
 
 #, php-format
 msgid "PHP 8.5 · %s"
@@ -1268,28 +1404,28 @@ msgid "PHP 8.5"
 msgstr ""
 
 msgid "Open production"
-msgstr ""
+msgstr "Umgebung öffnen"
 
 msgid "Settings"
-msgstr ""
+msgstr "Einstellungen"
 
 msgid "Production URL"
-msgstr ""
+msgstr "Produktions-URL"
 
 msgid "Last commit"
-msgstr ""
+msgstr "Letzter Commit"
 
 msgid "Activity"
-msgstr ""
+msgstr "Aktivität"
 
 msgid "No activity yet."
-msgstr ""
+msgstr "Bisher keine Aktivität."
 
 msgid "deployed"
-msgstr ""
+msgstr "bereitgestellt"
 
 msgid "Git clone URL"
-msgstr ""
+msgstr "Git-Klon-URL"
 
 msgid "Queue Messages"
 msgstr "Warteschlangen-Nachrichten"
@@ -1316,494 +1452,562 @@ msgid "Requeue"
 msgstr "Erneut einreihen"
 
 msgid "Delete"
-msgstr ""
+msgstr "Löschen"
 
-#, fuzzy
-#| msgid "Queue Messages"
 msgid "Delete queue message"
-msgstr "Warteschlangen-Nachrichten"
+msgstr "Nachricht aus der Warteschlange löschen"
 
 msgid ""
 "Are you sure you want to delete the message {name}? This action cannot be "
 "undone."
 msgstr ""
+"Möchtest du die Nachricht {name} wirklich löschen? Diese Aktion kann nicht "
+"rückgängig gemacht werden."
 
 msgid "Payload"
 msgstr "Payload"
 
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 msgid "Yes"
 msgstr "Ja"
 
 msgid "Priority"
-msgstr ""
+msgstr "Priorität"
 
 msgid "Delivery ID"
 msgstr "Delivery-ID"
 
 msgid "Create account"
-msgstr ""
+msgstr "Konto erstellen"
 
 msgid "Already registered?"
-msgstr ""
+msgstr "Bereits registriert?"
 
 msgid "Firstname"
-msgstr ""
+msgstr "Vorname"
 
 msgid "Lastname"
-msgstr ""
+msgstr "Nachname"
 
 msgid "Password repeat"
-msgstr ""
+msgstr "Passwort wiederholen"
 
 msgid "By signing up you agree to our terms."
 msgstr ""
+"Mit Ihrer Anmeldung erklärst du dich mit unseren Nutzungsbedingungen "
+"einverstanden."
 
 msgid "Add registry"
-msgstr ""
+msgstr "Register hinzufügen"
 
 msgid "Private or public container image registry for the team."
-msgstr ""
+msgstr "Private oder öffentliche Container-Image-Registry für das Team."
 
 msgid "Registry URL"
-msgstr ""
+msgstr "Register-URL"
 
 msgid "Repository"
-msgstr ""
+msgstr "Versionskontrolle"
 
 msgid "Password / Token"
-msgstr ""
+msgstr "Passwort / Token"
 
 msgid "Enable image pruning after deploy"
-msgstr ""
+msgstr "Abbilderbereinigung nach der Bereitstellung aktivieren"
 
 msgid ""
 "Supported for Docker Hub (docker.io) and OCI-compatible registries. AWS ECR, "
 "Azure ACR and Quay.io are not supported."
 msgstr ""
+"Unterstützt werden Docker Hub (docker.io) und OCI-kompatible Register. AWS "
+"ECR, Azure ACR und Quay.io werden nicht unterstützt."
 
 msgid "Tags to keep"
-msgstr ""
+msgstr "Beizubehaltende Tags"
 
 msgid "Edit registry"
-msgstr ""
+msgstr "Register editieren"
 
 msgid "Update connection and pruning settings for this registry."
 msgstr ""
+"Aktualisiere die Verbindungs- und Bereinigungseinstellungen für dieses "
+"Register."
 
 msgid "Leave empty to keep existing"
-msgstr ""
+msgstr "Leer lassen, um den bestehenden Eintrag beizubehalten"
 
 msgid "Delete registry"
-msgstr ""
+msgstr "Register löschen"
 
 msgid ""
 "This registry is assigned to one or more projects and cannot be deleted."
 msgstr ""
+"Dieses Register ist einem oder mehreren Projekten zugeordnet und kann nicht "
+"gelöscht werden."
 
 msgid "Permanently removes the registry."
-msgstr ""
+msgstr "Register wird dauerhaft gelöscht."
 
 msgid "Cannot delete: registry is assigned to projects"
 msgstr ""
+"Kann nicht gelöscht werden: Die Registrierung ist Projekten zugeordnet."
 
 msgid "Are you sure you want to delete {name}? This action cannot be undone."
 msgstr ""
+"Möchtest du {name} wirklich löschen? Diese Aktion kann nicht rückgängig "
+"gemacht werden."
 
 msgid "Container Registries"
-msgstr ""
+msgstr "Container-Registries"
 
 msgid "Private and public image registries for the team."
-msgstr ""
+msgstr "Private und öffentliche Register für das Team."
 
 msgid "URL"
-msgstr ""
+msgstr "URL"
 
 msgid ""
 "No registries configured yet. Add a container registry to enable image-based "
 "deployments."
 msgstr ""
+"Es sind noch keine Register konfiguriert. Fügen Sie eine Container-Registry "
+"hinzu, um imagebasierte Bereitstellungen zu ermöglichen."
 
 msgid "No metrics available."
-msgstr ""
+msgstr "Keine Metriken verfügbar."
 
 msgid "Memory"
-msgstr ""
+msgstr "Speicher"
 
 msgid "Load (1m)"
-msgstr ""
+msgstr "Last (1m)"
 
 msgid "Create server"
-msgstr ""
+msgstr "Server erstellen"
 
 msgid "Register a VPS reachable over SSH to host your environments"
 msgstr ""
+"Registriere einen über SSH erreichbaren Server (VPS), um deine Umgebungen zu "
+"hosten"
 
 msgid "Server name"
-msgstr ""
+msgstr "Servername"
 
 msgid "IP address (IPv4 or IPv6)"
-msgstr ""
+msgstr "IP-Adresse (IPv4 oder IPv6)"
 
 msgid "SSH port"
-msgstr ""
+msgstr "SSH-Port"
 
 msgid "— no credential —"
-msgstr ""
+msgstr "— keine Zugangsdaten —"
 
 msgid "Edit server"
-msgstr ""
+msgstr "Server bearbeiten"
 
 msgid "Update connection details for this server"
-msgstr ""
+msgstr "Verbindungsdaten für diesen Server aktualisieren"
 
 msgid "Setup server"
-msgstr ""
+msgstr "Server einrichten"
 
 msgid "Delete server"
-msgstr ""
+msgstr "Server löschen"
 
 msgid "This server still hosts projects and cannot be deleted."
 msgstr ""
+"Dieser Server hostet weiterhin Projekte und kann nicht gelöscht werden."
 
 msgid "Permanently removes the server."
-msgstr ""
+msgstr "Der Server wird dauerhaft entfernt."
 
 msgid "Cannot delete: server still hosts projects"
-msgstr ""
+msgstr "Kann nicht gelöscht werden: Der Server hostet noch Projekte."
 
 msgid ""
 "Are you sure you want to delete the server {name}? This action cannot be "
 "undone."
 msgstr ""
+"Möchtest du den Server {name} wirklich löschen? Diese Aktion kann nicht "
+"rückgängig gemacht werden."
 
 msgid "Servers"
-msgstr ""
+msgstr "Server"
 
 msgid ""
 "Compute and database instances for the team — shared across all projects."
 msgstr ""
+"Rechen- und Datenbankinstanzen für das Team – projektübergreifend gemeinsam "
+"genutzt."
 
 msgid "IP address"
-msgstr ""
+msgstr "IP-Adresse"
 
 msgid "Credentials assigned"
-msgstr ""
+msgstr "Zugangsdaten zugewiesen"
 
 msgid "Docker"
-msgstr ""
+msgstr "Docker"
 
 msgid "Docker Compose"
-msgstr ""
+msgstr "Docker Compose"
 
 msgid "Ready to deploy"
+msgstr "Bereit zur Inbetriebnahme"
+
+msgid ""
+"No servers added yet. Add a server to use them in a project and deploy your "
+"environments"
 msgstr ""
+"Es wurden noch keine Server hinzugefügt. Füge einen Server hinzu, um ihn in "
+"einem Projekt zu verwenden und deine Umgebungen bereitzustellen."
 
 msgid "Server Setup"
-msgstr ""
+msgstr "Server-Einrichtung"
 
 msgid "Setup: {name}"
-msgstr ""
+msgstr "Einrichtung: {name}"
 
 msgid "Back to server"
-msgstr ""
+msgstr "Zurück zum Server"
 
 msgid "Provisioned"
-msgstr ""
+msgstr "Bereitgestellt"
 
 msgid "Setup failed"
-msgstr ""
+msgstr "Die Einrichtung ist fehlgeschlagen"
 
 msgid "Provisioning"
-msgstr ""
+msgstr "Bereitstellung"
 
 msgid "Not set up"
-msgstr ""
+msgstr "Nicht eingerichtet"
 
 msgid ""
 "This server cannot be deleted while it still hosts projects. Reassign or "
 "delete them first."
 msgstr ""
+"Dieser Server kann nicht gelöscht werden, solange noch Projekte darauf "
+"gehostet werden. Weise diese zunächst anderen Servern zu oder lösche diese"
 
 msgid "No data yet — samples appear as the metrics ticker runs."
 msgstr ""
+"Noch keine Daten – Beispiele werden angezeigt, sobald der Metrik-Ticker "
+"läuft."
 
 msgid "CPU utilization"
-msgstr ""
+msgstr "CPU-Auslastung"
 
 msgid "utilization, %"
-msgstr ""
+msgstr "auslastung, %"
 
-#, fuzzy
-#| msgid "Requeue"
 msgid "run-queue"
-msgstr "Erneut einreihen"
+msgstr "lauf. warteschlange"
 
 msgid "Setup log"
-msgstr ""
+msgstr "Installationsprotokoll"
 
 msgid "Provisioning & bootstrap output."
-msgstr ""
+msgstr "Ausgabe zu Bereitstellung und Bootstrap."
 
 msgid "No setup has been run yet."
-msgstr ""
+msgstr "Es wurde noch keine Einrichtung durchgeführt."
 
 msgid "Run setup"
-msgstr ""
+msgstr "Starte Setup"
 
 msgid "Run setup again"
-msgstr ""
+msgstr "Setup erneut ausführen"
 
 msgid "Details"
-msgstr ""
+msgstr "Details"
 
 msgid "Created"
-msgstr ""
+msgstr "Erstellt"
 
 msgid "Hosted workloads"
-msgstr ""
+msgstr "Gehostete Workloads"
 
 msgid "No projects deployed to this server yet."
-msgstr ""
+msgstr "Auf diesem Server wurden noch keine Projekte bereitgestellt."
 
 msgid "Teams"
-msgstr ""
+msgstr "Teams"
 
 msgid "Create team"
-msgstr ""
+msgstr "Team erstellen"
 
 msgid ""
 "A new team contains its own projects which own environments, servers and "
 "registries"
 msgstr ""
+"Ein neues Team umfasst eigene Projekte, die über eigene Umgebungen, Server "
+"und Registries verfügen."
 
 msgid "Team name"
-msgstr ""
+msgstr "Teamname"
 
 msgid "Invite team members (optional)"
-msgstr ""
+msgstr "Teammitglieder einladen (optional)"
 
 msgid "Team-wide configuration, members and access."
-msgstr ""
+msgstr "Teamweite Konfiguration, Mitglieder und Zugriffsrechte."
 
 msgid "General"
-msgstr ""
+msgstr "Allgemeines"
 
 msgid "Members"
-msgstr ""
+msgstr "Mitglieder"
 
 msgid "Members of this team. The owner cannot be removed."
-msgstr ""
-
-msgid "Invite more members (optional)"
-msgstr ""
+msgstr "Mitglieder dieses Teams. Der Eigentümer kann nicht entfernt werden."
 
 msgid "Delete team"
-msgstr ""
+msgstr "Team löschen"
 
 msgid "Permanently removes the team and all associated resources."
-msgstr ""
+msgstr "Das Team und alle zugehörigen Ressourcen werden dauerhaft entfernt."
 
 msgid ""
 "Are you sure you want to delete the team {name}? This action cannot be "
 "undone. Deleting a team will delete all associated resources too!"
 msgstr ""
+"Möchtest du das Team {name} wirklich löschen? Diese Aktion kann nicht "
+"rückgängig gemacht werden. Beim Löschen eines Teams werden auch alle "
+"zugehörigen Ressourcen gelöscht!"
 
 msgid "Teams group your projects, environments and members."
-msgstr ""
+msgstr "In Teams werden Ihre Projekte, Umgebungen und Mitglieder gruppiert."
 
 msgid "Create Team"
-msgstr ""
+msgstr "Team erstellen"
 
 msgid "No teams yet."
-msgstr ""
+msgstr "Noch keine Teams vorhanden."
 
 msgid "Complete registration"
-msgstr ""
+msgstr "Anmeldung abschließen"
 
 msgid "You have been invited to join a team. Create your account to continue."
 msgstr ""
+"Du wurdest eingeladen, einem Team beizutreten. Erstelle ein Konto, um "
+"fortzufahren."
 
 msgid "Team overview"
-msgstr ""
+msgstr "Teamübersicht"
 
 #, php-format
 msgid "Created at %s"
-msgstr ""
+msgstr "Erstellt am %s"
 
 msgid "View all"
-msgstr ""
+msgstr "Alle anzeigen"
 
 msgid "No members in this team."
-msgstr ""
+msgstr "Dieses Team hat keine Mitglieder."
 
 msgid "New variable"
-msgstr ""
+msgstr "Neue Variable"
 
 msgid "Injected into the environment at build and runtime."
-msgstr ""
+msgstr "Wird bei der Erstellung und zur Laufzeit in die Umgebung injiziert."
 
 msgid "e.g. DATABASE_URL"
-msgstr ""
+msgstr "z.B. DATABASE_URL"
 
 msgid "Uppercase letters, digits and underscores."
-msgstr ""
+msgstr "Großbuchstaben, Ziffern und Unterstriche."
 
 msgid "Enter value…"
-msgstr ""
+msgstr "Wert eingeben..."
 
 msgid "Value is stored encrypted and masked in the UI and in logs."
 msgstr ""
+"Der Wert wird in der Benutzeroberfläche und in den Protokollen verschlüsselt "
+"und maskiert gespeichert."
 
 msgid ""
 "Automatically passed down to all child environments of this environment."
 msgstr ""
+"Wird automatisch an alle untergeordneten Umgebungen dieser Umgebung "
+"weitergegeben."
 
 msgid "Create variable"
-msgstr ""
+msgstr "Variable erstellen"
 
 msgid "Edit variable"
-msgstr ""
+msgstr "Variable bearbeiten"
 
 msgid "Leave blank to keep the current value."
-msgstr ""
+msgstr "Lass das Feld leer, um den aktuellen Wert beizubehalten."
 
 msgid "Environment variables"
-msgstr ""
+msgstr "Umgebungsvariablen"
 
 #, php-format
 msgid ""
 "%d variables · %d secret · %d inherited — injected at build and runtime."
 msgstr ""
+"%d Variablen · %d Geheimnisse · %d vererbte Werte – werden bei der "
+"Erstellung und zur Laufzeit eingefügt."
 
 msgid "This environment only"
-msgstr ""
+msgstr "Nur diese Umgebung"
 
 msgid "Delete variable"
-msgstr ""
+msgstr "Variable löschen"
 
 msgid ""
 "Are you sure you want to delete {key}? The variable will no longer be "
 "available after the next deploy."
 msgstr ""
+"Möchtest du {key} wirklich löschen? Die Variable steht nach dem nächsten "
+"Deploy nicht mehr zur Verfügung."
 
 msgid "Error 400 · Bad Request"
-msgstr ""
+msgstr "Fehler 400 · Ungültige Anfrage"
 
 msgid "Something went wrong"
-msgstr ""
+msgstr "Es ist ein Fehler aufgetreten"
 
 msgid "The server was unable to process your request."
-msgstr ""
+msgstr "Der Server konnte Ihre Anfrage nicht bearbeiten."
 
 msgid "Homepage"
-msgstr ""
+msgstr "Startseite"
 
 msgid "Error 404 · Not found"
-msgstr ""
+msgstr "Fehler 404 · Nicht gefunden"
 
 msgid "This route doesn't exist"
-msgstr ""
+msgstr "Diese Route existiert nicht."
 
 msgid ""
 "The page you're looking for may have been moved, renamed, or never deployed. "
 "Check the URL or head back to your dashboard."
 msgstr ""
+"Die gesuchte Seite wurde möglicherweise verschoben, umbenannt oder gar nicht "
+"veröffentlicht. Überprüfe die URL oder kehre zur Startseite zurück."
 
 msgid "Oops"
-msgstr ""
+msgstr "Hoppla"
 
 msgid "Deploy without friction"
-msgstr ""
+msgstr "Reibungslose Bereitstellung"
 
 msgid "From commit to production in minutes on a server of your choice!"
 msgstr ""
+"Vom Commit bis zur Produktion in wenigen Minuten auf einem Server deiner "
+"Wahl!"
 
 msgid "Isolated environments per branch"
-msgstr ""
+msgstr "Isolierte Umgebungen pro Zweig"
 
 msgid "Instant data cloning for child branches"
-msgstr ""
+msgstr "Sofortiges Klonen von Daten für abgeleitete Umgebungen"
 
 msgid "Use any Linux Server from a hoster of your choice"
-msgstr ""
+msgstr "Verwende einen beliebigen Linux-Server eines Hosters deiner Wahl"
 
 msgid "No vendor lock-in"
-msgstr ""
+msgstr "Keine Anbieterabhängigkeit"
 
 msgid "Change theme"
-msgstr ""
+msgstr "Design wechseln"
+
+msgid "Team settings"
+msgstr "Teameinstellungen"
 
 msgid "Select Project"
-msgstr ""
+msgstr "Projekt auswählen"
 
 msgid "Project settings"
-msgstr ""
+msgstr "Projekteinstellungen"
 
 msgid "Account"
-msgstr ""
+msgstr "Konto"
 
 msgid "Security"
-msgstr ""
+msgstr "Sicherheit"
 
 msgid "Sign out"
-msgstr ""
+msgstr "Abmelden"
 
 msgid "Registries"
-msgstr ""
+msgstr "Register"
 
 msgid "Back to app"
-msgstr ""
+msgstr "Zurück zur Anwendung"
 
 msgid ""
 "We received a request to change the email address of your Tragwerk account "
 "to {email}. Please confirm it by clicking the link below."
 msgstr ""
+"Wir haben eine Anfrage erhalten, die E-Mail-Adresse deines Tragwerk-Kontos "
+"in {email} zu ändern. Bitte bestätige dies, indem du auf den untenstehenden "
+"Link klickst."
 
 msgid "If you did not request this change, you can ignore this email."
 msgstr ""
+"Falls Du diese Änderung nicht angefordert hast, kannst du diese E-Mail "
+"ignorieren."
 
 msgid "This link expires in 24 hours."
-msgstr ""
+msgstr "Dieser Link läuft in 24 Stunden ab."
 
 msgid ""
 "You requested a password reset for your Tragwerk account. Click the link "
 "below to set a new password."
 msgstr ""
+"Du hast eine Passwortzurücksetzung für dein Tragwerk-Konto angefordert. "
+"Klicke auf den unten stehenden Link, um ein neues Passwort festzulegen."
 
 msgid ""
 "This link expires in 2 hours. If you did not request a password reset, you "
 "can ignore this email."
 msgstr ""
+"Dieser Link ist 2 Stunden gültig. Falls du keine Passwortzurücksetzung "
+"angefordert hast, kannst du diese E-Mail ignorieren."
 
 msgid "You have been invited to join a team on Tragwerk."
-msgstr ""
+msgstr "Du wurdest eingeladen, einem Team auf Tragwerk beizutreten."
+
+#, php-format
+msgid "You have been added to the team \"%s\" on Tragwerk."
+msgstr "Du wurdest zum Team \"%s\" bei Tragwerk hinzugefügt."
 
 msgid ""
 "Thank you for registering with Tragwerk. Please confirm your email address "
 "by clicking the link below."
 msgstr ""
-
-msgid "Add another email"
-msgstr ""
-
-msgid "Member"
-msgstr ""
+"Vielen Dank für deine Registrierung bei Tragwerk. Bitte bestätigen deine E-"
+"Mail-Adresse, indem du auf den untenstehenden Link klickst."
 
 msgid "Role"
-msgstr ""
+msgstr "Rolle"
 
-msgid "Owner"
-msgstr ""
+msgid "Add another email"
+msgstr "Weitere E-Mail hinzufügen"
+
+msgid "Pending invitations"
+msgstr "Ausstehende Einladungen"
+
+msgid "invited"
+msgstr "eingeladen"
+
+msgid "Make owner"
+msgstr "Zum Besitzer machen"
 
 msgid "Remove member"
-msgstr ""
+msgstr "Mitglied entfernen"
 
-msgid "You have been added to a team on Tragwerk."
-msgstr "Sie wurden zu einem Team bei Tragwerk hinzugefügt."
+msgid "Invite more members (optional)"
+msgstr "Weitere Mitglieder einladen (optional)"
 
-#, php-format
-msgid "You have been added to the team \"%s\" on Tragwerk."
-msgstr "Sie wurden zum Team \"%s\" bei Tragwerk hinzugefügt."
+msgid "Invite members"
+msgstr "Mitglieder einladen"
+
+#~ msgid "Git forge"
+#~ msgstr "Versionskontrolle"

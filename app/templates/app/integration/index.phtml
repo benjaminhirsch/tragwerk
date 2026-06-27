@@ -11,7 +11,7 @@ $integration = $integrations[0] ?? null;
 $this->layout('layout::default', [
     'pageType'     => $this->activeProject()->name,
     'pageTitle'    => $this->t('Integrations'),
-    'pageSubTitle' => $this->t('Git forge webhook that triggers deployments on push.'),
+    'pageSubTitle' => $this->t('Webhook that triggers deployments on push.'),
     'wide'         => true,
 ]) ?>
 
@@ -27,7 +27,7 @@ $this->layout('layout::default', [
 
     <div class="tw-card">
         <div class="tw-card__body text-center text-body-secondary">
-            <?= $this->t('No integration configured yet. Add a git forge webhook to enable push-triggered deployments.') ?>
+            <?= $this->t('No integration configured yet. Add a webhook to enable push-triggered deployments.') ?>
         </div>
     </div>
 <?php else: ?>

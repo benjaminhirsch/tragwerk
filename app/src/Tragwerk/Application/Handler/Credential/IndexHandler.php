@@ -12,6 +12,8 @@ use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Repository\CredentialRepository;
 
+use function iterator_to_array;
+
 final readonly class IndexHandler implements RequestHandlerInterface
 {
     public function __construct(
@@ -30,6 +32,10 @@ final readonly class IndexHandler implements RequestHandlerInterface
                 yield from [];
             })();
 
-        return $this->renderer->render($request, 'page::credential/index', ['credentials' => $credentials]);
+        return $this->renderer->render($request, 'page::credential/index', [
+            'credentials' => iterator_to_array(
+                $credentials,
+            ),
+        ]);
     }
 }

@@ -26,10 +26,10 @@ $this->layout('layout::default', [
 
         <?= $this->fetch('partial::input/select', [
             'id'                 => 'forge',
-            'label'              => $this->t('Git forge'),
+            'label'              => $this->t('Version control (VCS)'),
             'validation'         => $validationBag ?? null,
             'options'            => $forgeOptions,
-            'defaultOptionLabel' => $this->t('— select a git forge —'),
+            'defaultOptionLabel' => $this->t('— select a git vcs —'),
         ]) ?>
         <p class="text-body-secondary small mb-0">
             <?= $this->t('A secure webhook secret is generated automatically.') ?>
