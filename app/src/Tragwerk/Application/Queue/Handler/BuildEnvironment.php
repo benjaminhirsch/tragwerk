@@ -15,7 +15,7 @@ use Symfony\Component\Yaml\Yaml;
 use Throwable;
 use Tragwerk\Application\Queue\Message;
 use Tragwerk\Application\Queue\Producer;
-use Tragwerk\Application\Service\BranchAncestorResolver;
+use Tragwerk\Application\Service\EnvVarResolver;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
 use Tragwerk\Domain\Docker\DockerfileGenerator;
@@ -30,7 +30,6 @@ use Tragwerk\Domain\Event\BuildLogCreated;
 use Tragwerk\Domain\Event\DeployJobCreated;
 use Tragwerk\Domain\Model\ProjectConfig;
 use Tragwerk\Domain\Repository\DomainRepository;
-use Tragwerk\Domain\Repository\EnvVarRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\Repository\UserRepository;
@@ -42,7 +41,6 @@ use Tragwerk\Domain\ValueObject\TimestampImmutable;
 use Tragwerk\Infrastructure\Git\BareRepository;
 use ZipArchive;
 
-use function array_flip;
 use function assert;
 use function basename;
 use function chmod;
@@ -50,12 +48,8 @@ use function file_put_contents;
 use function glob;
 use function implode;
 use function is_dir;
-use function iterator_to_array;
 use function mkdir;
 use function rtrim;
-use function usort;
-
-use const PHP_INT_MAX;
 
 final readonly class BuildEnvironment
 {
@@ -75,8 +69,7 @@ final readonly class BuildEnvironment
         private TeamRepository $teamRepository,
         private UserRepository $userRepository,
         private LockFactory $lockFactory,
-        private EnvVarRepository $envVarRepository,
-        private BranchAncestorResolver $ancestorResolver,
+        private EnvVarResolver $envVarResolver,
     ) {
     }
 
@@ -130,7 +123,7 @@ final readonly class BuildEnvironment
 
         $acmeEmail   = $this->ownerEmail($projectIdentifier);
         $messages    = ['Build started for commit ' . $commitSha];
-        $userEnvVars = $this->resolveEnvVars($projectIdentifier, $branch);
+        $userEnvVars = $this->envVarResolver->resolve($projectIdentifier, $branch);
 
         try {
             $compose = Yaml::dump(
@@ -276,39 +269,6 @@ final readonly class BuildEnvironment
         } catch (Throwable) {
             return '';
         }
-    }
-
-    /**
-     * Merges branch-specific vars and inherited ancestor vars into a key→value map.
-     * Branch-specific vars override inherited; among inherited, closer ancestor wins.
-     *
-     * @return array<string, string>
-     */
-    private function resolveEnvVars(ProjectIdentifier $projectId, string $branch): array
-    {
-        $ancestors     = $this->ancestorResolver->getAncestors($projectId->toString(), $branch);
-        $inheritedVars = $this->envVarRepository->findInheritedFromAncestors($projectId, $ancestors);
-        $ownVars       = $this->envVarRepository->findByBranch($projectId, $branch);
-
-        $resolved = [];
-
-        // Inherited vars: iterate from farthest ancestor to closest so closer ancestor wins
-        $ancestorOrder   = array_flip($ancestors);
-        $sortedInherited = iterator_to_array($inheritedVars, false);
-        usort($sortedInherited, static function ($a, $b) use ($ancestorOrder): int {
-            return ($ancestorOrder[$b->branch] ?? PHP_INT_MAX) <=> ($ancestorOrder[$a->branch] ?? PHP_INT_MAX);
-        });
-
-        foreach ($sortedInherited as $var) {
-            $resolved[$var->key] = $var->value;
-        }
-
-        // Branch-specific vars always win
-        foreach ($ownVars as $var) {
-            $resolved[$var->key] = $var->value;
-        }
-
-        return $resolved;
     }
 
     private function log(string $projectId, string $branch, string $message): void
