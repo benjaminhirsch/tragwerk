@@ -51,6 +51,10 @@ final readonly class ShowHandler implements RequestHandlerInterface
             0,
         );
 
+        if (($request->getQueryParams()['fragment'] ?? null) === 'deployments') {
+            return $this->renderer->render($request, 'page::environment/_deployments', ['deployments' => $deployments]);
+        }
+
         $primaryHost = $this->domainResolver->primaryHost(
             $this->domainRepository->findByProject($project->id),
             $branch,

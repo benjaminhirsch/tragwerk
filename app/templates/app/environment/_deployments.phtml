@@ -1,0 +1,69 @@
+<?php
+
+declare(strict_types=1);
+
+use Tragwerk\Domain\Entity\DeployJob;
+use Tragwerk\Domain\Enum\DeployJobStatus;
+
+/**
+ * @var list<DeployJob> $deployments
+ */
+?>
+<div class="tw-table-wrap mb-4">
+    <table class="tw-table">
+        <thead>
+        <tr>
+            <th class="sortable"><?= $this->t('Commit') ?></th>
+            <th class="sortable"><?= $this->t('Status') ?></th>
+            <th class="sortable tw-hide-sm"><?= $this->t('Duration') ?></th>
+            <th class="sortable"><?= $this->t('Time') ?></th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php if ($deployments === []): ?>
+            <tr><td colspan="4" class="text-body-secondary small">
+                <i class="bi bi-info-circle me-1"></i><?= $this->t('No deployments yet.') ?>
+            </td></tr>
+        <?php endif ?>
+        <?php
+        /** @var DeployJob $deployment */
+        foreach ($deployments as $index => $deployment):
+            $statusType = match ($deployment->status) {
+                DeployJobStatus::Completed => 'ok',
+                DeployJobStatus::Failed    => 'danger',
+                DeployJobStatus::Running, DeployJobStatus::Pending => 'info',
+            };
+            $statusLabel = match ($deployment->status) {
+                DeployJobStatus::Completed => $this->t('Successful'),
+                DeployJobStatus::Failed    => $this->t('Failed'),
+                DeployJobStatus::Running   => $this->t('Running'),
+                DeployJobStatus::Pending   => $this->t('Pending'),
+            };
+            $showDuration = $deployment->status === DeployJobStatus::Completed
+                || $deployment->status === DeployJobStatus::Failed;
+            $diff     = $deployment->createdAt->toDateTime()->diff($deployment->updatedAt->toDateTime());
+            $seconds  = $diff->days * 86400 + $diff->h * 3600 + $diff->i * 60 + $diff->s;
+            $duration = $seconds >= 60
+                ? sprintf('%dm %02ds', intdiv($seconds, 60), $seconds % 60)
+                : $seconds . 's';
+            ?>
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="tw-cell-strong">
+                        <a href="<?= $this->e($this->url('deployment') . '?selected=' . urlencode($deployment->id->toString())) ?>">
+                            <?= $deployment->commitSha !== '' ? $this->e(substr($deployment->commitSha, 0, 7)) : $this->e($this->t('(sync)')) ?>
+                        </a></span>
+                        <?php if ($index === 0 && $deployment->status === DeployJobStatus::Completed): ?>
+                            <span class="tw-badge tw-badge--info" style="font-size:.68rem"><?= $this->t('live') ?></span>
+                        <?php endif ?>
+                    </div>
+                </td>
+                <td><?= $this->fetch('partial::badge', ['type' => $statusType, 'label' => $statusLabel]) ?></td>
+                <td class="tw-hide-sm tw-cell-muted mono"><?= $showDuration ? $this->e($duration) : '—' ?></td>
+                <td class="tw-cell-muted"><time data-formatter="relative" datetime="<?= $this->e($deployment->createdAt->format('c')) ?>"><?= $this->e($deployment->createdAt->format('Y-m-d H:i')) ?></time></td>
+            </tr>
+        <?php endforeach ?>
+        </tbody>
+    </table>
+</div>
