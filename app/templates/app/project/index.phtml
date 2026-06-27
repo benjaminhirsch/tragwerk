@@ -61,6 +61,13 @@ $this->layout('layout::default', [
                 <td class="tw-hide-sm tw-cell-muted">—</td>
             </tr>
         <?php endforeach ?>
+        <?php if ($projects === []): ?>
+            <tr>
+                <td class="text-center" colspan="6">
+                    <?= $this->t('No projects added yet. Create a project to start deploying') ?>
+                </td>
+            </tr>
+        <?php endif; ?>
         </tbody>
     </table>
 </div>

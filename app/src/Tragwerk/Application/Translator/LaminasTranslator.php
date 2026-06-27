@@ -48,7 +48,7 @@ class LaminasTranslator extends Translator
 
         $translated = $this->translator->translate(
             $message,
-            $domain ?? 'messages',
+            $domain ?? self::DEFAULT_TEXT_DOMAIN,
             $locale ?? $this->defaultLocale,
         );
 

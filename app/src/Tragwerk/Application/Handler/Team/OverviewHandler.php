@@ -14,6 +14,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Throwable;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Application\Service\TeamActivityFeed;
+use Tragwerk\Application\Translator\Translator;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
@@ -39,6 +40,7 @@ final readonly class OverviewHandler implements RequestHandlerInterface
         private BareRepository $bareRepository,
         private TeamActivityFeed $activityFeed,
         private UrlHelper $urlHelper,
+        private Translator $translator,
     ) {
     }
 
@@ -110,13 +112,13 @@ final readonly class OverviewHandler implements RequestHandlerInterface
         }
 
         $card = [
-            'label'     => 'Active projects',
+            'label'     => $this->translator->translate('Active projects'),
             'labelIcon' => 'bi bi-box-seam',
             'value'     => count($projects),
         ];
 
         if ($thisMonth > 0) {
-            $card['delta']         = $thisMonth . ' this month';
+            $card['delta']         = $thisMonth . $this->translator->translate(' this month');
             $card['deltaIcon']     = 'bi-arrow-up-short';
             $card['deltaColorVar'] = '--ok-text';
         }
@@ -151,10 +153,10 @@ final readonly class OverviewHandler implements RequestHandlerInterface
         }
 
         return [
-            'label'     => 'Environments',
+            'label'     => $this->translator->translate('Environments'),
             'labelIcon' => 'bi bi-diagram-3',
             'value'     => $total,
-            'text'      => $preview . ' in preview branches',
+            'text'      => $preview . $this->translator->translate(' in preview branches'),
         ];
     }
 
@@ -171,14 +173,14 @@ final readonly class OverviewHandler implements RequestHandlerInterface
         );
 
         $card = [
-            'label'     => 'Deployments / 24 h',
+            'label'     => $this->translator->translate('Deployments / 24 h'),
             'labelIcon' => 'bi bi-rocket-takeoff',
             'value'     => $counts['total'],
         ];
 
         if ($counts['total'] > 0) {
             $rate                  = round($counts['completed'] / $counts['total'] * 100, 1);
-            $card['delta']         = $rate . ' % successful';
+            $card['delta']         = $rate . $this->translator->translate(' % successful');
             $card['deltaIcon']     = 'bi-check2-circle';
             $card['deltaColorVar'] = '--ok-text';
         }
@@ -206,7 +208,7 @@ final readonly class OverviewHandler implements RequestHandlerInterface
         }
 
         $card = [
-            'label'     => 'Server utilization',
+            'label'     => $this->translator->translate('Server utilization'),
             'labelIcon' => 'bi bi-hdd-stack',
         ];
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-25 19:58+0000\n"
+"POT-Creation-Date: 2026-06-27 14:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -57,11 +57,11 @@ msgstr ""
 msgid "Invalid SSH public key"
 msgstr ""
 
-#, php-format
-msgid "Password must be at least %d characters"
+msgid "Invalid email address"
 msgstr ""
 
-msgid "Invalid email address"
+#, php-format
+msgid "Password must be at least %d characters"
 msgstr ""
 
 msgid "Enter the 6-digit code from your authenticator app"
@@ -87,6 +87,9 @@ msgstr ""
 msgid "mail.teamInvitation.subject"
 msgstr ""
 
+msgid "You have been added to a team on Tragwerk."
+msgstr ""
+
 msgid "Confirm your new email address"
 msgstr ""
 
@@ -106,6 +109,28 @@ msgid "Credential not found"
 msgstr ""
 
 msgid "IP address already exists"
+msgstr ""
+
+msgid "Active projects"
+msgstr ""
+
+msgid " this month"
+msgstr ""
+
+msgid "Environments"
+msgstr ""
+
+msgid " in preview branches"
+msgstr ""
+
+msgid "Deployments / 24 h"
+msgstr ""
+
+#, php-format
+msgid " % successful"
+msgstr ""
+
+msgid "Server utilization"
 msgstr ""
 
 msgid "Your current password is incorrect"
@@ -175,6 +200,15 @@ msgid "Recovery Code"
 msgstr ""
 
 msgid "Trusted Device"
+msgstr ""
+
+msgid "Owner"
+msgstr ""
+
+msgid "Admin"
+msgstr ""
+
+msgid "Member"
 msgstr ""
 
 msgid "Account settings"
@@ -613,6 +647,11 @@ msgstr ""
 msgid "SSH credentials used to connect to servers — shared across the team."
 msgstr ""
 
+msgid ""
+"No credentials configured yet. Add credentials first to use them in the team "
+"wo setup servers."
+msgstr ""
+
 msgid "No logs yet."
 msgstr ""
 
@@ -718,9 +757,6 @@ msgstr ""
 msgid "Remove domain"
 msgstr ""
 
-msgid "Environments"
-msgstr ""
-
 msgid "Any branch can be deployed as an isolated environment."
 msgstr ""
 
@@ -805,10 +841,10 @@ msgstr ""
 msgid "Connect a git forge so pushes trigger a deployment"
 msgstr ""
 
-msgid "Git forge"
+msgid "Version control (VCS)"
 msgstr ""
 
-msgid "— select a git forge —"
+msgid "— select a git vcs —"
 msgstr ""
 
 msgid "A secure webhook secret is generated automatically."
@@ -817,12 +853,12 @@ msgstr ""
 msgid "Integrations"
 msgstr ""
 
-msgid "Git forge webhook that triggers deployments on push."
+msgid "Webhook that triggers deployments on push."
 msgstr ""
 
 msgid ""
-"No integration configured yet. Add a git forge webhook to enable push-"
-"triggered deployments."
+"No integration configured yet. Add a webhook to enable push-triggered "
+"deployments."
 msgstr ""
 
 msgid "Webhook URL"
@@ -1247,6 +1283,9 @@ msgstr ""
 msgid "Last deploy"
 msgstr ""
 
+msgid "No projects added yet. Create a project to start deploying"
+msgstr ""
+
 #, php-format
 msgid "PHP 8.5 · %s"
 msgstr ""
@@ -1486,6 +1525,11 @@ msgstr ""
 msgid "Ready to deploy"
 msgstr ""
 
+msgid ""
+"No servers added yet. Add a server to use them in a project and deploy your "
+"environments"
+msgstr ""
+
 msgid "Server Setup"
 msgstr ""
 
@@ -1578,9 +1622,6 @@ msgid "Members"
 msgstr ""
 
 msgid "Members of this team. The owner cannot be removed."
-msgstr ""
-
-msgid "Invite more members (optional)"
 msgstr ""
 
 msgid "Delete team"
@@ -1719,6 +1760,9 @@ msgstr ""
 msgid "Change theme"
 msgstr ""
 
+msgid "Team settings"
+msgstr ""
+
 msgid "Select Project"
 msgstr ""
 
@@ -1764,22 +1808,35 @@ msgstr ""
 msgid "You have been invited to join a team on Tragwerk."
 msgstr ""
 
+#, php-format
+msgid "You have been added to the team \"%s\" on Tragwerk."
+msgstr ""
+
 msgid ""
 "Thank you for registering with Tragwerk. Please confirm your email address "
 "by clicking the link below."
 msgstr ""
 
-msgid "Add another email"
-msgstr ""
-
-msgid "Member"
-msgstr ""
-
 msgid "Role"
 msgstr ""
 
-msgid "Owner"
+msgid "Add another email"
+msgstr ""
+
+msgid "Pending invitations"
+msgstr ""
+
+msgid "invited"
+msgstr ""
+
+msgid "Make owner"
 msgstr ""
 
 msgid "Remove member"
+msgstr ""
+
+msgid "Invite more members (optional)"
+msgstr ""
+
+msgid "Invite members"
 msgstr ""

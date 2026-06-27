@@ -14,6 +14,7 @@ use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 
 use function assert;
+use function iterator_to_array;
 
 final readonly class IndexHandler implements RequestHandlerInterface
 {
@@ -40,8 +41,8 @@ final readonly class IndexHandler implements RequestHandlerInterface
         }
 
         return $this->renderer->render($request, 'page::project/index', [
-            'projects' => $projects,
-            'servers'  => $servers,
+            'projects' => iterator_to_array($projects),
+            'servers'  => iterator_to_array($servers),
         ]);
     }
 }

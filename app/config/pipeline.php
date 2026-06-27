@@ -89,7 +89,7 @@ return static function (
     // locale preference from the auth details, but before the translator/template
     // extensions that consume the negotiated Locale request attribute.
     $app->pipe(Middleware\NegotiateLocale::class);
-    $app->pipe(Middleware\SetTranslatorLocale::class);
+    // $app->pipe(Middleware\SetTranslatorLocale::class);
     $app->pipe(Template\Extension\Csrf::class);
     $app->pipe(Template\Extension\Authentication::class);
     $app->pipe(Template\Extension\Locale::class);
