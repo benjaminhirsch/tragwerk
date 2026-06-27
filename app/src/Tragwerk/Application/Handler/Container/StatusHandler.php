@@ -22,6 +22,7 @@ use Tragwerk\Domain\Repository\ServerRepository;
 
 use function array_values;
 use function assert;
+use function basename;
 use function escapeshellarg;
 use function explode;
 use function is_array;
@@ -111,8 +112,12 @@ final readonly class StatusHandler implements RequestHandlerInterface
 
         $sftp->setTimeout(30);
 
-        $remoteDir      = 'tragwerk/' . $project->id->toString() . '/' . $branch;
-        $branchSlug     = $this->slugify($branch);
+        $remoteDir = 'tragwerk/' . $project->id->toString() . '/' . $branch;
+        // Must match the compose project name the deploy uses: slugify(basename($branch)). Using the
+        // full branch here turns "feat/cron-observability" into "featcron-observability" (slash
+        // stripped), so `docker compose -p …` targets a non-existent project and only the
+        // label-filtered standalone containers show up.
+        $branchSlug     = $this->slugify(basename($branch));
         $shortId        = substr($project->id->toString(), 0, 8);
         $composeProject = 'tw-' . $shortId . '-' . $branchSlug;
         $labelFilter    = escapeshellarg('label=tragwerk.working_dir=/root/' . $remoteDir);
