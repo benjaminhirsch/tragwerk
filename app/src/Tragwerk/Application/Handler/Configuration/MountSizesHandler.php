@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tragwerk\Application\Handler\Configuration;
 
 use Override;
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -17,6 +18,7 @@ use Tragwerk\Domain\Model\ApplicationConfig;
 
 use function assert;
 use function is_string;
+use function md5;
 use function strlen;
 use function substr;
 
@@ -26,6 +28,7 @@ final readonly class MountSizesHandler implements RequestHandlerInterface
         private ResponseRenderer $renderer,
         private ProjectConfigLoader $configLoader,
         private VolumeSizeReader $volumeSizeReader,
+        private CacheItemPoolInterface $cache,
     ) {
     }
 
@@ -52,15 +55,35 @@ final readonly class MountSizesHandler implements RequestHandlerInterface
         $error = null;
 
         if ($hasMounts || $services !== []) {
-            try {
-                $prefix = $this->volumeSizeReader->composeProjectName($project, $branch) . '_';
+            // Cache the SSH `docker system df -v` result briefly. The pool holds a blocking
+            // lock per key, so concurrent pollers (multiple tabs/users) wait for a single SSH
+            // call instead of each opening their own connection.
+            $item = $this->cache->getItem('mount_sizes_' . $project->id->toString() . '_' . md5($branch));
 
-                foreach ($this->volumeSizeReader->read($project, $branch) as $name => $size) {
-                    $sizes[substr($name, strlen($prefix))] = $size;
+            if ($item->isHit()) {
+                /** @var array{sizes: array<string, string>, error: string|null} $result */
+                $result = $item->get();
+            } else {
+                try {
+                    $prefix = $this->volumeSizeReader->composeProjectName($project, $branch) . '_';
+                    $sizes  = [];
+
+                    foreach ($this->volumeSizeReader->read($project, $branch) as $name => $size) {
+                        $sizes[substr($name, strlen($prefix))] = $size;
+                    }
+
+                    $result = ['sizes' => $sizes, 'error' => null];
+                    $item->set($result)->expiresAfter(55);
+                } catch (Throwable $e) {
+                    $result = ['sizes' => [], 'error' => $e->getMessage()];
+                    $item->set($result)->expiresAfter(10);
                 }
-            } catch (Throwable $e) {
-                $error = $e->getMessage();
+
+                $this->cache->save($item);
             }
+
+            $sizes = $result['sizes'];
+            $error = $result['error'];
         }
 
         return $this->renderer->render($request, 'page::configuration/_mount_sizes', [
