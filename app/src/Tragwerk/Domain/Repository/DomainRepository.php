@@ -26,11 +26,8 @@ interface DomainRepository
     /** @return list<Domain> */
     public function findByProject(ProjectIdentifier $projectId): array;
 
-    /** @return list<Domain> */
-    public function findByEnvironment(ProjectIdentifier $projectId, string $branch): array;
-
     /** @throws EntityUpdateFailed */
-    public function clearPrimary(ProjectIdentifier $projectId, string $branch): void;
+    public function clearPrimary(ProjectIdentifier $projectId): void;
 
     /** @throws EntityUpdateFailed */
     public function setPrimary(DomainIdentifier $id): void;

@@ -35,7 +35,7 @@ final readonly class IndexHandler implements RequestHandlerInterface
         assert(is_string($activeBranch));
 
         $projectConfig = $this->configLoader->load($activeProject->id, $activeBranch);
-        $domains       = $this->domainRepository->findByEnvironment($activeProject->id, $activeBranch);
+        $domains       = $this->domainRepository->findByProject($activeProject->id);
 
         return $this->renderer->render($request, 'page::configuration/index', [
             'project'       => $activeProject,

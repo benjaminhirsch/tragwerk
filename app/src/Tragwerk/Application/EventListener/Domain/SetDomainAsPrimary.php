@@ -15,7 +15,7 @@ final readonly class SetDomainAsPrimary
 
     public function __invoke(Event\DomainSetPrimary $event): void
     {
-        $this->domainRepository->clearPrimary($event->projectId, $event->branch);
+        $this->domainRepository->clearPrimary($event->projectId);
         $this->domainRepository->setPrimary($event->domainId);
     }
 }

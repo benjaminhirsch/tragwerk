@@ -37,19 +37,16 @@ final readonly class DeleteHandler implements RequestHandlerInterface
         $project = $request->getAttribute('active_project');
         assert($project instanceof Project);
 
-        $branch = $request->getAttribute('active_environment');
-        assert(is_string($branch));
-
-        $domain = $this->resolveDomain($request, $project, $branch);
+        $domain = $this->resolveDomain($request, $project);
 
         if ($domain instanceof Domain) {
             $wasPrimary = $domain->isPrimary;
-            $this->eventDispatcher->dispatch(new DomainDeleted($domain->id, $project->id, $branch));
+            $this->eventDispatcher->dispatch(new DomainDeleted($domain->id, $project->id));
 
             if ($wasPrimary) {
-                $remaining = $this->domainRepository->findByEnvironment($project->id, $branch);
+                $remaining = $this->domainRepository->findByProject($project->id);
                 if ($remaining !== []) {
-                    $this->eventDispatcher->dispatch(new DomainSetPrimary($remaining[0]->id, $project->id, $branch));
+                    $this->eventDispatcher->dispatch(new DomainSetPrimary($remaining[0]->id, $project->id));
                 }
             }
         }
@@ -57,7 +54,7 @@ final readonly class DeleteHandler implements RequestHandlerInterface
         return new RedirectResponse($this->urlHelper->generate('domain'));
     }
 
-    private function resolveDomain(ServerRequestInterface $request, Project $project, string $branch): Domain|null
+    private function resolveDomain(ServerRequestInterface $request, Project $project): Domain|null
     {
         $domainId = $request->getAttribute('domainId');
         if (! is_string($domainId) || ! DomainIdentifier::isValid($domainId)) {
@@ -70,7 +67,7 @@ final readonly class DeleteHandler implements RequestHandlerInterface
             return null;
         }
 
-        if ($domain->projectId->toString() !== $project->id->toString() || $domain->branch !== $branch) {
+        if ($domain->projectId->toString() !== $project->id->toString()) {
             return null;
         }
 

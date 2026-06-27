@@ -36,6 +36,7 @@ use Tragwerk\Domain\Repository\EnvVarRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\Repository\UserRepository;
+use Tragwerk\Domain\Service\DomainResolver;
 use Tragwerk\Domain\ValueObject\DomainIdentifier;
 use Tragwerk\Domain\ValueObject\EnvVarIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
@@ -125,13 +126,7 @@ final class BuildEnvironmentTest extends TestCase
                 return [];
             }
 
-            /** @return list<Domain> */
-            public function findByEnvironment(ProjectIdentifier $projectId, string $branch): array
-            {
-                return [];
-            }
-
-            public function clearPrimary(ProjectIdentifier $projectId, string $branch): void
+            public function clearPrimary(ProjectIdentifier $projectId): void
             {
             }
 
@@ -337,6 +332,7 @@ final class BuildEnvironmentTest extends TestCase
             $this->tempDataDir,
             $nullProducer,
             $nullDomainRepo,
+            new DomainResolver(),
             $nullProjectRepo,
             $nullTeamRepo,
             $nullUserRepo,

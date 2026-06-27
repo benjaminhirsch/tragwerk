@@ -20,17 +20,20 @@ final readonly class TriggerProjectRedeploy
     public function __invoke(Event\DomainAdded|Event\DomainDeleted $event): void
     {
         $projectId = $event->projectId;
-        $branch    = $event instanceof Event\DomainAdded ? $event->domain->branch : $event->branch;
 
-        $latestJob = $this->deployJobRepository->getLatestByProjectAndBranch($projectId, $branch);
-        if ($latestJob === null) {
-            return;
+        // Domains are project-wide now — a change can affect any environment, so rebuild every
+        // environment that already has a deployment.
+        foreach ($this->deployJobRepository->getDeployedBranches($projectId) as $branch) {
+            $latestJob = $this->deployJobRepository->getLatestByProjectAndBranch($projectId, $branch);
+            if ($latestJob === null) {
+                continue;
+            }
+
+            $this->producer->sendMessage(new Message\BuildEnvironment(
+                $projectId->toString(),
+                $branch,
+                $latestJob->commitSha,
+            ));
         }
-
-        $this->producer->sendMessage(new Message\BuildEnvironment(
-            $projectId->toString(),
-            $branch,
-            $latestJob->commitSha,
-        ));
     }
 }

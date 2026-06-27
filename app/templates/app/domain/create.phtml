@@ -3,15 +3,15 @@
 declare(strict_types=1);
 
 /**
- * @var string      $branch
  * @var string      $host
  * @var string      $placeholder
+ * @var bool        $isWildcard
  * @var string|null $error
  */
 
 $this->layout('layout::default', [
     'wide' => false,
-    'pageType' => $this->activeTeam()->name . ' / ' . $this->activeEnvironment(),
+    'pageType' => $this->activeTeam()->name . ' / ' . $this->activeProject()->name,
     'pageTitle' => $this->t('Add domain'),
     'pageSubTitle' => $this->t('Connect a custom domain and map it to a routing placeholder.'),
 ]) ?>
@@ -30,7 +30,19 @@ $this->layout('layout::default', [
                    class="form-control mono<?= $error !== null ? ' is-invalid' : '' ?>"
                    placeholder="<?= $this->e($this->t('e.g. shop.my-company.com')) ?>"
                    value="<?= $this->e($host) ?>">
-            <div class="field-help"><?= $this->t('Without https:// — hostname only.') ?></div>
+            <div class="field-help"><?= $this->t('Without https:// — hostname only. For a wildcard enter the base only, e.g.') ?> <code>preview.my-company.com</code>.</div>
+        </div>
+
+        <div class="prop-switch">
+            <input id="is_wildcard" name="is_wildcard" value="1" type="checkbox"
+                   class="form-check-input"<?= $isWildcard ? ' checked' : '' ?>>
+            <div>
+                <label class="ttl d-block" for="is_wildcard"><?= $this->t('Wildcard domain') ?></label>
+                <div class="dsc">
+                    <?= $this->t('Each environment gets an auto-derived subdomain (e.g.') ?>
+                    <code>feature-x.preview.my-company.com</code>) <?= $this->t('as long as no explicit domain is assigned to the same placeholder.') ?>
+                </div>
+            </div>
         </div>
 
         <div>

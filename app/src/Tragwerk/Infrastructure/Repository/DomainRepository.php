@@ -54,42 +54,15 @@ final class DomainRepository extends GenericRepository implements DomainReposito
     }
 
     #[Override]
-    public function findByEnvironment(ProjectIdentifier $projectId, string $branch): array
-    {
-        $qb = $this->connection->createQueryBuilder();
-        $qb->select('*')
-            ->from(EntityHelper::getDbTableName(EntityType::DOMAIN))
-            ->where($qb->expr()->eq('project_id', ':project_id'))
-            ->andWhere($qb->expr()->eq('branch', ':branch'))
-            ->setParameter('project_id', $projectId->toString())
-            ->setParameter('branch', $branch)
-            ->orderBy('is_primary', 'DESC')
-            ->addOrderBy('created_at', 'ASC');
-
-        try {
-            $domains = [];
-            foreach ($qb->executeQuery()->iterateAssociative() as $row) {
-                $domains[] = $this->map($row, Domain::class);
-            }
-
-            return $domains;
-        } catch (MappingError | Exception $e) {
-            throw EntityHydrationFailed::create(Domain::class, $e);
-        }
-    }
-
-    #[Override]
-    public function clearPrimary(ProjectIdentifier $projectId, string $branch): void
+    public function clearPrimary(ProjectIdentifier $projectId): void
     {
         $qb = $this->connection->createQueryBuilder();
         try {
             $qb->update(EntityHelper::getDbTableName(EntityType::DOMAIN))
                 ->set('is_primary', ':false')
                 ->where($qb->expr()->eq('project_id', ':project_id'))
-                ->andWhere($qb->expr()->eq('branch', ':branch'))
                 ->setParameter('false', false, 'boolean')
                 ->setParameter('project_id', $projectId->toString())
-                ->setParameter('branch', $branch)
                 ->executeStatement();
         } catch (Exception $e) {
             throw EntityUpdateFailed::create(DomainIdentifier::nil(), $e);

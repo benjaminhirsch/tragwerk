@@ -21,6 +21,7 @@ use Tragwerk\Domain\Repository\DomainRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
+use Tragwerk\Domain\Service\DomainResolver;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Infrastructure\Git\BareRepository;
 
@@ -40,6 +41,7 @@ final readonly class ShowHandler implements RequestHandlerInterface
         private RegistryRepository $registryRepository,
         private DeployJobRepository $deployJobRepository,
         private DomainRepository $domainRepository,
+        private DomainResolver $domainResolver,
         private BareRepository $bareRepository,
         private UrlHelper $urlHelper,
         private string $gitSshHost,
@@ -139,13 +141,12 @@ final readonly class ShowHandler implements RequestHandlerInterface
 
     private function primaryDomain(Project $project, string $branch): string|null
     {
-        foreach ($this->domainRepository->findByEnvironment($project->id, $branch) as $domain) {
-            if ($domain->isPrimary) {
-                return 'https://' . $domain->host;
-            }
-        }
+        $host = $this->domainResolver->primaryHost(
+            $this->domainRepository->findByProject($project->id),
+            $branch,
+        );
 
-        return null;
+        return $host !== null ? 'https://' . $host : null;
     }
 
     private function resolveProject(ServerRequestInterface $request): Project|null

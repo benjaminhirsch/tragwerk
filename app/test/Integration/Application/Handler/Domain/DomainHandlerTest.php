@@ -45,6 +45,27 @@ final class DomainHandlerTest extends EnvironmentScopedTestCase
     }
 
     #[Test]
+    public function createWildcardDomainPersists(): void
+    {
+        $response = $this->dispatch(
+            'POST',
+            $this->url('domain.create'),
+            ['host' => 'preview.example.com', 'placeholder' => 'default', 'is_wildcard' => '1'],
+            $this->sessionCookie,
+        );
+
+        self::assertSame(302, $response->getStatusCode());
+
+        $repo = $this->container->get(DomainRepository::class);
+        assert($repo instanceof DomainRepository);
+        $domains = $repo->findByProject($this->project->id);
+
+        self::assertCount(1, $domains);
+        self::assertTrue($domains[0]->isWildcard);
+        self::assertSame('preview.example.com', $domains[0]->host);
+    }
+
+    #[Test]
     public function deleteRemovesDomainAndRedirects(): void
     {
         $domain = $this->seedDomain('example.com', true);
@@ -61,7 +82,7 @@ final class DomainHandlerTest extends EnvironmentScopedTestCase
 
         $repo = $this->container->get(DomainRepository::class);
         assert($repo instanceof DomainRepository);
-        self::assertCount(0, $repo->findByEnvironment($this->project->id, $this->branch));
+        self::assertCount(0, $repo->findByProject($this->project->id));
     }
 
     #[Test]
@@ -82,7 +103,7 @@ final class DomainHandlerTest extends EnvironmentScopedTestCase
         $repo = $this->container->get(DomainRepository::class);
         assert($repo instanceof DomainRepository);
         $byHost = [];
-        foreach ($repo->findByEnvironment($this->project->id, $this->branch) as $d) {
+        foreach ($repo->findByProject($this->project->id) as $d) {
             $byHost[$d->host] = $d->isPrimary;
         }
 
@@ -99,7 +120,6 @@ final class DomainHandlerTest extends EnvironmentScopedTestCase
             $isPrimary,
             TimestampImmutable::now(),
             'default',
-            $this->branch,
         );
 
         $repo = $this->container->get(DomainRepository::class);

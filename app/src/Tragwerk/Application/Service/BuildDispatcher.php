@@ -13,6 +13,7 @@ use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Enum\BuildLogType;
 use Tragwerk\Domain\Event\BuildLogCreated;
 use Tragwerk\Domain\Repository\DomainRepository;
+use Tragwerk\Domain\Service\DomainResolver;
 use Tragwerk\Domain\ValueObject\BuildLogIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
 use Tragwerk\Infrastructure\Git\BareRepository;
@@ -26,6 +27,7 @@ final readonly class BuildDispatcher
         private ConfigValidator $configValidator,
         private EventDispatcherInterface $eventDispatcher,
         private DomainRepository $domainRepository,
+        private DomainResolver $domainResolver,
         private Producer $producer,
     ) {
     }
@@ -48,7 +50,10 @@ final readonly class BuildDispatcher
         )));
 
         $isMain    = $branch === 'main' || $branch === 'master';
-        $hasDomain = $isMain || $this->domainRepository->findByEnvironment($project->id, $branch) !== [];
+        $hasDomain = $isMain || $this->domainResolver->resolveForEnvironment(
+            $this->domainRepository->findByProject($project->id),
+            $branch,
+        ) !== [];
 
         if (! $configValid || ! $hasDomain) {
             return;

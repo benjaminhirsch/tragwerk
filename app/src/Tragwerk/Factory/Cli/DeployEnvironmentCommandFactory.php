@@ -19,6 +19,7 @@ use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\RegistryPrefixRepository;
 use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
+use Tragwerk\Domain\Service\DomainResolver;
 use Tragwerk\Infrastructure\Git\BareRepository;
 use Tragwerk\Infrastructure\Mercure\MercurePublisher;
 
@@ -36,21 +37,22 @@ final readonly class DeployEnvironmentCommandFactory
         $dataPath = $config['project']['data_path'] ?? 'data/project';
         assert(is_string($dataPath));
 
-        $projects    = $container->get(ProjectRepository::class);
-        $servers     = $container->get(ServerRepository::class);
-        $credentials = $container->get(CredentialRepository::class);
-        $deployJobs  = $container->get(DeployJobRepository::class);
-        $registries  = $container->get(RegistryRepository::class);
-        $domains     = $container->get(DomainRepository::class);
-        $bareRepo    = $container->get(BareRepository::class);
-        $xmlConv     = $container->get(XmlToArrayConverter::class);
-        $mapper      = $container->get(TreeMapper::class);
-        $compose     = $container->get(DockerComposeGenerator::class);
-        $imgResolver = $container->get(ServiceImageResolver::class);
-        $producer    = $container->get(Producer::class);
-        $regPrefixes = $container->get(RegistryPrefixRepository::class);
-        $envVars     = $container->get(EnvVarRepository::class);
-        $mercure     = $container->get(MercurePublisher::class);
+        $projects       = $container->get(ProjectRepository::class);
+        $servers        = $container->get(ServerRepository::class);
+        $credentials    = $container->get(CredentialRepository::class);
+        $deployJobs     = $container->get(DeployJobRepository::class);
+        $registries     = $container->get(RegistryRepository::class);
+        $domains        = $container->get(DomainRepository::class);
+        $domainResolver = $container->get(DomainResolver::class);
+        $bareRepo       = $container->get(BareRepository::class);
+        $xmlConv        = $container->get(XmlToArrayConverter::class);
+        $mapper         = $container->get(TreeMapper::class);
+        $compose        = $container->get(DockerComposeGenerator::class);
+        $imgResolver    = $container->get(ServiceImageResolver::class);
+        $producer       = $container->get(Producer::class);
+        $regPrefixes    = $container->get(RegistryPrefixRepository::class);
+        $envVars        = $container->get(EnvVarRepository::class);
+        $mercure        = $container->get(MercurePublisher::class);
 
         assert($projects instanceof ProjectRepository);
         assert($servers instanceof ServerRepository);
@@ -58,6 +60,7 @@ final readonly class DeployEnvironmentCommandFactory
         assert($deployJobs instanceof DeployJobRepository);
         assert($registries instanceof RegistryRepository);
         assert($domains instanceof DomainRepository);
+        assert($domainResolver instanceof DomainResolver);
         assert($bareRepo instanceof BareRepository);
         assert($xmlConv instanceof XmlToArrayConverter);
         assert($mapper instanceof TreeMapper);
@@ -75,6 +78,7 @@ final readonly class DeployEnvironmentCommandFactory
             $deployJobs,
             $registries,
             $domains,
+            $domainResolver,
             $bareRepo,
             $xmlConv,
             $mapper,
