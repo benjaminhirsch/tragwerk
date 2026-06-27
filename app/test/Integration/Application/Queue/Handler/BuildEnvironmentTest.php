@@ -19,6 +19,7 @@ use Tragwerk\Application\Queue\Message;
 use Tragwerk\Application\Queue\Producer;
 use Tragwerk\Application\Queue\Queue;
 use Tragwerk\Application\Service\BranchAncestorResolver;
+use Tragwerk\Application\Service\EnvVarResolver;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
 use Tragwerk\Domain\Docker\DockerfileGenerator;
@@ -337,8 +338,7 @@ final class BuildEnvironmentTest extends TestCase
             $nullTeamRepo,
             $nullUserRepo,
             new LockFactory(new InMemoryStore()),
-            $nullEnvVarRepo,
-            new BranchAncestorResolver($this->bareRepository),
+            new EnvVarResolver($nullEnvVarRepo, new BranchAncestorResolver($this->bareRepository)),
         );
     }
 

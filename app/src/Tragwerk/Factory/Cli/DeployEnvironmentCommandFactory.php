@@ -8,14 +8,13 @@ use CuyZ\Valinor\Mapper\TreeMapper;
 use Psr\Container\ContainerInterface;
 use Tragwerk\Application\Cli\Command\DeployEnvironmentCommand;
 use Tragwerk\Application\Queue\Producer;
-use Tragwerk\Application\Service\BranchAncestorResolver;
+use Tragwerk\Application\Service\EnvVarResolver;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
 use Tragwerk\Domain\Docker\ServiceImageResolver;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\DeployJobRepository;
 use Tragwerk\Domain\Repository\DomainRepository;
-use Tragwerk\Domain\Repository\EnvVarRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\RegistryPrefixRepository;
 use Tragwerk\Domain\Repository\RegistryRepository;
@@ -52,8 +51,7 @@ final readonly class DeployEnvironmentCommandFactory
         $imgResolver    = $container->get(ServiceImageResolver::class);
         $producer       = $container->get(Producer::class);
         $regPrefixes    = $container->get(RegistryPrefixRepository::class);
-        $envVars        = $container->get(EnvVarRepository::class);
-        $ancestors      = $container->get(BranchAncestorResolver::class);
+        $envVars        = $container->get(EnvVarResolver::class);
         $mercure        = $container->get(MercurePublisher::class);
 
         assert($projects instanceof ProjectRepository);
@@ -70,8 +68,7 @@ final readonly class DeployEnvironmentCommandFactory
         assert($imgResolver instanceof ServiceImageResolver);
         assert($producer instanceof Producer);
         assert($regPrefixes instanceof RegistryPrefixRepository);
-        assert($envVars instanceof EnvVarRepository);
-        assert($ancestors instanceof BranchAncestorResolver);
+        assert($envVars instanceof EnvVarResolver);
         assert($mercure instanceof MercurePublisher);
 
         return new DeployEnvironmentCommand(
@@ -90,7 +87,6 @@ final readonly class DeployEnvironmentCommandFactory
             $producer,
             $regPrefixes,
             $envVars,
-            $ancestors,
             $dataPath,
             $mercure,
         );
