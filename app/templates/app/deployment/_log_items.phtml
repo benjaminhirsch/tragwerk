@@ -108,9 +108,11 @@ $buildIcon = static fn (string $type): string => match ($type) {
     <?php endif ?>
 <?php endforeach ?>
 <?php if ($hasMore): ?>
-    <div hx-get="<?= $this->e($listUrl . '?offset=' . $nextOffset . '&type=' . urlencode($type)) ?>"
-         hx-trigger="intersect once root:#log-items"
+    <div class="log-more text-body-secondary small"
+         hx-get="<?= $this->e($listUrl . '?offset=' . $nextOffset . '&type=' . urlencode($type)) ?>"
+         hx-trigger="intersect once root:#log-items threshold:0.1"
          hx-target="this"
          hx-swap="outerHTML">
+        <i class="bi bi-arrow-repeat me-1"></i><?= $this->e($this->t('Loading more…')) ?>
     </div>
 <?php endif ?>

@@ -39,6 +39,18 @@
         }
     });
 
+    // The live refresh (SSE / 30s poll) on #log-items swaps innerHTML and would
+    // otherwise reset the list to the first page, dropping infinite-scrolled
+    // entries. Report how many are currently loaded via `limit` so the server
+    // re-renders the whole loaded window instead.
+    document.body.addEventListener('htmx:configRequest', function (evt) {
+        var elt = evt.detail && evt.detail.elt;
+        if (elt && elt.id === 'log-items') {
+            evt.detail.parameters['limit'] =
+                document.querySelectorAll('#log-items .log-item').length || 20;
+        }
+    });
+
     function terminalText() {
         var body = document.getElementById('term-body');
         return body ? body.innerText : '';
