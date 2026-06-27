@@ -20,6 +20,7 @@ use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 
+use function array_values;
 use function assert;
 use function escapeshellarg;
 use function explode;
@@ -116,11 +117,14 @@ final readonly class StatusHandler implements RequestHandlerInterface
         $composeProject = 'tw-' . $shortId . '-' . $branchSlug;
         $labelFilter    = escapeshellarg('label=tragwerk.working_dir=/root/' . $remoteDir);
         $dc             = 'docker compose --project-name ' . escapeshellarg($composeProject);
-        $raw            = $sftp->exec(
-            'cd ~/' . $remoteDir . ' && ' . $dc . ' ps --format json 2>&1; '
-            . 'docker ps --filter ' . $labelFilter . ' --format json 2>/dev/null',
+        // Include restarting (not just running) containers so a crash-looping service — which is
+        // not "running" at the poll moment — still shows up instead of silently vanishing.
+        $raw    = $sftp->exec(
+            'cd ~/' . $remoteDir . ' && ' . $dc . ' ps --status running --status restarting --format json 2>&1; '
+            . 'docker ps --filter ' . $labelFilter
+            . ' --filter status=running --filter status=restarting --format json 2>/dev/null',
         );
-        $output         = trim(is_string($raw) ? $raw : '');
+        $output = trim(is_string($raw) ? $raw : '');
 
         $containers = $this->parseContainers($output);
 
@@ -218,14 +222,17 @@ final readonly class StatusHandler implements RequestHandlerInterface
                 $obj['Name'] = $obj['Names'];
             }
 
-            if (! isset($obj['Name'])) {
+            $name = $obj['Name'] ?? null;
+            if (! is_string($name) || $name === '') {
                 continue;
             }
 
-            $containers[] = $obj;
+            // The compose `ps` and the label-filtered `docker ps` can return the same container;
+            // key by name so it appears once.
+            $containers[$name] = $obj;
         }
 
-        return $containers;
+        return array_values($containers);
     }
 
     private function slugify(string $name): string
