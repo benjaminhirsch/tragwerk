@@ -20,23 +20,26 @@ $cronTopic = urlencode($topicBase . '/project/' . $project->id->toString() . '/c
 $tailUrl   = $this->url('log.tail');
 ?>
 
+<div class="log-view">
 <?php if ($services !== []): ?>
-    <div class="d-flex align-items-center gap-2 mb-3">
+    <div class="d-flex align-items-center gap-2 mb-3" style="flex:none">
         <label for="log-service" class="tw-cell-muted" style="font-size:.8rem"><?= $this->e($this->t('Service')) ?></label>
         <select id="log-service" name="service" class="tw-input" style="max-width:18rem"
                 hx-get="<?= $this->e($tailUrl) ?>"
                 hx-trigger="change"
                 hx-target="#log-tail"
-                hx-swap="innerHTML">
+                hx-swap="innerHTML"
+                hx-indicator="#log-service-spinner">
             <?php foreach ($services as $service): ?>
                 <option value="<?= $this->e($service['value']) ?>"
                     <?= $service['value'] === $selectedService ? 'selected' : '' ?>><?= $this->e($service['label']) ?></option>
             <?php endforeach ?>
         </select>
+        <span id="log-service-spinner" class="spinner-border spinner-border-sm htmx-indicator" role="status" aria-hidden="true"></span>
     </div>
 <?php endif ?>
 
-<div id="log-shell" hx-ext="sse" sse-connect="/.well-known/mercure?topic=<?= $cronTopic ?>">
+<div id="log-shell" class="log-view__body" hx-ext="sse" sse-connect="/.well-known/mercure?topic=<?= $cronTopic ?>">
     <div id="log-tail"
          hx-get="<?= $this->e($tailUrl . '?service=' . urlencode($selectedService)) ?>"
          hx-trigger="load"
@@ -45,4 +48,5 @@ $tailUrl   = $this->url('log.tail');
         <span class="spinner-border spinner-border-sm me-2" role="status"></span>
         <?= $this->t('Loading...') ?>
     </div>
+</div>
 </div>
