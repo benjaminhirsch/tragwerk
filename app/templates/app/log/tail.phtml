@@ -16,12 +16,13 @@ $badgeType = static fn (string $level): string => match ($level) {
     default                   => 'neutral',
 };
 ?>
-<div hx-get="<?= $this->e($this->url('log.tail') . '?service=' . urlencode($service ?? '')) ?>"
+<div class="log-tail__inner"
+     hx-get="<?= $this->e($this->url('log.tail') . '?service=' . urlencode($service ?? '')) ?>"
      hx-trigger="every 10s, sse:message"
      hx-target="#log-tail"
      hx-swap="innerHTML">
 
-    <div class="d-flex align-items-center justify-content-between mb-2">
+    <div class="d-flex align-items-center justify-content-between mb-2" style="flex:none">
         <span class="tw-cell-muted" style="font-size:.8rem">
             <?= count($entries) ?> <?= $this->e($this->t('entries')) ?> &middot; <?= $this->e($this->t('last 500 lines')) ?>
         </span>
@@ -37,7 +38,7 @@ $badgeType = static fn (string $level): string => match ($level) {
             <i class="bi bi-info-circle me-1"></i><?= $this->e($this->t('No log entries.')) ?>
         </div></div>
     <?php else: ?>
-        <div class="tw-table-wrap" style="max-height:600px;overflow-y:auto">
+        <div class="tw-table-wrap" style="overflow-y:auto">
             <table class="tw-table mono" style="font-size:.78rem">
                 <tbody>
                 <?php foreach (array_reverse($entries) as $entry): ?>
