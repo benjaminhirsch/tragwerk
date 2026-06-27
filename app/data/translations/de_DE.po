@@ -2026,3 +2026,18 @@ msgstr "AGB:"
 
 msgid "This is an automated message — please do not reply to this email."
 msgstr "Dies ist eine automatische Nachricht — bitte antworten Sie nicht auf diese E-Mail."
+
+msgid "Last run"
+msgstr "Letzter Lauf"
+
+msgid "No runs yet"
+msgstr "Noch keine Läufe"
+
+msgid "Succeeded"
+msgstr "Erfolgreich"
+
+msgid "No cron jobs configured."
+msgstr "Keine Cronjobs konfiguriert."
+
+msgid "Live container logs for this environment — pick the application, a worker or the cron sidecar."
+msgstr "Live-Container-Logs für diese Umgebung — wähle die Anwendung, einen Worker oder den Cron-Sidecar."

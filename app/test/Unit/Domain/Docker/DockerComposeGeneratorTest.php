@@ -663,10 +663,13 @@ final class DockerComposeGeneratorTest extends TestCase
 
         $cron = $this->service($compose, 'app-cron');
 
-        self::assertSame('supercronic /etc/supercronic/crontab', $cron['command']);
+        self::assertSame('supercronic -json /etc/supercronic/crontab', $cron['command']);
         self::assertSame('unless-stopped', $cron['restart']);
         self::assertArrayNotHasKey('labels', $cron);
-        self::assertSame(['disable' => true], $cron['healthcheck'] ?? null);
+        self::assertSame(
+            ['CMD', 'supercronic', '-test', '/etc/supercronic/crontab'],
+            $cron['healthcheck']['test'] ?? null,
+        );
     }
 
     #[Test]

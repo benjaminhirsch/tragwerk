@@ -48,6 +48,8 @@
 
             if (str_contains($name, '-worker-')) {
                 $containerIcon = 'bi-gear-wide-connected';
+            } elseif (str_contains($name, '-cron')) {
+                $containerIcon = 'bi-clock-history';
             }
 
             ?>

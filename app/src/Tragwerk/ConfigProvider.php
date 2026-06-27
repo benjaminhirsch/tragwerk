@@ -305,6 +305,8 @@ final readonly class ConfigProvider
                         Infrastructure\Repository\ServerMetricRepository::class,
                     Domain\Repository\AppMetricRepository::class =>
                         Infrastructure\Repository\AppMetricRepository::class,
+                    Domain\Repository\CronRunRepository::class =>
+                        Infrastructure\Repository\CronRunRepository::class,
                     Domain\Repository\RegistryRepository::class =>
                         Infrastructure\Repository\RegistryRepository::class,
                     Domain\Repository\RegistryPrefixRepository::class =>
@@ -402,6 +404,7 @@ final readonly class ConfigProvider
                 ],
                 Event\ServerMetricsSampled::class => [EventListener\ServerMetrics\PersistServerMetrics::class],
                 Event\AppMetricsSampled::class    => [EventListener\AppMetrics\PersistAppMetrics::class],
+                Event\CronRunsCollected::class    => [EventListener\Cron\PersistCronRuns::class],
                 Event\RegistryCreated::class      => [EventListener\Registry\CreateRegistry::class],
                 Event\RegistryUpdated::class      => [EventListener\Registry\UpdateRegistry::class],
                 Event\RegistryDeleted::class      => [EventListener\Registry\DeleteRegistry::class],

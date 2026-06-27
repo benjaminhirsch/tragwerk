@@ -1,16 +1,48 @@
 <?php
 
+declare(strict_types=1);
+
+/**
+ * @var list<array{value: string, label: string}> $services
+ * @var string                                     $selectedService
+ * @var \Tragwerk\Domain\Entity\Project            $project
+ * @var string                                     $branch
+ */
+
 $this->layout('layout::default', [
     'pageType' =>  $this->activeTeam()->name . ' / ' . $this->activeEnvironment(),
     'pageTitle' => $this->t('Logs'),
-    'pageSubTitle' => $this->t('Live FrankenPHP runtime log of the running application container in this environment.'),
-]) ?>
+    'pageSubTitle' => $this->t('Live container logs for this environment — pick the application, a worker or the cron sidecar.'),
+]);
 
-<div id="log-tail"
-     hx-get="<?= $this->e($this->url('log.tail')) ?>"
-     hx-trigger="load"
-     hx-target="#log-tail"
-     hx-swap="innerHTML">
-    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-    <?= $this->t('Loading...') ?>
+$topicBase = $_SERVER['MERCURE_TOPIC_BASE'] ?? 'https://tragwerk.build';
+$cronTopic = urlencode($topicBase . '/project/' . $project->id->toString() . '/cron/' . $branch);
+$tailUrl   = $this->url('log.tail');
+?>
+
+<?php if ($services !== []): ?>
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <label for="log-service" class="tw-cell-muted" style="font-size:.8rem"><?= $this->e($this->t('Service')) ?></label>
+        <select id="log-service" name="service" class="tw-input" style="max-width:18rem"
+                hx-get="<?= $this->e($tailUrl) ?>"
+                hx-trigger="change"
+                hx-target="#log-tail"
+                hx-swap="innerHTML">
+            <?php foreach ($services as $service): ?>
+                <option value="<?= $this->e($service['value']) ?>"
+                    <?= $service['value'] === $selectedService ? 'selected' : '' ?>><?= $this->e($service['label']) ?></option>
+            <?php endforeach ?>
+        </select>
+    </div>
+<?php endif ?>
+
+<div id="log-shell" hx-ext="sse" sse-connect="/.well-known/mercure?topic=<?= $cronTopic ?>">
+    <div id="log-tail"
+         hx-get="<?= $this->e($tailUrl . '?service=' . urlencode($selectedService)) ?>"
+         hx-trigger="load"
+         hx-target="#log-tail"
+         hx-swap="innerHTML">
+        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+        <?= $this->t('Loading...') ?>
+    </div>
 </div>
