@@ -40,6 +40,7 @@ use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\RegistryPrefixRepository;
 use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
+use Tragwerk\Domain\Service\DomainResolver;
 use Tragwerk\Domain\ValueObject\DeployJobIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Infrastructure\Git\BareRepository;
@@ -97,6 +98,7 @@ final class DeployEnvironmentCommand extends Command
         private readonly DeployJobRepository $deployJobRepository,
         private readonly RegistryRepository $registryRepository,
         private readonly DomainRepository $domainRepository,
+        private readonly DomainResolver $domainResolver,
         private readonly BareRepository $bareRepository,
         private readonly XmlToArrayConverter $xmlConverter,
         private readonly TreeMapper $treeMapper,
@@ -422,11 +424,11 @@ final class DeployEnvironmentCommand extends Command
         $sftp->mkdir($remoteDir, -1, true);
 
         // Upload docker-compose.yml (with image: refs) + Caddyfiles
-        $domainsByPlaceholder = [];
         $projectIdentifier    = ProjectIdentifier::fromString($projectId);
-        foreach ($this->domainRepository->findByEnvironment($projectIdentifier, $branch) as $domain) {
-            $domainsByPlaceholder[$domain->placeholder][] = $domain->host;
-        }
+        $domainsByPlaceholder = $this->domainResolver->resolveForEnvironment(
+            $this->domainRepository->findByProject($projectIdentifier),
+            $branch,
+        );
 
         $userEnvVars = [];
         foreach ($this->envVarRepository->findByBranch($projectIdentifier, $branch) as $envVar) {

@@ -13,7 +13,6 @@ use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Repository\DomainRepository;
 
 use function assert;
-use function is_string;
 
 final readonly class IndexHandler implements RequestHandlerInterface
 {
@@ -29,12 +28,8 @@ final readonly class IndexHandler implements RequestHandlerInterface
         $project = $request->getAttribute('active_project');
         assert($project instanceof Project);
 
-        $branch = $request->getAttribute('active_environment');
-        assert(is_string($branch));
-
         return $this->renderer->render($request, 'page::domain/index', [
-            'branch'  => $branch,
-            'domains' => $this->domainRepository->findByEnvironment($project->id, $branch),
+            'domains' => $this->domainRepository->findByProject($project->id),
         ]);
     }
 }

@@ -26,14 +26,13 @@ final class DomainAddedTest extends EnvironmentScopedTestCase
             host: 'example.com',
             isPrimary: false,
             createdAt: TimestampImmutable::now(),
-            branch: $this->branch,
         );
 
         $this->dispatcher()->dispatch(new DomainAdded($domain));
 
         $repository = $this->container->get(DomainRepository::class);
         assert($repository instanceof DomainRepository);
-        $domains = $repository->findByEnvironment($this->project->id, $this->branch);
+        $domains = $repository->findByProject($this->project->id);
 
         self::assertCount(1, $domains);
         self::assertSame('example.com', $domains[0]->host);

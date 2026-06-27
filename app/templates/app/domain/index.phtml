@@ -3,14 +3,13 @@
 declare(strict_types=1);
 
 /**
- * @var string                                 $branch
  * @var list<\Tragwerk\Domain\Entity\Domain>   $domains
  */
 
 $this->layout('layout::default', [
-    'pageType' =>  $this->activeTeam()->name . ' / ' . $this->activeEnvironment(),
+    'pageType' =>  $this->activeTeam()->name . ' / ' . $this->activeProject()->name,
     'pageTitle' => $this->t('Domains'),
-    'pageSubTitle' => $this->t('Connect custom domains and map them to a routing placeholder.'),
+    'pageSubTitle' => $this->t('Connect custom domains and map them to a routing placeholder. Wildcard domains assign a subdomain per environment automatically.'),
 ]) ?>
 
 <?php $this->start('pageHeadButtons') ?>
@@ -39,13 +38,19 @@ $this->layout('layout::default', [
             <tr>
                 <td>
                     <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-globe2" style="color:var(--text-faint)"></i>
-                        <?= $this->fetch('partial::link', [
-                            'label'   => $domain->host,
-                            'href'    => sprintf('https://%s', $domain->host),
-                            'target'  => '_blank',
-                            'classes' => 'tw-cell-strong mono',
-                        ]) ?>
+                        <?php if ($domain->isWildcard): ?>
+                            <i class="bi bi-asterisk" style="color:var(--text-faint)"></i>
+                            <span class="tw-cell-strong mono">*.<?= $this->e($domain->host) ?></span>
+                            <span class="tw-badge tw-badge--neutral"><?= $this->e($this->t('Wildcard')) ?></span>
+                        <?php else: ?>
+                            <i class="bi bi-globe2" style="color:var(--text-faint)"></i>
+                            <?= $this->fetch('partial::link', [
+                                'label'   => $domain->host,
+                                'href'    => sprintf('https://%s', $domain->host),
+                                'target'  => '_blank',
+                                'classes' => 'tw-cell-strong mono',
+                            ]) ?>
+                        <?php endif ?>
                     </div>
                 </td>
                 <td><span class="tw-badge tw-badge--neutral mono">{<?= $this->e($domain->placeholder) ?>}</span></td>

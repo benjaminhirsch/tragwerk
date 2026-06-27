@@ -13,6 +13,7 @@ use Tragwerk\Domain\Repository\DomainRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
+use Tragwerk\Domain\Service\DomainResolver;
 use Tragwerk\Infrastructure\Git\BareRepository;
 
 use function assert;
@@ -37,6 +38,7 @@ final readonly class ShowHandlerFactory
         $registries = $container->get(RegistryRepository::class);
         $deployJobs = $container->get(DeployJobRepository::class);
         $domains    = $container->get(DomainRepository::class);
+        $resolver   = $container->get(DomainResolver::class);
         $bare       = $container->get(BareRepository::class);
         $urlHelper  = $container->get(UrlHelper::class);
 
@@ -46,6 +48,7 @@ final readonly class ShowHandlerFactory
         assert($registries instanceof RegistryRepository);
         assert($deployJobs instanceof DeployJobRepository);
         assert($domains instanceof DomainRepository);
+        assert($resolver instanceof DomainResolver);
         assert($bare instanceof BareRepository);
         assert($urlHelper instanceof UrlHelper);
 
@@ -56,6 +59,7 @@ final readonly class ShowHandlerFactory
             $registries,
             $deployJobs,
             $domains,
+            $resolver,
             $bare,
             $urlHelper,
             $sshHost,

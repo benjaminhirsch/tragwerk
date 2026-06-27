@@ -34,6 +34,7 @@ use Tragwerk\Domain\Repository\EnvVarRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\Repository\UserRepository;
+use Tragwerk\Domain\Service\DomainResolver;
 use Tragwerk\Domain\ValueObject\BuildLogIdentifier;
 use Tragwerk\Domain\ValueObject\DeployJobIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
@@ -69,6 +70,7 @@ final readonly class BuildEnvironment
         private string $projectDataPath,
         private Producer $producer,
         private DomainRepository $domainRepository,
+        private DomainResolver $domainResolver,
         private ProjectRepository $projectRepository,
         private TeamRepository $teamRepository,
         private UserRepository $userRepository,
@@ -121,10 +123,10 @@ final readonly class BuildEnvironment
         $outDir = $this->ensureBuildDir($projectId, $branch);
 
         $projectIdentifier    = ProjectIdentifier::fromString($projectId);
-        $domainsByPlaceholder = [];
-        foreach ($this->domainRepository->findByEnvironment($projectIdentifier, $branch) as $domain) {
-            $domainsByPlaceholder[$domain->placeholder][] = $domain->host;
-        }
+        $domainsByPlaceholder = $this->domainResolver->resolveForEnvironment(
+            $this->domainRepository->findByProject($projectIdentifier),
+            $branch,
+        );
 
         $acmeEmail   = $this->ownerEmail($projectIdentifier);
         $messages    = ['Build started for commit ' . $commitSha];

@@ -8,8 +8,8 @@ use Fig\Http\Message\RequestMethodInterface;
 use Mezzio\MiddlewareFactory;
 use Mezzio\Router\RouteCollectorInterface;
 use Tragwerk\Application\Handler;
-use Tragwerk\Application\Middleware\Conditional\RequiresActiveEnvironment;
-use Tragwerk\Application\Middleware\Redirect\ToActiveProject;
+use Tragwerk\Application\Middleware\Conditional\RequiresActiveProject;
+use Tragwerk\Application\Middleware\Redirect\ToActiveTeam;
 
 final readonly class Domain
 {
@@ -23,10 +23,10 @@ final readonly class Domain
         $routes->get(
             '/domains',
             $this->middlewareFactory->prepare([
-                new RequiresActiveEnvironment($this->middlewareFactory->prepare([
+                new RequiresActiveProject($this->middlewareFactory->prepare([
                     Handler\Domain\IndexHandler::class,
                 ])),
-                ToActiveProject::class,
+                ToActiveTeam::class,
             ]),
             'domain',
         );
@@ -34,10 +34,10 @@ final readonly class Domain
         $routes->route(
             '/domains/create',
             $this->middlewareFactory->prepare([
-                new RequiresActiveEnvironment($this->middlewareFactory->prepare([
+                new RequiresActiveProject($this->middlewareFactory->prepare([
                     Handler\Domain\CreateHandler::class,
                 ])),
-                ToActiveProject::class,
+                ToActiveTeam::class,
             ]),
             [
                 RequestMethodInterface::METHOD_GET,
@@ -49,10 +49,10 @@ final readonly class Domain
         $routes->post(
             '/domains/{domainId}/delete',
             $this->middlewareFactory->prepare([
-                new RequiresActiveEnvironment($this->middlewareFactory->prepare([
+                new RequiresActiveProject($this->middlewareFactory->prepare([
                     Handler\Domain\DeleteHandler::class,
                 ])),
-                ToActiveProject::class,
+                ToActiveTeam::class,
             ]),
             'domain.delete',
         );
@@ -60,10 +60,10 @@ final readonly class Domain
         $routes->post(
             '/domains/{domainId}/primary',
             $this->middlewareFactory->prepare([
-                new RequiresActiveEnvironment($this->middlewareFactory->prepare([
+                new RequiresActiveProject($this->middlewareFactory->prepare([
                     Handler\Domain\SetPrimaryHandler::class,
                 ])),
-                ToActiveProject::class,
+                ToActiveTeam::class,
             ]),
             'domain.primary',
         );

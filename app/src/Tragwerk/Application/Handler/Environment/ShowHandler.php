@@ -59,7 +59,7 @@ final readonly class ShowHandler implements RequestHandlerInterface
             0,
         );
 
-        $domains       = $this->domainRepository->findByEnvironment($project->id, $branch);
+        $domains       = $this->domainRepository->findByProject($project->id);
         $primaryDomain = null;
         foreach ($domains as $domain) {
             if ($domain->isPrimary) {

@@ -55,11 +55,9 @@ final readonly class CreateHandler implements RequestHandlerInterface
         $project = $request->getAttribute('active_project');
         assert($project instanceof Project);
 
-        $branch = $request->getAttribute('active_environment');
-        assert(is_string($branch));
-
         $host        = '';
         $placeholder = 'default';
+        $isWildcard  = false;
         $error       = null;
 
         if ($request->getMethod() === RequestMethodInterface::METHOD_POST) {
@@ -68,15 +66,21 @@ final readonly class CreateHandler implements RequestHandlerInterface
             $placeholder = is_array($body) && is_string($body['placeholder'] ?? null)
                 ? trim(strtolower($body['placeholder']))
                 : 'default';
+            $isWildcard  = is_array($body) && ($body['is_wildcard'] ?? null) !== null;
 
             if ($placeholder === '' || preg_match('/^[a-z][a-z0-9_-]*$/', $placeholder) !== 1) {
                 $placeholder = 'default';
             }
 
-            $error = $this->validate($host, $project->id, $branch) ?? $this->checkDns($host, $project->serverId);
+            // A wildcard stores only the base host; subdomains are derived per environment, so a
+            // DNS check against the base would be misleading and is skipped.
+            $error = $this->validate($host, $project->id);
+            if ($error === null && ! $isWildcard) {
+                $error = $this->checkDns($host, $project->serverId);
+            }
 
             if ($error === null) {
-                $existing = $this->domainRepository->findByEnvironment($project->id, $branch);
+                $existing = $this->domainRepository->findByProject($project->id);
                 $domain   = new Domain(
                     id:          DomainIdentifier::create(),
                     projectId:   $project->id,
@@ -84,7 +88,7 @@ final readonly class CreateHandler implements RequestHandlerInterface
                     isPrimary:   $existing === [],
                     createdAt:   TimestampImmutable::now(),
                     placeholder: $placeholder,
-                    branch:      $branch,
+                    isWildcard:  $isWildcard,
                 );
                 $this->eventDispatcher->dispatch(new DomainAdded($domain));
 
@@ -93,14 +97,14 @@ final readonly class CreateHandler implements RequestHandlerInterface
         }
 
         return $this->renderer->render($request, 'page::domain/create', [
-            'branch'      => $branch,
             'host'        => $host,
             'placeholder' => $placeholder,
+            'isWildcard'  => $isWildcard,
             'error'       => $error,
         ]);
     }
 
-    private function validate(string $host, ProjectIdentifier $projectId, string $branch): string|null
+    private function validate(string $host, ProjectIdentifier $projectId): string|null
     {
         if ($host === '') {
             return 'Domain must not be empty.';
@@ -110,7 +114,7 @@ final readonly class CreateHandler implements RequestHandlerInterface
             return 'Invalid domain (e.g. example.com or sub.example.com).';
         }
 
-        foreach ($this->domainRepository->findByEnvironment($projectId, $branch) as $existing) {
+        foreach ($this->domainRepository->findByProject($projectId) as $existing) {
             if ($existing->host === $host) {
                 return 'This domain has already been added.';
             }

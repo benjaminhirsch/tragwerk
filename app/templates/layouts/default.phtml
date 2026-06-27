@@ -209,6 +209,14 @@ $this->layout('layout::blank') ?>
                         'label' => $this->t('Integrations'),
                         'icon' => 'bi bi-link-45deg',
                 ],
+                [
+                        'route' => [
+                                'routeName' => 'domain',
+                                'routeParams' => [],
+                        ],
+                        'label' => $this->t('Domains'),
+                        'icon' => 'bi bi-signpost-2',
+                ],
         ]);
     }
 
@@ -245,14 +253,6 @@ $this->layout('layout::blank') ?>
                         ],
                         'label' => $this->t('Variables'),
                         'icon' => 'bi bi-sliders',
-                ],
-                [
-                        'route' => [
-                                'routeName' => 'domain',
-                                'routeParams' => [],
-                        ],
-                        'label' => $this->t('Domains'),
-                        'icon' => 'bi bi-signpost-2',
                 ],
                 [
                         'route' => [

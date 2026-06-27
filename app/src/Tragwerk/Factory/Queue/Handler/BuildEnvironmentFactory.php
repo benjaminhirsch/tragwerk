@@ -20,6 +20,7 @@ use Tragwerk\Domain\Repository\EnvVarRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\Repository\UserRepository;
+use Tragwerk\Domain\Service\DomainResolver;
 use Tragwerk\Infrastructure\Git\BareRepository;
 
 use function assert;
@@ -45,6 +46,7 @@ final readonly class BuildEnvironmentFactory
         $logger           = $container->get(LoggerInterface::class);
         $producer         = $container->get(Producer::class);
         $domains          = $container->get(DomainRepository::class);
+        $domainResolver   = $container->get(DomainResolver::class);
         $projects         = $container->get(ProjectRepository::class);
         $teams            = $container->get(TeamRepository::class);
         $users            = $container->get(UserRepository::class);
@@ -61,6 +63,7 @@ final readonly class BuildEnvironmentFactory
         assert($logger instanceof LoggerInterface);
         assert($producer instanceof Producer);
         assert($domains instanceof DomainRepository);
+        assert($domainResolver instanceof DomainResolver);
         assert($projects instanceof ProjectRepository);
         assert($teams instanceof TeamRepository);
         assert($users instanceof UserRepository);
@@ -79,6 +82,7 @@ final readonly class BuildEnvironmentFactory
             $dataPath,
             $producer,
             $domains,
+            $domainResolver,
             $projects,
             $teams,
             $users,
