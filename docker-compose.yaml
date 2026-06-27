@@ -68,6 +68,9 @@ services:
       context: docker/sshd
       dockerfile: Dockerfile
     container_name: tragwerk-sshd
+    environment:
+      <<: *default-variables
+      APP_INTERNAL_URL: http://app
     ports:
       - "2222:22"
     volumes:

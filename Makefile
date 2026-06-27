@@ -35,6 +35,11 @@ coverage-unit:
 coverage-integration:
 	docker compose run --rm --env XDEBUG_MODE=off app $(PARATEST_COVERAGE) --testsuite integration
 
+## test-wrapper: Run sshd git-auth-wrapper bats tests (dockerized bats)
+.PHONY: test-wrapper
+test-wrapper:
+	docker run --rm -v $(PWD):/code -w /code bats/bats:latest docker/sshd/test/
+
 ## check: Run all checks
 .PHONY: check
 check:

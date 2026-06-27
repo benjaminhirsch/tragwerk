@@ -1,0 +1,59 @@
+#!/bin/sh
+#
+# Forced command for every SSH key in authorized_keys:
+#   command="/usr/local/bin/git-auth-wrapper <sshKeyId>"
+#
+# sshd authenticated the key (pubkey auth); $1 tells us *which* key it was.
+# We authorize the requested git operation against the target project via the
+# app's internal endpoint, then delegate to git-shell (which additionally
+# restricts execution to the git pack commands). Fails closed.
+
+set -eu
+
+KEY_ID="${1:-}"
+APP_URL="${APP_INTERNAL_URL:-http://app}"
+CMD="${SSH_ORIGINAL_COMMAND:-}"
+
+fail() {
+    echo "git-auth-wrapper: $1" >&2
+    exit 1
+}
+
+[ -n "$KEY_ID" ] || fail "missing key id"
+[ -n "$CMD" ] || fail "interactive shell not permitted"
+
+# First token = git verb -> map to read/write.
+VERB="${CMD%% *}"
+case "$VERB" in
+    git-upload-pack|git-upload-archive) OP="read" ;;
+    git-receive-pack)                   OP="write" ;;
+    *) fail "command not allowed: $VERB" ;;
+esac
+
+# Remainder = repository path argument; strip surrounding single quotes.
+ARG="${CMD#* }"
+ARG="${ARG#\'}"
+ARG="${ARG%\'}"
+
+# Must be repos/<uuid>; strip the prefix.
+case "$ARG" in
+    repos/*) PROJECT_ID="${ARG#repos/}" ;;
+    *) fail "invalid repository path" ;;
+esac
+
+# Strict UUID match -> defends against path traversal (repos/../../etc).
+if ! printf '%s' "$PROJECT_ID" | grep -Eq \
+    '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'; then
+    fail "invalid project id"
+fi
+
+BODY="{\"keyId\":\"${KEY_ID}\",\"projectId\":\"${PROJECT_ID}\",\"op\":\"${OP}\"}"
+
+# -f -> non-2xx becomes a non-zero exit; any curl failure denies (fail closed).
+if ! curl -fsS -m 5 -X POST "${APP_URL}/internal/git-auth" \
+        -H 'Content-Type: application/json' \
+        -d "$BODY" >/dev/null 2>&1; then
+    fail "access denied"
+fi
+
+exec git-shell -c "$SSH_ORIGINAL_COMMAND"
