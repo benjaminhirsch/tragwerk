@@ -2011,3 +2011,18 @@ msgstr "Mitglieder einladen"
 
 #~ msgid "Git forge"
 #~ msgstr "Versionskontrolle"
+
+msgid "Tragwerk — Simple hosting for PHP applications."
+msgstr "Tragwerk — Einfaches Hosting für PHP-Anwendungen."
+
+msgid "Imprint:"
+msgstr "Impressum:"
+
+msgid "Privacy Policy:"
+msgstr "Datenschutz:"
+
+msgid "Terms & Conditions:"
+msgstr "AGB:"
+
+msgid "This is an automated message — please do not reply to this email."
+msgstr "Dies ist eine automatische Nachricht — bitte antworten Sie nicht auf diese E-Mail."
