@@ -55,10 +55,18 @@ final readonly class IndexHandler implements RequestHandlerInterface
             ? $params['type']
             : 'all';
 
-        $entries = $this->buildEntries($activeProject, $activeBranch, $offset, $type);
+        // Live refresh (every 30s / SSE) reloads the whole currently-loaded
+        // window in one go — the JS reports how many entries are on screen via
+        // `limit` so infinite-scrolled pages are not dropped on each swap.
+        $isFragment  = isset($params['fragment']);
+        $limit       = is_numeric($params['limit'] ?? null) ? (int) $params['limit'] : self::PAGE_SIZE;
+        $windowStart = $isFragment ? 0 : $offset;
+        $windowSize  = $isFragment ? max(self::PAGE_SIZE, $limit) : self::PAGE_SIZE;
 
-        $hasMore = count($entries) > $offset + self::PAGE_SIZE;
-        $entries = array_slice($entries, $offset, self::PAGE_SIZE);
+        $entries = $this->buildEntries($activeProject, $activeBranch, $windowStart + $windowSize, $type);
+
+        $hasMore = count($entries) > $windowStart + $windowSize;
+        $entries = array_slice($entries, $windowStart, $windowSize);
 
         // Infinite scroll (offset > 0) and live list refresh (fragment flag)
         // render only the list items, swapped into #log-items.
@@ -111,16 +119,16 @@ final readonly class IndexHandler implements RequestHandlerInterface
 
     /**
      * Build the merged, chronologically descending list of deploy jobs and
-     * build logs. Fetches everything up to (offset + PAGE_SIZE + 1) so the
-     * caller can slice the requested page and detect whether more remain.
+     * build logs. Fetches one more than the requested window so the caller can
+     * slice the visible window and detect whether more remain.
      *
      * @param 'all'|'build'|'deploy' $type
      *
      * @return list<LogListEntry>
      */
-    private function buildEntries(Project $project, string $branch, int $offset, string $type): array
+    private function buildEntries(Project $project, string $branch, int $windowEnd, string $type): array
     {
-        $limit = $offset + self::PAGE_SIZE + 1;
+        $limit = $windowEnd + 1;
 
         $entries = [];
 
