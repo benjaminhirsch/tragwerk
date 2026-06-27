@@ -159,6 +159,11 @@ final readonly class BuildEnvironment
                     $messages[] = 'Generated ' . $dockerfile->caddyfileName;
                 }
 
+                if ($dockerfile->crontabName !== null && $dockerfile->crontabContent !== null) {
+                    file_put_contents($outDir . '/' . $dockerfile->crontabName, $dockerfile->crontabContent);
+                    $messages[] = 'Generated ' . $dockerfile->crontabName;
+                }
+
                 if ($dockerfile->entrypointName !== null && $dockerfile->entrypointContent !== null) {
                     $path = $outDir . '/' . $dockerfile->entrypointName;
                     file_put_contents($path, $dockerfile->entrypointContent);
