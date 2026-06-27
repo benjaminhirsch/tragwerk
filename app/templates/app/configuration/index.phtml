@@ -233,21 +233,20 @@ $resolveDomain = static function (string $pattern) use ($hostsByPlaceholder): st
                         </tr>
                         </thead>
                         <tbody>
-                        <tr>
-                            <td class="tw-cell-strong">cache-prune</td>
-                            <td><span class="tw-tag">*/15 * * * *</span></td>
-                            <td class="mono tw-cell-muted" style="font-size:.78rem">artisan cache:prune</td>
-                        </tr>
-                        <tr>
-                            <td class="tw-cell-strong">reports</td>
-                            <td><span class="tw-tag">0 2 * * *</span></td>
-                            <td class="mono tw-cell-muted" style="font-size:.78rem">artisan reports:generate</td>
-                        </tr>
-                        <tr>
-                            <td class="tw-cell-strong">sitemap</td>
-                            <td><span class="tw-tag">0 */6 * * *</span></td>
-                            <td class="mono tw-cell-muted" style="font-size:.78rem">artisan sitemap:build</td>
-                        </tr>
+                        <?php if ($app !== null && $app->crons !== []): ?>
+                            <?php foreach ($app->crons as $cron): ?>
+                                <tr>
+                                    <td class="tw-cell-strong"><?= $this->e($cron->name) ?></td>
+                                    <td><span class="tw-tag"><?= $this->e($cron->schedule) ?></span></td>
+                                    <td class="mono tw-cell-muted"
+                                        style="font-size:.78rem"><?= $this->e($cron->command) ?></td>
+                                </tr>
+                            <?php endforeach ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="3" class="tw-cell-muted"><?= $this->t('No cron jobs configured.') ?></td>
+                            </tr>
+                        <?php endif ?>
                         </tbody>
                     </table>
                 </div>

@@ -134,6 +134,18 @@ final class GenerateDockerConfig extends Command
                 $output->writeln('Generated ' . $outDir . '/' . $dockerfile->caddyfileName);
             }
 
+            if ($dockerfile->crontabName !== null && $dockerfile->crontabContent !== null) {
+                $crontabPath = $outDir . '/' . $dockerfile->crontabName;
+
+                if (file_put_contents($crontabPath, $dockerfile->crontabContent) === false) {
+                    $output->writeln('Failed to write ' . $dockerfile->crontabName);
+
+                    return self::FAILURE;
+                }
+
+                $output->writeln('Generated ' . $outDir . '/' . $dockerfile->crontabName);
+            }
+
             if ($dockerfile->entrypointName === null || $dockerfile->entrypointContent === null) {
                 continue;
             }

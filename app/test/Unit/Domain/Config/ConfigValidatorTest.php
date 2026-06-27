@@ -95,6 +95,42 @@ final class ConfigValidatorTest extends TestCase
     }
 
     #[Test]
+    public function semanticallyBrokenCronScheduleReturnsError(): void
+    {
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>'
+            . '<project>'
+            . '<applications>'
+            . '<application name="app" type="php:8.5" root="/">'
+            . '<web><location path="/" root="public" index="index.php" passthru="/index.php"/></web>'
+            . '<crons><cron name="cleanup" command="bin/cli x" schedule="61 * * * *"/></crons>'
+            . '</application>'
+            . '</applications>'
+            . '<routes><route pattern="{default}" upstream="app:http"/></routes>'
+            . '</project>';
+
+        $errors = $this->validator->validate($xml);
+
+        self::assertContains('Invalid cron schedule "61 * * * *" for cron "cleanup"', $errors);
+    }
+
+    #[Test]
+    public function validCronScheduleReturnsNoError(): void
+    {
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>'
+            . '<project>'
+            . '<applications>'
+            . '<application name="app" type="php:8.5" root="/">'
+            . '<web><location path="/" root="public" index="index.php" passthru="/index.php"/></web>'
+            . '<crons><cron name="cleanup" command="bin/cli x" schedule="0 2 * * *"/></crons>'
+            . '</application>'
+            . '</applications>'
+            . '<routes><route pattern="{default}" upstream="app:http"/></routes>'
+            . '</project>';
+
+        self::assertSame([], $this->validator->validate($xml));
+    }
+
+    #[Test]
     public function errorsContainHumanReadableMessages(): void
     {
         $errors = $this->validator->validate('<?xml version="1.0"?><unknown/>');

@@ -14,6 +14,7 @@ use Tragwerk\Domain\Enum\ApplicationRuntime;
 use Tragwerk\Domain\Enum\MountSource;
 use Tragwerk\Domain\Enum\ServiceRuntime;
 use Tragwerk\Domain\Model\ApplicationConfig;
+use Tragwerk\Domain\Model\CronDefinitionConfig;
 use Tragwerk\Domain\Model\HookConfig;
 use Tragwerk\Domain\Model\LocationConfig;
 use Tragwerk\Domain\Model\MountConfig;
@@ -642,6 +643,41 @@ final class DockerComposeGeneratorTest extends TestCase
         self::assertSame('bin/cli metrics:sample', $metrics['command']);
         self::assertSame('unless-stopped', $queue['restart']);
         self::assertSame('unless-stopped', $metrics['restart']);
+    }
+
+    #[Test]
+    public function cronsGenerateSingleSidecarRunningSupercronic(): void
+    {
+        $app     = new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([new LocationConfig(path: '/', root: 'public', passthru: '/index.php')]),
+            crons: [
+                new CronDefinitionConfig(name: 'cleanup', command: 'bin/cli app:cleanup', schedule: '0 2 * * *'),
+                new CronDefinitionConfig(name: 'import', command: 'bin/cli app:import', schedule: '@hourly'),
+            ],
+        );
+        $config  = self::project([$app], [self::upstream('https://{default}', 'app:http')]);
+        $compose = $this->generator->generate($config, 'main');
+
+        $cron = $this->service($compose, 'app-cron');
+
+        self::assertSame('supercronic /etc/supercronic/crontab', $cron['command']);
+        self::assertSame('unless-stopped', $cron['restart']);
+        self::assertArrayNotHasKey('labels', $cron);
+        self::assertSame(['disable' => true], $cron['healthcheck'] ?? null);
+    }
+
+    #[Test]
+    public function noCronSidecarWhenNoCronsDefined(): void
+    {
+        $config  = self::project([self::app('app')], []);
+        $compose = $this->generator->generate($config);
+
+        $services = $compose['services'];
+        self::assertIsArray($services);
+        self::assertArrayNotHasKey('app-cron', $services);
     }
 
     #[Test]

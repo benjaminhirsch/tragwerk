@@ -50,14 +50,24 @@ final readonly class DockerfileGenerator
         $hasEntrypoint   = $deployHooks !== [] || $postDeployHooks !== [];
         $isPhp           = str_starts_with($app->type->value, 'php:');
         $hasCaddyfile    = $isPhp && $app->web->locations !== [];
+        $hasCrons        = $app->crons !== [];
 
         return new DockerfileOutput(
             dockerfileName:    'Dockerfile.' . $slug,
-            dockerfileContent: $this->buildDockerfile($app, $slug, $buildHooks, $hasEntrypoint, $hasCaddyfile),
+            dockerfileContent: $this->buildDockerfile(
+                $app,
+                $slug,
+                $buildHooks,
+                $hasEntrypoint,
+                $hasCaddyfile,
+                $hasCrons,
+            ),
             entrypointName:    $hasEntrypoint ? 'docker-entrypoint.' . $slug . '.sh' : null,
             entrypointContent: $hasEntrypoint ? $this->buildEntrypoint($deployHooks, $postDeployHooks) : null,
             caddyfileName:     $hasCaddyfile ? 'Caddyfile.' . $slug : null,
             caddyfileContent:  $hasCaddyfile ? $this->buildCaddyfile($app) : null,
+            crontabName:       $hasCrons ? 'crontab.' . $slug : null,
+            crontabContent:    $hasCrons ? $this->buildCrontab($app) : null,
         );
     }
 
@@ -85,6 +95,7 @@ final readonly class DockerfileGenerator
         array $buildHooks,
         bool $hasEntrypoint,
         bool $hasCaddyfile,
+        bool $hasCrons,
     ): string {
         $image      = $this->imageResolver->forApplication($app->type);
         $copySource = $app->root === '/' ? '.' : ltrim($app->root, '/');
@@ -104,7 +115,17 @@ final readonly class DockerfileGenerator
             $lines[] = '';
         }
 
+        if ($hasCrons) {
+            $lines[] = $this->buildSupercronicRun();
+            $lines[] = '';
+        }
+
         $lines[] = 'COPY ' . $copySource . ' .';
+
+        if ($hasCrons) {
+            $lines[] = '';
+            $lines[] = 'COPY crontab.' . $slug . ' /etc/supercronic/crontab';
+        }
 
         foreach ($buildHooks as $hook) {
             $scriptLines = $this->parseScriptLines($hook->value);
@@ -249,6 +270,44 @@ final readonly class DockerfileGenerator
         $location = $passthruLocations[0];
 
         return '/app/' . ltrim($location->root, '/') . '/' . ltrim((string) $location->passthru, '/');
+    }
+
+    /**
+     * Installs supercronic, a lightweight crontab runner built for containers:
+     * it runs as the unprivileged container user, logs jobs to stdout/stderr
+     * (so `docker logs` works) and needs no system cron daemon. Version is
+     * pinned for reproducible builds; bump SUPERCRONIC_SHA1 alongside the
+     * version to keep download integrity verification correct.
+     */
+    private function buildSupercronicRun(): string
+    {
+        $version = 'v0.2.33';
+        // SHA1 published in the release's SHA1SUMS for supercronic-linux-amd64.
+        $sha1 = '71b0d58cc53f6bd72cf2f293e09e294b79c666d8';
+        $url  = 'https://github.com/aptible/supercronic/releases/download/'
+            . $version . '/supercronic-linux-amd64';
+
+        $parts   = [];
+        $parts[] = 'apt-get update -qq';
+        $parts[] = 'apt-get install -y --no-install-recommends curl ca-certificates';
+        $parts[] = 'rm -rf /var/lib/apt/lists/*';
+        $parts[] = 'curl -fsSLo /usr/local/bin/supercronic "' . $url . '"';
+        $parts[] = 'echo "' . $sha1 . '  /usr/local/bin/supercronic" | sha1sum -c -';
+        $parts[] = 'chmod +x /usr/local/bin/supercronic';
+
+        return 'RUN ' . implode(" \\\n    && ", $parts);
+    }
+
+    private function buildCrontab(ApplicationConfig $app): string
+    {
+        $lines = [];
+        foreach ($app->crons as $cron) {
+            // "# name" annotates each entry so supercronic's stdout logs are identifiable.
+            $lines[] = '# ' . $cron->name;
+            $lines[] = $cron->schedule . ' ' . trim($cron->command);
+        }
+
+        return implode("\n", $lines) . "\n";
     }
 
     /** @param list<ExtensionConfig> $extensions */

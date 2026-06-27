@@ -12,6 +12,7 @@ use Tragwerk\Domain\Docker\ServiceImageResolver;
 use Tragwerk\Domain\Enum\ApplicationRuntime;
 use Tragwerk\Domain\Enum\HookType;
 use Tragwerk\Domain\Model\ApplicationConfig;
+use Tragwerk\Domain\Model\CronDefinitionConfig;
 use Tragwerk\Domain\Model\ExtensionConfig;
 use Tragwerk\Domain\Model\HookConfig;
 use Tragwerk\Domain\Model\LocationConfig;
@@ -31,8 +32,9 @@ final class DockerfileGeneratorTest extends TestCase
     }
 
     /**
-     * @param list<HookConfig>      $hooks
-     * @param list<ExtensionConfig> $extensions
+     * @param list<HookConfig>           $hooks
+     * @param list<ExtensionConfig>      $extensions
+     * @param list<CronDefinitionConfig> $crons
      */
     private static function app(
         string $name = 'app',
@@ -40,6 +42,7 @@ final class DockerfileGeneratorTest extends TestCase
         string $root = '/',
         array $hooks = [],
         array $extensions = [],
+        array $crons = [],
     ): ApplicationConfig {
         return new ApplicationConfig(
             name: $name,
@@ -48,6 +51,7 @@ final class DockerfileGeneratorTest extends TestCase
             web: new WebConfig([new LocationConfig(path: '/', root: 'public')]),
             hooks: $hooks,
             extensions: $extensions,
+            crons: $crons,
         );
     }
 
@@ -88,6 +92,31 @@ final class DockerfileGeneratorTest extends TestCase
 
         self::assertStringContainsString('COPY backend .', $output->dockerfileContent);
         self::assertStringNotContainsString('COPY . .', $output->dockerfileContent);
+    }
+
+    #[Test]
+    public function cronsInstallSupercronicAndGenerateCrontab(): void
+    {
+        $output = $this->generator->generate(self::app('My App', crons: [
+            new CronDefinitionConfig(name: 'cleanup', command: 'bin/cli app:cleanup', schedule: '0 2 * * *'),
+        ]));
+
+        self::assertStringContainsString('supercronic-linux-amd64', $output->dockerfileContent);
+        self::assertStringContainsString('COPY crontab.my-app /etc/supercronic/crontab', $output->dockerfileContent);
+
+        self::assertSame('crontab.my-app', $output->crontabName);
+        self::assertStringContainsString('# cleanup', (string) $output->crontabContent);
+        self::assertStringContainsString('0 2 * * * bin/cli app:cleanup', (string) $output->crontabContent);
+    }
+
+    #[Test]
+    public function noSupercronicWhenNoCrons(): void
+    {
+        $output = $this->generator->generate(self::app());
+
+        self::assertStringNotContainsString('supercronic', $output->dockerfileContent);
+        self::assertNull($output->crontabName);
+        self::assertNull($output->crontabContent);
     }
 
     #[Test]

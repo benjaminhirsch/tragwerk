@@ -112,6 +112,7 @@ final readonly class XmlToArrayConverter
             'relationships',
             'extensions',
             'workers',
+            'crons',
         ], true);
     }
 

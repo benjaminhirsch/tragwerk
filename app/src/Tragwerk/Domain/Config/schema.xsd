@@ -52,6 +52,10 @@
                     <xs:selector xpath="workers/worker"/>
                     <xs:field xpath="@name"/>
                 </xs:unique>
+                <xs:unique name="uniqueCronName">
+                    <xs:selector xpath="crons/cron"/>
+                    <xs:field xpath="@name"/>
+                </xs:unique>
             </xs:element>
         </xs:sequence>
     </xs:complexType>
@@ -67,6 +71,7 @@
             <xs:element name="extensions"    type="ExtensionsType"     minOccurs="0"/>
             <xs:element name="workerMode"    type="WorkerModeType"     minOccurs="0"/>
             <xs:element name="workers"       type="WorkersType"        minOccurs="0"/>
+            <xs:element name="crons"         type="CronsType"          minOccurs="0"/>
             <xs:element name="hooks"         type="HooksType"          minOccurs="0"/>
             <xs:element name="mounts"        type="MountsType"         minOccurs="0"/>
             <xs:element name="relationships" type="RelationshipsType"  minOccurs="0"/>
@@ -154,6 +159,51 @@
                 <xs:documentation>
                     The command the container runs, e.g.
                     "bin/cli worker:start default".
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <!-- ============================================================ -->
+    <!-- Cron Jobs                                                    -->
+    <!-- ============================================================ -->
+    <xs:complexType name="CronsType">
+        <xs:annotation>
+            <xs:documentation>
+                Scheduled commands: an isolated sidecar container shares the
+                application image and runs supercronic, which executes each
+                command on its crontab schedule (e.g. nightly cleanup, periodic
+                imports).
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="cron" type="CronDefinitionType" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="CronDefinitionType">
+        <xs:attribute name="name" type="IdentifierType" use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    Unique name for this cron job within the application. Used as
+                    a log label in the cron sidecar.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="command" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    The command to run on schedule, e.g.
+                    "bin/cli app:cleanup". Runs from the application root (/app).
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="schedule" type="CrontimeType" use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    Crontab schedule expression, e.g. "0 2 * * *" (daily at
+                    02:00). Standard 5-field cron syntax; descriptors like
+                    "@hourly" or "@daily" are also accepted.
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
@@ -405,6 +455,21 @@
             <xs:pattern value="[a-zA-Z][a-zA-Z0-9 _-]*"/>
             <xs:minLength value="1"/>
             <xs:maxLength value="64"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="CrontimeType">
+        <xs:annotation>
+            <xs:documentation>
+                A crontab schedule: either a standard 5-field expression
+                (minute hour day-of-month month day-of-week) or a descriptor
+                such as @yearly, @annually, @monthly, @weekly, @daily,
+                @midnight, @hourly, or @every 1h30m.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:pattern value="(@(yearly|annually|monthly|weekly|daily|midnight|hourly))|(@every (\d+(ns|us|ms|s|m|h))+)|([^ ]+ [^ ]+ [^ ]+ [^ ]+ [^ ]+)"/>
+            <xs:minLength value="1"/>
         </xs:restriction>
     </xs:simpleType>
 

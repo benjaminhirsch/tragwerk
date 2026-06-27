@@ -14,6 +14,7 @@ final readonly class ApplicationConfig
      * @param list<RelationshipConfig>     $relationships
      * @param list<ExtensionConfig>        $extensions
      * @param list<WorkerDefinitionConfig> $workers
+     * @param list<CronDefinitionConfig>   $crons
      */
     public function __construct(
         public string $name,
@@ -26,6 +27,7 @@ final readonly class ApplicationConfig
         public array $extensions = [],
         public WorkerConfig|null $workerMode = null,
         public array $workers = [],
+        public array $crons = [],
     ) {
     }
 }
