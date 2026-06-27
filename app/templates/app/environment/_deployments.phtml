@@ -61,7 +61,7 @@ use Tragwerk\Domain\Enum\DeployJobStatus;
                 </td>
                 <td><?= $this->fetch('partial::badge', ['type' => $statusType, 'label' => $statusLabel]) ?></td>
                 <td class="tw-hide-sm tw-cell-muted mono"><?= $showDuration ? $this->e($duration) : '—' ?></td>
-                <td class="tw-cell-muted"><time data-formatter="relative" datetime="<?= $this->e($deployment->createdAt->format('c')) ?>"><?= $this->e($deployment->createdAt->format('Y-m-d H:i')) ?></time></td>
+                <td class="tw-cell-muted"><?= $this->fetch('partial::datetime', ['date' => $deployment->createdAt, 'relative' => true]) ?></td>
             </tr>
         <?php endforeach ?>
         </tbody>
