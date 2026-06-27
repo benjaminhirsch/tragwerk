@@ -90,13 +90,13 @@ final readonly class BuildEnvironment
         $lock->acquire(blocking: true);
 
         try {
-            $this->doBuild($projectId, $branch, $commitSha);
+            $this->doBuild($projectId, $branch, $commitSha, $message->forceRebuild);
         } finally {
             $lock->release();
         }
     }
 
-    private function doBuild(string $projectId, string $branch, string $commitSha): void
+    private function doBuild(string $projectId, string $branch, string $commitSha, bool $forceRebuild): void
     {
         $this->logger->info('Starting build', [
             'project_id' => $projectId,
@@ -185,7 +185,14 @@ final readonly class BuildEnvironment
         $this->eventDispatcher->dispatch(new DeployJobCreated($deployJob));
 
         $this->producer->sendMessage(
-            new Message\DeployEnvironment($projectId, $branch, $commitSha, $deployJob->id->toString(), $acmeEmail),
+            new Message\DeployEnvironment(
+                $projectId,
+                $branch,
+                $commitSha,
+                $deployJob->id->toString(),
+                $acmeEmail,
+                $forceRebuild,
+            ),
         );
 
         $this->log($projectId, $branch, implode("\n", $messages));

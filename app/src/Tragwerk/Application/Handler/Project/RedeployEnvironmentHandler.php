@@ -58,9 +58,10 @@ final readonly class RedeployEnvironmentHandler implements RequestHandlerInterfa
         }
 
         $this->producer->sendMessage(new BuildEnvironment(
-            projectId: $project->id->toString(),
-            branch:    $branch,
-            commitSha: $commits[0]->hash,
+            projectId:    $project->id->toString(),
+            branch:       $branch,
+            commitSha:    $commits[0]->hash,
+            forceRebuild: true,
         ));
 
         return new RedirectResponse($this->urlHelper->generate('project.show', ['id' => $project->id->toString()]));

@@ -16,6 +16,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Yaml\Yaml;
@@ -24,6 +25,7 @@ use Tragwerk\Application\Queue\Message\PruneRegistryImages;
 use Tragwerk\Application\Queue\Producer;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
+use Tragwerk\Domain\Docker\ImageReference;
 use Tragwerk\Domain\Docker\ServiceImageResolver;
 use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Project;
@@ -50,7 +52,6 @@ use function array_map;
 use function assert;
 use function basename;
 use function copy;
-use function date;
 use function escapeshellarg;
 use function exec;
 use function explode;
@@ -120,16 +121,23 @@ final class DeployEnvironmentCommand extends Command
             ->addArgument('branch', InputArgument::REQUIRED, 'Git branch name')
             ->addArgument('commit-sha', InputArgument::REQUIRED, 'Git commit SHA')
             ->addArgument('deploy-job-id', InputArgument::REQUIRED, 'Deploy job UUID')
-            ->addArgument('acme-email', InputArgument::OPTIONAL, 'ACME email for Traefik', '');
+            ->addArgument('acme-email', InputArgument::OPTIONAL, 'ACME email for Traefik', '')
+            ->addOption(
+                'force-rebuild',
+                null,
+                InputOption::VALUE_NONE,
+                'Rebuild the image even if one for the same fingerprint already exists in the registry',
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $projectId   = $input->getArgument('project-id');
-        $branch      = $input->getArgument('branch');
-        $commitSha   = $input->getArgument('commit-sha');
-        $deployJobId = $input->getArgument('deploy-job-id');
-        $acmeEmail   = $input->getArgument('acme-email') ?? '';
+        $projectId    = $input->getArgument('project-id');
+        $branch       = $input->getArgument('branch');
+        $commitSha    = $input->getArgument('commit-sha');
+        $deployJobId  = $input->getArgument('deploy-job-id');
+        $acmeEmail    = $input->getArgument('acme-email') ?? '';
+        $forceRebuild = $input->getOption('force-rebuild') === true;
 
         assert(is_string($projectId));
         assert(is_string($branch));
@@ -215,6 +223,7 @@ final class DeployEnvironmentCommand extends Command
             $credential,
             $key,
             $registry,
+            $forceRebuild,
         );
     }
 
@@ -232,11 +241,10 @@ final class DeployEnvironmentCommand extends Command
         Credential $credential,
         PrivateKey $key,
         Registry $registry,
+        bool $forceRebuild = false,
     ): int {
         $branchSlug     = $this->slugify(basename($branch));
         $projectSlug    = $this->slugify($project->name);
-        $shortSha       = substr($commitSha, 0, 8);
-        $timestamp      = date('YmdHis');
         $repoPath       = $this->bareRepository->getPath($projectId);
         $composeProject = 'tw-' . substr($projectId, 0, 8) . '-' . $branchSlug;
 
@@ -318,13 +326,47 @@ final class DeployEnvironmentCommand extends Command
 
         foreach ($config->applications as $app) {
             $appSlug    = $this->slugify($app->name);
-            $imageTag   = $registry->url . '/' . $registry->repository
-                . ':' . $appSlug . '-' . $branchSlug . '-' . $timestamp . '-' . $shortSha;
-            $cacheTag   = $registry->url . '/' . $registry->repository
-                . ':' . $appSlug . '-' . $branchSlug . '-cache';
             $dockerfile = $buildDir . '/Dockerfile.' . $appSlug;
 
-            $this->log($jobId, '[Deploy] Building image: ' . $imageTag);
+            // The image content is fully determined by the commit plus the generated build recipe.
+            // Same fingerprint → identical image, so an already-pushed tag can be reused.
+            $fingerprint = ImageReference::fingerprint(
+                $commitSha,
+                $this->readArtifact($dockerfile),
+                $this->readArtifact($buildDir . '/Caddyfile.' . $appSlug),
+                $this->readArtifact($buildDir . '/docker-entrypoint.' . $appSlug . '.sh'),
+            );
+            $imageTag    = ImageReference::tag(
+                $registry->url,
+                $registry->repository,
+                $appSlug,
+                $branchSlug,
+                $fingerprint,
+            );
+            $cacheTag    = $registry->url . '/' . $registry->repository
+                . ':' . $appSlug . '-' . $branchSlug . '-cache';
+
+            if (! $forceRebuild && $this->imageExistsInRegistry($imageTag, $dockerEnv)) {
+                $this->log(
+                    $jobId,
+                    '[Deploy] ' . $appSlug . ': ♻ reusing existing image ' . $imageTag . ' (build skipped)',
+                );
+                $this->registryPrefixRepository->upsert(
+                    ProjectIdentifier::fromString($projectId),
+                    $registry->id,
+                    $appSlug,
+                    $branchSlug,
+                );
+                $imageTags[$appSlug] = $imageTag;
+
+                continue;
+            }
+
+            $this->log(
+                $jobId,
+                '[Deploy] ' . $appSlug . ': 🔨 building new image ' . $imageTag
+                . ($forceRebuild ? ' (forced rebuild)' : ' (source/config changed)'),
+            );
 
             $build = new Process(
                 [
@@ -935,6 +977,30 @@ final class DeployEnvironmentCommand extends Command
         $slug = preg_replace('/[\s_]+/', '-', strtolower($name)) ?? '';
 
         return preg_replace('/[^a-z0-9-]/', '', $slug) ?? '';
+    }
+
+    private function readArtifact(string $path): string
+    {
+        if (! file_exists($path)) {
+            return '';
+        }
+
+        $content = file_get_contents($path);
+
+        return $content === false ? '' : $content;
+    }
+
+    /** @param array<string, string> $dockerEnv */
+    private function imageExistsInRegistry(string $ref, array $dockerEnv): bool
+    {
+        $inspect = new Process(
+            ['docker', 'buildx', 'imagetools', 'inspect', $ref],
+            env: $dockerEnv,
+            timeout: 60,
+        );
+        $inspect->run();
+
+        return $inspect->isSuccessful();
     }
 
     private function ensureServerTraefik(SFTP $sftp, string $acmeEmail, DeployJobIdentifier $jobId): void
