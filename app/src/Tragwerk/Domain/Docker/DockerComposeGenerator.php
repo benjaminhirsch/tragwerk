@@ -240,7 +240,11 @@ final readonly class DockerComposeGenerator
         }
 
         // -json: machine-parseable logs (consumed by the live log viewer and the cron:sample ticker).
-        $cron['command'] = 'supercronic -json /etc/supercronic/crontab';
+        // -no-reap: supercronic's PID 1 process reaper fork-execs a helper that dies with ENOENT in
+        // this read-only image, crash-looping the container before any job runs. Our jobs are simple
+        // one-shot `bin/cli` commands (sh → php → exit) that leave no orphaned children to reap, so
+        // disabling the reaper is safe.
+        $cron['command'] = 'supercronic -no-reap -json /etc/supercronic/crontab';
         $cron['restart'] = 'unless-stopped';
 
         if (isset($appService['environment'])) {
