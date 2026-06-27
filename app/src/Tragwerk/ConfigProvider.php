@@ -421,7 +421,6 @@ final readonly class ConfigProvider
                     EventListener\Project\DeleteGitRepository::class,
                     EventListener\Project\DeleteProjectData::class,
                 ],
-                Event\QueueMessageDeleted::class => [EventListener\Queue\DeleteQueueMessage::class],
                 Event\SshKeyCreated::class       => [
                     EventListener\SshKey\PersistSshKey::class,
                     EventListener\SshKey\UpdateAuthorizedKeys::class,
