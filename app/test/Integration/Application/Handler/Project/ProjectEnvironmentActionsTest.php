@@ -13,7 +13,7 @@ use function assert;
 final class ProjectEnvironmentActionsTest extends EnvironmentScopedTestCase
 {
     #[Test]
-    public function redeployTriggersBuildAndRedirectsToProjectShow(): void
+    public function redeployTriggersBuildAndRedirectsToEnvironmentShow(): void
     {
         $response = $this->dispatch(
             'POST',
@@ -23,10 +23,7 @@ final class ProjectEnvironmentActionsTest extends EnvironmentScopedTestCase
         );
 
         self::assertSame(302, $response->getStatusCode());
-        self::assertSame(
-            $this->url('project.show', ['id' => $this->project->id->toString()]),
-            $response->getHeaderLine('Location'),
-        );
+        self::assertSame('/environments/show?id=' . $this->branch, $response->getHeaderLine('Location'));
     }
 
     #[Test]

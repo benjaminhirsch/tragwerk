@@ -64,7 +64,7 @@ final readonly class RedeployEnvironmentHandler implements RequestHandlerInterfa
             forceRebuild: true,
         ));
 
-        return new RedirectResponse($this->urlHelper->generate('project.show', ['id' => $project->id->toString()]));
+        return new RedirectResponse($this->urlHelper->generate('environment.show', [], ['id' => $branch]));
     }
 
     private function resolveProject(ServerRequestInterface $request): Project|null
