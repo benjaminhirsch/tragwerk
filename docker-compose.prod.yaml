@@ -1,0 +1,202 @@
+# Production stack for self-hosting Tragwerk on a VPS.
+#
+# Build happens on the VPS (no registry):
+#   cp .env.prod.dist .env   # then fill in the secrets / hosts
+#   docker compose -f docker-compose.prod.yaml up -d --build
+#
+# Update flow:
+#   git pull && docker compose -f docker-compose.prod.yaml up -d --build
+#
+# Traefik terminates TLS and routes by host. The app + every worker run from the
+# SAME image (tragwerk-app:local, built once from app/Dockerfile.prod); only the
+# command differs. The one-shot `migrate` service runs schema migrations before
+# the long-running services start.
+
+name: tragwerk-prod
+
+x-app-env: &app-env
+  TZ: ${TZ:-UTC}
+  TRAGWERK_DATABASE_HOST: ${TRAGWERK_DATABASE_HOST:-db}
+  TRAGWERK_DATABASE_PORT: ${TRAGWERK_DATABASE_PORT:-5432}
+  TRAGWERK_DATABASE_DATABASE: ${TRAGWERK_DATABASE_DATABASE:-app}
+  TRAGWERK_DATABASE_USER: ${TRAGWERK_DATABASE_USER:-app}
+  TRAGWERK_DATABASE_PASSWORD: ${TRAGWERK_DATABASE_PASSWORD:?set TRAGWERK_DATABASE_PASSWORD in .env}
+  MERCURE_PUBLISHER_JWT_SECRET: ${MERCURE_PUBLISHER_JWT_SECRET:?set MERCURE_PUBLISHER_JWT_SECRET in .env}
+  MERCURE_SUBSCRIBER_JWT_SECRET: ${MERCURE_SUBSCRIBER_JWT_SECRET:?set MERCURE_SUBSCRIBER_JWT_SECRET in .env}
+  MERCURE_HUB_URL: ${MERCURE_HUB_URL:-http://localhost/.well-known/mercure}
+  MERCURE_TOPIC_BASE: ${MERCURE_TOPIC_BASE:-https://tragwerk.build}
+  TWO_FACTOR_KEY: ${TWO_FACTOR_KEY:?set TWO_FACTOR_KEY in .env}
+  LOG_LEVEL: ${LOG_LEVEL:-error}
+  FRANKENPHP_NUM_WORKERS: ${FRANKENPHP_NUM_WORKERS:-4}
+  SMTP_HOST: ${SMTP_HOST:-}
+  SMTP_PORT: ${SMTP_PORT:-}
+  SMTP_USERNAME: ${SMTP_USERNAME:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+
+# Shared data volumes (cache/logging/project are common to app + workers).
+x-app-volumes: &app-volumes
+  - data-cache:/app/data/cache
+  - data-logging:/app/data/logging
+  - data-project:/app/data/project
+  - data-repositories:/app/data/repositories
+  - data-ssh:/app/data/ssh
+  - /var/run/docker.sock:/var/run/docker.sock
+
+# Base for the app + every worker: same image, env, volumes, docker.sock access,
+# internal network, and a gate on successful migration.
+x-app-base: &app-base
+  image: tragwerk-app:local
+  restart: unless-stopped
+  init: true
+  environment: *app-env
+  volumes: *app-volumes
+  networks:
+    - internal
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
+
+services:
+  traefik:
+    image: traefik:v3
+    restart: unless-stopped
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedByDefault=false
+      - --providers.docker.network=tragwerk-web
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      # TLS + cert resolver applied at the entrypoint level (not per-router), so
+      # a local HTTP-only override can swap the entrypoint without leaving stale
+      # tls.certresolver labels behind (compose merges labels per key).
+      - --entrypoints.websecure.http.tls=true
+      - --entrypoints.websecure.http.tls.certresolver=le
+      - --certificatesresolvers.le.acme.tlschallenge=true
+      - --certificatesresolvers.le.acme.email=${ACME_EMAIL:?set ACME_EMAIL in .env}
+      - --certificatesresolvers.le.acme.storage=/acme/acme.json
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-acme:/acme
+    networks:
+      - web
+
+  app:
+    <<: *app-base
+    build:
+      context: app
+      dockerfile: Dockerfile.prod
+    command: ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]
+    networks:
+      - web
+      - internal
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=tragwerk-web
+      - traefik.http.routers.app.rule=Host(`${APP_HOST:?set APP_HOST in .env}`)
+      - traefik.http.routers.app.entrypoints=websecure
+      - traefik.http.services.app.loadbalancer.server.port=80
+
+  worker-queue:
+    <<: *app-base
+    command: ["bin/cli", "worker:start", "-w", "2", "default"]
+
+  worker-metrics:
+    <<: *app-base
+    command: ["bin/cli", "metrics:sample"]
+
+  worker-crons:
+    <<: *app-base
+    command: ["bin/cli", "cron:sample"]
+
+  # One-shot: prepare the queue + apply migrations, then exit 0. Long-running
+  # services gate on this via service_completed_successfully.
+  migrate:
+    image: tragwerk-app:local
+    environment: *app-env
+    command:
+      - sh
+      - -c
+      - "bin/cli worker:prepare && bin/cli migrations:migrate --no-interaction --all-or-nothing"
+    volumes:
+      - data-cache:/app/data/cache
+      - data-logging:/app/data/logging
+      - data-project:/app/data/project
+    networks:
+      - internal
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-UTC}
+      POSTGRES_USER: ${TRAGWERK_DATABASE_USER:-app}
+      POSTGRES_PASSWORD: ${TRAGWERK_DATABASE_PASSWORD:?set TRAGWERK_DATABASE_PASSWORD in .env}
+      POSTGRES_DB: ${TRAGWERK_DATABASE_DATABASE:-app}
+    volumes:
+      - db-data:/var/lib/postgresql
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${TRAGWERK_DATABASE_USER:-app}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  sshd:
+    build:
+      context: docker/sshd
+      dockerfile: Dockerfile
+    image: tragwerk-sshd:local
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-UTC}
+      APP_INTERNAL_URL: http://app
+    ports:
+      - "${SSH_PORT:-2222}:22"
+    volumes:
+      - data-repositories:/home/git/repos
+      - data-ssh:/home/git/ssh_data
+    networks:
+      - internal
+
+  docs:
+    build:
+      context: docs
+      dockerfile: Dockerfile
+    image: tragwerk-docs:local
+    restart: unless-stopped
+    networks:
+      - web
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=tragwerk-web
+      - traefik.http.routers.docs.rule=Host(`${DOCS_HOST:?set DOCS_HOST in .env}`)
+      - traefik.http.routers.docs.entrypoints=websecure
+      - traefik.http.services.docs.loadbalancer.server.port=80
+
+networks:
+  # Public-facing: Traefik <-> app/docs. The apps Tragwerk hosts can join this
+  # same external network so Traefik stays the single proxy on the VPS.
+  web:
+    name: tragwerk-web
+  # Private: app/workers <-> db/sshd. Not reachable from the proxy network.
+  internal:
+    name: tragwerk-internal
+
+volumes:
+  data-cache:
+  data-logging:
+  data-project:
+  data-repositories:
+  data-ssh:
+  db-data:
+  traefik-acme:
