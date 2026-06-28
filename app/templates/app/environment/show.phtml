@@ -68,6 +68,9 @@ $sseTopic  = urlencode($topicBase . '/project/' . $this->activeProject()->id->to
     <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#tw-redeploy-modal">
         <i class="bi bi-arrow-clockwise"></i> <?= $this->e($this->t('Redeploy')) ?>
     </button>
+    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#tw-disable-environment-modal">
+        <i class="bi bi-pause-circle"></i> <?= $this->e($this->t('Disable')) ?>
+    </button>
     <button type="button" class="btn btn-outline-secondary"
             style="color:var(--danger-text);border-color:var(--danger-soft)"
             data-bs-toggle="modal" data-bs-target="#tw-delete-environment-modal">
@@ -114,6 +117,17 @@ $sseTopic  = urlencode($topicBase . '/project/' . $this->activeProject()->id->to
     'actionLabel'   => $this->t('Redeploy'),
     'actionClasses' => 'btn btn-primary',
     'actionIcon'    => 'bi bi-arrow-clockwise',
+    'extraFields'   => ['branch' => $branch],
+]) ?>
+
+<?= $this->fetch('partial::modal', [
+    'id'            => 'tw-disable-environment-modal',
+    'header'        => $this->t('Disable environment'),
+    'body'          => $this->t('Disable {branch}? This stops its containers without deleting anything. Data and configuration are kept; a redeploy reactivates it.', ['branch' => '<b class="mono">' . $this->e($branch) . '</b>']),
+    'actionUrl'     => $this->url('project.environment.disable', ['id' => $this->activeProject()->id->toString()]),
+    'actionLabel'   => $this->t('Disable'),
+    'actionClasses' => 'btn btn-warning',
+    'actionIcon'    => 'bi bi-pause-circle',
     'extraFields'   => ['branch' => $branch],
 ]) ?>
 
