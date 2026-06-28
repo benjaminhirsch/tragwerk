@@ -43,14 +43,31 @@ ENV XDG_CONFIG_HOME=/tmp/caddy-config \
 # clear-config-cache (needs the full app); the entrypoint warms it at runtime.
 FROM base AS vendor
 
+# Optional GitHub token to dodge anonymous API rate limits on fresh hosts:
+#   docker compose ... build --build-arg GITHUB_TOKEN=ghp_xxx
+# (or set GITHUB_TOKEN in .env — compose passes it through, see compose build args)
+ARG GITHUB_TOKEN=""
+
+# COMPOSER_MAX_PARALLEL_HTTP=1 serializes downloads: GitHub's codeload
+# sporadically returns "HTTP/2 400" under composer's parallel HTTP/2
+# multiplexing. The retry covers transient blips.
+ENV COMPOSER_MAX_PARALLEL_HTTP=1
+
 COPY composer.json composer.lock ./
-RUN composer install \
+RUN if [ -n "$GITHUB_TOKEN" ]; then composer config --global github-oauth.github.com "$GITHUB_TOKEN"; fi; \
+    for attempt in 1 2 3; do \
+      composer install \
         --no-dev \
         --optimize-autoloader \
         --no-scripts \
         --prefer-dist \
         --no-interaction \
-        --no-progress
+        --no-progress \
+      && exit 0; \
+      echo "composer install failed (attempt $attempt), retrying..." >&2; \
+      sleep 3; \
+    done; \
+    exit 1
 
 # ---- final app stage --------------------------------------------------------
 FROM base AS app
