@@ -1,0 +1,15 @@
+name: tragwerk-docs
+
+services:
+  docs:
+    image: node:22-alpine
+    working_dir: /docs
+    user: "${DOCKER_UID:-1000}:${DOCKER_GID:-1000}"
+    environment:
+      # keep the npm cache inside the bind mount so it survives container recreation
+      NPM_CONFIG_CACHE: /docs/.npm-cache
+    volumes:
+      - ./docs:/docs
+    ports:
+      - "5173:5173"
+    command: sh -c "npm install && npm run docs:dev -- --host 0.0.0.0"

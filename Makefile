@@ -84,3 +84,25 @@ db/migrations/status:
 .PHONY: db/migrations/migrate
 db/migrations/migrate:
 	docker compose run --rm --env XDEBUG_MODE=off app bin/cli migrations:migrate
+
+DOCS_COMPOSE := docker compose -f docker-compose.docs.yaml
+
+## docs/dev: Serve docs with hot reload at http://localhost:5173
+.PHONY: docs/dev
+docs/dev:
+	$(DOCS_COMPOSE) up
+
+## docs/build: Build static docs site → docs/.vitepress/dist
+.PHONY: docs/build
+docs/build:
+	$(DOCS_COMPOSE) run --rm docs sh -c "npm install && npm run docs:build"
+
+## docs/install: Install/refresh docs npm dependencies
+.PHONY: docs/install
+docs/install:
+	$(DOCS_COMPOSE) run --rm docs npm install
+
+## docs/clean: Remove docs node_modules and build output
+.PHONY: docs/clean
+docs/clean:
+	$(DOCS_COMPOSE) run --rm docs sh -c "rm -rf node_modules .vitepress/dist .vitepress/cache .npm-cache"

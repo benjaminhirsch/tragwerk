@@ -1,0 +1,243 @@
+/* ============================================================
+   Tragwerk docs theme — mirrors the app design tokens
+   Source of truth: app/public/css/app.css (OKLCH light/dark)
+   ============================================================ */
+
+/* ---------- Self-hosted fonts (offline, no Google Fonts) ---------- */
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("./fonts/manrope-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("./fonts/jetbrains-mono-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ============================================================
+   LIGHT THEME  (app :root / [data-bs-theme="light"])
+   ============================================================ */
+:root {
+  --tw-bg: oklch(0.984 0.003 95);
+  --tw-bg-grad: oklch(0.975 0.004 95);
+  --tw-surface: oklch(1 0 0);
+  --tw-surface-2: oklch(0.978 0.004 95);
+  --tw-surface-hover: oklch(0.965 0.005 95);
+  --tw-border: oklch(0.918 0.004 95);
+  --tw-border-strong: oklch(0.86 0.005 95);
+
+  --tw-text: oklch(0.24 0.012 268);
+  --tw-text-muted: oklch(0.53 0.012 268);
+  --tw-text-faint: oklch(0.66 0.01 268);
+
+  --tw-accent: oklch(0.62 0.188 256);
+  --tw-accent-hover: oklch(0.565 0.19 256);
+  --tw-accent-soft: oklch(0.95 0.03 256);
+  --tw-accent-border: oklch(0.86 0.07 256);
+  --tw-accent-text: oklch(0.52 0.19 256);
+
+  --tw-ok: oklch(0.62 0.15 155);
+  --tw-ok-soft: oklch(0.95 0.04 155);
+  --tw-ok-text: oklch(0.5 0.13 155);
+  --tw-warn: oklch(0.74 0.15 75);
+  --tw-warn-soft: oklch(0.96 0.05 85);
+  --tw-warn-text: oklch(0.56 0.12 70);
+  --tw-danger: oklch(0.6 0.2 22);
+  --tw-danger-soft: oklch(0.95 0.04 22);
+  --tw-danger-text: oklch(0.55 0.2 25);
+  --tw-purple: oklch(0.58 0.2 295);
+  --tw-purple-soft: oklch(0.95 0.04 295);
+
+  /* ---- Fonts ---- */
+  --vp-font-family-base: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --vp-font-family-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* ---- Map onto VitePress tokens ---- */
+  --vp-c-bg: var(--tw-bg);
+  --vp-c-bg-alt: var(--tw-surface-2);
+  --vp-c-bg-elv: var(--tw-surface);
+  --vp-c-bg-soft: var(--tw-surface-2);
+
+  --vp-c-border: var(--tw-border-strong);
+  --vp-c-divider: var(--tw-border);
+  --vp-c-gutter: var(--tw-border);
+
+  --vp-c-text-1: var(--tw-text);
+  --vp-c-text-2: var(--tw-text-muted);
+  --vp-c-text-3: var(--tw-text-faint);
+
+  --vp-c-brand-1: var(--tw-accent-text);
+  --vp-c-brand-2: var(--tw-accent);
+  --vp-c-brand-3: var(--tw-accent-hover);
+  --vp-c-brand-soft: var(--tw-accent-soft);
+  --vp-c-brand-1: var(--tw-accent);
+
+  --vp-c-default-1: var(--tw-text-muted);
+  --vp-c-default-soft: var(--tw-surface-hover);
+
+  /* Status / custom block colors */
+  --vp-c-tip-1: var(--tw-accent);
+  --vp-c-tip-soft: var(--tw-accent-soft);
+  --vp-c-success-1: var(--tw-ok);
+  --vp-c-success-soft: var(--tw-ok-soft);
+  --vp-c-warning-1: var(--tw-warn);
+  --vp-c-warning-soft: var(--tw-warn-soft);
+  --vp-c-danger-1: var(--tw-danger);
+  --vp-c-danger-soft: var(--tw-danger-soft);
+
+  /* Buttons */
+  --vp-button-brand-bg: var(--tw-accent);
+  --vp-button-brand-hover-bg: var(--tw-accent-hover);
+  --vp-button-brand-active-bg: var(--tw-accent-hover);
+  --vp-button-brand-border: transparent;
+  --vp-button-brand-hover-border: transparent;
+  --vp-button-brand-text: #fff;
+  --vp-button-brand-hover-text: #fff;
+
+  /* Home hero gradient (matches app logo gradient) */
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: -webkit-linear-gradient(
+    150deg,
+    var(--tw-accent),
+    oklch(0.55 0.21 280)
+  );
+  --vp-home-hero-image-background-image: linear-gradient(
+    150deg,
+    var(--tw-accent-soft),
+    var(--tw-purple-soft)
+  );
+  --vp-home-hero-image-filter: blur(48px);
+
+  /* Code blocks — light surface in light mode (Shiki github-light tokens) */
+  --vp-code-block-bg: oklch(0.965 0.004 95);
+  --vp-code-block-divider-color: var(--tw-border);
+
+  /* Inline `code` — high contrast on light surface */
+  --vp-code-color: oklch(0.45 0.16 256);
+  --vp-code-bg: oklch(0.955 0.012 256);
+
+  /* Radii */
+  --vp-border-radius: 0.6rem;
+}
+
+/* ============================================================
+   DARK THEME  (app [data-bs-theme="dark"])
+   ============================================================ */
+.dark {
+  --tw-bg: oklch(0.165 0.007 270);
+  --tw-bg-grad: oklch(0.185 0.008 270);
+  --tw-surface: oklch(0.205 0.008 270);
+  --tw-surface-2: oklch(0.235 0.009 270);
+  --tw-surface-hover: oklch(0.255 0.01 270);
+  --tw-border: oklch(0.285 0.01 270);
+  --tw-border-strong: oklch(0.36 0.012 270);
+
+  --tw-text: oklch(0.955 0.004 95);
+  --tw-text-muted: oklch(0.71 0.012 270);
+  --tw-text-faint: oklch(0.56 0.012 270);
+
+  --tw-accent: oklch(0.7 0.16 256);
+  --tw-accent-hover: oklch(0.76 0.15 256);
+  --tw-accent-soft: oklch(0.3 0.07 256);
+  --tw-accent-border: oklch(0.42 0.1 256);
+  --tw-accent-text: oklch(0.78 0.14 256);
+
+  --tw-ok: oklch(0.72 0.15 155);
+  --tw-ok-soft: oklch(0.32 0.06 155);
+  --tw-ok-text: oklch(0.8 0.14 155);
+  --tw-warn: oklch(0.8 0.14 80);
+  --tw-warn-soft: oklch(0.36 0.06 75);
+  --tw-warn-text: oklch(0.85 0.13 85);
+  --tw-danger: oklch(0.68 0.19 22);
+  --tw-danger-soft: oklch(0.34 0.09 22);
+  --tw-danger-text: oklch(0.8 0.13 22);
+  --tw-purple: oklch(0.7 0.16 295);
+  --tw-purple-soft: oklch(0.33 0.08 295);
+
+  --vp-c-bg: var(--tw-bg);
+  --vp-c-bg-alt: var(--tw-surface);
+  --vp-c-bg-elv: var(--tw-surface-2);
+  --vp-c-bg-soft: var(--tw-surface-2);
+
+  --vp-c-border: var(--tw-border-strong);
+  --vp-c-divider: var(--tw-border);
+  --vp-c-gutter: var(--tw-border);
+
+  --vp-c-text-1: var(--tw-text);
+  --vp-c-text-2: var(--tw-text-muted);
+  --vp-c-text-3: var(--tw-text-faint);
+
+  --vp-c-brand-1: var(--tw-accent-text);
+  --vp-c-brand-2: var(--tw-accent);
+  --vp-c-brand-3: var(--tw-accent-hover);
+  --vp-c-brand-soft: var(--tw-accent-soft);
+
+  --vp-c-default-soft: var(--tw-surface-hover);
+
+  --vp-c-tip-1: var(--tw-accent-text);
+  --vp-c-tip-soft: var(--tw-accent-soft);
+  --vp-c-success-1: var(--tw-ok-text);
+  --vp-c-success-soft: var(--tw-ok-soft);
+  --vp-c-warning-1: var(--tw-warn-text);
+  --vp-c-warning-soft: var(--tw-warn-soft);
+  --vp-c-danger-1: var(--tw-danger-text);
+  --vp-c-danger-soft: var(--tw-danger-soft);
+
+  --vp-button-brand-text: oklch(0.16 0.012 268);
+  --vp-button-brand-hover-text: oklch(0.16 0.012 268);
+
+  --vp-code-block-bg: oklch(0.135 0.008 270);
+
+  /* Inline `code` — light text on dark surface */
+  --vp-code-color: oklch(0.82 0.12 256);
+  --vp-code-bg: oklch(0.28 0.03 256);
+}
+
+/* ============================================================
+   Small refinements to feel like the app
+   ============================================================ */
+body {
+  letter-spacing: -0.011em;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  letter-spacing: -0.02em;
+}
+
+/* Custom-block / code radius to match app 0.6rem */
+.custom-block,
+.vp-doc div[class*="language-"] {
+  border-radius: 0.6rem;
+}
+
+/* Hero name: the gradient text-clip + tight line-height clips the "g" descender */
+.VPHero .name .clip,
+.VPHero .name {
+  line-height: 1.25;
+  padding-bottom: 0.08em;
+}
+
+/* Inline code: border + tighter padding for legibility */
+.vp-doc :not(pre) > code {
+  border: 1px solid var(--tw-border);
+  padding: 2px 6px;
+  font-weight: 500;
+}
+.dark .vp-doc :not(pre) > code {
+  border-color: var(--tw-border-strong);
+}
