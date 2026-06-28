@@ -17,7 +17,9 @@ use function explode;
 use function implode;
 use function sprintf;
 use function str_ends_with;
+use function str_replace;
 use function str_starts_with;
+use function strlen;
 use function strpos;
 use function substr;
 use function trim;
@@ -101,7 +103,8 @@ final readonly class CronRunCollector
             $jobMap               = $this->jobMap($projectId, $branch);
 
             foreach ($this->parser->parse($block['logs']) as $parsed) {
-                $key      = trim($parsed->command);
+                $command  = $this->unwrapShellCommand($parsed->command);
+                $key      = trim($command);
                 $jobName  = $jobMap[$key]['name'] ?? $key;
                 $schedule = $jobMap[$key]['schedule'] ?? $parsed->schedule;
 
@@ -110,7 +113,7 @@ final readonly class CronRunCollector
                     branch:     $branch,
                     appSlug:    $appSlug,
                     jobName:    $jobName,
-                    command:    $parsed->command,
+                    command:    $command,
                     schedule:   $schedule,
                     startedAt:  $parsed->startedAt,
                     finishedAt: $parsed->finishedAt,
@@ -121,6 +124,24 @@ final readonly class CronRunCollector
         }
 
         return $runs;
+    }
+
+    /**
+     * Reverses the crontab wrapping done by DockerfileGenerator, which writes each entry as
+     * `/bin/sh -c '<cmd>'` (single-quote escaped). supercronic logs that wrapped form as
+     * `job.command`, but the UI and jobMap key by the bare config.xml command — so unwrap it back
+     * to keep the stored command, jobMap lookup and template lookup on the same key.
+     */
+    private function unwrapShellCommand(string $command): string
+    {
+        $prefix = "/bin/sh -c '";
+        if (! str_starts_with($command, $prefix) || ! str_ends_with($command, "'")) {
+            return $command;
+        }
+
+        $inner = substr($command, strlen($prefix), -1);
+
+        return str_replace("'\\''", "'", $inner);
     }
 
     /**
