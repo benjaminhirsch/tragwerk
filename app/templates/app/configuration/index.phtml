@@ -6,7 +6,6 @@ use Tragwerk\Domain\Model\ProjectConfig;
 
 /** @var ProjectConfig|null $projectConfig */
 /** @var array<string, list<string>> $hostsByPlaceholder */
-/** @var bool $disabled */
 
 $this->layout('layout::default', [
         'pageType' => $this->activeTeam()->name . ' / ' . $this->activeEnvironment(),
@@ -168,18 +167,17 @@ $resolveDomain = static function (string $pattern) use ($hostsByPlaceholder): st
                             <td id="cfg-service-disk-<?= $this->e($slugify($service->name)) ?>" class="tw-hide-sm tw-cell-muted">
                                 <span class="spinner-border spinner-border-sm" role="status"></span>
                             </td>
-                            <td>
-                                <?php if ($disabled): ?>
-                                    <span class="tw-badge tw-badge--warn"><span class="tw-dot"></span><?= $this->t('Paused') ?></span>
-                                <?php else: ?>
-                                    <span class="tw-badge tw-badge--ok"><span class="tw-dot"></span><?= $this->t('Running') ?></span>
-                                <?php endif ?>
+                            <td id="cfg-service-status-<?= $this->e($slugify($service->name)) ?>">
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
                             </td>
                         </tr>
                     <?php endforeach ?>
                     </tbody>
                 </table>
             </div>
+            <div hx-get="<?= $this->e($this->url('configuration.service-status')) ?>"
+                 hx-trigger="load, every 30s"
+                 hx-swap="none"></div>
         </section>
     <?php endif ?>
 

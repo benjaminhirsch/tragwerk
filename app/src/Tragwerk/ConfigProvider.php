@@ -52,6 +52,7 @@ use Tragwerk\Factory\EventListener\Project\DeleteProjectDataFactory;
 use Tragwerk\Factory\EventListener\SshKey\UpdateAuthorizedKeysFactory;
 use Tragwerk\Factory\Git\BareRepositoryFactory;
 use Tragwerk\Factory\Handler\Configuration\MountSizesHandlerFactory;
+use Tragwerk\Factory\Handler\Configuration\ServiceStatusHandlerFactory;
 use Tragwerk\Factory\Handler\Container\StatusHandlerFactory;
 use Tragwerk\Factory\Handler\Log\TailHandlerFactory;
 use Tragwerk\Factory\Handler\Project\ShowHandlerFactory;
@@ -99,6 +100,7 @@ final readonly class ConfigProvider
                     Application\Handler\Project\ShowHandler::class        => ShowHandlerFactory::class,
                     Application\Handler\Container\StatusHandler::class    => StatusHandlerFactory::class,
                     Application\Handler\Configuration\MountSizesHandler::class => MountSizesHandlerFactory::class,
+                    Application\Handler\Configuration\ServiceStatusHandler::class => ServiceStatusHandlerFactory::class,
                     Application\Handler\Log\TailHandler::class            => TailHandlerFactory::class,
                     Application\Queue\Handler\BuildEnvironment::class         => BuildEnvironmentFactory::class,
                     Application\Cli\Command\DeployEnvironmentCommand::class   => DeployEnvironmentCommandFactory::class,

@@ -1,0 +1,48 @@
+<?php
+
+use Tragwerk\Domain\Model\ServiceConfig;
+
+/** @var list<ServiceConfig> $services */
+/** @var array<string, array{state: string, health: string}> $states */
+/** @var string|null $error */
+/** @var bool $disabled */
+
+$slugify = static function (string $name): string {
+    $slug = preg_replace('/[\s_]+/', '-', strtolower($name)) ?? '';
+
+    return preg_replace('/[^a-z0-9-]/', '', $slug) ?? '';
+};
+
+/**
+ * @return array{0: string, 1: string} [badge css modifier, label]
+ */
+$badge = function (bool $disabled, ?array $entry): array {
+    if ($disabled) {
+        return ['warn', $this->t('Paused')];
+    }
+
+    if ($entry === null) {
+        return ['neutral', $this->t('Not deployed')];
+    }
+
+    $state  = $entry['state'];
+    $health = $entry['health'];
+
+    return match (true) {
+        $state === 'running' && $health === 'unhealthy' => ['danger', $this->t('Unhealthy')],
+        $state === 'running' && $health === 'starting'  => ['warn', $this->t('Starting')],
+        $state === 'running'                            => ['ok', $this->t('Running')],
+        $state === 'restarting'                         => ['warn', $this->t('Restarting')],
+        $state === 'exited' || $state === 'dead'        => ['danger', $this->t('Stopped')],
+        $state === 'paused'                             => ['warn', $this->t('Paused')],
+        default                                         => ['neutral', $this->t('Not deployed')],
+    };
+};
+?>
+<?php foreach ($services ?? [] as $service): ?>
+    <?php [$css, $label] = $badge($disabled, $states[$slugify($service->name)] ?? null); ?>
+    <td id="cfg-service-status-<?= $this->e($slugify($service->name)) ?>" hx-swap-oob="true"
+        <?php if ($error !== null): ?>title="<?= $this->e($error) ?>"<?php endif ?>>
+        <span class="tw-badge tw-badge--<?= $this->e($css) ?>"><span class="tw-dot"></span><?= $this->e($label) ?></span>
+    </td>
+<?php endforeach ?>

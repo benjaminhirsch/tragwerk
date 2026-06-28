@@ -40,5 +40,16 @@ final readonly class Configuration
             ]),
             'configuration.mounts',
         );
+
+        $routes->get(
+            '/configurations/service-status',
+            $this->middlewareFactory->prepare([
+                new RequiresActiveProject($this->middlewareFactory->prepare([
+                    Handler\Configuration\ServiceStatusHandler::class,
+                ])),
+                ToActiveTeam::class,
+            ]),
+            'configuration.service-status',
+        );
     }
 }
