@@ -85,6 +85,15 @@ Each service becomes a container using the resolved official image, with:
 - a healthcheck (e.g. `pg_isready`, `mysqladmin ping`, or `redis-cli ping`) that
   relationships' `service_healthy` conditions wait on.
 
+::: info Services are not exposed publicly
+Service ports are **never published to the host or the internet**. The generated
+container has no port mapping — a service is reachable only over the internal
+Docker network, by the applications that declare a relationship to it (using its
+slugified `name` as the hostname). Only application containers are fronted by
+Traefik. To inspect a database during development, tunnel in over SSH rather than
+expecting a public port.
+:::
+
 ::: tip Choose the right PHP extension
 Remember to add the matching PDO extension to your app — `pdo_pgsql` for
 PostgreSQL, `pdo_mysql` for MySQL/MariaDB. See [Extensions](/config/applications#extensions).
