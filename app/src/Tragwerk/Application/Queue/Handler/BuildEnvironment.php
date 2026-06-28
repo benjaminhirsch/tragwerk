@@ -30,6 +30,7 @@ use Tragwerk\Domain\Event\BuildLogCreated;
 use Tragwerk\Domain\Event\DeployJobCreated;
 use Tragwerk\Domain\Model\ProjectConfig;
 use Tragwerk\Domain\Repository\DomainRepository;
+use Tragwerk\Domain\Repository\EnvironmentStateRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\Repository\UserRepository;
@@ -70,6 +71,7 @@ final readonly class BuildEnvironment
         private UserRepository $userRepository,
         private LockFactory $lockFactory,
         private EnvVarResolver $envVarResolver,
+        private EnvironmentStateRepository $environmentStateRepository,
     ) {
     }
 
@@ -78,6 +80,9 @@ final readonly class BuildEnvironment
         $projectId = $message->projectId;
         $branch    = $message->branch;
         $commitSha = $message->commitSha;
+
+        // A (re)deploy reactivates a previously disabled environment.
+        $this->environmentStateRepository->enable(ProjectIdentifier::fromString($projectId), $branch);
 
         $lock = $this->lockFactory->createLock('build:' . $projectId . ':' . $branch, ttl: 600.0);
         $lock->acquire(blocking: true);

@@ -2,24 +2,18 @@
 
 declare(strict_types=1);
 
-namespace TragwerkTest\Integration\Application\EventListener\Environment;
+namespace TragwerkTest\Integration\Domain\Repository;
 
 use PHPUnit\Framework\Attributes\Test;
-use Tragwerk\Application\EventListener\Environment\DeleteEnvironmentJobs;
-use Tragwerk\Domain\Entity\DeployJob;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Registry;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Entity\User;
-use Tragwerk\Domain\Enum\DeployJobStatus;
-use Tragwerk\Domain\Event\EnvironmentDeleted;
-use Tragwerk\Domain\Repository\DeployJobRepository;
 use Tragwerk\Domain\Repository\EnvironmentStateRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\Repository\UserRepository;
-use Tragwerk\Domain\ValueObject\DeployJobIdentifier;
 use Tragwerk\Domain\ValueObject\PasswordHash;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Domain\ValueObject\RegistryIdentifier;
@@ -31,53 +25,51 @@ use TragwerkTest\Integration\Support\IntegrationTestCase;
 
 use function assert;
 
-final class DeleteEnvironmentJobsTest extends IntegrationTestCase
+final class EnvironmentStateRepositoryTest extends IntegrationTestCase
 {
-    private DeployJobRepository $repository;
+    private EnvironmentStateRepository $repository;
     private ProjectIdentifier $projectId;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $repository = $this->container->get(DeployJobRepository::class);
-        assert($repository instanceof DeployJobRepository);
+        $repository = $this->container->get(EnvironmentStateRepository::class);
+        assert($repository instanceof EnvironmentStateRepository);
         $this->repository = $repository;
 
         $this->projectId = $this->seedProject();
     }
 
     #[Test]
-    public function deletesOnlyJobsOfTheGivenBranch(): void
+    public function disableThenIsDisabledIsTrueAndEnableClearsIt(): void
     {
-        $this->repository->create($this->job('feature'));
-        $this->repository->create($this->job('feature'));
-        $this->repository->create($this->job('main'));
+        self::assertFalse($this->repository->isDisabled($this->projectId, 'main'));
 
-        $envState = $this->container->get(EnvironmentStateRepository::class);
-        assert($envState instanceof EnvironmentStateRepository);
+        $this->repository->disable($this->projectId, 'main');
+        self::assertTrue($this->repository->isDisabled($this->projectId, 'main'));
 
-        $listener = new DeleteEnvironmentJobs($this->repository, $envState);
-        $listener(new EnvironmentDeleted($this->projectId, 'feature'));
-
-        self::assertNull($this->repository->getLatestByProjectAndBranch($this->projectId, 'feature'));
-        self::assertNotNull($this->repository->getLatestByProjectAndBranch($this->projectId, 'main'));
+        $this->repository->enable($this->projectId, 'main');
+        self::assertFalse($this->repository->isDisabled($this->projectId, 'main'));
     }
 
-    private function job(string $branch): DeployJob
+    #[Test]
+    public function disableIsIdempotent(): void
     {
-        $now = TimestampImmutable::now();
+        $this->repository->disable($this->projectId, 'main');
+        $this->repository->disable($this->projectId, 'main');
 
-        return new DeployJob(
-            DeployJobIdentifier::create(),
-            $this->projectId,
-            $branch,
-            'abcdef1234567890abcdef1234567890abcdef12',
-            DeployJobStatus::Completed,
-            '',
-            $now,
-            $now,
-        );
+        self::assertTrue($this->repository->isDisabled($this->projectId, 'main'));
+    }
+
+    #[Test]
+    public function disabledMapReturnsOnlyDisabledBranches(): void
+    {
+        $this->repository->disable($this->projectId, 'feature');
+
+        $map = $this->repository->disabledMap($this->projectId, ['main', 'feature']);
+
+        self::assertSame(['feature' => true], $map);
     }
 
     private function seedProject(): ProjectIdentifier
@@ -90,9 +82,9 @@ final class DeleteEnvironmentJobsTest extends IntegrationTestCase
         assert($users instanceof UserRepository);
         $users->create(new User(
             $userId,
-            'delete-env-jobs-test@example.com',
-            'Delete',
-            'Tester',
+            'env-state-test@example.com',
+            'Env',
+            'State',
             PasswordHash::create('password'),
             $now,
             $now,

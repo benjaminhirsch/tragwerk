@@ -10,6 +10,7 @@ use Tragwerk\Application\Handler\Project\ShowHandler;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Repository\DeployJobRepository;
 use Tragwerk\Domain\Repository\DomainRepository;
+use Tragwerk\Domain\Repository\EnvironmentStateRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
@@ -40,6 +41,7 @@ final readonly class ShowHandlerFactory
         $domains    = $container->get(DomainRepository::class);
         $resolver   = $container->get(DomainResolver::class);
         $bare       = $container->get(BareRepository::class);
+        $envState   = $container->get(EnvironmentStateRepository::class);
         $urlHelper  = $container->get(UrlHelper::class);
 
         assert($renderer instanceof ResponseRenderer);
@@ -50,6 +52,7 @@ final readonly class ShowHandlerFactory
         assert($domains instanceof DomainRepository);
         assert($resolver instanceof DomainResolver);
         assert($bare instanceof BareRepository);
+        assert($envState instanceof EnvironmentStateRepository);
         assert($urlHelper instanceof UrlHelper);
 
         return new ShowHandler(
@@ -61,6 +64,7 @@ final readonly class ShowHandlerFactory
             $domains,
             $resolver,
             $bare,
+            $envState,
             $urlHelper,
             $sshHost,
             $sshRepoBase,

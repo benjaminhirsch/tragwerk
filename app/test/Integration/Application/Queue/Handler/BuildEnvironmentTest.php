@@ -33,6 +33,7 @@ use Tragwerk\Domain\Entity\User;
 use Tragwerk\Domain\Enum\Locale;
 use Tragwerk\Domain\Enum\TeamRole;
 use Tragwerk\Domain\Repository\DomainRepository;
+use Tragwerk\Domain\Repository\EnvironmentStateRepository;
 use Tragwerk\Domain\Repository\EnvVarRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
@@ -339,6 +340,30 @@ final class BuildEnvironmentTest extends TestCase
             $nullUserRepo,
             new LockFactory(new InMemoryStore()),
             new EnvVarResolver($nullEnvVarRepo, new BranchAncestorResolver($this->bareRepository)),
+            new class implements EnvironmentStateRepository {
+                public function disable(ProjectIdentifier $projectId, string $branch): void
+                {
+                }
+
+                public function enable(ProjectIdentifier $projectId, string $branch): void
+                {
+                }
+
+                public function isDisabled(ProjectIdentifier $projectId, string $branch): bool
+                {
+                    return false;
+                }
+
+                /**
+                 * @param string[] $branches
+                 *
+                 * @return array<string, bool>
+                 */
+                public function disabledMap(ProjectIdentifier $projectId, array $branches): array
+                {
+                    return [];
+                }
+            },
         );
     }
 
