@@ -7,6 +7,7 @@ namespace Tragwerk\Application\Handler\Webhook;
 use Laminas\Diactoros\Response\EmptyResponse;
 use Laminas\Diactoros\Response\JsonResponse;
 use Override;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -16,6 +17,7 @@ use Tragwerk\Application\Webhook\AdapterRegistry;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Enum\BuildLogType;
 use Tragwerk\Domain\Enum\GitForge;
+use Tragwerk\Domain\Event\EnvironmentDeleted;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\ProjectWebhookRepository;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
@@ -30,6 +32,7 @@ final readonly class ForgeWebhookHandler implements RequestHandlerInterface
         private ProjectWebhookRepository $webhookRepository,
         private AdapterRegistry $adapterRegistry,
         private BuildDispatcher $buildDispatcher,
+        private EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -77,6 +80,12 @@ final readonly class ForgeWebhookHandler implements RequestHandlerInterface
 
         if ($payload === null) {
             return new EmptyResponse(200);
+        }
+
+        if ($payload->deleted) {
+            $this->eventDispatcher->dispatch(new EnvironmentDeleted($project->id, $payload->branch));
+
+            return new JsonResponse(['status' => 'ok']);
         }
 
         $this->buildDispatcher->dispatch($project, $payload->branch, $payload->commitSha, BuildLogType::WEBHOOK);

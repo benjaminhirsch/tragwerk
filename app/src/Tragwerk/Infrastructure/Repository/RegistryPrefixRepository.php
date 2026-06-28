@@ -105,4 +105,17 @@ final readonly class RegistryPrefixRepository implements RegistryPrefixRepositor
 
         return $result;
     }
+
+    #[Override]
+    public function deleteByProjectAndBranchSlug(ProjectIdentifier $projectId, string $branchSlug): void
+    {
+        try {
+            $this->connection->executeStatement(
+                'DELETE FROM registry_prefixes WHERE project_id = :project_id AND branch_slug = :branch_slug',
+                ['project_id' => $projectId->toString(), 'branch_slug' => $branchSlug],
+            );
+        } catch (Exception) {
+            // best-effort cleanup
+        }
+    }
 }

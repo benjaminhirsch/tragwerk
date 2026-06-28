@@ -48,6 +48,22 @@ final readonly class BitbucketAdapter implements WebhookAdapter
 
         $new = $changes[0]['new'] ?? null;
 
+        // Branch deletion: "new" is null, the removed branch is described by "old".
+        if ($new === null) {
+            $old = $changes[0]['old'] ?? null;
+
+            if (! is_array($old) || ($old['type'] ?? null) !== 'branch') {
+                return null;
+            }
+
+            $branch = $old['name'] ?? null;
+            if (! is_string($branch) || $branch === '') {
+                return null;
+            }
+
+            return new PushPayload(branch: $branch, commitSha: '', deleted: true);
+        }
+
         if (! is_array($new) || ($new['type'] ?? null) !== 'branch') {
             return null;
         }

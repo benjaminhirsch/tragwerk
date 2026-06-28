@@ -83,6 +83,24 @@ final readonly class BareRepository
         $this->run(['rm', '-rf', $path]);
     }
 
+    /**
+     * Deletes a branch ref from the bare repository. Idempotent: a missing ref
+     * is a no-op (e.g. when the branch was already removed on the remote).
+     */
+    public function deleteBranch(string $projectId, string $branch): void
+    {
+        $path = $this->getPath($projectId);
+        if (! is_dir($path)) {
+            return;
+        }
+
+        try {
+            $this->run(['git', '-C', $path, 'update-ref', '-d', 'refs/heads/' . $branch]);
+        } catch (RuntimeException) {
+            // ref already gone — nothing to do
+        }
+    }
+
     /** @return string[] */
     public function getBranches(string $projectId): array
     {

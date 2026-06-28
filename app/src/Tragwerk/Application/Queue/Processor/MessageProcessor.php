@@ -35,6 +35,7 @@ final readonly class MessageProcessor implements Processor
         private Handler\PruneRegistryImages $pruneRegistryImages,
         private Handler\PruneAllRegistryImages $pruneAllRegistryImages,
         private Handler\RunCleanupProjectDocker $runCleanupProjectDocker,
+        private Handler\RunCleanupEnvironmentDocker $runCleanupEnvironmentDocker,
     ) {
     }
 
@@ -62,6 +63,7 @@ final readonly class MessageProcessor implements Processor
             Message\PruneRegistryImages::class     => $this->pruneRegistryImages->handle($parsedMessage),
             Message\PruneAllRegistryImages::class  => $this->pruneAllRegistryImages->handle($parsedMessage),
             Message\CleanupProjectDocker::class    => $this->runCleanupProjectDocker->handle($parsedMessage),
+            Message\CleanupEnvironmentDocker::class => $this->runCleanupEnvironmentDocker->handle($parsedMessage),
             default => throw new InvalidArgumentException('Unknown message class: ' . $parsedMessage::class),
         };
 

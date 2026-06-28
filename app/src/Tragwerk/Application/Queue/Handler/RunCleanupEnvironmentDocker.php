@@ -1,0 +1,66 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tragwerk\Application\Queue\Handler;
+
+use Psr\Log\LoggerInterface;
+use Symfony\Component\Process\Process;
+use Tragwerk\Application\Queue\Message;
+
+use function dirname;
+
+final readonly class RunCleanupEnvironmentDocker
+{
+    public function __construct(
+        private LoggerInterface $logger,
+    ) {
+    }
+
+    public function handle(Message\CleanupEnvironmentDocker $message): void
+    {
+        $workDir = dirname(__DIR__, 5);
+
+        $this->logger->info('Starting Docker cleanup for deleted environment', [
+            'project_id' => $message->projectId,
+            'branch'     => $message->branch,
+        ]);
+
+        $process = new Process(
+            [
+                'php',
+                'bin/cli',
+                'environment:docker-cleanup',
+                $message->projectId,
+                $message->branch,
+                $message->host,
+                (string) $message->port,
+                $message->credentialId,
+            ],
+            $workDir,
+            timeout: 300,
+        );
+
+        $process->run(function (string $type, string $buffer) use ($message): void {
+            $this->logger->debug('Environment Docker cleanup output', [
+                'project_id' => $message->projectId,
+                'branch'     => $message->branch,
+                'type'       => $type,
+                'output'     => $buffer,
+            ]);
+        });
+
+        if (! $process->isSuccessful()) {
+            $this->logger->error('Environment Docker cleanup failed', [
+                'project_id' => $message->projectId,
+                'branch'     => $message->branch,
+                'exit_code'  => $process->getExitCode(),
+            ]);
+        }
+
+        $this->logger->info('Environment Docker cleanup completed', [
+            'project_id' => $message->projectId,
+            'branch'     => $message->branch,
+        ]);
+    }
+}

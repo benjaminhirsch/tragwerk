@@ -338,4 +338,18 @@ final class DeployJobRepository extends GenericRepository implements DeployJobRe
             throw EntityUpdateFailed::create($id, $e);
         }
     }
+
+    #[Override]
+    public function deleteByProjectAndBranch(ProjectIdentifier $projectId, string $branch): void
+    {
+        try {
+            $this->connection->executeStatement(
+                'DELETE FROM ' . EntityHelper::getDbTableName(EntityType::DEPLOY_JOB)
+                . ' WHERE project_id = :project_id AND branch = :branch',
+                ['project_id' => $projectId->toString(), 'branch' => $branch],
+            );
+        } catch (Exception) {
+            // best-effort cleanup; do not block environment deletion
+        }
+    }
 }

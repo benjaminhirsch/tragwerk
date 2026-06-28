@@ -43,6 +43,7 @@ $commands = [
         Command\SampleServerMetrics::class,
         Command\SampleCronRuns::class,
         Command\CleanupProjectDockerCommand::class,
+        Command\CleanupEnvironmentDockerCommand::class,
         Command\PruneOrphanedRegistryImagesCommand::class,
 
         DoctrineMigrationsCommand\CurrentCommand::class,
