@@ -42,14 +42,22 @@ final readonly class MountSizesHandler implements RequestHandlerInterface
         assert(is_string($branch));
 
         $projectConfig = $this->configLoader->load($project->id, $branch);
-        $app           = $projectConfig?->applications[0] ?? null;
 
-        $services = [];
+        $applications = [];
+        $services     = [];
         if ($projectConfig !== null) {
-            $services = $projectConfig->services;
+            $applications = $projectConfig->applications;
+            $services     = $projectConfig->services;
         }
 
-        $hasMounts = $app instanceof ApplicationConfig && $app->mounts !== [];
+        $hasMounts = false;
+        foreach ($applications as $app) {
+            assert($app instanceof ApplicationConfig);
+            if ($app->mounts !== []) {
+                $hasMounts = true;
+                break;
+            }
+        }
 
         $sizes = [];
         $error = null;
@@ -87,10 +95,10 @@ final readonly class MountSizesHandler implements RequestHandlerInterface
         }
 
         return $this->renderer->render($request, 'page::configuration/_mount_sizes', [
-            'app'      => $app,
-            'services' => $services,
-            'sizes'    => $sizes,
-            'error'    => $error,
+            'applications' => $applications,
+            'services'     => $services,
+            'sizes'        => $sizes,
+            'error'        => $error,
         ]);
     }
 }
