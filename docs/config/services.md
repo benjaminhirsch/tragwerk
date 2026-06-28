@@ -19,9 +19,10 @@ element and connected to applications via [relationships](/config/relationships)
 
 | Attribute | Required | Default | Description                                                              |
 | --------- | -------- | ------- | ------------------------------------------------------------------------ |
-| `name`    | Yes      | —       | Unique service name. Referenced by a relationship's `target`.            |
-| `type`    | Yes      | —       | Service engine and version. See the matrix below.                        |
-| `disk`    | No       | `512`   | Disk allocation in MB (positive integer). Applies to stateful services.  |
+| `name`       | Yes      | —       | Unique service name. Referenced by a relationship's `target`.            |
+| `type`       | Yes      | —       | Service engine and version. See the matrix below.                        |
+| `disk`       | No       | `512`   | Disk allocation in MB (positive integer). Applies to stateful services.  |
+| `local-port` | No       | —       | Loopback host port (`1024`–`65535`). When set, the service is published on `127.0.0.1` for SSH-tunnelled local client access. On `main`/`master` the configured port is used verbatim; every other branch gets a Docker-assigned free loopback port (find it via `docker ps`). |
 
 ::: warning Name pattern
 `name` must match `[a-zA-Z][a-zA-Z0-9 _-]*` and be unique within the project.
@@ -92,6 +93,11 @@ Docker network, by the applications that declare a relationship to it (using its
 slugified `name` as the hostname). Only application containers are fronted by
 Traefik. To inspect a database during development, tunnel in over SSH rather than
 expecting a public port.
+
+The one opt-in exception is the [`local-port`](#service) attribute: it publishes
+the service on the host **loopback only** (`127.0.0.1`, never `0.0.0.0`), so it
+stays private and reachable solely through an SSH tunnel. See
+[connecting from your machine](/app/services#connecting-to-a-database-from-your-machine).
 :::
 
 ::: tip Choose the right PHP extension

@@ -47,7 +47,7 @@
         </application>
     </applications>
     <services>
-        <service name="db" type="postgresql:18" disk="2048"/>
+        <service name="db" type="postgresql:18" disk="2048" local-port="55432"/>
         <service name="redis" type="redis:8"/>
     </services>
     <routes>

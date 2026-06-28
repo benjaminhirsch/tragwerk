@@ -283,6 +283,26 @@ final class ProjectConfigMappingTest extends TestCase
     }
 
     #[Test]
+    public function serviceLocalPortIsNullWhenAbsent(): void
+    {
+        $services = '<services><service name="cache" type="redis:8"/></services>';
+
+        $config = $this->map(self::projectXml(services: $services));
+
+        self::assertNull($config->services[0]->localPort);
+    }
+
+    #[Test]
+    public function serviceLocalPortIsIntWhenPresent(): void
+    {
+        $services = '<services><service name="db" type="postgresql:18" local-port="55432"/></services>';
+
+        $config = $this->map(self::projectXml(services: $services));
+
+        self::assertSame(55432, $config->services[0]->localPort);
+    }
+
+    #[Test]
     public function mountCloneFromParentIsTrueWhenSet(): void
     {
         $mounts = '<mounts><mount name="data" source="local" path="data" clone-from-parent="true"/></mounts>';

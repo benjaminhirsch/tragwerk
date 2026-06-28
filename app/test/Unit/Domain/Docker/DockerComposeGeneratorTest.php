@@ -399,6 +399,101 @@ final class DockerComposeGeneratorTest extends TestCase
     }
 
     #[Test]
+    public function serviceWithoutLocalPortHasNoPortsMapping(): void
+    {
+        $service = new ServiceConfig(name: 'db', type: ServiceRuntime::POSTGRES18, disk: null);
+        $config  = self::project(
+            [self::app('app')],
+            [self::upstream('https://{default}', 'app:http')],
+            [$service],
+        );
+
+        self::assertArrayNotHasKey('ports', $this->service($this->generator->generate($config), 'db'));
+    }
+
+    #[Test]
+    public function postgresqlLocalPortBindsLoopbackOnMain(): void
+    {
+        $service = new ServiceConfig(name: 'db', type: ServiceRuntime::POSTGRES18, disk: null, localPort: 55432);
+        $config  = self::project(
+            [self::app('app')],
+            [self::upstream('https://{default}', 'app:http')],
+            [$service],
+        );
+
+        self::assertSame(
+            ['127.0.0.1:55432:5432'],
+            $this->service($this->generator->generate($config, 'main'), 'db')['ports'],
+        );
+    }
+
+    #[Test]
+    public function masterBranchAlsoUsesConfiguredPort(): void
+    {
+        $service = new ServiceConfig(name: 'db', type: ServiceRuntime::POSTGRES18, disk: null, localPort: 55432);
+        $config  = self::project(
+            [self::app('app')],
+            [self::upstream('https://{default}', 'app:http')],
+            [$service],
+        );
+
+        self::assertSame(
+            ['127.0.0.1:55432:5432'],
+            $this->service($this->generator->generate($config, 'master'), 'db')['ports'],
+        );
+    }
+
+    #[Test]
+    public function featureBranchGetsDockerAssignedLoopbackPort(): void
+    {
+        $service = new ServiceConfig(name: 'db', type: ServiceRuntime::POSTGRES18, disk: null, localPort: 55432);
+        $config  = self::project(
+            [self::app('app')],
+            [self::upstream('https://{default}', 'app:http')],
+            [$service],
+        );
+
+        // Non-root branch: empty host-port slot -> Docker assigns a free loopback port.
+        self::assertSame(
+            ['127.0.0.1::5432'],
+            $this->service($this->generator->generate($config, 'feature-x'), 'db')['ports'],
+        );
+    }
+
+    #[Test]
+    public function mysqlLocalPortMapsToInternal3306(): void
+    {
+        $service = new ServiceConfig(name: 'mysql', type: ServiceRuntime::MYSQL8, disk: null, localPort: 53306);
+        $config  = self::project(
+            [self::app('app')],
+            [self::upstream('https://{default}', 'app:http')],
+            [$service],
+        );
+
+        self::assertSame(
+            ['127.0.0.1:53306:3306'],
+            $this->service($this->generator->generate($config, 'main'), 'mysql')['ports'],
+        );
+    }
+
+    #[Test]
+    public function redisLocalPortMapsToInternal6379(): void
+    {
+        $service = new ServiceConfig(name: 'redis', type: ServiceRuntime::REDIS8, disk: null, localPort: 56379);
+        $config  = self::project(
+            [self::app('app')],
+            [self::upstream('https://{default}', 'app:http')],
+            [$service],
+        );
+
+        $ports = $this->service($this->generator->generate($config, 'main'), 'redis')['ports'];
+
+        self::assertSame(['127.0.0.1:56379:6379'], $ports);
+        self::assertIsArray($ports);
+        self::assertStringStartsWith('127.0.0.1:', $ports[0]);
+    }
+
+    #[Test]
     public function relationshipNameWithHyphensNormalisedInEnvVarPrefix(): void
     {
         $rel    = new RelationshipConfig(name: 'primary-db', target: 'db');

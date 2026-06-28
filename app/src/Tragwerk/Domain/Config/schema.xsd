@@ -410,6 +410,21 @@
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
+        <xs:attribute name="local-port" use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    Optional host loopback port. When set, the service is published on
+                    127.0.0.1:&lt;local-port&gt; (never 0.0.0.0) for SSH-tunnelled local
+                    client access. Must be unique host-wide across all projects/branches.
+                </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+                <xs:restriction base="xs:integer">
+                    <xs:minInclusive value="1024"/>
+                    <xs:maxInclusive value="65535"/>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:attribute>
     </xs:complexType>
 
     <!-- ============================================================ -->

@@ -94,12 +94,11 @@ After the next [deployment](/app/deployments), the Configuration view lists
 
 ## Connecting to a database from your machine
 
-Because a service has no published port, you cannot point a client straight at
-`your-vps:5432`. You first reach the VPS over SSH, then bridge to the container
-**inside** the Docker network. Find the container and network names with
-`docker ps` / `docker network ls` on the VPS — the compose project name looks
-like `tw-<id>-<branch>`, the service container like `tw-<id>-<branch>-db-1`, and
-the network like `tw-<id>-<branch>_default`.
+By default a service has no published port, so you cannot point a client
+straight at `your-vps:5432`. Either run the client inside the container over SSH,
+or declare a loopback port and forward it over SSH. Find container names with
+`docker ps` on the VPS — the compose project name looks like `tw-<id>-<branch>`
+and the service container like `tw-<id>-<branch>-db-1`.
 
 ### Quick CLI access (no tunnel)
 
@@ -110,30 +109,43 @@ ssh user@your-vps
 docker exec -it tw-<id>-<branch>-db-1 psql -U app app
 ```
 
-### TCP tunnel for a local client
+### Persistent loopback port (config)
 
-To use a GUI client or local tooling, bridge the service to the VPS loopback,
-then forward that port over SSH. Using the **service name** (`db`) rather than a
-container IP means the bridge keeps working across redeploys:
+If you regularly attach a local client, declare a
+[`local-port`](/config/services#service) on the service. Tragwerk then publishes
+it on the VPS loopback for you — no per-session bridge container:
+
+```xml
+<service name="db" type="postgresql:18" local-port="55432"/>
+```
+
+On the **`main`/`master` branch** the generated Compose binds the configured
+port verbatim — `127.0.0.1:55432:5432` (loopback only, never `0.0.0.0`). After
+redeploying, forward it over SSH:
 
 ```bash
-# 1. On the VPS: expose the service on 127.0.0.1 only, via a throwaway socat container
-docker run --rm -p 127.0.0.1:55432:5432 \
-  --network tw-<id>-<branch>_default \
-  alpine/socat tcp-listen:5432,fork,reuseaddr tcp-connect:db:5432
-
-# 2. On your machine: forward your local 5432 to that loopback port
+# On your machine: forward your local 5432 to the VPS loopback port
 ssh -L 5432:127.0.0.1:55432 user@your-vps
 ```
 
-Now connect your client to `localhost:5432` with the default
-[credentials](/config/services#default-credentials) — database `app`, user
-`app`, password `secret`. Redis/Valkey work the same way; just use port `6379`.
+Then connect to `localhost:5432` with the default
+[credentials](/config/services#default-credentials). MySQL/MariaDB use internal
+port `3306`, Redis/Valkey `6379`.
+
+::: info Feature branches get an auto-assigned port
+Because `config.xml` is shared across branches, a fixed port would collide when
+two branches run on the same VPS. So only **`main`/`master`** use the configured
+`local-port`. Every other branch binds `127.0.0.1::5432` — **Docker picks a free
+loopback port** for it. Find the assigned port with `docker ps` on the VPS (look
+at the `127.0.0.1:<port>->5432/tcp` mapping for `tw-<id>-<branch>-db-1`), then
+forward that port over SSH.
+:::
 
 ::: warning
-Binding socat to `127.0.0.1` keeps the service private to the SSH session. Never
-publish the service on `0.0.0.0` — that would expose your database to the
-internet, which is exactly what Tragwerk avoids by default.
+The published port always binds `127.0.0.1` on the VPS, so the service stays
+reachable only through the SSH tunnel. Tragwerk never publishes a service on
+`0.0.0.0` — that would expose your database to the internet, which is exactly
+what it avoids by default.
 :::
 
 ## Related
