@@ -168,6 +168,19 @@ final readonly class DockerComposeGenerator
             $svcConfig['healthcheck']       = $this->serviceHealthcheck($service->type);
             $svcConfig['stop_grace_period'] = $this->serviceStopGracePeriod($service->type);
 
+            if ($service->localPort !== null) {
+                // main/master keeps the configured, predictable host port; every other
+                // branch lets Docker assign a free loopback port (find it via `docker ps`)
+                // so two branches of the same project never collide on the host. Always
+                // hard-bound to 127.0.0.1 — a user can never coerce a public 0.0.0.0 bind.
+                $isRootBranch = $branch === 'main' || $branch === 'master';
+                $hostPort     = $isRootBranch ? (string) $service->localPort : '';
+
+                $svcConfig['ports'] = [
+                    '127.0.0.1:' . $hostPort . ':' . $this->servicePort($service->type),
+                ];
+            }
+
             $services[$slug] = $svcConfig;
         }
 
@@ -402,10 +415,12 @@ final readonly class DockerComposeGenerator
     /** @return array<string, string> */
     private function connectionVars(ServiceConfig $service, string $slug): array
     {
+        $port = (string) $this->servicePort($service->type);
+
         if (str_starts_with($service->type->value, 'postgresql:')) {
             return [
                 'HOST'     => $slug,
-                'PORT'     => '5432',
+                'PORT'     => $port,
                 'DATABASE' => 'app',
                 'USER'     => 'app',
                 'PASSWORD' => 'secret',
@@ -418,7 +433,7 @@ final readonly class DockerComposeGenerator
         ) {
             return [
                 'HOST'     => $slug,
-                'PORT'     => '3306',
+                'PORT'     => $port,
                 'DATABASE' => 'app',
                 'USER'     => 'app',
                 'PASSWORD' => 'secret',
@@ -427,8 +442,25 @@ final readonly class DockerComposeGenerator
 
         return [
             'HOST' => $slug,
-            'PORT' => '6379',
+            'PORT' => $port,
         ];
+    }
+
+    /** Internal container port a service listens on, keyed by runtime family. */
+    private function servicePort(ServiceRuntime $runtime): int
+    {
+        if (str_starts_with($runtime->value, 'postgresql:')) {
+            return 5432;
+        }
+
+        if (
+            str_starts_with($runtime->value, 'mysql:')
+            || str_starts_with($runtime->value, 'mariadb:')
+        ) {
+            return 3306;
+        }
+
+        return 6379;
     }
 
     /** @return array<string, string> */

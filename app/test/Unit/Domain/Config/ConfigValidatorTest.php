@@ -131,6 +131,65 @@ final class ConfigValidatorTest extends TestCase
     }
 
     #[Test]
+    public function duplicateLocalPortReturnsError(): void
+    {
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>'
+            . '<project>'
+            . '<applications>'
+            . '<application name="app" type="php:8.5" root="/">'
+            . '<web><location path="/" root="public" index="index.php" passthru="/index.php"/></web>'
+            . '</application>'
+            . '</applications>'
+            . '<services>'
+            . '<service name="db" type="postgresql:18" local-port="55432"/>'
+            . '<service name="db2" type="postgresql:18" local-port="55432"/>'
+            . '</services>'
+            . '<routes><route pattern="{default}" upstream="app:http"/></routes>'
+            . '</project>';
+
+        $errors = $this->validator->validate($xml);
+
+        self::assertContains('Duplicate local-port "55432" on services "db" and "db2"', $errors);
+    }
+
+    #[Test]
+    public function distinctLocalPortsReturnNoError(): void
+    {
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>'
+            . '<project>'
+            . '<applications>'
+            . '<application name="app" type="php:8.5" root="/">'
+            . '<web><location path="/" root="public" index="index.php" passthru="/index.php"/></web>'
+            . '</application>'
+            . '</applications>'
+            . '<services>'
+            . '<service name="db" type="postgresql:18" local-port="55432"/>'
+            . '<service name="cache" type="redis:8" local-port="56379"/>'
+            . '</services>'
+            . '<routes><route pattern="{default}" upstream="app:http"/></routes>'
+            . '</project>';
+
+        self::assertSame([], $this->validator->validate($xml));
+    }
+
+    #[Test]
+    public function localPortBelowRangeReturnsSchemaError(): void
+    {
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>'
+            . '<project>'
+            . '<applications>'
+            . '<application name="app" type="php:8.5" root="/">'
+            . '<web><location path="/" root="public" index="index.php" passthru="/index.php"/></web>'
+            . '</application>'
+            . '</applications>'
+            . '<services><service name="db" type="postgresql:18" local-port="80"/></services>'
+            . '<routes><route pattern="{default}" upstream="app:http"/></routes>'
+            . '</project>';
+
+        self::assertNotEmpty($this->validator->validate($xml));
+    }
+
+    #[Test]
     public function errorsContainHumanReadableMessages(): void
     {
         $errors = $this->validator->validate('<?xml version="1.0"?><unknown/>');

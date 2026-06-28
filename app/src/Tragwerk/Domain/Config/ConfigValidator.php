@@ -52,7 +52,50 @@ final readonly class ConfigValidator
         // XSD only checks the structural shape of a schedule (field count / descriptor),
         // not whether field values are in range. Validate semantics here so a broken
         // schedule fails the build instead of crash-looping the cron sidecar at runtime.
-        return $this->validateCronSchedules($doc);
+        return [
+            ...$this->validateCronSchedules($doc),
+            ...$this->validateLocalPorts($doc),
+        ];
+    }
+
+    /**
+     * Loopback ports bind 127.0.0.1 on the host, so two services sharing a port
+     * fail `docker up` with "address already in use". Catch in-config duplicates
+     * here; host-wide collisions across projects/branches are not visible to a
+     * single config and surface at deploy time.
+     *
+     * @return string[]
+     */
+    private function validateLocalPorts(DOMDocument $doc): array
+    {
+        $errors = [];
+
+        /** @var array<string, string> $seen port => first service name */
+        $seen = [];
+
+        foreach ($doc->getElementsByTagName('service') as $service) {
+            if (! $service instanceof DOMElement || ! $service->hasAttribute('local-port')) {
+                continue;
+            }
+
+            $port = $service->getAttribute('local-port');
+            $name = $service->getAttribute('name');
+
+            if (isset($seen[$port])) {
+                $errors[] = sprintf(
+                    'Duplicate local-port "%s" on services "%s" and "%s"',
+                    $port,
+                    $seen[$port],
+                    $name,
+                );
+
+                continue;
+            }
+
+            $seen[$port] = $name;
+        }
+
+        return $errors;
     }
 
     /** @return string[] */

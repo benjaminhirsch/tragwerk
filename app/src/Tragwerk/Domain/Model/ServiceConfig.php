@@ -12,6 +12,7 @@ final readonly class ServiceConfig
         public string $name,
         public ServiceRuntime $type,
         public int|null $disk = null,
+        public int|null $localPort = null,
     ) {
     }
 }
