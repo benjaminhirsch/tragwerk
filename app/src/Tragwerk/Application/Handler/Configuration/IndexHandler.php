@@ -13,6 +13,7 @@ use Tragwerk\Application\Service\ProjectConfigLoader;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Repository\CronRunRepository;
 use Tragwerk\Domain\Repository\DomainRepository;
+use Tragwerk\Domain\Repository\EnvironmentStateRepository;
 use Tragwerk\Domain\Service\DomainResolver;
 
 use function assert;
@@ -26,6 +27,7 @@ final readonly class IndexHandler implements RequestHandlerInterface
         private DomainRepository $domainRepository,
         private DomainResolver $domainResolver,
         private CronRunRepository $cronRunRepository,
+        private EnvironmentStateRepository $environmentStateRepository,
     ) {
     }
 
@@ -55,6 +57,7 @@ final readonly class IndexHandler implements RequestHandlerInterface
             'projectConfig'      => $projectConfig,
             'hostsByPlaceholder' => $hostsByPlaceholder,
             'cronRuns'           => $cronRuns,
+            'disabled'           => $this->environmentStateRepository->isDisabled($activeProject->id, $activeBranch),
         ]);
     }
 }
