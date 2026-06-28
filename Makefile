@@ -92,6 +92,11 @@ DOCS_COMPOSE := docker compose -f docker-compose.docs.yaml
 docs/dev:
 	$(DOCS_COMPOSE) up
 
+## docs/stop: Stop the docs dev server and remove its container
+.PHONY: docs/stop
+docs/stop:
+	$(DOCS_COMPOSE) down
+
 ## docs/build: Build static docs site → docs/.vitepress/dist
 .PHONY: docs/build
 docs/build:
