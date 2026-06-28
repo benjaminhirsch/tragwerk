@@ -90,6 +90,8 @@ services:
     build:
       context: app
       dockerfile: Dockerfile.prod
+      args:
+        GITHUB_TOKEN: ${GITHUB_TOKEN:-}
     command: ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]
     networks:
       - web
