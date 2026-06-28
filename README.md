@@ -1,2 +1,3 @@
-# tragwerk
-Public repository to report issues and see the roadmap
+# Tragwerk
+
+Issues and ideas welcome. Open an issue to start a discussion.
