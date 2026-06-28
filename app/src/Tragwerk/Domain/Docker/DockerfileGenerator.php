@@ -238,6 +238,11 @@ final readonly class DockerfileGenerator
             if ($location->passthru !== null && $location->passthru !== 'none') {
                 $lines[] = '    php_server';
             } else {
+                // Serve the extensionless path, then "{path}.html", then a directory
+                // index. This lets pre-rendered static sites with clean URLs (e.g.
+                // VitePress, Astro, Hugo) resolve "/foo" to "foo.html" on direct
+                // load; without it Caddy only finds the file when an extension is given.
+                $lines[] = '    try_files {path} {path}.html {path}/index.html';
                 $lines[] = '    file_server';
             }
 

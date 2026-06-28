@@ -404,6 +404,42 @@ final class DockerfileGeneratorTest extends TestCase
     }
 
     #[Test]
+    public function caddyfileStaticLocationFallsBackToHtmlForCleanUrls(): void
+    {
+        $app    = new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([new LocationConfig(path: '/', root: 'public', passthru: 'none')]),
+            hooks: [],
+            extensions: [],
+        );
+        $output = $this->generator->generate($app);
+
+        self::assertNotNull($output->caddyfileContent);
+        // Clean-URL fallback: extensionless "/foo" resolves to "foo.html".
+        self::assertStringContainsString('try_files {path} {path}.html {path}/index.html', $output->caddyfileContent);
+    }
+
+    #[Test]
+    public function caddyfilePhpLocationHasNoTryFiles(): void
+    {
+        $app    = new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([new LocationConfig(path: '/', root: 'public', passthru: '/index.php')]),
+            hooks: [],
+            extensions: [],
+        );
+        $output = $this->generator->generate($app);
+
+        self::assertNotNull($output->caddyfileContent);
+        // The PHP front controller already handles routing; no static fallback.
+        self::assertStringNotContainsString('try_files', $output->caddyfileContent);
+    }
+
+    #[Test]
     public function caddyfileMultipleLocationsGetPrefixedPaths(): void
     {
         $app    = new ApplicationConfig(
