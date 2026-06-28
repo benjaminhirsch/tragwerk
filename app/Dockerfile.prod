@@ -1,0 +1,76 @@
+# syntax=docker/dockerfile:1
+#
+# Production image for the Tragwerk control-plane app.
+# Multi-stage: a shared `base` (runtime + tooling), a `vendor` stage that bakes
+# the production Composer dependencies into a cacheable layer, and the final
+# `app` stage that copies the source on top. Built on the VPS via
+# docker-compose.prod.yaml; the same image runs the web server and every worker
+# (only the `command` differs).
+
+FROM dunglas/frankenphp:1.12.3-php8.5-trixie AS base
+
+WORKDIR /app
+
+# git (BareRepository shells out to it), unzip (composer extraction), gettext CLI
+# (msgfmt), docker-cli + buildx: Tragwerk is the control plane and drives the
+# Docker socket to build/run the hosted apps.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git unzip gettext docker-cli \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=docker/buildx-bin:latest /buildx /usr/lib/docker/cli-plugins/docker-buildx
+
+# Production extension set — no xdebug/pcov (dev/test only).
+RUN install-php-extensions \
+        intl \
+        gettext \
+        pdo_pgsql \
+        zip \
+        pcntl \
+        opcache \
+        sockets \
+        curl
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Caddy needs a writable autosave/lock location; point XDG dirs at writable paths.
+ENV XDG_CONFIG_HOME=/tmp/caddy-config \
+    XDG_DATA_HOME=/tmp/caddy-data
+
+# ---- vendor stage: production dependencies only -----------------------------
+# Isolated so the (slow) install layer is cached and only re-runs when
+# composer.json/composer.lock change. --no-scripts skips post-install
+# clear-config-cache (needs the full app); the entrypoint warms it at runtime.
+FROM base AS vendor
+
+COPY composer.json composer.lock ./
+RUN composer install \
+        --no-dev \
+        --optimize-autoloader \
+        --no-scripts \
+        --prefer-dist \
+        --no-interaction \
+        --no-progress
+
+# ---- final app stage --------------------------------------------------------
+FROM base AS app
+
+# Application source (filtered by .dockerignore — no vendor/, data/, dev configs,
+# and crucially no config/development.config.php symlink).
+COPY . .
+
+# Baked production dependencies, then a fresh optimized autoloader over the
+# real source tree.
+COPY --from=vendor /app/vendor ./vendor
+RUN composer dump-autoload --no-dev --optimize --no-interaction
+
+# Production server + PHP config (no file-watch, no xdebug).
+COPY Caddyfile /etc/caddy/Caddyfile
+COPY app.prod.ini /usr/local/etc/php/conf.d/app.ini
+
+COPY bin/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+EXPOSE 80
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]

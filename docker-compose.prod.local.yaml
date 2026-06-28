@@ -1,0 +1,44 @@
+# Local override for testing the production stack WITHOUT TLS/ACME.
+# Let's Encrypt needs public DNS + reachable :443, impossible on a laptop.
+# This routes everything over plain HTTP :80, keyed by Host header.
+#
+# Usage:
+#   cp .env.prod.dist .env   # dummy values are fine for local
+#   docker compose -f docker-compose.prod.yaml -f docker-compose.prod.local.yaml up -d --build
+#
+# Then (no DNS needed):
+#   curl -H 'Host: tragwerk.localhost' http://localhost/login
+#   curl -H 'Host: docs.localhost'     http://localhost/
+#
+# (Browsers resolve *.localhost -> 127.0.0.1 automatically, so
+#  http://tragwerk.localhost / http://docs.localhost also work in a browser.)
+
+services:
+  traefik:
+    # No ACME, no https redirect, single :80 entrypoint.
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedByDefault=false
+      - --providers.docker.network=tragwerk-web
+      - --entrypoints.web.address=:80
+      - --api.insecure=true
+    ports:
+      - "80:80"
+      - "8080:8080"   # Traefik dashboard (http://localhost:8080)
+
+  app:
+    # Override the whole label set: plain `web` entrypoint, no TLS/certresolver.
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=tragwerk-web
+      - traefik.http.routers.app.rule=Host(`tragwerk.localhost`)
+      - traefik.http.routers.app.entrypoints=web
+      - traefik.http.services.app.loadbalancer.server.port=80
+
+  docs:
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=tragwerk-web
+      - traefik.http.routers.docs.rule=Host(`docs.localhost`)
+      - traefik.http.routers.docs.entrypoints=web
+      - traefik.http.services.docs.loadbalancer.server.port=80

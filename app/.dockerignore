@@ -1,0 +1,31 @@
+# VCS / IDE
+.git
+.gitignore
+.idea
+
+# Dev-only container + PHP config (prod variants are copied explicitly)
+Dockerfile
+Dockerfile.prod
+Caddyfile.dev
+*.dev.ini
+
+# Dependencies — rebuilt in the vendor stage
+vendor/
+
+# Runtime data — provided by named volumes at runtime
+data/
+
+# Tests & QA tooling — not needed in the runtime image
+test/
+phpunit.xml.dist
+phpstan.neon
+phpcs.xml.dist
+phplint.yml
+public/coverage/
+
+# Laminas development mode — MUST NEVER ship to production.
+# config/development.config.php is an active symlink in this repo and would
+# force debug=true + disable config caching if copied into the image.
+config/development.config.php
+config/autoload/*.local.php
+config/autoload/development.local.php
