@@ -52,6 +52,47 @@ A PHP application with a front controller:
 </web>
 ```
 
+### Static sites & clean URLs
+
+A `passthru="none"` location serves files straight from disk. For pre-rendered
+sites that use **clean URLs** (no `.html` in links — VitePress, Astro, Hugo and
+similar), Tragwerk also resolves an **extensionless request to `{path}.html`**,
+then to a directory `index.html`. So a request for `/guide/intro` is served from
+`guide/intro.html`, and deep links work on **direct load and refresh**, not only
+through in-app navigation.
+
+A complete static-site project — a documentation app built during the image
+build and served on its own subdomain:
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="schema.xsd?v1">
+    <applications>
+        <application name="Documentation" type="php:8.5" root="docs">
+            <web>
+                <location path="/" root=".vitepress/dist" index="index.html" passthru="none"/>
+            </web>
+            <hooks>
+                <hook type="build"><![CDATA[
+                  npm ci
+                  npm run docs:build
+                ]]></hook>
+            </hooks>
+        </application>
+    </applications>
+    <routes>
+        <route pattern="https://{docs}" upstream="Documentation:http"/>
+    </routes>
+</project>
+```
+
+::: tip
+`type` selects the base image, but with `passthru="none"` **no PHP runs** — the
+container just serves the built static output. Point `root` at your generator's
+output directory (here `.vitepress/dist`) and produce it in a `build` hook.
+:::
+
 ### Multiple locations
 
 You can declare several locations to serve different paths differently — for
