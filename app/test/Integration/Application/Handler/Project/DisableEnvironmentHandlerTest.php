@@ -9,6 +9,7 @@ use Tragwerk\Application\Queue\Message\StopEnvironmentDocker;
 use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Repository\CredentialRepository;
+use Tragwerk\Domain\Repository\EnvironmentStateRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\ValueObject\CredentialIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
@@ -50,6 +51,10 @@ final class DisableEnvironmentHandlerTest extends EnvironmentScopedTestCase
         self::assertSame($this->branch, $message->branch);
         self::assertSame($this->server->host, $message->host);
         self::assertSame($credentialId->toString(), $message->credentialId);
+
+        $envState = $this->container->get(EnvironmentStateRepository::class);
+        assert($envState instanceof EnvironmentStateRepository);
+        self::assertTrue($envState->isDisabled($this->project->id, $this->branch));
     }
 
     #[Test]

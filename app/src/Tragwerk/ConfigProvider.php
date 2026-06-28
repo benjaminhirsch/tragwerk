@@ -311,6 +311,8 @@ final readonly class ConfigProvider
                         Infrastructure\Repository\RegistryRepository::class,
                     Domain\Repository\RegistryPrefixRepository::class =>
                         Infrastructure\Repository\RegistryPrefixRepository::class,
+                    Domain\Repository\EnvironmentStateRepository::class =>
+                        Infrastructure\Repository\EnvironmentStateRepository::class,
                     Domain\Repository\EmailConfirmationRepository::class =>
                         Infrastructure\Repository\EmailConfirmationRepository::class,
                     Domain\Repository\PasswordResetRepository::class =>

@@ -12,6 +12,7 @@ use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Repository\DeployJobRepository;
 use Tragwerk\Domain\Repository\DomainRepository;
+use Tragwerk\Domain\Repository\EnvironmentStateRepository;
 use Tragwerk\Domain\Service\DomainResolver;
 
 use function is_string;
@@ -25,6 +26,7 @@ final readonly class ShowHandler implements RequestHandlerInterface
         private DeployJobRepository $deployJobRepository,
         private DomainRepository $domainRepository,
         private DomainResolver $domainResolver,
+        private EnvironmentStateRepository $environmentStateRepository,
     ) {
     }
 
@@ -41,6 +43,7 @@ final readonly class ShowHandler implements RequestHandlerInterface
                 'branch'      => null,
                 'deployments' => [],
                 'primaryHost' => null,
+                'disabled'    => false,
             ]);
         }
 
@@ -64,6 +67,7 @@ final readonly class ShowHandler implements RequestHandlerInterface
             'branch'      => $branch,
             'deployments' => $deployments,
             'primaryHost' => $primaryHost,
+            'disabled'    => $this->environmentStateRepository->isDisabled($project->id, $branch),
         ]);
     }
 }

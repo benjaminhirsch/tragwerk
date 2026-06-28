@@ -105,10 +105,18 @@ final class StopEnvironmentDockerCommand extends Command
 
         $output->writeln('[Stop] Stopping containers for branch: ' . $branch);
 
+        // Compose-managed services (db, workers, cron sidecars).
         $sftp->exec(
             'cd ' . escapeshellarg($branchDir)
             . ' && NO_COLOR=1 docker compose --project-name ' . escapeshellarg($composeProject)
             . ' -f docker-compose.yml stop 2>&1; true',
+        );
+
+        // Blue/green app containers are started via `docker run` (not compose-managed),
+        // so they are invisible to `docker compose stop` — stop them by name.
+        $sftp->exec(
+            'docker ps -q --filter ' . escapeshellarg('name=' . $composeProject . '-')
+            . ' 2>/dev/null | xargs -r docker stop 2>/dev/null; true',
         );
 
         $output->writeln('[Stop] Done. Containers stopped; volumes and files kept. Redeploy reactivates.');

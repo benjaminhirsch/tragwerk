@@ -17,6 +17,7 @@ use Tragwerk\Application\Queue\Producer;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
+use Tragwerk\Domain\Repository\EnvironmentStateRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
@@ -32,6 +33,7 @@ final readonly class DisableEnvironmentHandler implements RequestHandlerInterfac
         private ProjectRepository $projectRepository,
         private ServerRepository $serverRepository,
         private BareRepository $bareRepository,
+        private EnvironmentStateRepository $environmentStateRepository,
         private Producer $producer,
         private UrlHelper $urlHelper,
     ) {
@@ -60,6 +62,8 @@ final readonly class DisableEnvironmentHandler implements RequestHandlerInterfac
         if (! in_array($branch, $branches, true)) {
             return new EmptyResponse(404);
         }
+
+        $this->environmentStateRepository->disable($project->id, $branch);
 
         try {
             $server = $this->serverRepository->getById($project->serverId);

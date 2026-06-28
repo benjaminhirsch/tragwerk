@@ -9,15 +9,18 @@ use Tragwerk\Domain\Enum\DeployJobStatus;
  * @var string|null         $branch
  * @var list<DeployJob>     $deployments
  * @var string|null         $primaryHost
+ * @var bool                $disabled
  */
 
 $latest       = $deployments[0] ?? null;
-$statusBadge  = match ($latest?->status) {
-    DeployJobStatus::Completed => ['ok', $this->t('Running')],
-    DeployJobStatus::Failed    => ['danger', $this->t('Failed')],
-    DeployJobStatus::Running, DeployJobStatus::Pending => ['info', $this->t('Deploying')],
-    default => ['neutral', $this->t('Not deployed')],
-};
+$statusBadge  = $disabled
+    ? ['warn', $this->t('Paused')]
+    : match ($latest?->status) {
+        DeployJobStatus::Completed => ['ok', $this->t('Running')],
+        DeployJobStatus::Failed    => ['danger', $this->t('Failed')],
+        DeployJobStatus::Running, DeployJobStatus::Pending => ['info', $this->t('Deploying')],
+        default => ['neutral', $this->t('Not deployed')],
+    };
 
 $subtitle = '';
 if ($branch !== null) {
@@ -68,9 +71,11 @@ $sseTopic  = urlencode($topicBase . '/project/' . $this->activeProject()->id->to
     <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#tw-redeploy-modal">
         <i class="bi bi-arrow-clockwise"></i> <?= $this->e($this->t('Redeploy')) ?>
     </button>
-    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#tw-disable-environment-modal">
-        <i class="bi bi-pause-circle"></i> <?= $this->e($this->t('Disable')) ?>
-    </button>
+    <?php if (! $disabled): ?>
+        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#tw-disable-environment-modal">
+            <i class="bi bi-pause-circle"></i> <?= $this->e($this->t('Disable')) ?>
+        </button>
+    <?php endif ?>
     <button type="button" class="btn btn-outline-secondary"
             style="color:var(--danger-text);border-color:var(--danger-soft)"
             data-bs-toggle="modal" data-bs-target="#tw-delete-environment-modal">
@@ -120,6 +125,7 @@ $sseTopic  = urlencode($topicBase . '/project/' . $this->activeProject()->id->to
     'extraFields'   => ['branch' => $branch],
 ]) ?>
 
+<?php if (! $disabled): ?>
 <?= $this->fetch('partial::modal', [
     'id'            => 'tw-disable-environment-modal',
     'header'        => $this->t('Disable environment'),
@@ -130,6 +136,7 @@ $sseTopic  = urlencode($topicBase . '/project/' . $this->activeProject()->id->to
     'actionIcon'    => 'bi bi-pause-circle',
     'extraFields'   => ['branch' => $branch],
 ]) ?>
+<?php endif ?>
 
 <?= $this->fetch('partial::modal', [
     'id'            => 'tw-delete-environment-modal',

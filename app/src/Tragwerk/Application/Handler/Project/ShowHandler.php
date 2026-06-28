@@ -18,6 +18,7 @@ use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Repository\DeployJobRepository;
 use Tragwerk\Domain\Repository\DomainRepository;
+use Tragwerk\Domain\Repository\EnvironmentStateRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
@@ -43,6 +44,7 @@ final readonly class ShowHandler implements RequestHandlerInterface
         private DomainRepository $domainRepository,
         private DomainResolver $domainResolver,
         private BareRepository $bareRepository,
+        private EnvironmentStateRepository $environmentStateRepository,
         private UrlHelper $urlHelper,
         private string $gitSshHost,
         private string $gitSshRepoBase,
@@ -66,6 +68,7 @@ final readonly class ShowHandler implements RequestHandlerInterface
 
         $branches = array_keys($parents);
         $statuses = $this->deployJobRepository->getLatestStatusByProjectAndBranches($project->id, $branches);
+        $disabled = $this->environmentStateRepository->disabledMap($project->id, $branches);
 
         $environments = [];
         foreach ($parents as $branch => $parent) {
@@ -76,6 +79,7 @@ final readonly class ShowHandler implements RequestHandlerInterface
                 'isRoot'     => $parent === null,
                 'hasParent'  => $parent !== null,
                 'status'     => ($statuses[$branch] ?? null)?->value,
+                'disabled'   => $disabled[$branch] ?? false,
                 'commit'     => $latest !== null ? substr($latest->commitSha, 0, 7) : null,
                 'deployedAt' => $latest?->createdAt,
             ];

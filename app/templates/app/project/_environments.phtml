@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 /**
  * @var \Tragwerk\Domain\Entity\Project $project
- * @var list<array{name: string, isRoot: bool, hasParent: bool, status: string|null, commit: string|null, deployedAt: \Tragwerk\Domain\ValueObject\TimestampImmutable|null}> $environments
+ * @var list<array{name: string, isRoot: bool, hasParent: bool, status: string|null, disabled: bool, commit: string|null, deployedAt: \Tragwerk\Domain\ValueObject\TimestampImmutable|null}> $environments
  */
 
-$statusBadge = function (?string $status): array {
+$statusBadge = function (?string $status, bool $disabled): array {
+    if ($disabled) {
+        return ['tw-badge--warn', $this->t('Paused')];
+    }
+
     return match ($status) {
         'completed' => ['tw-badge--ok', $this->t('Running')],
         'failed'    => ['tw-badge--danger', $this->t('Failed')],
@@ -31,7 +35,7 @@ $statusBadge = function (?string $status): array {
         </thead>
         <tbody>
         <?php foreach ($environments as $i => $env): ?>
-            <?php [$badgeCss, $badgeLabel] = $statusBadge($env['status']); ?>
+            <?php [$badgeCss, $badgeLabel] = $statusBadge($env['status'], $env['disabled']); ?>
             <tr>
                 <td>
                     <div class="d-flex align-items-center gap-2">

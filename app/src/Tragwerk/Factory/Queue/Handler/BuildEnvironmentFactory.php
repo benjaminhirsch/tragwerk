@@ -16,6 +16,7 @@ use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
 use Tragwerk\Domain\Docker\DockerfileGenerator;
 use Tragwerk\Domain\Repository\DomainRepository;
+use Tragwerk\Domain\Repository\EnvironmentStateRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
 use Tragwerk\Domain\Repository\UserRepository;
@@ -51,6 +52,7 @@ final readonly class BuildEnvironmentFactory
         $users            = $container->get(UserRepository::class);
         $lockFactory      = $container->get(LockFactory::class);
         $envVars          = $container->get(EnvVarResolver::class);
+        $environmentState = $container->get(EnvironmentStateRepository::class);
 
         assert($bareRepository instanceof BareRepository);
         assert($xmlConverter instanceof XmlToArrayConverter);
@@ -67,6 +69,7 @@ final readonly class BuildEnvironmentFactory
         assert($users instanceof UserRepository);
         assert($lockFactory instanceof LockFactory);
         assert($envVars instanceof EnvVarResolver);
+        assert($environmentState instanceof EnvironmentStateRepository);
 
         return new BuildEnvironment(
             $bareRepository,
@@ -85,6 +88,7 @@ final readonly class BuildEnvironmentFactory
             $users,
             $lockFactory,
             $envVars,
+            $environmentState,
         );
     }
 }
