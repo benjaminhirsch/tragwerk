@@ -27,10 +27,16 @@ $slugify = static function (string $name): string {
     return preg_replace('/[^a-z0-9-]/', '', $slug) ?? '';
 };
 
-$app = null;
-if ($projectConfig !== null && $projectConfig->applications !== []) {
-    $app = $projectConfig->applications[0];
-    assert($app instanceof ApplicationConfig);
+/** @var list<ApplicationConfig> $applications */
+$applications = $projectConfig?->applications ?? [];
+
+// Does any application define mounts? Drives the background disk-usage poll.
+$anyMounts = false;
+foreach ($applications as $a) {
+    if ($a->mounts !== []) {
+        $anyMounts = true;
+        break;
+    }
 }
 
 // Resolve a route pattern's {placeholder} to its effective host(s) for this
@@ -58,94 +64,207 @@ $resolveDomain = static function (string $pattern) use ($hostsByPlaceholder): st
 
 <?php else: ?>
 
-    <div class="row g-4">
-        <!-- Runtime -->
-        <div class="col-lg-6">
+    <?php
+    /** @var array<string, \Tragwerk\Domain\Model\CronRun> $cronRuns */
+    $cronRuns ??= [];
+    $topicBase = $_SERVER['MERCURE_TOPIC_BASE'] ?? 'https://tragwerk.build';
+    $cronTopic = urlencode($topicBase . '/project/' . $project->id->toString() . '/cron/' . $branch);
+    ?>
+
+    <!-- Application tabs (only when more than one application is defined) -->
+    <?php if (count($applications) > 1): ?>
+        <div class="tw-seg mb-3" id="cfg-app-seg">
+            <?php foreach ($applications as $i => $a): ?>
+                <button class="<?= $i === 0 ? 'active' : '' ?>" data-app-target="cfg-app-<?= $i ?>">
+                    <?= $this->e($a->name) ?>
+                </button>
+            <?php endforeach ?>
+        </div>
+    <?php endif ?>
+
+    <!-- Per-application sections -->
+    <?php foreach ($applications as $i => $app): ?>
+        <?php $appSlug = $slugify($app->name); ?>
+        <div class="cfg-app-panel" id="cfg-app-<?= $i ?>"<?= $i > 0 ? ' hidden' : '' ?>>
+
+            <!-- Runtime -->
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <section class="mb-4">
+                        <h2 class="cfg-h"><i class="bi bi-cpu"></i> <?= $this->t('Runtime') ?></h2>
+                        <div class="tw-card">
+                            <div class="tw-card__body">
+                                <div class="cfg-row"><span class="k"><?= $this->t('Language') ?></span><span
+                                            class="v"><?= $this->e($runtimeLabel($app->type->value)) ?></span>
+                                </div>
+                                <div class="cfg-row"><span class="k"><?= $this->t('Web server') ?></span><span
+                                            class="v"><?= $this->e($app->workerMode !== null ? 'FrankenPHP · worker mode' : 'FrankenPHP') ?></span>
+                                </div>
+                                <div class="cfg-row"><span class="k"><?= $this->t('Workers') ?></span><span
+                                            class="v"><?= $this->e(count($app->workers)) ?></span></div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- Hooks -->
+            <?php if ($app->hooks !== []): ?>
+                <section class="mt-2 mb-4">
+                    <h2 class="cfg-h"><i class="bi bi-terminal"></i> <?= $this->t('Hooks') ?></h2>
+                    <div class="tw-card">
+                        <div class="tw-card__body">
+                            <?php foreach ($app->hooks as $hook): ?>
+                                <div class="hook-block">
+                                    <div class="hook-label"><span class="tw-tag"><?= $this->e($hook->type->value) ?></span>
+                                    </div>
+                                    <div class="tw-terminal"><?= nl2br($this->e($hook->value)) ?></div>
+                                </div>
+                            <?php endforeach ?>
+                        </div>
+                    </div>
+                </section>
+            <?php endif ?>
+
+            <!-- Mounts -->
+            <?php if ($app->mounts !== []): ?>
+                <section class="mb-4">
+                    <h2 class="cfg-h"><i class="bi bi-folder2-open"></i> <?= $this->t('Mounts & Volumes') ?></h2>
+                    <div class="tw-table-wrap">
+                        <table class="tw-table">
+                            <thead>
+                            <tr>
+                                <th><?= $this->t('Path') ?></th>
+                                <th><?= $this->t('Type') ?></th>
+                                <th><?= $this->t('Source') ?></th>
+                                <th class="tw-hide-sm"><?= $this->t('Disk') ?></th>
+                                <th><?= $this->t('Mode') ?></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach ($app->mounts as $mount): ?>
+                                <?php $mountShort = $appSlug . '-' . $slugify($mount->name); ?>
+                                <tr>
+                                    <td class="mono tw-cell-strong"><?= $this->e($mount->name) ?></td>
+                                    <td>
+                                        <?php if ($mount->source === MountSource::SERVICE): ?>
+                                            <span class="tw-badge tw-badge--purple"><span
+                                                        class="tw-dot"></span><?= $this->t('Volume') ?></span>
+                                        <?php else: ?>
+                                            <span class="tw-badge tw-badge--neutral"><span class="tw-dot"></span>tmpfs</span>
+                                        <?php endif ?>
+                                    </td>
+                                    <td class="tw-cell-muted mono"><?= $this->e($mount->path) ?></td>
+                                    <td id="cfg-mount-disk-<?= $this->e($mountShort) ?>" class="tw-hide-sm tw-cell-muted">
+                                        <span class="spinner-border spinner-border-sm me-2  col-3" role="status"></span>
+                                    </td>
+                                    <td><span class="tw-tag"><?= $this->t('read-write') ?></span></td>
+                                </tr>
+                            <?php endforeach ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            <?php endif ?>
+
+            <!-- Crons & Workers -->
             <section class="mb-4">
-                <h2 class="cfg-h"><i class="bi bi-cpu"></i> <?= $this->t('Runtime') ?></h2>
-                <div class="tw-card">
-                    <div class="tw-card__body">
-                        <div class="cfg-row"><span class="k"><?= $this->t('Language') ?></span><span
-                                    class="v"><?= $this->e($app !== null ? $runtimeLabel($app->type->value) : 'PHP 8.5') ?></span>
-                        </div>
-                        <div class="cfg-row"><span class="k"><?= $this->t('Web server') ?></span><span
-                                    class="v"><?= $this->e($app?->workerMode !== null ? 'FrankenPHP · worker mode' : 'FrankenPHP') ?></span>
-                        </div>
-                        <div class="cfg-row"><span class="k"><?= $this->t('Workers') ?></span><span
-                                    class="v"><?= $this->e(count($app?->workers ?? [])) ?></span></div>
+                <div class="row g-4">
+                    <div class="col-lg-7">
+                        <section hx-ext="sse" sse-connect="/.well-known/mercure?topic=<?= $cronTopic ?>">
+                            <h2 class="cfg-h"><i class="bi bi-clock-history"></i> <?= $this->t('Cron jobs') ?></h2>
+                            <div class="tw-table-wrap">
+                                <table class="tw-table">
+                                    <thead>
+                                    <tr>
+                                        <th><?= $this->t('Name') ?></th>
+                                        <th><?= $this->t('Schedule') ?></th>
+                                        <th><?= $this->t('Command') ?></th>
+                                        <th><?= $this->t('Last run') ?></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="cron-rows-<?= $i ?>"
+                                           hx-get="<?= $this->e($this->url('configuration')) ?>"
+                                           hx-select="#cron-rows-<?= $i ?>"
+                                           hx-target="#cron-rows-<?= $i ?>"
+                                           hx-swap="outerHTML"
+                                           hx-trigger="sse:message">
+                                    <?php if ($app->crons !== []): ?>
+                                        <?php foreach ($app->crons as $cron): ?>
+                                            <?php $run = $cronRuns[trim($cron->command)] ?? null; ?>
+                                            <tr>
+                                                <td class="tw-cell-strong"><?= $this->e($cron->name) ?></td>
+                                                <td><span class="tw-tag"><?= $this->e($cron->schedule) ?></span></td>
+                                                <td class="mono tw-cell-muted"
+                                                    style="font-size:.78rem"><?= $this->e($cron->command) ?></td>
+                                                <td style="font-size:.78rem">
+                                                    <?php if ($run === null): ?>
+                                                        <span class="tw-cell-muted"><?= $this->t('No runs yet') ?></span>
+                                                    <?php else: ?>
+                                                        <?php
+                                                        if ($run->succeeded === null) {
+                                                            $runBadge = ['type' => 'warn', 'label' => $this->t('Running')];
+                                                        } elseif ($run->succeeded) {
+                                                            $runBadge = ['type' => 'ok', 'label' => $this->t('Succeeded')];
+                                                        } else {
+                                                            $runBadge = ['type' => 'danger', 'label' => $this->t('Failed')];
+                                                        }
+                                                        ?>
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <?= $this->fetch('partial::badge', $runBadge) ?>
+                                                            <span class="tw-cell-muted mono"
+                                                                  title="<?= $this->e($run->startedAt->format('Y-m-d H:i:s')) ?>"><?= $this->e($run->startedAt->format('Y-m-d H:i')) ?></span>
+                                                        </div>
+                                                    <?php endif ?>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach ?>
+                                    <?php else: ?>
+                                        <tr>
+                                            <td colspan="4" class="tw-cell-muted"><?= $this->t('No cron jobs configured.') ?></td>
+                                        </tr>
+                                    <?php endif ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    </div>
+                    <div class="col-lg-5">
+                        <section>
+                            <h2 class="cfg-h"><i class="bi bi-gear-wide-connected"></i> <?= $this->t('Workers') ?></h2>
+                            <div class="tw-table-wrap">
+                                <table class="tw-table">
+                                    <thead>
+                                    <tr>
+                                        <th><?= $this->t('Name') ?></th>
+                                        <th><?= $this->t('Command') ?></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <?php if ($app->workers !== []): ?>
+                                        <?php foreach ($app->workers as $worker): ?>
+                                            <tr>
+                                                <td class="tw-cell-strong"><?= $this->e($worker->name) ?></td>
+                                                <td class="mono tw-cell-muted"
+                                                    style="font-size:.78rem"><?= $this->e($worker->command) ?></td>
+                                            </tr>
+                                        <?php endforeach ?>
+                                    <?php else: ?>
+                                        <tr>
+                                            <td colspan="3" class="tw-cell-muted"><?= $this->t('No workers configured.') ?></td>
+                                        </tr>
+                                    <?php endif ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
                     </div>
                 </div>
             </section>
         </div>
-    </div>
+    <?php endforeach ?>
 
-    <!-- Hooks -->
-    <?php if ($app !== null && $app->hooks !== []): ?>
-        <section class="mt-2 mb-4">
-            <h2 class="cfg-h"><i class="bi bi-terminal"></i> <?= $this->t('Hooks') ?></h2>
-            <div class="tw-card">
-                <div class="tw-card__body">
-                    <?php foreach ($app->hooks as $hook): ?>
-                        <div class="hook-block">
-                            <div class="hook-label"><span class="tw-tag"><?= $this->e($hook->type->value) ?></span>
-                            </div>
-                            <div class="tw-terminal"><?= nl2br($this->e($hook->value)) ?></div>
-                        </div>
-                    <?php endforeach ?>
-                </div>
-            </div>
-        </section>
-    <?php endif ?>
-
-    <!-- Mounts -->
-    <?php if ($app !== null && $app->mounts !== []): ?>
-        <section class="mb-4">
-            <h2 class="cfg-h"><i class="bi bi-folder2-open"></i> <?= $this->t('Mounts & Volumes') ?></h2>
-            <div class="tw-table-wrap">
-                <table class="tw-table">
-                    <thead>
-                    <tr>
-                        <th><?= $this->t('Path') ?></th>
-                        <th><?= $this->t('Type') ?></th>
-                        <th><?= $this->t('Source') ?></th>
-                        <th class="tw-hide-sm"><?= $this->t('Disk') ?></th>
-                        <th><?= $this->t('Mode') ?></th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <?php $appSlug = $slugify($app->name); ?>
-                    <?php foreach ($app->mounts as $mount): ?>
-                        <?php $mountShort = $appSlug . '-' . $slugify($mount->name); ?>
-                        <tr>
-                            <td class="mono tw-cell-strong"><?= $this->e($mount->name) ?></td>
-                            <td>
-                                <?php if ($mount->source === MountSource::SERVICE): ?>
-                                    <span class="tw-badge tw-badge--purple"><span
-                                                class="tw-dot"></span><?= $this->t('Volume') ?></span>
-                                <?php else: ?>
-                                    <span class="tw-badge tw-badge--neutral"><span class="tw-dot"></span>tmpfs</span>
-                                <?php endif ?>
-                            </td>
-                            <td class="tw-cell-muted mono"><?= $this->e($mount->path) ?></td>
-                            <td id="cfg-mount-disk-<?= $this->e($mountShort) ?>" class="tw-hide-sm tw-cell-muted">
-                                <span class="spinner-border spinner-border-sm me-2  col-3" role="status"></span>
-                            </td>
-                            <td><span class="tw-tag"><?= $this->t('read-write') ?></span></td>
-                        </tr>
-                    <?php endforeach ?>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    <?php endif ?>
-
-    <?php if (($app?->mounts ?? []) !== [] || $projectConfig->services !== []): ?>
-        <div hx-get="<?= $this->e($this->url('configuration.mounts')) ?>"
-             hx-trigger="load, every 60s"
-             hx-swap="none"></div>
-    <?php endif ?>
-
-    <!-- Services -->
+    <!-- Services (project-level) -->
     <?php if ($projectConfig->services !== []): ?>
         <section class="mb-4">
             <h2 class="cfg-h"><i class="bi bi-hdd-stack"></i> <?= $this->t('Services') ?></h2>
@@ -181,7 +300,7 @@ $resolveDomain = static function (string $pattern) use ($hostsByPlaceholder): st
         </section>
     <?php endif ?>
 
-    <!-- Routes -->
+    <!-- Routes (project-level) -->
     <?php if ($projectConfig->routes !== []): ?>
         <section class="mb-4">
             <h2 class="cfg-h"><i class="bi bi-signpost-split"></i> <?= $this->t('Routes') ?></h2>
@@ -222,103 +341,15 @@ $resolveDomain = static function (string $pattern) use ($hostsByPlaceholder): st
         </section>
     <?php endif ?>
 
-    <!-- Crons & Workers -->
-    <?php
-    /** @var array<string, \Tragwerk\Domain\Model\CronRun> $cronRuns */
-    $cronRuns ??= [];
-    $topicBase = $_SERVER['MERCURE_TOPIC_BASE'] ?? 'https://tragwerk.build';
-    $cronTopic = urlencode($topicBase . '/project/' . $project->id->toString() . '/cron/' . $branch);
-    ?>
-    <div class="row g-4">
-        <div class="col-lg-7">
-            <section hx-ext="sse" sse-connect="/.well-known/mercure?topic=<?= $cronTopic ?>">
-                <h2 class="cfg-h"><i class="bi bi-clock-history"></i> <?= $this->t('Cron jobs') ?></h2>
-                <div class="tw-table-wrap">
-                    <table class="tw-table">
-                        <thead>
-                        <tr>
-                            <th><?= $this->t('Name') ?></th>
-                            <th><?= $this->t('Schedule') ?></th>
-                            <th><?= $this->t('Command') ?></th>
-                            <th><?= $this->t('Last run') ?></th>
-                        </tr>
-                        </thead>
-                        <tbody id="cron-rows"
-                               hx-get="<?= $this->e($this->url('configuration')) ?>"
-                               hx-select="#cron-rows"
-                               hx-target="#cron-rows"
-                               hx-swap="outerHTML"
-                               hx-trigger="sse:message">
-                        <?php if ($app !== null && $app->crons !== []): ?>
-                            <?php foreach ($app->crons as $cron): ?>
-                                <?php $run = $cronRuns[trim($cron->command)] ?? null; ?>
-                                <tr>
-                                    <td class="tw-cell-strong"><?= $this->e($cron->name) ?></td>
-                                    <td><span class="tw-tag"><?= $this->e($cron->schedule) ?></span></td>
-                                    <td class="mono tw-cell-muted"
-                                        style="font-size:.78rem"><?= $this->e($cron->command) ?></td>
-                                    <td style="font-size:.78rem">
-                                        <?php if ($run === null): ?>
-                                            <span class="tw-cell-muted"><?= $this->t('No runs yet') ?></span>
-                                        <?php else: ?>
-                                            <?php
-                                            if ($run->succeeded === null) {
-                                                $runBadge = ['type' => 'warn', 'label' => $this->t('Running')];
-                                            } elseif ($run->succeeded) {
-                                                $runBadge = ['type' => 'ok', 'label' => $this->t('Succeeded')];
-                                            } else {
-                                                $runBadge = ['type' => 'danger', 'label' => $this->t('Failed')];
-                                            }
-                                            ?>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <?= $this->fetch('partial::badge', $runBadge) ?>
-                                                <span class="tw-cell-muted mono"
-                                                      title="<?= $this->e($run->startedAt->format('Y-m-d H:i:s')) ?>"><?= $this->e($run->startedAt->format('Y-m-d H:i')) ?></span>
-                                            </div>
-                                        <?php endif ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="4" class="tw-cell-muted"><?= $this->t('No cron jobs configured.') ?></td>
-                            </tr>
-                        <?php endif ?>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </div>
-        <div class="col-lg-5">
-            <section>
-                <h2 class="cfg-h"><i class="bi bi-gear-wide-connected"></i> <?= $this->t('Workers') ?></h2>
-                <div class="tw-table-wrap">
-                    <table class="tw-table">
-                        <thead>
-                        <tr>
-                            <th><?= $this->t('Name') ?></th>
-                            <th><?= $this->t('Command') ?></th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <?php if ($app !== null && $app->workers !== []): ?>
-                            <?php foreach ($app->workers as $worker): ?>
-                                <tr>
-                                    <td class="tw-cell-strong"><?= $this->e($worker->name) ?></td>
-                                    <td class="mono tw-cell-muted"
-                                        style="font-size:.78rem"><?= $this->e($worker->command) ?></td>
-                                </tr>
-                            <?php endforeach ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="3" class="tw-cell-muted"><?= $this->t('No workers configured.') ?></td>
-                            </tr>
-                        <?php endif ?>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </div>
-    </div>
+    <!-- Background disk-usage poll (mounts + services) -->
+    <?php if ($anyMounts || $projectConfig->services !== []): ?>
+        <div hx-get="<?= $this->e($this->url('configuration.mounts')) ?>"
+             hx-trigger="load, every 60s"
+             hx-swap="none"></div>
+    <?php endif ?>
 
 <?php endif ?>
+
+<?php $this->start('javascript') ?>
+<script src="/js/configuration-tabs.js"></script>
+<?php $this->stop() ?>

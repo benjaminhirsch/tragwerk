@@ -3,7 +3,7 @@
 use Tragwerk\Domain\Model\ApplicationConfig;
 use Tragwerk\Domain\Model\ServiceConfig;
 
-/** @var ApplicationConfig|null $app */
+/** @var list<ApplicationConfig> $applications */
 /** @var list<ServiceConfig> $services */
 /** @var array<string, string> $sizes */
 /** @var string|null $error */
@@ -14,7 +14,7 @@ $slugify = static function (string $name): string {
     return preg_replace('/[^a-z0-9-]/', '', $slug) ?? '';
 };
 ?>
-<?php if ($app !== null): ?>
+<?php foreach ($applications as $app): ?>
     <?php $appSlug = $slugify($app->name); ?>
     <?php foreach ($app->mounts as $mount): ?>
         <?php
@@ -26,7 +26,7 @@ $slugify = static function (string $name): string {
             <?= $size !== null ? $this->e($size) : '—' ?>
         </td>
     <?php endforeach ?>
-<?php endif ?>
+<?php endforeach ?>
 <?php foreach ($services ?? [] as $service): ?>
     <?php $size = $sizes[$slugify($service->name) . '-data'] ?? null; ?>
     <td id="cfg-service-disk-<?= $this->e($slugify($service->name)) ?>" class="tw-hide-sm tw-cell-muted" hx-swap-oob="true"
