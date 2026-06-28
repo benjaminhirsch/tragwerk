@@ -103,17 +103,26 @@ services:
       - traefik.http.routers.app.entrypoints=websecure
       - traefik.http.services.app.loadbalancer.server.port=80
 
+  # Workers run bin/cli, not FrankenPHP — the image's inherited healthcheck
+  # (curl :2019/metrics, Caddy admin) never passes for them, so disable it.
+  # restart: unless-stopped (from *app-base) handles actual crashes.
   worker-queue:
     <<: *app-base
     command: ["bin/cli", "worker:start", "-w", "2", "default"]
+    healthcheck:
+      disable: true
 
   worker-metrics:
     <<: *app-base
     command: ["bin/cli", "metrics:sample"]
+    healthcheck:
+      disable: true
 
   worker-crons:
     <<: *app-base
     command: ["bin/cli", "cron:sample"]
+    healthcheck:
+      disable: true
 
   # One-shot: prepare the queue + apply migrations, then exit 0. Long-running
   # services gate on this via service_completed_successfully.
@@ -131,6 +140,8 @@ services:
     networks:
       - internal
     restart: "no"
+    healthcheck:
+      disable: true
     depends_on:
       db:
         condition: service_healthy
