@@ -426,6 +426,12 @@ final readonly class ConfigProvider
                     EventListener\Project\DeleteGitRepository::class,
                     EventListener\Project\DeleteProjectData::class,
                 ],
+                Event\EnvironmentDeleted::class  => [
+                    EventListener\Environment\QueueDockerCleanup::class,
+                    EventListener\Environment\QueueRegistryCleanup::class,
+                    EventListener\Environment\DeleteEnvironmentJobs::class,
+                    EventListener\Environment\DeleteGitBranch::class,
+                ],
                 Event\SshKeyCreated::class       => [
                     EventListener\SshKey\PersistSshKey::class,
                     EventListener\SshKey\UpdateAuthorizedKeys::class,

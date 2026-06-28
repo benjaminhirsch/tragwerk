@@ -21,4 +21,7 @@ interface RegistryPrefixRepository
 
     /** @return list<array{app_slug: string, branch_slug: string}> */
     public function findByRegistry(RegistryIdentifier $registryId): array;
+
+    /** Removes all registry prefix rows of the given project for the given branch slug. */
+    public function deleteByProjectAndBranchSlug(ProjectIdentifier $projectId, string $branchSlug): void;
 }

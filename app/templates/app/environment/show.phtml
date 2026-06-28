@@ -68,6 +68,11 @@ $sseTopic  = urlencode($topicBase . '/project/' . $this->activeProject()->id->to
     <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#tw-redeploy-modal">
         <i class="bi bi-arrow-clockwise"></i> <?= $this->e($this->t('Redeploy')) ?>
     </button>
+    <button type="button" class="btn btn-outline-secondary"
+            style="color:var(--danger-text);border-color:var(--danger-soft)"
+            data-bs-toggle="modal" data-bs-target="#tw-delete-environment-modal">
+        <i class="bi bi-trash3"></i> <?= $this->e($this->t('Delete')) ?>
+    </button>
 <?php $this->stop() ?>
 
 <!-- KPIs (live) -->
@@ -109,6 +114,17 @@ $sseTopic  = urlencode($topicBase . '/project/' . $this->activeProject()->id->to
     'actionLabel'   => $this->t('Redeploy'),
     'actionClasses' => 'btn btn-primary',
     'actionIcon'    => 'bi bi-arrow-clockwise',
+    'extraFields'   => ['branch' => $branch],
+]) ?>
+
+<?= $this->fetch('partial::modal', [
+    'id'            => 'tw-delete-environment-modal',
+    'header'        => $this->t('Delete environment'),
+    'body'          => $this->t('Delete {branch}? This stops and removes its containers, destroys its database volume and deletes the branch. This action cannot be undone.', ['branch' => '<b class="mono">' . $this->e($branch) . '</b>']),
+    'actionUrl'     => $this->url('project.environment.delete', ['id' => $this->activeProject()->id->toString()]),
+    'actionLabel'   => $this->t('Delete environment'),
+    'actionClasses' => 'btn btn-danger',
+    'actionIcon'    => 'bi bi-trash3',
     'extraFields'   => ['branch' => $branch],
 ]) ?>
 

@@ -7,12 +7,14 @@ namespace Tragwerk\Application\Handler\Webhook;
 use Laminas\Diactoros\Response\EmptyResponse;
 use Laminas\Diactoros\Response\JsonResponse;
 use Override;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Throwable;
 use Tragwerk\Application\Service\BuildDispatcher;
 use Tragwerk\Domain\Entity\Project;
+use Tragwerk\Domain\Event\EnvironmentDeleted;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 
@@ -22,9 +24,12 @@ use function is_string;
 
 final readonly class GitPushHandler implements RequestHandlerInterface
 {
+    private const string ZERO_SHA = '0000000000000000000000000000000000000000';
+
     public function __construct(
         private ProjectRepository $projectRepository,
         private BuildDispatcher $buildDispatcher,
+        private EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -58,6 +63,12 @@ final readonly class GitPushHandler implements RequestHandlerInterface
             assert($project instanceof Project);
         } catch (Throwable) {
             return new EmptyResponse(404);
+        }
+
+        if ($newSha === self::ZERO_SHA) {
+            $this->eventDispatcher->dispatch(new EnvironmentDeleted($project->id, $branch));
+
+            return new JsonResponse(['status' => 'ok']);
         }
 
         $this->buildDispatcher->dispatch($project, $branch, $newSha);

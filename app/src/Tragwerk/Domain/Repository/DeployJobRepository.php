@@ -83,4 +83,7 @@ interface DeployJobRepository
 
     /** @throws EntityUpdateFailed */
     public function appendOutput(DeployJobIdentifier $id, string $text): void;
+
+    /** Removes all deploy jobs of the given project on the given branch. */
+    public function deleteByProjectAndBranch(ProjectIdentifier $projectId, string $branch): void;
 }

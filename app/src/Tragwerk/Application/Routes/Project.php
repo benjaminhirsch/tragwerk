@@ -57,6 +57,12 @@ final readonly class Project
         );
 
         $routes->post(
+            '/projects/{id}/environments/delete',
+            $this->middlewareFactory->prepare([Handler\Project\DeleteEnvironmentHandler::class]),
+            'project.environment.delete',
+        );
+
+        $routes->post(
             '/projects/{id}/delete',
             $this->middlewareFactory->prepare([Handler\Project\DeleteHandler::class]),
             'project.delete',

@@ -50,8 +50,12 @@ final readonly class GitHubAdapter implements WebhookAdapter
             return null;
         }
 
-        if (! is_string($sha) || $sha === '' || $sha === self::ZERO_SHA) {
+        if (! is_string($sha) || $sha === '') {
             return null;
+        }
+
+        if ($sha === self::ZERO_SHA) {
+            return new PushPayload(branch: substr($ref, 11), commitSha: '', deleted: true);
         }
 
         return new PushPayload(

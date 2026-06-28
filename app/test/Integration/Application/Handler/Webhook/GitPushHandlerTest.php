@@ -140,6 +140,35 @@ final class GitPushHandlerTest extends AppIntegrationTestCase
     }
 
     #[Test]
+    public function branchDeleteWithZeroShaReturns200(): void
+    {
+        $response = $this->dispatch('POST', $this->url('webhook.git-push'), [
+            'projectId' => $this->project->id->toString(),
+            'branch'    => 'feature',
+            'newSha'    => '0000000000000000000000000000000000000000',
+        ]);
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function branchDeleteWithZeroShaDoesNotTriggerBuild(): void
+    {
+        $this->dispatch('POST', $this->url('webhook.git-push'), [
+            'projectId' => $this->project->id->toString(),
+            'branch'    => 'feature',
+            'newSha'    => '0000000000000000000000000000000000000000',
+        ]);
+
+        $repository = $this->container->get(BuildLogRepository::class);
+        assert($repository instanceof BuildLogRepository);
+
+        $logs = iterator_to_array($repository->getLatestByProjectAndBranch($this->project->id, 'feature'));
+
+        self::assertSame([], $logs);
+    }
+
+    #[Test]
     public function validPushWithNoConfigFileLogsSkipMessage(): void
     {
         $this->dispatch('POST', $this->url('webhook.git-push'), [
