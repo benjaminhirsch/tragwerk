@@ -39,10 +39,7 @@ final class DisableEnvironmentHandlerTest extends EnvironmentScopedTestCase
         );
 
         self::assertSame(302, $response->getStatusCode());
-        self::assertSame(
-            $this->url('project.show', ['id' => $this->project->id->toString()]),
-            $response->getHeaderLine('Location'),
-        );
+        self::assertSame('/environments/show?id=' . $this->branch, $response->getHeaderLine('Location'));
 
         self::assertCount(1, $producer->messages);
         $message = $producer->messages[0];

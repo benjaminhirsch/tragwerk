@@ -73,7 +73,7 @@ $sseTopic  = urlencode($topicBase . '/project/' . $this->activeProject()->id->to
     </button>
     <?php if (! $disabled): ?>
         <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#tw-disable-environment-modal">
-            <i class="bi bi-pause-circle"></i> <?= $this->e($this->t('Disable')) ?>
+            <i class="bi bi-pause-circle"></i> <?= $this->e($this->t('Pause')) ?>
         </button>
     <?php endif ?>
     <button type="button" class="btn btn-outline-secondary"
@@ -128,10 +128,10 @@ $sseTopic  = urlencode($topicBase . '/project/' . $this->activeProject()->id->to
 <?php if (! $disabled): ?>
 <?= $this->fetch('partial::modal', [
     'id'            => 'tw-disable-environment-modal',
-    'header'        => $this->t('Disable environment'),
-    'body'          => $this->t('Disable {branch}? This stops its containers without deleting anything. Data and configuration are kept; a redeploy reactivates it.', ['branch' => '<b class="mono">' . $this->e($branch) . '</b>']),
+    'header'        => $this->t('Pause environment'),
+    'body'          => $this->t('Pause {branch}? This stops its containers without deleting anything. Data and configuration are kept; a redeploy reactivates it.', ['branch' => '<b class="mono">' . $this->e($branch) . '</b>']),
     'actionUrl'     => $this->url('project.environment.disable', ['id' => $this->activeProject()->id->toString()]),
-    'actionLabel'   => $this->t('Disable'),
+    'actionLabel'   => $this->t('Pause'),
     'actionClasses' => 'btn btn-warning',
     'actionIcon'    => 'bi bi-pause-circle',
     'extraFields'   => ['branch' => $branch],

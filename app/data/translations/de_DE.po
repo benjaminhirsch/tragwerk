@@ -2041,3 +2041,21 @@ msgstr "Keine Cronjobs konfiguriert."
 
 msgid "Live container logs for this environment — pick the application, a worker or the cron sidecar."
 msgstr "Live-Container-Logs für diese Umgebung — wähle die Anwendung, einen Worker oder den Cron-Sidecar."
+
+msgid "Pause"
+msgstr "Pausieren"
+
+msgid "Paused"
+msgstr "Pausiert"
+
+msgid "Pause environment"
+msgstr "Umgebung pausieren"
+
+msgid "Pause {branch}? This stops its containers without deleting anything. Data and configuration are kept; a redeploy reactivates it."
+msgstr "{branch} pausieren? Dies stoppt die Container, ohne etwas zu löschen. Daten und Konfiguration bleiben erhalten; ein Redeploy reaktiviert sie."
+
+msgid "Delete environment"
+msgstr "Umgebung löschen"
+
+msgid "Delete {branch}? This stops and removes its containers, destroys its database volume and deletes the branch. This action cannot be undone."
+msgstr "{branch} löschen? Dies stoppt und entfernt die Container, zerstört das Datenbank-Volume und löscht den Branch. Diese Aktion kann nicht rückgängig gemacht werden."
