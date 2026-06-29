@@ -21,6 +21,12 @@ use function round;
  *     t: string, busy: string|null, total: string|null, ready: string|null, queue: string|null,
  *     req_rate: string, err_pct: string, latency_ms: string
  * }
+ * @phpstan-type LatestRow array{
+ *     total_workers: string, busy_workers: string, ready_workers: string, queue_depth: string,
+ *     total_threads: string, busy_threads: string, crashes: string, restarts: string,
+ *     requests_total: string, requests_5xx: string, requests_4xx: string,
+ *     duration_sum_ms: string, duration_count: string, in_flight: string
+ * }
  */
 final readonly class AppMetricRepository implements AppMetricRepositoryInterface
 {
@@ -43,13 +49,13 @@ final readonly class AppMetricRepository implements AppMetricRepositoryInterface
             INSERT INTO app_metrics (
                 id, project_id, branch, sampled_at,
                 total_workers, busy_workers, ready_workers, queue_depth,
-                total_threads, busy_threads,
+                total_threads, busy_threads, crashes, restarts,
                 requests_total, requests_5xx, requests_4xx,
                 duration_sum_ms, duration_count, in_flight
             )
             SELECT :id, :project_id, :branch, :sampled_at,
                    :total_workers, :busy_workers, :ready_workers, :queue_depth,
-                   :total_threads, :busy_threads,
+                   :total_threads, :busy_threads, :crashes, :restarts,
                    :requests_total, :requests_5xx, :requests_4xx,
                    :duration_sum_ms, :duration_count, :in_flight
             WHERE EXISTS (SELECT 1 FROM projects WHERE id = :project_id)
@@ -65,6 +71,8 @@ final readonly class AppMetricRepository implements AppMetricRepositoryInterface
                 'queue_depth'     => $metrics->queueDepth,
                 'total_threads'   => $metrics->totalThreads,
                 'busy_threads'    => $metrics->busyThreads,
+                'crashes'         => $metrics->crashes,
+                'restarts'        => $metrics->restarts,
                 'requests_total'  => $metrics->requestsTotal,
                 'requests_5xx'    => $metrics->requests5xx,
                 'requests_4xx'    => $metrics->requests4xx,
@@ -151,6 +159,51 @@ final readonly class AppMetricRepository implements AppMetricRepositoryInterface
             'errPct'    => round((float) $r['err_pct'], 2),
             'latencyMs' => round((float) $r['latency_ms'], 1),
         ], $rows);
+    }
+
+    #[Override]
+    public function getLatest(ProjectIdentifier $projectId, string $branch): EnvironmentMetrics|null
+    {
+        /** @var list<LatestRow> $rows */
+        $rows = $this->connection->executeQuery(
+            <<<'SQL'
+            SELECT total_workers, busy_workers, ready_workers, queue_depth,
+                   total_threads, busy_threads, crashes, restarts,
+                   requests_total, requests_5xx, requests_4xx,
+                   duration_sum_ms, duration_count, in_flight
+            FROM app_metrics
+            WHERE project_id = :pid AND branch = :branch
+            ORDER BY sampled_at DESC
+            LIMIT 1
+            SQL,
+            ['pid' => $projectId->toString(), 'branch' => $branch],
+        )->fetchAllAssociative();
+
+        if ($rows === []) {
+            return null;
+        }
+
+        $row = $rows[0];
+
+        // requestCount (frankenphp_worker_request_count) is collected but neither persisted nor
+        // rendered — the KPI tiles use requests_total (caddy) instead. Default it to 0 here.
+        return new EnvironmentMetrics(
+            totalWorkers:  (int) $row['total_workers'],
+            busyWorkers:   (int) $row['busy_workers'],
+            readyWorkers:  (int) $row['ready_workers'],
+            queueDepth:    (int) $row['queue_depth'],
+            totalThreads:  (int) $row['total_threads'],
+            busyThreads:   (int) $row['busy_threads'],
+            requestCount:  0,
+            crashes:       (int) $row['crashes'],
+            restarts:      (int) $row['restarts'],
+            requestsTotal: (int) $row['requests_total'],
+            requests5xx:   (int) $row['requests_5xx'],
+            requests4xx:   (int) $row['requests_4xx'],
+            durationSumMs: (int) $row['duration_sum_ms'],
+            durationCount: (int) $row['duration_count'],
+            inFlight:      (int) $row['in_flight'],
+        );
     }
 
     #[Override]

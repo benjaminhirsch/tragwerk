@@ -35,6 +35,9 @@ interface AppMetricRepository
         int $intervalSeconds,
     ): array;
 
+    /** Most recent sample for the environment, or null if none has been collected yet. */
+    public function getLatest(ProjectIdentifier $projectId, string $branch): EnvironmentMetrics|null;
+
     /** @return int Number of pruned rows */
     public function pruneOlderThan(DateTimeImmutable $threshold): int;
 }

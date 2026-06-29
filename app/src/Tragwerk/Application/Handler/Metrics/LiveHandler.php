@@ -9,15 +9,9 @@ use Override;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use RuntimeException;
-use Throwable;
 use Tragwerk\Application\Response\ResponseRenderer;
-use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Project;
-use Tragwerk\Domain\Entity\Server;
-use Tragwerk\Domain\Repository\CredentialRepository;
-use Tragwerk\Domain\Repository\ServerRepository;
-use Tragwerk\Infrastructure\Metrics\EnvironmentMetricsCollector;
+use Tragwerk\Domain\Repository\AppMetricRepository;
 
 use function assert;
 use function is_string;
@@ -26,9 +20,7 @@ final readonly class LiveHandler implements RequestHandlerInterface
 {
     public function __construct(
         private ResponseRenderer $renderer,
-        private ServerRepository $serverRepository,
-        private CredentialRepository $credentialRepository,
-        private EnvironmentMetricsCollector $collector,
+        private AppMetricRepository $appMetrics,
     ) {
     }
 
@@ -44,30 +36,10 @@ final readonly class LiveHandler implements RequestHandlerInterface
             return new EmptyResponse(400);
         }
 
-        $metrics = null;
-        $error   = null;
-
-        try {
-            $server = $this->serverRepository->getById($project->serverId);
-            assert($server instanceof Server);
-
-            if ($server->credentialId === null) {
-                throw new RuntimeException('No credential assigned to server.');
-            }
-
-            $credential = $this->credentialRepository->getById($server->credentialId);
-            assert($credential instanceof Credential);
-
-            $metrics = $this->collector->collect($project, $branch, $server, $credential);
-        } catch (Throwable $e) {
-            $error = $e->getMessage();
-        }
-
         return $this->renderer->render($request, 'page::metrics/_live', [
             'project' => $project,
             'branch'  => $branch,
-            'metrics' => $metrics,
-            'error'   => $error,
+            'metrics' => $this->appMetrics->getLatest($project->id, $branch),
         ]);
     }
 

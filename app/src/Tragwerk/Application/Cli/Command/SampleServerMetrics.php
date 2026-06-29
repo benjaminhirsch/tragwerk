@@ -43,7 +43,7 @@ use const SIGTERM;
 #[AsCommand(name: 'metrics:sample', description: 'Sample host + per-environment app metrics (ticker)')]
 final class SampleServerMetrics extends Command
 {
-    private const int VERSION_REFRESH_CYCLES = 60;
+    private const int VERSION_REFRESH_CYCLES = 120;
 
     public function __construct(
         private readonly ServerRepository $servers,
@@ -68,7 +68,7 @@ final class SampleServerMetrics extends Command
             'i',
             InputOption::VALUE_REQUIRED,
             'Seconds between sampling cycles',
-            60,
+            30,
         );
         $this->addOption(
             'once',
@@ -82,7 +82,7 @@ final class SampleServerMetrics extends Command
     {
         $once        = (bool) $input->getOption('once');
         $intervalRaw = $input->getOption('interval');
-        $interval    = max(1, is_numeric($intervalRaw) ? (int) $intervalRaw : 60);
+        $interval    = max(1, is_numeric($intervalRaw) ? (int) $intervalRaw : 30);
 
         $stopping = false;
         if (function_exists('pcntl_async_signals')) {
