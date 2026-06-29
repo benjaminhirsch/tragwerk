@@ -1,36 +1,55 @@
 <?php
-/** @var \Tragwerk\Domain\Entity\Server $server */
-/** @var \Tragwerk\Domain\Entity\SetupJob $job */
-$polling  = $job->status->value === 'pending' || $job->status->value === 'running';
-$logUrl   = $this->url('server.setup.log', ['id' => $server->id->toString(), 'jobId' => $job->id->toString()]);
+
+declare(strict_types=1);
+
+use Tragwerk\Domain\Enum\SetupJobStatus;
+
+/**
+ * @var \Tragwerk\Domain\Entity\Server  $server
+ * @var \Tragwerk\Domain\Entity\SetupJob $job
+ */
+
+$status   = $job->status;
+$isActive = $status === SetupJobStatus::Pending || $status === SetupJobStatus::Running;
+
+$logUrl    = $this->url('server.setup.log', ['id' => $server->id->toString(), 'jobId' => $job->id->toString()]);
 $topicBase = $_SERVER['MERCURE_TOPIC_BASE'] ?? 'https://tragwerk.build';
 $sseTopic  = urlencode($topicBase . '/server/' . $server->id->toString() . '/setup-job/' . $job->id->toString());
+
+$title = 'setup-' . substr($job->id->toString(), 0, 7) . '.log';
+
+$diff     = $job->createdAt->toDateTime()->diff($job->updatedAt->toDateTime());
+$seconds  = $diff->days * 86400 + $diff->h * 3600 + $diff->i * 60 + $diff->s;
+$duration = $seconds >= 60
+    ? sprintf('%dm %ds', intdiv($seconds, 60), $seconds % 60)
+    : $seconds . 's';
+
+$statusBadge = match ($status) {
+    SetupJobStatus::Completed => '<span class="tw-badge tw-badge--ok"><span class="tw-dot"></span>' . $this->e($this->t('Completed')) . '</span>',
+    SetupJobStatus::Failed    => '<span class="tw-badge tw-badge--danger"><span class="tw-dot"></span>' . $this->e($this->t('Failed')) . '</span>',
+    SetupJobStatus::Running   => '<span class="tw-badge tw-badge--info tw-badge--building"><span class="tw-dot"></span>' . $this->e($this->t('Running')) . '</span>',
+    SetupJobStatus::Pending   => '<span class="tw-badge tw-badge--info tw-badge--building"><span class="tw-dot"></span>' . $this->e($this->t('Pending')) . '</span>',
+};
 ?>
-<div id="tw-setup-log"
-    <?php if ($polling): ?>
+<div class="term-win" id="tw-setup-log" style="min-height:360px;max-height:70vh"
+    <?php if ($isActive): ?>
     hx-ext="sse"
     sse-connect="/.well-known/mercure?topic=<?= $sseTopic ?>"
     hx-get="<?= $this->e($logUrl) ?>"
     hx-trigger="sse:message, every 30s"
     hx-swap="outerHTML"
-    <?php endif ?>
->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <?php if ($job->status->value === 'completed'): ?>
-            <span class="badge bg-success"><?= $this->t('Completed') ?></span>
-        <?php elseif ($job->status->value === 'failed'): ?>
-            <span class="badge bg-danger"><?= $this->t('Failed') ?></span>
-        <?php elseif ($job->status->value === 'running'): ?>
-            <span class="badge bg-primary">
-                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                <?= $this->t('Running') ?>
-            </span>
-        <?php else: ?>
-            <span class="badge bg-secondary"><?= $this->t('Pending') ?></span>
-        <?php endif ?>
+    <?php endif ?>>
+    <div class="term-bar">
+        <span class="term-title" id="term-title"><?= $this->e($title) ?></span>
+        <span class="term-actions">
+            <button class="btn btn-ghost btn-sm" id="copy-btn" title="<?= $this->e($this->t('Copy')) ?>"><i class="bi bi-clipboard"></i></button>
+            <button class="btn btn-ghost btn-sm" id="dl-btn" title="<?= $this->e($this->t('Download')) ?>"><i class="bi bi-download"></i></button>
+        </span>
     </div>
-
-    <pre class="bg-dark text-light p-3 rounded"
-         style="min-height: 200px; max-height: 600px; overflow-y: auto; font-size: 0.85rem; white-space: pre-wrap;"
-    ><?= $this->e($job->output) ?></pre>
+    <div class="term-meta" id="term-meta">
+        <span class="m"><?= $statusBadge ?></span>
+        <span class="m"><i class="bi bi-stopwatch"></i> <b><?= $this->e($duration) ?></b></span>
+        <span class="m"><i class="bi bi-clock"></i> <?= $this->e($job->createdAt->format('Y-m-d H:i:s')) ?></span>
+    </div>
+    <div class="term-body" id="term-body" style="white-space:pre-wrap"><?= $this->e($job->output !== '' ? $job->output : '...') ?><?php if ($isActive): ?> <span class="cursor"></span><?php endif ?></div>
 </div>
