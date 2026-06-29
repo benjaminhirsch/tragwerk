@@ -1,20 +1,36 @@
 <?php
-/** @var \Tragwerk\Domain\Entity\Server $server */
-/** @var \Tragwerk\Domain\Entity\SetupJob $job */
-$this->layout('layout::default', ['title' => $this->t('Server Setup')])
+
+declare(strict_types=1);
+
+/**
+ * @var \Tragwerk\Domain\Entity\Server  $server
+ * @var \Tragwerk\Domain\Entity\SetupJob $job
+ */
+
+$this->layout('layout::default', [
+    'wide'         => true,
+    'pageType'     => $this->activeTeam()->name . ' / Servers',
+    'pageTitle'    => $this->t('Setup: {name}', ['name' => $server->name]),
+    'pageSubTitle' => $this->t('Provisioning & bootstrap output.'),
+]);
 ?>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="mb-0"><?= $this->t('Setup: {name}', ['name' => $this->e($server->name)]) ?></h1>
-    <?= $this->fetch('partial::link', [
-        'label'   => $this->t('Back to server'),
-        'href'    => $this->url('server.show', ['id' => $server->id->toString()]) . '#setup',
-        'classes' => 'btn btn-secondary btn-sm',
-    ]) ?>
+<a class="d-inline-flex align-items-center gap-2 mb-3" href="<?= $this->url('server.show', ['id' => $server->id->toString()]) ?>#setup" style="color:var(--text-muted);font-weight:600;font-size:.86rem">
+    <i class="bi bi-arrow-left"></i> <?= $this->e($this->t('Back to server')) ?>
+</a>
+
+<div class="tw-pagehead">
+    <div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="tw-iconbtn" style="background:var(--surface-2);width:34px;height:34px"><i class="bi bi-server"></i></span>
+            <h1 class="mono" style="margin:0;font-size:1.45rem"><?= $this->e($server->name) ?></h1>
+        </div>
+        <p class="tw-sub mt-1 mono"><?= $this->e($server->host) ?>:<?= $this->e((string) $server->port) ?></p>
+    </div>
 </div>
 
-<div class="tw-card">
-    <?= $this->fetch('page::server/_log_widget', ['server' => $server, 'job' => $job]) ?>
-</div>
+<?= $this->fetch('page::server/_log_widget', ['server' => $server, 'job' => $job]) ?>
 
-<script src="/js/setup-log.js"></script>
+<?php $this->start('javascript') ?>
+<script src="/js/deploy-logs.js"></script>
+<?php $this->stop() ?>
