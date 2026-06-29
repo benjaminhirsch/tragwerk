@@ -89,6 +89,28 @@ final class AppMetricRepositoryTest extends IntegrationTestCase
     }
 
     #[Test]
+    public function getLatestReturnsMostRecentSampleWithCrashCounters(): void
+    {
+        $base = new DateTimeImmutable('2026-06-01 12:00:00+00');
+
+        $this->store($base, requestsTotal: 10, crashes: 1, restarts: 2);
+        $this->store($base->modify('+30 seconds'), requestsTotal: 25, crashes: 3, restarts: 4);
+
+        $latest = $this->repository->getLatest($this->projectId, 'main');
+
+        self::assertNotNull($latest);
+        self::assertSame(25, $latest->requestsTotal);
+        self::assertSame(3, $latest->crashes);
+        self::assertSame(4, $latest->restarts);
+    }
+
+    #[Test]
+    public function getLatestReturnsNullWhenNoSamplesExist(): void
+    {
+        self::assertNull($this->repository->getLatest($this->projectId, 'main'));
+    }
+
+    #[Test]
     public function pruneOlderThanDeletesOnlyOldSamples(): void
     {
         $now = new DateTimeImmutable();
@@ -106,6 +128,8 @@ final class AppMetricRepositoryTest extends IntegrationTestCase
         int $durationSumMs = 0,
         int $durationCount = 0,
         int $requests5xx = 0,
+        int $crashes = 0,
+        int $restarts = 0,
     ): void {
         $metrics = new EnvironmentMetrics(
             totalWorkers:  4,
@@ -115,8 +139,8 @@ final class AppMetricRepositoryTest extends IntegrationTestCase
             totalThreads:  8,
             busyThreads:   3,
             requestCount:  0,
-            crashes:       0,
-            restarts:      0,
+            crashes:       $crashes,
+            restarts:      $restarts,
             requestsTotal: $requestsTotal,
             requests5xx:   $requests5xx,
             requests4xx:   0,

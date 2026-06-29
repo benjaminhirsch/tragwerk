@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tragwerk\Infrastructure\Metrics;
 
 use Tragwerk\Domain\Entity\Credential;
-use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Model\EnvironmentMetrics;
 use Tragwerk\Infrastructure\Ssh\RemoteShell;
@@ -18,7 +17,6 @@ use function preg_match;
 use function preg_match_all;
 use function preg_quote;
 use function round;
-use function sprintf;
 use function str_contains;
 use function str_starts_with;
 use function strpos;
@@ -36,41 +34,13 @@ use const PREG_SET_ORDER;
  * across an environment's containers and label series. The parse step ({@see self::parse()}) is pure
  * and unit-testable.
  *
- * {@see self::collect()} scrapes a single environment on demand (live view); {@see self::collectServer()}
- * discovers all running environments on a host in one SSH connection (background ticker).
+ * {@see self::collectServer()} discovers all running environments on a host in one SSH connection
+ * (background ticker); the live KPI tiles read the persisted samples from the database.
  */
 final readonly class EnvironmentMetricsCollector
 {
     public function __construct(private RemoteShell $shell)
     {
-    }
-
-    public function collect(
-        Project $project,
-        string $branch,
-        Server $server,
-        Credential $credential,
-    ): EnvironmentMetrics|null {
-        $dir = 'tragwerk/' . $project->id->toString() . '/' . $branch;
-
-        $script = sprintf(
-            <<<'SH'
-            cd ~/%s 2>/dev/null || exit 0
-            seen=""
-            for c in $(docker compose ps -q 2>/dev/null); do
-              seen="$seen $c"
-              docker exec "$c" php -r 'echo @file_get_contents("http://127.0.0.1:2019/metrics");' 2>/dev/null
-            done
-            for c in $(docker ps -q --filter "label=tragwerk.working_dir=/root/%s" 2>/dev/null); do
-              case "$seen" in *$c*) continue ;; esac
-              docker exec "$c" php -r 'echo @file_get_contents("http://127.0.0.1:2019/metrics");' 2>/dev/null
-            done
-            SH,
-            $dir,
-            $dir,
-        );
-
-        return $this->parse($this->shell->run($server, $credential, $script));
     }
 
     /**
