@@ -53,6 +53,7 @@
         "ext-gettext": "*",
         "ext-intl": "*",
         "ext-libxml": "*",
+        "ext-pcntl": "*",
         "ext-session": "*",
         "bacon/bacon-qr-code": "^3.0",
         "chypriote/unique-names-generator": "^0.0.4",
