@@ -343,7 +343,11 @@ final readonly class DockerfileGenerator
         $peclExts   = array_values(array_filter($extNames, fn (string $n) => $this->isPeclExtension($n)));
 
         $aptPackages = array_unique(array_merge(
-            ['unzip'], // always needed so composer can extract packages
+            // unzip: so composer can extract packages. curl/wget/ca-certificates:
+            // the FrankenPHP base image ships neither curl nor wget, yet build
+            // hooks routinely fetch tools/binaries with them — guarantee both
+            // (plus CA roots for TLS) so hooks don't fail with "not found" (exit 127).
+            ['unzip', 'curl', 'wget', 'ca-certificates'],
             ...array_map(fn (string $name) => $this->aptDepsForExtension($name), $extNames),
         ));
 
