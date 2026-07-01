@@ -333,7 +333,12 @@ final readonly class DockerfileGenerator
     /** @param list<ExtensionConfig> $extensions */
     private function buildExtensionRun(array $extensions): string
     {
-        $extNames   = array_map(static fn (ExtensionConfig $e) => $e->name, $extensions);
+        // Dedupe so a config listing the same extension twice does not emit a
+        // duplicate "pecl install <ext>", which fails on the second run
+        // ("already installed ... install failed" → non-zero exit → build breaks).
+        $extNames   = array_values(array_unique(
+            array_map(static fn (ExtensionConfig $e) => $e->name, $extensions),
+        ));
         $nativeExts = array_values(array_filter($extNames, fn (string $n) => ! $this->isPeclExtension($n)));
         $peclExts   = array_values(array_filter($extNames, fn (string $n) => $this->isPeclExtension($n)));
 
