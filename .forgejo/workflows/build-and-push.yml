@@ -29,12 +29,15 @@ jobs:
       - name: Code auschecken
         uses: actions/checkout@v4
 
-      # 2. Buildx bereitstellen (BuildKit-Backend für den Build) — die einzige
+      - name: Docker CLI installieren
+        uses: docker/setup-docker-action@v4
+
+      # 3. Buildx bereitstellen (BuildKit-Backend für den Build) — die einzige
       #    "Abhängigkeit", die der CI-Job selbst braucht.
       - name: Docker Buildx einrichten
         uses: docker/setup-buildx-action@v3
 
-      # 3. Registry-Host und (kleingeschriebenen) Image-Namen berechnen.
+      # 4. Registry-Host und (kleingeschriebenen) Image-Namen berechnen.
       #    GITHUB_SERVER_URL enthält das Schema (https://) — das muss für einen
       #    gültigen Image-Ref UND für docker/login-action entfernt werden.
       #    Image-Namen müssen zudem komplett lowercase sein.
@@ -47,7 +50,7 @@ jobs:
           echo "registry=${REGISTRY}" >> "$GITHUB_OUTPUT"
           echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
 
-      # 4. An der Forgejo Container Registry anmelden.
+      # 5. An der Forgejo Container Registry anmelden.
       #    github.token ist der automatisch bereitgestellte Job-Token; er hat in
       #    Forgejo Schreibrechte auf die Pakete des Repos. Für org-/nutzerweite
       #    Pushes stattdessen ein PAT als secrets.FORGEJO_TOKEN hinterlegen und
@@ -59,7 +62,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.FORGEJO_TOKEN || github.token }}
 
-      # 5. Tags/Labels ableiten: Branch-Name, SemVer aus Tags und 'latest' auf
+      # 6. Tags/Labels ableiten: Branch-Name, SemVer aus Tags und 'latest' auf
       #    dem Default-Branch.
       - name: Docker Metadaten extrahieren
         id: meta
@@ -71,7 +74,7 @@ jobs:
             type=semver,pattern={{version}}
             type=raw,value=latest,enable={{is_default_branch}}
 
-      # 6. Image bauen und pushen. Context/Dockerfile spiegeln
+      # 7. Image bauen und pushen. Context/Dockerfile spiegeln
       #    docker-compose.prod.yaml (context: app, dockerfile: Dockerfile.prod).
       #    GITHUB_TOKEN-Build-Arg ist optional: umgeht anonyme github.com-API-
       #    Rate-Limits beim composer install. Leer lassen ist ok — dann als
