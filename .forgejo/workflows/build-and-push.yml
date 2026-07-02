@@ -70,7 +70,7 @@ jobs:
         with:
           registry: ${{ steps.img.outputs.registry }}
           username: ${{ github.actor }}
-          password: ${{ secrets.FORGEJO_TOKEN || github.token }}
+          password: ${{ secrets.TOKEN }}
 
       # 6. Tags/Labels ableiten: Branch-Name, SemVer aus Tags und 'latest' auf
       #    dem Default-Branch.
