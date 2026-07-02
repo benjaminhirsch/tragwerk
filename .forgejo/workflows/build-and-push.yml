@@ -1,46 +1,93 @@
 name: Docker Image bauen und pushen
 
+# Baut das Produktions-Image (app/Dockerfile.prod) und pusht es in die
+# integrierte Forgejo Container Registry. Ersetzt den bisherigen Build direkt
+# auf dem VPS (docker compose -f docker-compose.prod.yaml up -d --build):
+# statt auf dem Server zu bauen, wird hier ein fertiges Image erzeugt, das der
+# Server nur noch pullt.
+#
+# Composer-/PHP-Abhängigkeiten werden NICHT hier im Runner installiert, sondern
+# im mehrstufigen Docker-Build selbst (vendor-Stage + install-php-extensions).
+# Der Runner braucht daher nur Docker Buildx.
+
 on:
   push:
     branches:
-      - 'main' # Trigger bei jedem Push auf den main-Branch
+      - 'main'   # Trigger bei jedem Push auf main
     tags:
-      - 'v*'  # Trigger, wenn du ein Git-Tag wie v1.0.0 erstellst
+      - 'v*'     # Trigger bei Version-Tags wie v1.0.0
 
 jobs:
   build-and-push:
-    runs-on: docker # Benötigt einen Runner, der Docker-Befehle ausführen darf
+    # Runner mit Docker-Zugriff (Docker-Daemon + Node im Runner-Image nötig,
+    # damit die docker/*-Actions laufen). Label ggf. an eure Runner-Config
+    # anpassen.
+    runs-on: Docker
 
     steps:
-      # 1. Code aus dem Repository auschecken
+      # 1. Quellcode auschecken
       - name: Code auschecken
         uses: actions/checkout@v4
 
-      # 2. In der integrierten Forgejo Registry anmelden
-      # Forgejo stellt das Geheimnis ${{ secrets.GITHUB_TOKEN }} (oder FORGEJO_TOKEN) automatisch bereit
+      # 2. Buildx bereitstellen (BuildKit-Backend für den Build) — die einzige
+      #    "Abhängigkeit", die der CI-Job selbst braucht.
+      - name: Docker Buildx einrichten
+        uses: docker/setup-buildx-action@v3
+
+      # 3. Registry-Host und (kleingeschriebenen) Image-Namen berechnen.
+      #    GITHUB_SERVER_URL enthält das Schema (https://) — das muss für einen
+      #    gültigen Image-Ref UND für docker/login-action entfernt werden.
+      #    Image-Namen müssen zudem komplett lowercase sein.
+      - name: Registry und Image-Namen bestimmen
+        id: img
+        run: |
+          REGISTRY="${GITHUB_SERVER_URL#http://}"
+          REGISTRY="${REGISTRY#https://}"
+          IMAGE="$(echo "${REGISTRY}/${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
+          echo "registry=${REGISTRY}" >> "$GITHUB_OUTPUT"
+          echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+
+      # 4. An der Forgejo Container Registry anmelden.
+      #    github.token ist der automatisch bereitgestellte Job-Token; er hat in
+      #    Forgejo Schreibrechte auf die Pakete des Repos. Für org-/nutzerweite
+      #    Pushes stattdessen ein PAT als secrets.FORGEJO_TOKEN hinterlegen und
+      #    unten einsetzen.
       - name: Bei Forgejo Container Registry anmelden
         uses: docker/login-action@v3
         with:
-          registry: ${{ gitea.server_url }} # Nutzt automatisch deine Domain
-          username: ${{ gitea.actor }}       # Dein Forgejo-Nutzername
-          password: ${{ secrets.FORGEJO_TOKEN }}
+          registry: ${{ steps.img.outputs.registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.FORGEJO_TOKEN || github.token }}
 
-      # 3. Docker-Metadaten extrahieren (Tags generieren wie 'latest' oder die Versionsnummer)
+      # 5. Tags/Labels ableiten: Branch-Name, SemVer aus Tags und 'latest' auf
+      #    dem Default-Branch.
       - name: Docker Metadaten extrahieren
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ gitea.server_url }}/${{ gitea.repository }}
+          images: ${{ steps.img.outputs.image }}
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=latest,enable={{is_default_branch}}
 
-      # 4. Das Image bauen und direkt in die Registry pushen
+      # 6. Image bauen und pushen. Context/Dockerfile spiegeln
+      #    docker-compose.prod.yaml (context: app, dockerfile: Dockerfile.prod).
+      #    GITHUB_TOKEN-Build-Arg ist optional: umgeht anonyme github.com-API-
+      #    Rate-Limits beim composer install. Leer lassen ist ok — dann als
+      #    secrets.COMPOSER_GITHUB_TOKEN ein github.com-PAT hinterlegen.
       - name: Image bauen und pushen
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
-          context: .
+          context: app
+          file: app/Dockerfile.prod
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            GITHUB_TOKEN=${{ secrets.COMPOSER_GITHUB_TOKEN }}
+          # Registry-Cache statt type=gha: der GitHub-Actions-Cache-Dienst ist
+          # auf Forgejo-Runnern unzuverlässig; ein buildcache-Tag in derselben
+          # Registry funktioniert immer.
+          cache-from: type=registry,ref=${{ steps.img.outputs.image }}:buildcache
+          cache-to: type=registry,ref=${{ steps.img.outputs.image }}:buildcache,mode=max
