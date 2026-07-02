@@ -22,7 +22,7 @@ jobs:
     # Runner mit Docker-Zugriff (Docker-Daemon + Node im Runner-Image nötig,
     # damit die docker/*-Actions laufen). Label ggf. an eure Runner-Config
     # anpassen.
-    runs-on: Docker
+    runs-on: docker
 
     steps:
       # 1. Quellcode auschecken
