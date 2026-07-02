@@ -2,9 +2,10 @@
 # Let's Encrypt needs public DNS + reachable :443, impossible on a laptop.
 # This routes everything over plain HTTP :80, keyed by Host header.
 #
-# Usage:
+# Usage (images are pulled from the registry, not built here):
 #   cp .env.prod.dist .env   # dummy values are fine for local
-#   docker compose -f docker-compose.prod.yaml -f docker-compose.prod.local.yaml up -d --build
+#   docker compose -f docker-compose.prod.yaml -f docker-compose.prod.local.yaml pull
+#   docker compose -f docker-compose.prod.yaml -f docker-compose.prod.local.yaml up -d
 #
 # Then (no DNS needed):
 #   curl -H 'Host: tragwerk.localhost' http://localhost/login

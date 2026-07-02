@@ -1,0 +1,6 @@
+# CI/host build context: never ship installed deps or built output — the image
+# runs `npm ci` + `npm run docs:build` itself. Keeps `COPY . .` from clobbering
+# node_modules and bloating the context.
+node_modules
+.vitepress/dist
+.vitepress/cache
