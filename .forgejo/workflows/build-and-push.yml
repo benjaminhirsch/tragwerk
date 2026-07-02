@@ -102,5 +102,5 @@ jobs:
           # Registry-Cache statt type=gha: der GitHub-Actions-Cache-Dienst ist
           # auf Forgejo-Runnern unzuverlässig; ein buildcache-Tag in derselben
           # Registry funktioniert immer.
-          cache-from: type=registry,ref=${{ steps.img.outputs.image }}:buildcache
-          cache-to: type=registry,ref=${{ steps.img.outputs.image }}:buildcache,mode=max
+          # cache-from: type=registry,ref=${{ steps.img.outputs.image }}:buildcache
+          # cache-to: type=registry,ref=${{ steps.img.outputs.image }}:buildcache,mode=max
