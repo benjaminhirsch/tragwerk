@@ -1,0 +1,46 @@
+name: Docker Image bauen und pushen
+
+on:
+  push:
+    branches:
+      - 'main' # Trigger bei jedem Push auf den main-Branch
+    tags:
+      - 'v*'  # Trigger, wenn du ein Git-Tag wie v1.0.0 erstellst
+
+jobs:
+  build-and-push:
+    runs-on: docker # Benötigt einen Runner, der Docker-Befehle ausführen darf
+
+    steps:
+      # 1. Code aus dem Repository auschecken
+      - name: Code auschecken
+        uses: actions/checkout@v4
+
+      # 2. In der integrierten Forgejo Registry anmelden
+      # Forgejo stellt das Geheimnis ${{ secrets.GITHUB_TOKEN }} (oder FORGEJO_TOKEN) automatisch bereit
+      - name: Bei Forgejo Container Registry anmelden
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ gitea.server_url }} # Nutzt automatisch deine Domain
+          username: ${{ gitea.actor }}       # Dein Forgejo-Nutzername
+          password: ${{ secrets.FORGEJO_TOKEN }}
+
+      # 3. Docker-Metadaten extrahieren (Tags generieren wie 'latest' oder die Versionsnummer)
+      - name: Docker Metadaten extrahieren
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ gitea.server_url }}/${{ gitea.repository }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      # 4. Das Image bauen und direkt in die Registry pushen
+      - name: Image bauen und pushen
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
