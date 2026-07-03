@@ -110,6 +110,8 @@ final readonly class ConfigProvider
                     EventListener\Project\DeleteProjectData::class     => DeleteProjectDataFactory::class,
                     Application\Service\TwoFactor\TwoFactorService::class =>
                         Factory\Service\TwoFactorServiceFactory::class,
+                    Application\Service\Credential\CredentialEncryptor::class =>
+                        Factory\Service\CredentialEncryptorFactory::class,
                 ],
                 'abstract_factories' => [Factory\Invoker\InvokerAbstractFactory::class],
             ],

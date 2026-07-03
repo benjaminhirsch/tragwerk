@@ -6,6 +6,7 @@ namespace TragwerkTest\Unit\Infrastructure\Metrics;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Tragwerk\Application\Service\Credential\CredentialEncryptor;
 use Tragwerk\Infrastructure\Metrics\EnvironmentMetricsCollector;
 use Tragwerk\Infrastructure\Ssh\RemoteShell;
 
@@ -16,7 +17,9 @@ final class EnvironmentMetricsCollectorTest extends TestCase
     protected function setUp(): void
     {
         // parse*() never touch the shell, so a real (stateless) RemoteShell is fine here.
-        $this->collector = new EnvironmentMetricsCollector(new RemoteShell());
+        $this->collector = new EnvironmentMetricsCollector(
+            new RemoteShell(new CredentialEncryptor('NKvFeNFUeEx4Lvifq6TVfYyIqvuiNrUl8kvWqboSMhQ=')),
+        );
     }
 
     #[Test]

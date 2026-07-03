@@ -7,6 +7,7 @@ namespace TragwerkTest\Unit\Infrastructure\Metrics;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use Tragwerk\Application\Service\Credential\CredentialEncryptor;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Infrastructure\Metrics\MetricsCollector;
 use Tragwerk\Infrastructure\Ssh\RemoteShell;
@@ -18,7 +19,9 @@ final class MetricsCollectorTest extends TestCase
     protected function setUp(): void
     {
         // parse() never touches the shell, so a real (stateless) RemoteShell is fine here.
-        $this->collector = new MetricsCollector(new RemoteShell());
+        $this->collector = new MetricsCollector(
+            new RemoteShell(new CredentialEncryptor('NKvFeNFUeEx4Lvifq6TVfYyIqvuiNrUl8kvWqboSMhQ=')),
+        );
     }
 
     private const string OUTPUT = <<<'TXT'

@@ -13,6 +13,8 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Throwable;
+use Tragwerk\Application\Exception\Credential\CredentialKeyEncryptionFailed;
+use Tragwerk\Application\Service\Credential\CredentialEncryptor;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\ValueObject\CredentialIdentifier;
 
@@ -34,6 +36,7 @@ final class CleanupProjectDockerCommand extends Command
 {
     public function __construct(
         private readonly CredentialRepository $credentialRepository,
+        private readonly CredentialEncryptor $credentialEncryptor,
     ) {
         parent::__construct();
     }
@@ -79,8 +82,8 @@ final class CleanupProjectDockerCommand extends Command
         }
 
         try {
-            $key = PublicKeyLoader::loadPrivateKey($credential->privateKey);
-        } catch (NoKeyLoadedException $e) {
+            $key = PublicKeyLoader::loadPrivateKey($this->credentialEncryptor->decrypt($credential->privateKey));
+        } catch (NoKeyLoadedException | CredentialKeyEncryptionFailed $e) {
             $output->writeln('[Cleanup] Failed to load private key: ' . $e->getMessage());
 
             return Command::FAILURE;
