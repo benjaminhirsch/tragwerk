@@ -124,13 +124,12 @@ port verbatim — `127.0.0.1:55432:5432` (loopback only, never `0.0.0.0`). After
 redeploying, forward it over SSH:
 
 ```bash
-# On your machine: forward your local 5432 to the server loopback port
-ssh -L 5432:127.0.0.1:55432 user@your-server
+# On your machine: forward your local 30000 to the server loopback port
+ssh -L 30000:127.0.0.1:55432 user@your-server
 ```
 
-Then connect to `localhost:5432` with the default
-[credentials](/config/services#default-credentials). MySQL/MariaDB use internal
-port `3306`, Redis/Valkey `6379`.
+Then connect to `localhost:30000` with the default
+[credentials](/config/services#default-credentials). 
 
 ::: info Feature branches get an auto-assigned port
 Because `config.xml` is shared across branches, a fixed port would collide when
