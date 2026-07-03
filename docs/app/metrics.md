@@ -1,12 +1,12 @@
 # Metrics
 
-Tragwerk surfaces metrics at two scopes: **server metrics** for the VPS as a
+Tragwerk surfaces metrics at two scopes: **server metrics** for the server as a
 whole, and **environment/app metrics** for a specific deployed application. Both
 offer a live view and historical graphs.
 
 ## Server metrics
 
-Server metrics cover the health of the VPS itself:
+Server metrics cover the health of the server itself:
 
 - **CPU** usage
 - **Memory** usage
@@ -53,4 +53,4 @@ worker and request tiles update while the graphs fill in history.
 
 - [Environments](/app/environments)
 - [Logs & Containers](/app/logs-containers)
-- [Architecture on the host](/self-hosting/architecture-on-host)
+- [Architecture on the host](/server/architecture-on-host)

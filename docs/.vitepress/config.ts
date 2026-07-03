@@ -34,9 +34,9 @@ export default defineConfig({
       { text: 'App', link: '/app/projects', activeMatch: '/app/' },
       { text: 'Config', link: '/config/overview', activeMatch: '/config/' },
       {
-        text: 'Self-Hosting',
-        link: '/self-hosting/requirements',
-        activeMatch: '/self-hosting/',
+        text: 'Server',
+        link: '/server/requirements',
+        activeMatch: '/server/',
       },
     ],
 
@@ -104,16 +104,16 @@ export default defineConfig({
           ],
         },
       ],
-      '/self-hosting/': [
+      '/server/': [
         {
-          text: 'Self-Hosting',
+          text: 'Server',
           items: [
-            { text: 'Requirements', link: '/self-hosting/requirements' },
-            { text: 'Servers', link: '/self-hosting/servers' },
-            { text: 'Server Setup', link: '/self-hosting/server-setup' },
+            { text: 'Requirements', link: '/server/requirements' },
+            { text: 'Servers', link: '/server/servers' },
+            { text: 'Server Setup', link: '/server/server-setup' },
             {
               text: 'Architecture on the Host',
-              link: '/self-hosting/architecture-on-host',
+              link: '/server/architecture-on-host',
             },
           ],
         },

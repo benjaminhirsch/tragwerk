@@ -4,7 +4,7 @@ Every Tragwerk project is described by a single XML file, `.tragwerk/config.xml`
 committed to the root of your git repository. This file is the source of truth
 for how your project is built and run: Tragwerk reads it on every deploy and
 **generates the Docker Compose file and Dockerfiles** that run your applications,
-workers, cron jobs, and backing services on the VPS.
+workers, cron jobs, and backing services on the server.
 
 ## Where the file lives
 
@@ -135,4 +135,4 @@ artifacts:
 ## Related
 
 - [Core concepts](/guide/concepts)
-- [Architecture on the host](/self-hosting/architecture-on-host)
+- [Architecture on the host](/server/architecture-on-host)

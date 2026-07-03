@@ -3,7 +3,7 @@
 Tragwerk organizes everything into a small set of nouns. From the top down: a
 **Team** owns **Projects**, each Project has per-branch **Environments**, and
 Environments run **Applications** backed by **Services** and exposed through
-**Routes** and **Domains**. **Servers** are the VPS targets you deploy to.
+**Routes** and **Domains**. **Servers** are the machines you deploy to.
 
 ## Teams & Roles
 
@@ -31,11 +31,11 @@ environments alongside production. See [Environments](/app/environments).
 
 ## Servers
 
-A Server is a VPS you register with Tragwerk as a deployment target. After you
+A Server is a machine you register with Tragwerk as a deployment target. After you
 add a server, an automated setup job provisions it over SSH and turns it into a
 Docker host ready to run your apps. One server can host many applications and
-environments side by side. See [Servers](/self-hosting/servers) and
-[server setup](/self-hosting/server-setup).
+environments side by side. See [Servers](/server/servers) and
+[server setup](/server/server-setup).
 
 ## Applications
 

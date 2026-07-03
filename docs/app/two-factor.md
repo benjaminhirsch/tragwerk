@@ -9,7 +9,7 @@ You manage it from the **Security** section of your
 The server must have the `TWO_FACTOR_KEY` environment variable set to a
 base64-encoded 32-byte value. It is used to encrypt stored TOTP secrets at rest.
 Without it, enrolment fails. See
-[self-hosting requirements](/self-hosting/requirements).
+[server requirements](/server/requirements).
 :::
 
 ## Enable two-factor
@@ -64,4 +64,4 @@ restore the second factor.
 ## Related
 
 - [Account](/app/account)
-- [Self-hosting requirements](/self-hosting/requirements)
+- [Server requirements](/server/requirements)

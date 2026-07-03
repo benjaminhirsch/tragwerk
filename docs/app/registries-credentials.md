@@ -2,7 +2,7 @@
 
 Registries and credentials are team-level resources that Tragwerk uses to reach
 external systems: **Docker registries** for pulling private images, and
-**credentials** for connecting to your VPSes over SSH.
+**credentials** for connecting to your servers over SSH.
 
 ## Docker registries
 
@@ -38,7 +38,7 @@ To pull from a private GitHub Container Registry:
 
 ## Credentials
 
-Credentials store the server-access details Tragwerk uses to reach your VPSes
+Credentials store the server-access details Tragwerk uses to reach your servers
 over SSH when provisioning, deploying, and reading container state.
 
 ### Managing credentials
@@ -57,15 +57,15 @@ it on save and rejects malformed keys.
 To register an SSH key for a server:
 
 1. Open **Credentials → Create**.
-2. **Name**: `prod-vps`
+2. **Name**: `prod-server`
 3. **Username**: `deploy`
 4. **Private key**: paste the contents of your PEM-encoded private key
    (e.g. `~/.ssh/id_ed25519`).
-5. Save, then attach the credential when adding a [server](/self-hosting/servers).
+5. Save, then attach the credential when adding a [server](/server/servers).
 
 ## Related
 
-- [Servers](/self-hosting/servers)
-- [Server setup](/self-hosting/server-setup)
+- [Servers](/server/servers)
+- [Server setup](/server/server-setup)
 - [Deployments](/app/deployments)
 - [Teams](/app/teams)

@@ -1,13 +1,13 @@
 # Requirements
 
-Tragwerk deploys your PHP applications to your own virtual private server (VPS).
+Tragwerk deploys your PHP applications to your own server.
 You bring the machine and SSH access; Tragwerk installs and manages everything
 else — Docker, the Traefik reverse proxy, and the generated per-application
 container stack.
 
-## VPS and SSH access
+## Server and SSH access
 
-The only hard requirement is a VPS you can reach over **SSH**. Tragwerk connects
+The only hard requirement is a server you can reach over **SSH**. Tragwerk connects
 to the server, installs the Docker environment, and from then on drives all
 provisioning and deploys remotely.
 
@@ -17,11 +17,11 @@ provisioning and deploys remotely.
   [credential](/app/registries-credentials).
 
 You can register any number of servers and run multiple applications on each.
-See [Servers](/self-hosting/servers) to add one.
+See [Servers](/server/servers) to add one.
 
 ## Docker support matrix
 
-Tragwerk runs everything on the VPS through Docker and Docker Compose. The
+Tragwerk runs everything on the server through Docker and Docker Compose. The
 officially supported targets are therefore **whatever Docker itself supports**.
 
 Refer to the official Docker Engine install matrix for supported distributions
@@ -29,13 +29,13 @@ and versions: <https://docs.docker.com/engine/install/>.
 
 ::: tip
 You do not need to install Docker yourself. Tragwerk's
-[server setup](/self-hosting/server-setup) installs and configures the Docker
+[server setup](/server/server-setup) installs and configures the Docker
 environment for you over SSH.
 :::
 
 ## What Tragwerk installs and manages
 
-During [server setup](/self-hosting/server-setup) Tragwerk provisions:
+During [server setup](/server/server-setup) Tragwerk provisions:
 
 - **Docker** and Docker Compose on the host.
 - **Traefik** as a host-level reverse proxy that terminates TLS and routes
@@ -45,7 +45,7 @@ During [server setup](/self-hosting/server-setup) Tragwerk provisions:
 
 Per application it then generates a `Dockerfile.{appSlug}` and a
 `docker-compose.yml` and runs the resulting containers. See
-[Architecture on the Host](/self-hosting/architecture-on-host).
+[Architecture on the Host](/server/architecture-on-host).
 
 ## Sizing guidance
 
@@ -58,7 +58,7 @@ Sizing depends entirely on your workload, but as a generic starting point:
   [mounts](/config/mounts) and service volumes. Image builds and the registry
   cache can grow over time.
 
-Scale up as you add applications — multiple apps coexist on one VPS, so a larger
+Scale up as you add applications — multiple apps coexist on one server, so a larger
 server lets you consolidate more environments.
 
 ## DNS and domains
@@ -66,7 +66,7 @@ server lets you consolidate more environments.
 Public routing and automatic TLS (Let's Encrypt via Traefik) require working DNS:
 
 - Point an **A/AAAA record** for each domain (or a wildcard) at your server's IP.
-- Each application is routed by host/subdomain, so distinct apps on the same VPS
+- Each application is routed by host/subdomain, so distinct apps on the same server
   use distinct hostnames.
 - Valid public DNS is also a prerequisite for Let's Encrypt certificate issuance.
 
@@ -74,7 +74,7 @@ See [Domains](/app/domains) for configuring hostnames per environment.
 
 ## Related
 
-- [Servers](/self-hosting/servers)
-- [Server Setup](/self-hosting/server-setup)
-- [Architecture on the Host](/self-hosting/architecture-on-host)
+- [Servers](/server/servers)
+- [Server Setup](/server/server-setup)
+- [Architecture on the Host](/server/architecture-on-host)
 - [Domains](/app/domains)

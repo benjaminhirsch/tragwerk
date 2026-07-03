@@ -12,7 +12,7 @@ containers, [worker](/app/workers) containers, and the
 [cron](/app/cronjobs) sidecar. Each row shows the container's live status
 (running, starting, restarting, stopped, paused).
 
-Status is polled from the VPS over SSH and refreshes automatically, so the page
+Status is polled from the server over SSH and refreshes automatically, so the page
 reflects the current state of the environment without a manual reload.
 
 ## Build & deploy logs
@@ -47,7 +47,7 @@ brings together, in one place:
 - **Hooks** (build / deploy / post-deploy)
 - **Routes**
 
-Mount sizes are computed on demand from the VPS, so you can see how much disk
+Mount sizes are computed on demand from the server, so you can see how much disk
 each persistent mount is consuming.
 
 ## Example workflow

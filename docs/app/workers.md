@@ -3,7 +3,7 @@
 Workers are long-lived background processes that run continuously alongside your
 application — typically queue consumers, message handlers, or other daemons. You
 define them in `.tragwerk/config.xml` and Tragwerk runs each one as its own
-container on the VPS.
+container on the server.
 
 ## Defining workers
 
@@ -17,7 +17,7 @@ to run. See the configuration reference: [Workers configuration](/config/workers
 </workers>
 ```
 
-## How it runs on the VPS
+## How it runs on the server
 
 For each declared worker Tragwerk generates a container named
 `{app}-worker-{name}` that runs your command in the application's runtime. The
@@ -45,4 +45,4 @@ On the next [deployment](/app/deployments) Tragwerk starts the container
 - [Workers configuration](/config/workers)
 - [Cron Jobs](/app/cronjobs)
 - [Logs & Containers](/app/logs-containers)
-- [Architecture on the host](/self-hosting/architecture-on-host)
+- [Architecture on the host](/server/architecture-on-host)

@@ -25,7 +25,7 @@ hostnames live in the WebUI.
 5. Click **Add domain**.
 
 ::: tip DNS
-Point a CNAME or A record for the hostname at your server. Once DNS resolves,
+Point a CNAME, A and or AAAA record for the hostname at your server. Once DNS resolves,
 Traefik requests a Let's Encrypt certificate automatically — no extra steps.
 :::
 
@@ -51,4 +51,4 @@ not upload or manage certificates yourself.
 
 - [Routes configuration](/config/routes)
 - [Environments](/app/environments)
-- [Architecture on the host](/self-hosting/architecture-on-host)
+- [Architecture on the host](/server/architecture-on-host)
