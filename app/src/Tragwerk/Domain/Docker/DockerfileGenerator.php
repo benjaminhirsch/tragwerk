@@ -10,6 +10,7 @@ use Tragwerk\Domain\Model\ApplicationConfig;
 use Tragwerk\Domain\Model\ExtensionConfig;
 use Tragwerk\Domain\Model\HookConfig;
 use Tragwerk\Domain\Model\LocationConfig;
+use Tragwerk\Domain\Model\PhpConfig;
 
 use function array_filter;
 use function array_map;
@@ -52,6 +53,7 @@ final readonly class DockerfileGenerator
         $isPhp           = str_starts_with($app->type->value, 'php:');
         $hasCaddyfile    = $isPhp && $app->web->locations !== [];
         $hasCrons        = $app->crons !== [];
+        $hasPhpIni       = $isPhp && $app->php !== null && $app->php->settings !== [];
 
         return new DockerfileOutput(
             dockerfileName:    'Dockerfile.' . $slug,
@@ -62,6 +64,7 @@ final readonly class DockerfileGenerator
                 $hasEntrypoint,
                 $hasCaddyfile,
                 $hasCrons,
+                $hasPhpIni,
             ),
             entrypointName:    $hasEntrypoint ? 'docker-entrypoint.' . $slug . '.sh' : null,
             entrypointContent: $hasEntrypoint ? $this->buildEntrypoint($deployHooks, $postDeployHooks) : null,
@@ -69,6 +72,8 @@ final readonly class DockerfileGenerator
             caddyfileContent:  $hasCaddyfile ? $this->buildCaddyfile($app) : null,
             crontabName:       $hasCrons ? 'crontab.' . $slug : null,
             crontabContent:    $hasCrons ? $this->buildCrontab($app) : null,
+            phpIniName:        $hasPhpIni ? 'php.' . $slug . '.ini' : null,
+            phpIniContent:     $hasPhpIni && $app->php !== null ? $this->buildPhpIni($app->php) : null,
         );
     }
 
@@ -97,6 +102,7 @@ final readonly class DockerfileGenerator
         bool $hasEntrypoint,
         bool $hasCaddyfile,
         bool $hasCrons,
+        bool $hasPhpIni,
     ): string {
         $image      = $this->imageResolver->forApplication($app->type);
         $copySource = $app->root === '/' ? '.' : ltrim($app->root, '/');
@@ -114,6 +120,15 @@ final readonly class DockerfileGenerator
             $lines[] = '';
             $lines[] = 'COPY --from=composer:latest /usr/bin/composer /usr/bin/composer';
             $lines[] = '';
+
+            if ($hasPhpIni) {
+                // conf.d is scanned alphabetically; the "zz-" prefix loads this last
+                // so user directives override the base image / app defaults. Copied
+                // before the source and build hooks so build-time PHP (composer,
+                // artisan) already runs under these settings.
+                $lines[] = 'COPY php.' . $slug . '.ini /usr/local/etc/php/conf.d/zz-tragwerk.ini';
+                $lines[] = '';
+            }
         }
 
         if ($hasCrons) {
@@ -325,6 +340,16 @@ final readonly class DockerfileGenerator
             $command = trim($cron->command);
             $escaped = "'" . str_replace("'", "'\\''", $command) . "'";
             $lines[] = $cron->schedule . ' /bin/sh -c ' . $escaped;
+        }
+
+        return implode("\n", $lines) . "\n";
+    }
+
+    private function buildPhpIni(PhpConfig $php): string
+    {
+        $lines = [];
+        foreach ($php->settings as $setting) {
+            $lines[] = $setting->name . '=' . $setting->value;
         }
 
         return implode("\n", $lines) . "\n";

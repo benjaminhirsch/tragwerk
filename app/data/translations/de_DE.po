@@ -2059,3 +2059,12 @@ msgstr "Umgebung löschen"
 
 msgid "Delete {branch}? This stops and removes its containers, destroys its database volume and deletes the branch. This action cannot be undone."
 msgstr "{branch} löschen? Dies stoppt und entfernt die Container, zerstört das Datenbank-Volume und löscht den Branch. Diese Aktion kann nicht rückgängig gemacht werden."
+
+msgid "PHP extensions"
+msgstr "PHP-Erweiterungen"
+
+msgid "PHP settings"
+msgstr "PHP-Einstellungen"
+
+msgid "Directive"
+msgstr "Direktive"

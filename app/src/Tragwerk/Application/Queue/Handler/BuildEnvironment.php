@@ -162,6 +162,11 @@ final readonly class BuildEnvironment
                     $messages[] = 'Generated ' . $dockerfile->crontabName;
                 }
 
+                if ($dockerfile->phpIniName !== null && $dockerfile->phpIniContent !== null) {
+                    file_put_contents($outDir . '/' . $dockerfile->phpIniName, $dockerfile->phpIniContent);
+                    $messages[] = 'Generated ' . $dockerfile->phpIniName;
+                }
+
                 if ($dockerfile->entrypointName !== null && $dockerfile->entrypointContent !== null) {
                     $path = $outDir . '/' . $dockerfile->entrypointName;
                     file_put_contents($path, $dockerfile->entrypointContent);

@@ -146,6 +146,18 @@ final class GenerateDockerConfig extends Command
                 $output->writeln('Generated ' . $outDir . '/' . $dockerfile->crontabName);
             }
 
+            if ($dockerfile->phpIniName !== null && $dockerfile->phpIniContent !== null) {
+                $phpIniPath = $outDir . '/' . $dockerfile->phpIniName;
+
+                if (file_put_contents($phpIniPath, $dockerfile->phpIniContent) === false) {
+                    $output->writeln('Failed to write ' . $dockerfile->phpIniName);
+
+                    return self::FAILURE;
+                }
+
+                $output->writeln('Generated ' . $outDir . '/' . $dockerfile->phpIniName);
+            }
+
             if ($dockerfile->entrypointName === null || $dockerfile->entrypointContent === null) {
                 continue;
             }

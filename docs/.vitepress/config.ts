@@ -93,6 +93,7 @@ export default defineConfig({
             { text: 'Overview', link: '/config/overview' },
             { text: 'Applications', link: '/config/applications' },
             { text: 'Web & Locations', link: '/config/web' },
+            { text: 'PHP Settings', link: '/config/php' },
             { text: 'Workers', link: '/config/workers' },
             { text: 'Cron Jobs', link: '/config/crons' },
             { text: 'Hooks', link: '/config/hooks' },

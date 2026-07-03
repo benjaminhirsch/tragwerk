@@ -16,6 +16,8 @@ use Tragwerk\Domain\Model\CronDefinitionConfig;
 use Tragwerk\Domain\Model\ExtensionConfig;
 use Tragwerk\Domain\Model\HookConfig;
 use Tragwerk\Domain\Model\LocationConfig;
+use Tragwerk\Domain\Model\PhpConfig;
+use Tragwerk\Domain\Model\PhpSettingConfig;
 use Tragwerk\Domain\Model\WebConfig;
 use Tragwerk\Domain\Model\WorkerConfig;
 
@@ -43,6 +45,7 @@ final class DockerfileGeneratorTest extends TestCase
         array $hooks = [],
         array $extensions = [],
         array $crons = [],
+        PhpConfig|null $php = null,
     ): ApplicationConfig {
         return new ApplicationConfig(
             name: $name,
@@ -52,6 +55,7 @@ final class DockerfileGeneratorTest extends TestCase
             hooks: $hooks,
             extensions: $extensions,
             crons: $crons,
+            php: $php,
         );
     }
 
@@ -341,6 +345,57 @@ final class DockerfileGeneratorTest extends TestCase
 
         self::assertStringContainsString('docker-php-ext-install gettext intl sockets', $output->dockerfileContent);
         self::assertStringContainsString('libicu-dev', $output->dockerfileContent);
+    }
+
+    #[Test]
+    public function phpSettingsGenerateIniFileAndCopy(): void
+    {
+        $output = $this->generator->generate(self::app('My App', php: new PhpConfig([
+            new PhpSettingConfig('memory_limit', '256M'),
+            new PhpSettingConfig('opcache.jit', 'tracing'),
+        ])));
+
+        self::assertSame('php.my-app.ini', $output->phpIniName);
+        self::assertSame("memory_limit=256M\nopcache.jit=tracing\n", $output->phpIniContent);
+        self::assertStringContainsString(
+            'COPY php.my-app.ini /usr/local/etc/php/conf.d/zz-tragwerk.ini',
+            $output->dockerfileContent,
+        );
+    }
+
+    #[Test]
+    public function phpIniCopyAppearsBeforeSourceCopy(): void
+    {
+        $output = $this->generator->generate(self::app(php: new PhpConfig([
+            new PhpSettingConfig('memory_limit', '256M'),
+        ])));
+
+        $iniPos    = strpos($output->dockerfileContent, 'zz-tragwerk.ini');
+        $sourcePos = strpos($output->dockerfileContent, 'COPY . .');
+
+        self::assertNotFalse($iniPos);
+        self::assertNotFalse($sourcePos);
+        self::assertLessThan($sourcePos, $iniPos);
+    }
+
+    #[Test]
+    public function noPhpIniWhenNoSettings(): void
+    {
+        $output = $this->generator->generate(self::app());
+
+        self::assertNull($output->phpIniName);
+        self::assertNull($output->phpIniContent);
+        self::assertStringNotContainsString('zz-tragwerk.ini', $output->dockerfileContent);
+    }
+
+    #[Test]
+    public function noPhpIniWhenEmptySettingsList(): void
+    {
+        $output = $this->generator->generate(self::app(php: new PhpConfig([])));
+
+        self::assertNull($output->phpIniName);
+        self::assertNull($output->phpIniContent);
+        self::assertStringNotContainsString('zz-tragwerk.ini', $output->dockerfileContent);
     }
 
     #[Test]

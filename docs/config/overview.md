@@ -122,6 +122,7 @@ artifacts:
 ## See each element
 
 - [Applications](/config/applications) — `<application>`, `<extensions>`, `<workerMode>`
+- [PHP Settings](/config/php) — `<php>` / `<setting>` ini directives
 - [Web](/config/web) — `<web>` / `<location>`
 - [Workers](/config/workers) — `<workers>` / `<worker>`
 - [Crons](/config/crons) — `<crons>` / `<cron>`
