@@ -6,6 +6,7 @@ namespace TragwerkTest\Integration\Application\Handler\Credential;
 
 use phpseclib3\Crypt\EC;
 use PHPUnit\Framework\Attributes\Test;
+use Tragwerk\Application\Service\Credential\CredentialEncryptor;
 use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
@@ -198,17 +199,32 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
     }
 
     #[Test]
-    public function editPostWithMissingKeyReRendersForm(): void
+    public function editPostWithEmptyKeyKeepsExistingKeyAndRedirects(): void
     {
-        $credential = $this->seedCredential('My Credential', 'admin');
-        $response   = $this->dispatch(
+        $plainKey   = self::makeSshPrivateKey();
+        $credential = $this->seedCredentialWithKey('My Credential', 'admin', $plainKey);
+
+        $response = $this->dispatch(
             'POST',
             $this->url('credential.edit', ['id' => $credential->id->toString()]),
-            ['name' => 'My Credential', 'username' => 'admin'],
+            ['name' => 'Renamed', 'username' => 'admin'],
             $this->sessionCookie,
         );
 
-        self::assertSame(200, $response->getStatusCode());
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame($this->url('credential'), $response->getHeaderLine('Location'));
+
+        $repository = $this->container->get(CredentialRepository::class);
+        assert($repository instanceof CredentialRepository);
+        $encryptor = $this->container->get(CredentialEncryptor::class);
+        assert($encryptor instanceof CredentialEncryptor);
+
+        $updated = $repository->getById($credential->id);
+        assert($updated instanceof Credential);
+        self::assertSame('Renamed', $updated->name);
+        self::assertNotNull($updated->privateKey);
+        // Existing key untouched — still decrypts to the original.
+        self::assertSame($plainKey, $encryptor->decrypt($updated->privateKey));
     }
 
     #[Test]
@@ -243,20 +259,27 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
     public function editPostUpdatesCredentialInDatabase(): void
     {
         $credential = $this->seedCredential('Old Name', 'admin');
+        $newKey     = self::makeSshPrivateKey();
         $this->dispatch(
             'POST',
             $this->url('credential.edit', ['id' => $credential->id->toString()]),
-            ['name' => 'Updated Name', 'username' => 'root', 'privateKey' => self::makeSshPrivateKey()],
+            ['name' => 'Updated Name', 'username' => 'root', 'privateKey' => $newKey],
             $this->sessionCookie,
         );
 
         $repository = $this->container->get(CredentialRepository::class);
         assert($repository instanceof CredentialRepository);
+        $encryptor = $this->container->get(CredentialEncryptor::class);
+        assert($encryptor instanceof CredentialEncryptor);
 
         $updated = $repository->getById($credential->id);
         assert($updated instanceof Credential);
         self::assertSame('Updated Name', $updated->name);
         self::assertSame('root', $updated->username);
+        self::assertNotNull($updated->privateKey);
+        // Stored encrypted (not plaintext), and decrypts back to the submitted key.
+        self::assertStringStartsNotWith('-----BEGIN', $updated->privateKey);
+        self::assertSame($newKey, $encryptor->decrypt($updated->privateKey));
     }
 
     #[Test]
@@ -449,6 +472,31 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
             $username,
             null,
             $teamId,
+            $now,
+            $this->user->id,
+            $now,
+            $this->user->id,
+        );
+
+        $repository = $this->container->get(CredentialRepository::class);
+        assert($repository instanceof CredentialRepository);
+        $repository->create($credential);
+
+        return $credential;
+    }
+
+    private function seedCredentialWithKey(string $name, string $username, string $plainKey): Credential
+    {
+        $encryptor = $this->container->get(CredentialEncryptor::class);
+        assert($encryptor instanceof CredentialEncryptor);
+
+        $now        = TimestampImmutable::now();
+        $credential = new Credential(
+            CredentialIdentifier::create(),
+            $name,
+            $username,
+            $encryptor->encrypt($plainKey),
+            $this->team->id,
             $now,
             $this->user->id,
             $now,

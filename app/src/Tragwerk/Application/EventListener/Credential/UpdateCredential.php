@@ -25,13 +25,18 @@ final readonly class UpdateCredential
         $credential = $this->credentialRepository->getById($event->credentialId);
         assert($credential instanceof Credential);
 
-        $plainKey = $event->credential->privateKey === '' ? null : $event->credential->privateKey;
+        $credential->name     = $event->credential->name;
+        $credential->username = $event->credential->username;
 
-        $credential->name       = $event->credential->name;
-        $credential->username   = $event->credential->username;
-        $credential->privateKey = $plainKey === null ? null : $this->credentialEncryptor->encrypt($plainKey);
-        $credential->updatedAt  = TimestampImmutable::now();
-        $credential->updatedBy  = $event->updatedBy;
+        // A blank key field means "keep the existing (encrypted) key"; only re-encrypt
+        // when the user submitted a new one. Store it verbatim, like the create path.
+        if ($event->credential->hasNewPrivateKey()) {
+            assert($event->credential->privateKey !== null);
+            $credential->privateKey = $this->credentialEncryptor->encrypt($event->credential->privateKey);
+        }
+
+        $credential->updatedAt = TimestampImmutable::now();
+        $credential->updatedBy = $event->updatedBy;
 
         $this->credentialRepository->update($credential);
     }
