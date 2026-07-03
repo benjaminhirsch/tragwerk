@@ -8,6 +8,7 @@ use CuyZ\Valinor\Mapper\TreeMapper;
 use Psr\Container\ContainerInterface;
 use Tragwerk\Application\Cli\Command\DeployEnvironmentCommand;
 use Tragwerk\Application\Queue\Producer;
+use Tragwerk\Application\Service\Credential\CredentialEncryptor;
 use Tragwerk\Application\Service\EnvVarResolver;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
@@ -53,6 +54,7 @@ final readonly class DeployEnvironmentCommandFactory
         $regPrefixes    = $container->get(RegistryPrefixRepository::class);
         $envVars        = $container->get(EnvVarResolver::class);
         $mercure        = $container->get(MercurePublisher::class);
+        $encryptor      = $container->get(CredentialEncryptor::class);
 
         assert($projects instanceof ProjectRepository);
         assert($servers instanceof ServerRepository);
@@ -70,6 +72,7 @@ final readonly class DeployEnvironmentCommandFactory
         assert($regPrefixes instanceof RegistryPrefixRepository);
         assert($envVars instanceof EnvVarResolver);
         assert($mercure instanceof MercurePublisher);
+        assert($encryptor instanceof CredentialEncryptor);
 
         return new DeployEnvironmentCommand(
             $projects,
@@ -89,6 +92,7 @@ final readonly class DeployEnvironmentCommandFactory
             $envVars,
             $dataPath,
             $mercure,
+            $encryptor,
         );
     }
 }

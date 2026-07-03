@@ -38,6 +38,7 @@ $commands = [
         Command\ConfigLoader::class,
         Command\GenerateDockerConfig::class,
         Command\SetupServerCommand::class,
+        Command\EncryptCredentialKeysCommand::class,
         Command\DeployEnvironmentCommand::class,
         Command\SyncEnvironmentDataCommand::class,
         Command\SampleServerMetrics::class,

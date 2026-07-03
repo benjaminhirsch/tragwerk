@@ -17,6 +17,8 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Throwable;
+use Tragwerk\Application\Exception\Credential\CredentialKeyEncryptionFailed;
+use Tragwerk\Application\Service\Credential\CredentialEncryptor;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Project;
@@ -54,6 +56,7 @@ final class SyncEnvironmentDataCommand extends Command
         private readonly ProjectRepository $projectRepository,
         private readonly ServerRepository $serverRepository,
         private readonly CredentialRepository $credentialRepository,
+        private readonly CredentialEncryptor $credentialEncryptor,
         private readonly DeployJobRepository $deployJobRepository,
         private readonly BareRepository $bareRepository,
         private readonly XmlToArrayConverter $xmlConverter,
@@ -133,8 +136,8 @@ final class SyncEnvironmentDataCommand extends Command
         }
 
         try {
-            $key = PublicKeyLoader::loadPrivateKey($credential->privateKey);
-        } catch (NoKeyLoadedException $e) {
+            $key = PublicKeyLoader::loadPrivateKey($this->credentialEncryptor->decrypt($credential->privateKey));
+        } catch (NoKeyLoadedException | CredentialKeyEncryptionFailed $e) {
             $this->log($jobId, '[Sync] Failed to load SSH key: ' . $e->getMessage());
             $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
 

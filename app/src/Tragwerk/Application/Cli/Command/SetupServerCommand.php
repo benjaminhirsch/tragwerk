@@ -15,6 +15,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Lock\LockFactory;
 use Throwable;
+use Tragwerk\Application\Exception\Credential\CredentialKeyEncryptionFailed;
+use Tragwerk\Application\Service\Credential\CredentialEncryptor;
 use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\SetupJob;
@@ -48,6 +50,7 @@ final class SetupServerCommand extends Command
         private readonly SetupJobRepository $setupJobRepository,
         private readonly ServerRepository $serverRepository,
         private readonly CredentialRepository $credentialRepository,
+        private readonly CredentialEncryptor $credentialEncryptor,
         private readonly LockFactory $lockFactory,
         private readonly MercurePublisher $mercurePublisher,
     ) {
@@ -123,8 +126,8 @@ final class SetupServerCommand extends Command
             $ssh           = new SSH2($formattedHost, $server->port, 30);
 
             try {
-                $key = PublicKeyLoader::loadPrivateKey($credential->privateKey);
-            } catch (NoKeyLoadedException $e) {
+                $key = PublicKeyLoader::loadPrivateKey($this->credentialEncryptor->decrypt($credential->privateKey));
+            } catch (NoKeyLoadedException | CredentialKeyEncryptionFailed $e) {
                 $this->fail($job, sprintf("Failed to load SSH key: %s\n", $e->getMessage()));
 
                 return Command::FAILURE;

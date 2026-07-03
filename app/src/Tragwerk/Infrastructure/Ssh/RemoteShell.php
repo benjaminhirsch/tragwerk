@@ -8,6 +8,8 @@ use phpseclib3\Crypt\PublicKeyLoader;
 use phpseclib3\Exception\NoKeyLoadedException;
 use phpseclib3\Net\SFTP;
 use RuntimeException;
+use Tragwerk\Application\Exception\Credential\CredentialKeyEncryptionFailed;
+use Tragwerk\Application\Service\Credential\CredentialEncryptor;
 use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Server;
 
@@ -27,6 +29,10 @@ final class RemoteShell
 {
     private const int TIMEOUT = 30;
 
+    public function __construct(private readonly CredentialEncryptor $credentialEncryptor)
+    {
+    }
+
     /** @throws RuntimeException */
     public function run(Server $server, Credential $credential, string $command): string
     {
@@ -35,8 +41,8 @@ final class RemoteShell
         }
 
         try {
-            $key = PublicKeyLoader::loadPrivateKey($credential->privateKey);
-        } catch (NoKeyLoadedException $e) {
+            $key = PublicKeyLoader::loadPrivateKey($this->credentialEncryptor->decrypt($credential->privateKey));
+        } catch (NoKeyLoadedException | CredentialKeyEncryptionFailed $e) {
             throw new RuntimeException('Failed to load SSH key: ' . $e->getMessage(), previous: $e);
         }
 

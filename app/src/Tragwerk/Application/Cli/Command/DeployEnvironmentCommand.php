@@ -21,8 +21,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Yaml\Yaml;
 use Throwable;
+use Tragwerk\Application\Exception\Credential\CredentialKeyEncryptionFailed;
 use Tragwerk\Application\Queue\Message\PruneRegistryImages;
 use Tragwerk\Application\Queue\Producer;
+use Tragwerk\Application\Service\Credential\CredentialEncryptor;
 use Tragwerk\Application\Service\EnvVarResolver;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
@@ -110,6 +112,7 @@ final class DeployEnvironmentCommand extends Command
         private readonly EnvVarResolver $envVarResolver,
         private readonly string $projectDataPath,
         private readonly MercurePublisher $mercurePublisher,
+        private readonly CredentialEncryptor $credentialEncryptor,
     ) {
         parent::__construct();
     }
@@ -195,8 +198,8 @@ final class DeployEnvironmentCommand extends Command
         }
 
         try {
-            $key = PublicKeyLoader::loadPrivateKey($credential->privateKey);
-        } catch (NoKeyLoadedException $e) {
+            $key = PublicKeyLoader::loadPrivateKey($this->credentialEncryptor->decrypt($credential->privateKey));
+        } catch (NoKeyLoadedException | CredentialKeyEncryptionFailed $e) {
             $this->log($jobId, '[Deploy] Failed to load SSH key: ' . $e->getMessage());
             $this->deployJobRepository->updateStatus($jobId, DeployJobStatus::Failed);
 
