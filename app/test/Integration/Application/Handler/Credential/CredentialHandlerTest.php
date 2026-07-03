@@ -195,7 +195,11 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
             $this->sessionCookie,
         );
 
+        $body = (string) $response->getBody();
         self::assertSame(200, $response->getStatusCode());
+        self::assertStringContainsString('Invalid SSH private key', $body);
+        // The textarea must carry is-invalid, otherwise Bootstrap hides the message.
+        self::assertStringContainsString('is-invalid', $body);
     }
 
     #[Test]

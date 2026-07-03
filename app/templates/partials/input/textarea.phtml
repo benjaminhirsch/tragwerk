@@ -16,7 +16,7 @@ endif;
         <span class="text-danger">*</span>
     <?php endif; ?>
     <textarea
-        class="form-control"
+        class="form-control<?php if (($validation?->getErrorByName($name) ?? null) !== null): ?> is-invalid<?php endif ?>"
         id="<?= $this->e($id) ?>"
         name="<?= $this->e($name) ?>"
         <?= ($required ?? false) ? 'required' : '' ?>
