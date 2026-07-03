@@ -18,6 +18,9 @@ final readonly class Integration implements DtoInterface
     public function __construct(
         #[FromBody]
         public string $forge,
+        // Optional PAT for fetching a private external repo; empty for public repos.
+        #[FromBody]
+        public string $accessToken = '',
     ) {
         $errors = [];
 
@@ -33,5 +36,12 @@ final readonly class Integration implements DtoInterface
     public function gitForge(): GitForge
     {
         return GitForge::from(trim($this->forge));
+    }
+
+    public function accessToken(): string|null
+    {
+        $token = trim($this->accessToken);
+
+        return $token === '' ? null : $token;
     }
 }

@@ -14,13 +14,18 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Throwable;
 use Tragwerk\Application\Service\BuildDispatcher;
 use Tragwerk\Application\Webhook\AdapterRegistry;
+use Tragwerk\Domain\Entity\BuildLog;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Enum\BuildLogType;
 use Tragwerk\Domain\Enum\GitForge;
+use Tragwerk\Domain\Event\BuildLogCreated;
 use Tragwerk\Domain\Event\EnvironmentDeleted;
 use Tragwerk\Domain\Repository\ProjectRepository;
 use Tragwerk\Domain\Repository\ProjectWebhookRepository;
+use Tragwerk\Domain\ValueObject\BuildLogIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Domain\ValueObject\TimestampImmutable;
+use Tragwerk\Infrastructure\Git\BareRepository;
 
 use function assert;
 use function is_string;
@@ -33,6 +38,7 @@ final readonly class ForgeWebhookHandler implements RequestHandlerInterface
         private AdapterRegistry $adapterRegistry,
         private BuildDispatcher $buildDispatcher,
         private EventDispatcherInterface $eventDispatcher,
+        private BareRepository $bareRepository,
     ) {
     }
 
@@ -86,6 +92,34 @@ final readonly class ForgeWebhookHandler implements RequestHandlerInterface
             $this->eventDispatcher->dispatch(new EnvironmentDeleted($project->id, $payload->branch));
 
             return new JsonResponse(['status' => 'ok']);
+        }
+
+        // The push landed on the external forge, not on Tragwerk's own remote, so
+        // the commit is not yet in the local bare repo. Fetch it first — config
+        // validation and the build both read the source from there.
+        if ($payload->cloneUrl !== null) {
+            try {
+                $this->bareRepository->fetch(
+                    $project->id->toString(),
+                    $payload->cloneUrl,
+                    $payload->branch,
+                    $integration->accessToken,
+                );
+            } catch (Throwable) {
+                // Do not surface the git error verbatim — it may contain the
+                // token-bearing URL. A generic, actionable message is persisted.
+                $this->eventDispatcher->dispatch(new BuildLogCreated(new BuildLog(
+                    id:        BuildLogIdentifier::create(),
+                    projectId: $project->id,
+                    branch:    $payload->branch,
+                    type:      BuildLogType::WEBHOOK,
+                    message:   'Failed to fetch "' . $payload->branch . '" from the remote repository — '
+                        . 'check the repository access and, for private repos, the integration access token.',
+                    createdAt: TimestampImmutable::now(),
+                )));
+
+                return new JsonResponse(['status' => 'error'], 502);
+            }
         }
 
         $this->buildDispatcher->dispatch($project, $payload->branch, $payload->commitSha, BuildLogType::WEBHOOK);

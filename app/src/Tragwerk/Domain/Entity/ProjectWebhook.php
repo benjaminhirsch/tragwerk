@@ -17,6 +17,8 @@ final class ProjectWebhook implements Entity
         public GitForge $forge,
         public string $secret,
         public TimestampImmutable $createdAt,
+        // Optional PAT for fetching a private external repo (forge-webhook flow).
+        public string|null $accessToken = null,
     ) {
     }
 }
