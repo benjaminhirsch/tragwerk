@@ -3,7 +3,11 @@
 
 <?= $this->t('We received a request to change the email address of your Tragwerk account to {email}. Please confirm it by clicking the link below.', ['email' => $newEmail]) ?>
 
+
 <?= $this->serverurl($this->url('email.confirm', ['token' => $confirmation->token])) ?>
 
+
 <?= $this->t('If you did not request this change, you can ignore this email.') ?>
+
+
 <?= $this->t('This link expires in 24 hours.') ?>
