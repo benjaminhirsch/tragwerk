@@ -130,6 +130,7 @@ final readonly class XmlToArrayConverter
             'hook',
             'mount',
             'relationship',
+            'setting',
         ], true);
     }
 

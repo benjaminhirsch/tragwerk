@@ -56,6 +56,10 @@
                     <xs:selector xpath="crons/cron"/>
                     <xs:field xpath="@name"/>
                 </xs:unique>
+                <xs:unique name="uniquePhpSettingName">
+                    <xs:selector xpath="php/setting"/>
+                    <xs:field xpath="@name"/>
+                </xs:unique>
             </xs:element>
         </xs:sequence>
     </xs:complexType>
@@ -69,6 +73,7 @@
         <xs:all>
             <xs:element name="web"           type="WebType"/>
             <xs:element name="extensions"    type="ExtensionsType"     minOccurs="0"/>
+            <xs:element name="php"           type="PhpType"            minOccurs="0"/>
             <xs:element name="workerMode"    type="WorkerModeType"     minOccurs="0"/>
             <xs:element name="workers"       type="WorkersType"        minOccurs="0"/>
             <xs:element name="crons"         type="CronsType"          minOccurs="0"/>
@@ -120,6 +125,41 @@
                             <xs:documentation>
                                 PHP extension name as accepted by docker-php-ext-install,
                                 e.g. "intl", "gettext", "sockets", "pdo_pgsql", "gd".
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- ============================================================ -->
+    <!-- PHP INI Settings                                             -->
+    <!-- ============================================================ -->
+    <xs:complexType name="PhpType">
+        <xs:annotation>
+            <xs:documentation>
+                PHP ini directives applied to the application container. Each
+                setting is written to a php.ini file baked into the image under
+                the PHP conf.d scan directory, loaded last so it overrides the
+                base image defaults (e.g. memory_limit, upload_max_filesize).
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="setting" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:attribute name="name" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>
+                                PHP ini directive name, e.g. "memory_limit",
+                                "upload_max_filesize", "opcache.jit".
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="value" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Value for the directive, e.g. "256M", "60", "tracing".
                             </xs:documentation>
                         </xs:annotation>
                     </xs:attribute>

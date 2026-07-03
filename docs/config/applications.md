@@ -34,6 +34,7 @@ project. The name is slugified to derive container names, so `My App` becomes
 | ------------------ | -------- | --------------------------------------------------------------------------- |
 | `<web>`            | Yes      | HTTP locations served by this app. See [Web](/config/web).                  |
 | `<extensions>`     | No       | PHP extensions to install. See below.                                       |
+| `<php>`            | No       | PHP ini settings, e.g. `memory_limit`. See [PHP Settings](/config/php).      |
 | `<workerMode>`     | No       | Enable FrankenPHP worker mode. See below.                                   |
 | `<workers>`        | No       | Background worker containers. See [Workers](/config/workers).               |
 | `<crons>`          | No       | Scheduled commands. See [Crons](/config/crons).                             |

@@ -15,6 +15,8 @@ final readonly class DockerfileOutput
         public string|null $caddyfileContent,
         public string|null $crontabName = null,
         public string|null $crontabContent = null,
+        public string|null $phpIniName = null,
+        public string|null $phpIniContent = null,
     ) {
     }
 }

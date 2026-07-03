@@ -28,6 +28,7 @@ final readonly class ApplicationConfig
         public WorkerConfig|null $workerMode = null,
         public array $workers = [],
         public array $crons = [],
+        public PhpConfig|null $php = null,
     ) {
     }
 }
