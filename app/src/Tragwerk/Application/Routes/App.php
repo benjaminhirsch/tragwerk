@@ -88,6 +88,10 @@ final readonly class App
         )->setOptions([Middleware\AuthenticationMiddleware::OPTION_REQUIRE_AUTHENTICATION => false]);
 
         $routes
+            ->get('/schema.xsd', $this->middlewareFactory->prepare([Handler\SchemaHandler::class]), 'schema')
+            ->setOptions([Middleware\AuthenticationMiddleware::OPTION_REQUIRE_AUTHENTICATION => false]);
+
+        $routes
             ->get('/imprint', $this->middlewareFactory->prepare([Handler\Legal\ImprintHandler::class]), 'imprint')
             ->setOptions([Middleware\AuthenticationMiddleware::OPTION_REQUIRE_AUTHENTICATION => false]);
 
