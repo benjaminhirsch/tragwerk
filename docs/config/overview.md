@@ -33,7 +33,7 @@ You can reference the schema from your file for editor autocompletion:
 
 ```xml
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="schema.xsd?v1">
+         xsi:noNamespaceSchemaLocation="https://console.tragwerk.app/schema.xsd">
 ```
 
 ## The `<project>` root
@@ -90,7 +90,7 @@ artifacts:
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="schema.xsd?v1">
+         xsi:noNamespaceSchemaLocation="https://console.tragwerk.app/schema.xsd">
     <applications>
         <application name="app" type="php:8.5" root="/">
             <extensions>

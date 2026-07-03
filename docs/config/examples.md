@@ -12,7 +12,7 @@ your default domain. No services, workers, or cron jobs.
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="schema.xsd?v1">
+         xsi:noNamespaceSchemaLocation="https://console.tragwerk.app/schema.xsd">
     <applications>
         <application name="app" type="php:8.5" root="/">
             <web>
@@ -34,7 +34,7 @@ hooks, a persistent mount, and relationships to PostgreSQL and Redis.
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="schema.xsd?v1">
+         xsi:noNamespaceSchemaLocation="https://console.tragwerk.app/schema.xsd">
     <applications>
         <application name="My Test Project" type="php:8.5" root="/">
             <web>
@@ -82,7 +82,7 @@ database where relevant.
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="schema.xsd?v1">
+         xsi:noNamespaceSchemaLocation="https://console.tragwerk.app/schema.xsd">
     <applications>
         <application name="Tragwerk" type="php:8.5" root="app">
             <extensions>
@@ -125,7 +125,7 @@ No services or relationships needed.
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="schema.xsd?v1">
+         xsi:noNamespaceSchemaLocation="https://console.tragwerk.app/schema.xsd">
     <applications>
         <application name="site" type="php:8.5" root="/">
             <web>
@@ -147,7 +147,7 @@ plus a per-minute cron, backed by PostgreSQL and Redis.
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="schema.xsd?v1">
+         xsi:noNamespaceSchemaLocation="https://console.tragwerk.app/schema.xsd">
     <applications>
         <application name="app" type="php:8.5" root="/">
             <extensions>
