@@ -39,20 +39,6 @@ The name is slugified to become the service's hostname on the Docker network.
 | Redis      | `redis:6`, `redis:7`, `redis:8`                                            |
 | Valkey     | `valkey:8`, `valkey:9`                                                     |
 
-## Default credentials
-
-Databases are provisioned with fixed default credentials, exposed to apps via
-[relationship env vars](/config/relationships):
-
-| Setting        | Value                          |
-| -------------- | ------------------------------ |
-| Database name  | `app`                          |
-| User           | `app`                          |
-| Password       | `secret`                       |
-| Root password  | `root` (MySQL/MariaDB only)    |
-
-Redis and Valkey require no credentials in the default setup.
-
 ## How applications connect
 
 Applications never reference services directly. Instead, you declare a

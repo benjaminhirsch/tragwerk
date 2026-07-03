@@ -1,6 +1,6 @@
 # Architecture on the Host
 
-Everything Tragwerk runs on your VPS is **generated from your
+Everything Tragwerk runs on your server is **generated from your
 `.tragwerk/config.xml`** and executed with Docker Compose. This page describes
 what that generated stack looks like on the host.
 
@@ -22,7 +22,7 @@ of a deployment.
 Dockerfile.{appSlug}  +  docker-compose.yml
         │  (docker compose build / up)
         ▼
-running containers on the VPS
+running containers on the server
 ```
 
 ## Application containers
@@ -50,20 +50,20 @@ keeps it warm between requests for higher throughput.
 ## Traefik routing
 
 Traefik runs at the host level (provisioned during
-[server setup](/self-hosting/server-setup)) and is the single public entrypoint.
+[server setup](/server/server-setup)) and is the single public entrypoint.
 The generated Compose file attaches **Traefik labels** to each application
 container to declare its hostname-based [route](/config/routes), and the
 container joins the shared external network **`tragwerk-net`** so Traefik can
 reach it.
 
 Because routing is by host/subdomain, **multiple applications coexist on one
-VPS** — each answers on its own hostname while sharing the same Traefik instance
+server** — each answers on its own hostname while sharing the same Traefik instance
 and Let's Encrypt setup.
 
 ### Why Traefik and not FrankenPHP's built-in Caddy
 
 FrankenPHP ships with Caddy and could serve a single app directly, but Tragwerk
-needs to host **many independent applications on the same VPS**, each on its own
+needs to host **many independent applications on the same server**, each on its own
 hostname. A dedicated host-level reverse proxy in front of all app containers is
 the natural fit for that, so Tragwerk uses **Traefik** as the single public
 entrypoint rather than exposing each app's built-in Caddy.
@@ -172,4 +172,4 @@ volumes shared by the relevant containers.
 - [Configuration Overview](/config/overview)
 - [Routes](/config/routes)
 - [Services](/config/services)
-- [Server Setup](/self-hosting/server-setup)
+- [Server Setup](/server/server-setup)

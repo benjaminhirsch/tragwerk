@@ -1,23 +1,23 @@
 # Integrations & Webhooks
 
-Integrations connect your Git hosting provider (forge) to Tragwerk so that a
+Integrations connect your version control system (VCS) to Tragwerk so that a
 `git push` automatically triggers a build and deployment. Each project has its
 own webhook integration with a unique signing secret.
 
 ## Creating a webhook integration
 
 Open **Integrations** for the active project and choose **Create integration**.
-You select the Git forge that hosts the repository; Tragwerk generates a random
-signing secret and exposes a forge-specific receiver endpoint.
+You select the VCS provider that hosts the repository; Tragwerk
+generates a random signing secret and exposes a VCS-specific receiver endpoint.
 
 ::: info
 Only **one** webhook integration may exist per project at a time. Delete the
-existing integration before creating a new one for a different forge.
+existing integration before creating a new one.
 :::
 
-Supported forges:
+Supported version control system providers:
 
-| Forge     | Route slug |
+| Provider  | Route slug |
 | --------- | ---------- |
 | GitHub    | `github`   |
 | GitLab    | `gitlab`   |
@@ -27,9 +27,9 @@ Supported forges:
 | Bitbucket | `bitbucket`|
 
 After creating the integration, copy the endpoint URL and secret into your
-forge's webhook settings (push events only).
+VCS provider's webhook settings (push events only).
 
-### Forge endpoint
+### VCS endpoint
 
 Each integration is served at:
 
@@ -40,7 +40,7 @@ POST /webhooks/{forge}/{projectId}
 For example, a GitHub integration for project `abc123` is reached at
 `https://your-tragwerk-host/webhooks/github/abc123`. The handler:
 
-1. Resolves the forge from the route slug and loads the project.
+1. Resolves the VCS provider from the route slug and loads the project.
 2. Looks up the project's stored integration secret.
 3. Verifies the request signature against that secret (returns `401` on
    mismatch).
@@ -53,39 +53,6 @@ For example, a GitHub integration for project `abc123` is reached at
 On the **Integrations** page, use **Delete** next to the integration. This
 removes the secret and disables the receiver endpoint; existing deployments are
 not affected.
-
-## Generic git-push receiver
-
-Tragwerk also exposes a forge-agnostic receiver used internally and for custom
-setups:
-
-```
-POST /webhooks/git-push
-```
-
-It expects a JSON/form body with `projectId`, `branch`, and `newSha`. A `newSha`
-of all zeros (`0000…0000`) signals a deleted branch and removes the
-corresponding environment; any other SHA dispatches a build for that branch.
-
-```json
-{
-  "projectId": "abc123",
-  "branch": "main",
-  "newSha": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
-}
-```
-
-## Internal git-auth endpoint
-
-The server-side Git hosting integration uses an internal endpoint to
-authenticate Git operations between the VPS and Tragwerk:
-
-```
-POST /internal/git-auth
-```
-
-This endpoint is for server-to-server communication only and is not part of the
-end-user workflow. It does not require an authenticated user session.
 
 ## Example: wiring up GitHub
 

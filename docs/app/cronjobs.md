@@ -2,7 +2,7 @@
 
 Cron jobs run scheduled commands inside your application's environment — for
 example clearing caches, sending digests, or pruning data. You define them in
-`.tragwerk/config.xml` and Tragwerk runs them on the VPS in a dedicated
+`.tragwerk/config.xml` and Tragwerk runs them on the server in a dedicated
 scheduler container.
 
 ## Defining cron jobs
@@ -18,7 +18,7 @@ Cron jobs live in the XML `<crons>` block. Each job has a name, a schedule
 </crons>
 ```
 
-## How it runs on the VPS
+## How it runs on the server
 
 For each application Tragwerk starts a **supercronic** sidecar container named
 `{app}-cron`. Supercronic is a cron implementation built for containers: it

@@ -5,8 +5,8 @@ register a server, connect a project, add your config, point a domain at it, and
 deploy.
 
 ::: tip Prerequisites
-You need a VPS with SSH access (any provider works) and a git repository
-containing a PHP application. See [requirements](/self-hosting/requirements) for
+You need a server with SSH access (any provider works) and a git repository
+containing a PHP application. See [requirements](/server/requirements) for
 the supported server baseline.
 :::
 
@@ -23,13 +23,13 @@ production projects.
 
 ## 2. Register a server and run setup
 
-Add your VPS under [Servers](/self-hosting/servers) by providing its host and
+Add your server under [Servers](/server/servers) by providing its host and
 SSH credentials. Tragwerk then runs an automated setup job that connects over
 SSH and provisions Docker and the base stack on the machine — all from the UI.
 
 Watch the setup progress until the server reports ready. Details on what the job
-does are in [server setup](/self-hosting/server-setup) and
-[architecture on the host](/self-hosting/architecture-on-host).
+does are in [server setup](/server/server-setup) and
+[architecture on the host](/server/architecture-on-host).
 
 ## 3. Create a project pointing at a git repo
 

@@ -2,7 +2,7 @@
 
 Cron jobs run scheduled commands inside your application's runtime — nightly
 cleanups, periodic imports, heartbeat checks. You declare them in the optional
-`<crons>` element, and Tragwerk runs them on the VPS in a dedicated
+`<crons>` element, and Tragwerk runs them on the server in a dedicated
 **supercronic** sidecar container.
 
 ## `<crons>`

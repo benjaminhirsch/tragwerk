@@ -1,7 +1,7 @@
 # Routes
 
 Routes map incoming domains to your applications. The required `<routes>`
-element tells Tragwerk which application should serve which hostname. On the VPS,
+element tells Tragwerk which application should serve which hostname. On the server,
 these become Traefik labels and the host-level reverse proxy does the actual
 routing.
 
@@ -75,11 +75,11 @@ Tragwerk does not run a proxy inside each project. Instead, each application
 container is labeled for **Traefik**, and a single host-level Traefik instance
 inspects those labels and routes domains (terminating TLS via Let's Encrypt) to
 the right container. This is how multiple applications and environments share one
-VPS. See [Architecture on the host](/self-hosting/architecture-on-host).
+server. See [Architecture on the host](/server/architecture-on-host).
 
 ## Related
 
 - [Domains (app guide)](/app/domains) — assigning domains to placeholders
 - [Web](/config/web) — what each application serves
-- [Architecture on the host](/self-hosting/architecture-on-host)
+- [Architecture on the host](/server/architecture-on-host)
 - [Examples](/config/examples)

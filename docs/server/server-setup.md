@@ -1,6 +1,6 @@
 # Server Setup
 
-After you [register a server](/self-hosting/servers), Tragwerk provisions it with
+After you [register a server](/server/servers), Tragwerk provisions it with
 an automated **setup job**. The job connects over SSH and prepares the host to
 run your applications.
 
@@ -13,7 +13,7 @@ run your applications.
   container joins so Traefik can reach it.
 
 After setup completes, the server is ready to receive deploys. See
-[Architecture on the Host](/self-hosting/architecture-on-host) for what the
+[Architecture on the Host](/server/architecture-on-host) for what the
 running stack looks like.
 
 ## Live setup logs and statuses
@@ -43,5 +43,5 @@ authorized on the server, then retry.
 
 ## Related
 
-- [Servers](/self-hosting/servers)
-- [Architecture on the Host](/self-hosting/architecture-on-host)
+- [Servers](/server/servers)
+- [Architecture on the Host](/server/architecture-on-host)

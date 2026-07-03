@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: Tragwerk
-  text: PHP hosting on your own VPS
-  tagline: A single XML file generates your whole Docker stack — FrankenPHP (a drop-in PHP-FPM replacement, with optional worker mode), Traefik routing, automatic SSL. Host as many PHP apps as you like on any VPS with SSH.
+  text: PHP hosting on your own server
+  tagline: A single XML file generates your whole Docker stack — FrankenPHP (a drop-in PHP-FPM replacement, with optional worker mode), Traefik routing, automatic SSL. Host as many PHP apps as you like on any server with SSH.
   image:
     src: /logo.svg
     alt: Tragwerk
@@ -26,13 +26,13 @@ features:
   - title: Backing services
     details: Declare databases and caches (PostgreSQL, MySQL, Redis, and more) as services and bind them to applications through relationships.
   - title: Auto SSL via Traefik
-    details: Traefik fronts every app as a reverse proxy and provisions Let's Encrypt certificates automatically, so multiple apps share one VPS over HTTPS.
-  - title: Self-hosted on any VPS
-    details: Bring your own server. Register a VPS, run the automated setup job, and Tragwerk turns it into a Docker host ready to deploy to.
+    details: Traefik fronts every app as a reverse proxy and provisions Let's Encrypt certificates automatically, so multiple apps share one server over HTTPS.
+  - title: Self-hosted on any server
+    details: Bring your own server. Register a server, run the automated setup job, and Tragwerk turns it into a Docker host ready to deploy to.
 ---
 
 Tragwerk is a self-hosted platform for deploying PHP applications to your own
-VPS. You describe your application once in XML; Tragwerk generates the Docker
+server. You describe your application once in XML; Tragwerk generates the Docker
 configuration, builds your images, starts the containers, and routes traffic
 through Traefik with automatic HTTPS.
 

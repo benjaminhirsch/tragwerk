@@ -1,6 +1,6 @@
 # Servers
 
-A **Server** is a registered VPS that Tragwerk deploys to. You add the
+A **Server** is a registered machine that Tragwerk deploys to. You add the
 connection details and credentials once; Tragwerk then provisions the machine
 and runs your applications on it.
 
@@ -16,7 +16,7 @@ Manage reusable SSH keys and passwords under
 [Registries & Credentials](/app/registries-credentials), then select one when
 registering the server.
 
-Once registered, run [Server Setup](/self-hosting/server-setup) to provision the
+Once registered, run [Server Setup](/server/server-setup) to provision the
 Docker environment before deploying.
 
 ## How credentials are used
@@ -24,7 +24,7 @@ Docker environment before deploying.
 Credentials authenticate Tragwerk's SSH connection to the server. They are used
 for:
 
-- The automated [server setup](/self-hosting/server-setup) job.
+- The automated [server setup](/server/server-setup) job.
 - Every deploy and management action (build, start/stop containers, blue/green
   switches, cleanup).
 
@@ -40,7 +40,7 @@ single credential across servers that share a key.
 ## Edit and delete
 
 - **Edit** a server to update its host, port, or selected credential — for
-  example after rotating an SSH key or moving the VPS.
+  example after rotating an SSH key or moving the server.
 - **Delete** a server to remove it from Tragwerk. Removing a server detaches it
   from any projects/environments that targeted it; remove or repoint those
   deployments first.
@@ -55,7 +55,7 @@ is routed by its own hostname through Traefik.
 
 ## Related
 
-- [Server Setup](/self-hosting/server-setup)
+- [Server Setup](/server/server-setup)
 - [Registries & Credentials](/app/registries-credentials)
-- [Architecture on the Host](/self-hosting/architecture-on-host)
+- [Architecture on the Host](/server/architecture-on-host)
 - [Environments](/app/environments)

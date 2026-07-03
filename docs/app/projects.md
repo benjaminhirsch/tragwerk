@@ -1,7 +1,7 @@
 # Projects
 
 A project is a single application managed by Tragwerk. It belongs to a
-[team](/app/teams), targets a [server](/self-hosting/servers) and a container
+[team](/app/teams), targets a [server](/server/servers) and a container
 [registry](/app/registries-credentials), and points at a git repository. Each
 git branch of that repository can be deployed as an isolated
 [environment](/app/environments).
@@ -16,7 +16,7 @@ git branch of that repository can be deployed as an isolated
 
 ::: tip Servers and registries first
 The Server and Registry dropdowns only list resources that already exist in the
-team. Add a [server](/self-hosting/servers) and a
+team. Add a [server](/server/servers) and a
 [registry](/app/registries-credentials) before creating the project if the lists
 are empty.
 :::

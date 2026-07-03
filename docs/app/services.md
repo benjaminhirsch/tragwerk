@@ -3,7 +3,7 @@
 Services are backing data stores — databases, caches, and queues — that run
 alongside your application containers in an [environment](/app/environments).
 You declare them in `.tragwerk/config.xml` and Tragwerk provisions a managed
-container for each one on the VPS.
+container for each one on the server.
 
 ## Declaring services
 
@@ -55,7 +55,7 @@ The `type` attribute uses the `image:version` form, for example `mariadb:11.8`,
 ## Live per-service status
 
 The Configuration view shows a live status badge for each declared service,
-polled from the running containers on the VPS:
+polled from the running containers on the server:
 
 | Badge       | Meaning                                            |
 | ----------- | -------------------------------------------------- |
@@ -95,9 +95,9 @@ After the next [deployment](/app/deployments), the Configuration view lists
 ## Connecting to a database from your machine
 
 By default a service has no published port, so you cannot point a client
-straight at `your-vps:5432`. Either run the client inside the container over SSH,
+straight at `your-server:5432`. Either run the client inside the container over SSH,
 or declare a loopback port and forward it over SSH. Find container names with
-`docker ps` on the VPS — the compose project name looks like `tw-<id>-<branch>`
+`docker ps` on the server — the compose project name looks like `tw-<id>-<branch>`
 and the service container like `tw-<id>-<branch>-db-1`.
 
 ### Quick CLI access (no tunnel)
@@ -105,7 +105,7 @@ and the service container like `tw-<id>-<branch>-db-1`.
 For a one-off `psql` session, run the client inside the container itself:
 
 ```bash
-ssh user@your-vps
+ssh user@your-server
 docker exec -it tw-<id>-<branch>-db-1 psql -U app app
 ```
 
@@ -113,7 +113,7 @@ docker exec -it tw-<id>-<branch>-db-1 psql -U app app
 
 If you regularly attach a local client, declare a
 [`local-port`](/config/services#service) on the service. Tragwerk then publishes
-it on the VPS loopback for you — no per-session bridge container:
+it on the server loopback for you — no per-session bridge container:
 
 ```xml
 <service name="db" type="postgresql:18" local-port="55432"/>
@@ -124,8 +124,8 @@ port verbatim — `127.0.0.1:55432:5432` (loopback only, never `0.0.0.0`). After
 redeploying, forward it over SSH:
 
 ```bash
-# On your machine: forward your local 5432 to the VPS loopback port
-ssh -L 5432:127.0.0.1:55432 user@your-vps
+# On your machine: forward your local 5432 to the server loopback port
+ssh -L 5432:127.0.0.1:55432 user@your-server
 ```
 
 Then connect to `localhost:5432` with the default
@@ -134,15 +134,15 @@ port `3306`, Redis/Valkey `6379`.
 
 ::: info Feature branches get an auto-assigned port
 Because `config.xml` is shared across branches, a fixed port would collide when
-two branches run on the same VPS. So only **`main`/`master`** use the configured
+two branches run on the same server. So only **`main`/`master`** use the configured
 `local-port`. Every other branch binds `127.0.0.1::5432` — **Docker picks a free
-loopback port** for it. Find the assigned port with `docker ps` on the VPS (look
+loopback port** for it. Find the assigned port with `docker ps` on the server (look
 at the `127.0.0.1:<port>->5432/tcp` mapping for `tw-<id>-<branch>-db-1`), then
 forward that port over SSH.
 :::
 
 ::: warning
-The published port always binds `127.0.0.1` on the VPS, so the service stays
+The published port always binds `127.0.0.1` on the server, so the service stays
 reachable only through the SSH tunnel. Tragwerk never publishes a service on
 `0.0.0.0` — that would expose your database to the internet, which is exactly
 what it avoids by default.

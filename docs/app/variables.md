@@ -36,13 +36,6 @@ environment. Inherited values are managed where they were originally defined.
    **Inherited** (pass down to child environments).
 5. Click **Create variable**.
 
-```text
-Key:   STRIPE_SECRET_KEY
-Value: sk_live_...
-[x] Secret
-[ ] Inherited
-```
-
 ## Edit or delete a variable
 
 In the table, click a key to edit it, or use the trash icon to delete it and
