@@ -24,8 +24,12 @@ use function is_dir;
 use function mkdir;
 use function proc_close;
 use function proc_open;
+use function rawurlencode;
 use function rtrim;
+use function str_starts_with;
 use function stream_get_contents;
+use function strlen;
+use function substr;
 use function trim;
 
 use const PHP_INT_MAX;
@@ -266,6 +270,45 @@ final readonly class BareRepository
         }
 
         return $parents;
+    }
+
+    /**
+     * Fetches a single branch from an external remote into the bare repo so the
+     * pushed commit becomes readable locally — config validation and the build
+     * both read the source from here. Used by the forge-webhook flow, where the
+     * code lives on an external forge instead of being pushed to Tragwerk.
+     *
+     * The optional token authenticates HTTPS fetches of private repos. It is
+     * injected into the URL userinfo (Forgejo/Gitea accept a PAT there) rather
+     * than stored as a named remote, so nothing is persisted in .git/config.
+     */
+    public function fetch(string $projectId, string $remoteUrl, string $branch, string|null $token = null): void
+    {
+        if (! $this->exists($projectId)) {
+            $this->init($projectId);
+        }
+
+        $url = $token !== null && $token !== ''
+            ? $this->injectToken($remoteUrl, $token)
+            : $remoteUrl;
+
+        // Force-update the local branch ref to the remote tip; the pushed SHA is
+        // then reachable for `git show <sha>:<path>`.
+        $refspec = '+refs/heads/' . $branch . ':refs/heads/' . $branch;
+
+        $this->run(['git', '-C', $this->getPath($projectId), 'fetch', '--no-tags', $url, $refspec]);
+    }
+
+    private function injectToken(string $url, string $token): string
+    {
+        foreach (['https://', 'http://'] as $scheme) {
+            if (str_starts_with($url, $scheme)) {
+                return $scheme . rawurlencode($token) . '@' . substr($url, strlen($scheme));
+            }
+        }
+
+        // Non-HTTP (e.g. ssh) — token injection does not apply.
+        return $url;
     }
 
     public function getFileContent(string $projectId, string $commitSha, string $path): string|null

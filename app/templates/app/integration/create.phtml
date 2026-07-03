@@ -34,6 +34,17 @@ $this->layout('layout::default', [
         <p class="text-body-secondary small mb-0">
             <?= $this->t('A secure webhook secret is generated automatically.') ?>
         </p>
+
+        <?= $this->fetch('partial::input/password', [
+            'id'           => 'accessToken',
+            'label'        => $this->t('Access token (private repositories)'),
+            'validation'   => $validationBag ?? null,
+            'placeholder'  => $this->t('Leave empty for public repositories'),
+            'autocomplete' => 'off',
+        ]) ?>
+        <p class="text-body-secondary small mb-0">
+            <?= $this->t('Required only for private repositories, so Tragwerk can fetch the pushed commit.') ?>
+        </p>
     </div>
     <div class="tw-card__head justify-content-end border-top">
         <?= $this->fetch('partial::link', [

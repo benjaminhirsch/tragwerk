@@ -61,11 +61,12 @@ final readonly class CreateHandler implements RequestHandlerInterface
                 assert($dto instanceof IntegrationDto);
 
                 $integration = new ProjectWebhook(
-                    id:        WebhookIntegrationIdentifier::create(),
-                    projectId: $activeProject->id,
-                    forge:     $dto->gitForge(),
-                    secret:    bin2hex(random_bytes(32)),
-                    createdAt: TimestampImmutable::now(),
+                    id:          WebhookIntegrationIdentifier::create(),
+                    projectId:   $activeProject->id,
+                    forge:       $dto->gitForge(),
+                    secret:      bin2hex(random_bytes(32)),
+                    createdAt:   TimestampImmutable::now(),
+                    accessToken: $dto->accessToken(),
                 );
 
                 $this->eventDispatcher->dispatch(new WebhookIntegrationCreated($integration));
