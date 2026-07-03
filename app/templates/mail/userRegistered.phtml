@@ -3,6 +3,8 @@
 
 <?= $this->t('Thank you for registering with Tragwerk. Please confirm your email address by clicking the link below.') ?>
 
+
 <?= $this->serverurl($this->url('email.confirm', ['token' => $confirmation->token])) ?>
+
 
 <?= $this->t('This link expires in 24 hours.') ?>
