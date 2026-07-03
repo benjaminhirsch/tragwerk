@@ -14,7 +14,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Throwable;
-use Tragwerk\Application\Dto\Credential\Credential as CredentialDto;
+use Tragwerk\Application\Dto\Credential\EditCredential as CredentialDto;
 use Tragwerk\Application\Mapper\GenericMapper;
 use Tragwerk\Application\Response\ResponseRenderer;
 use Tragwerk\Application\Validation\ValidationBag;
@@ -77,7 +77,8 @@ final readonly class EditHandler implements RequestHandlerInterface
             $validationBag = new ValidationBag([
                 'name'       => $credential->name,
                 'username'   => $credential->username,
-                'privateKey' => $credential->privateKey ?? '',
+                // Never surface the stored key (it is encrypted); blank means "keep existing".
+                'privateKey' => '',
             ]);
         }
 
