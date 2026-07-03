@@ -52,6 +52,13 @@ The private key must be a valid PEM-encoded SSH private key — Tragwerk validat
 it on save and rejects malformed keys.
 :::
 
+::: tip Encrypted at rest
+The private key is **encrypted before it is stored** and only ever decrypted in
+memory for the moment a connection is established — it is never persisted in
+plaintext. Because that key for encryption lives outside the database, a 
+leaked `credentials`table is useless without it. 
+:::
+
 ### Example
 
 To register an SSH key for a server:
