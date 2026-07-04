@@ -56,17 +56,6 @@ characters. Each name must be unique within its scope (for example, no two
 applications may share a name).
 :::
 
-## XML processing quirks
-
-Two transformations happen when the file is parsed; keep them in mind when
-reading the rest of this reference:
-
-- **Kebab-case attributes become camelCase internally.** For example
-  `clone-from-parent` becomes `cloneFromParent` and `max-requests` becomes
-  `maxRequests`. You always write the kebab-case form in XML.
-- **`"true"` / `"false"` strings become booleans.** Boolean attributes such as
-  `clone-from-parent` accept the literal strings `true` and `false`.
-
 ## How it drives generation
 
 When you deploy, Tragwerk turns the validated configuration into concrete Docker
