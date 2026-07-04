@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tragwerk\Domain\Entity;
 
+use Tragwerk\Domain\Enum\CredentialPrivilege;
 use Tragwerk\Domain\ValueObject\CredentialIdentifier;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
@@ -15,6 +16,7 @@ final class Credential implements Entity
         public CredentialIdentifier $id,
         public string $name,
         public string $username,
+        public CredentialPrivilege $privilege,
         public string|null $privateKey,
         public TeamIdentifier $teamId,
         public TimestampImmutable $createdAt,

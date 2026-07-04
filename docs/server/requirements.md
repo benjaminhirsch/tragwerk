@@ -12,8 +12,10 @@ to the server, installs the Docker environment, and from then on drives all
 provisioning and deploys remotely.
 
 - A reachable host (public IP or hostname) with an open SSH port.
-- A user that can run Docker (typically `root`, or a sudo-capable user).
-- Authentication via an SSH key or password — stored as a
+- A login user that is either **`root`** or a **passwordless sudo (`NOPASSWD`)**
+  user — you declare which on the credential's [privilege
+  level](/app/registries-credentials#privilege-level).
+- Authentication via an **SSH key** — stored as a
   [credential](/app/registries-credentials).
 
 You can register any number of servers and run multiple applications on each.
@@ -30,7 +32,11 @@ and versions: <https://docs.docker.com/engine/install/>.
 ::: tip
 You do not need to install Docker yourself. Tragwerk's
 [server setup](/server/server-setup) installs and configures the Docker
-environment for you over SSH.
+environment for you over SSH, using the **official Docker package repository**
+(apt for Debian/Ubuntu, dnf/yum for RHEL/Fedora/CentOS/Rocky Linux/AlmaLinux) —
+signed, pinnable packages rather than the `get.docker.com` convenience script.
+Rocky Linux and AlmaLinux are binary-compatible with RHEL and use Docker's CentOS
+repository.
 :::
 
 ## What Tragwerk installs and manages

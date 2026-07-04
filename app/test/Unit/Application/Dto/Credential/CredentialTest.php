@@ -10,6 +10,10 @@ use PHPUnit\Framework\TestCase;
 use Tragwerk\Application\Dto\Credential\Credential;
 use Tragwerk\Application\Exception\ValidationCollection;
 use Tragwerk\Application\Exception\ValidationError;
+use Tragwerk\Domain\Enum\CredentialPrivilege;
+use Tragwerk\Domain\ValueObject\CredentialIdentifier;
+use Tragwerk\Domain\ValueObject\TeamIdentifier;
+use Tragwerk\Domain\ValueObject\UserIdentifier;
 
 use function array_map;
 
@@ -22,6 +26,49 @@ final class CredentialTest extends TestCase
 
         self::assertSame('Deploy', $dto->name);
         self::assertSame('deploy', $dto->username);
+    }
+
+    #[Test]
+    public function privilegeDefaultsToRoot(): void
+    {
+        $dto = new Credential('Deploy', 'deploy', self::privateKey());
+
+        self::assertSame('root', $dto->privilege);
+    }
+
+    #[Test]
+    public function sudoPrivilegeConstructs(): void
+    {
+        $dto = new Credential('Deploy', 'deploy', self::privateKey(), 'sudo');
+
+        self::assertSame('sudo', $dto->privilege);
+    }
+
+    #[Test]
+    public function invalidPrivilegeIsRejected(): void
+    {
+        try {
+            new Credential('Deploy', 'deploy', self::privateKey(), 'superuser');
+        } catch (ValidationCollection $e) {
+            $fields = array_map(static fn (ValidationError $v): string => $v->name, $e->validations);
+            self::assertContains('privilege', $fields);
+
+            return;
+        }
+
+        self::fail('Expected ValidationCollection');
+    }
+
+    #[Test]
+    public function createCredentialMapsPrivilegeToEnum(): void
+    {
+        $entity = (new Credential('Deploy', 'deploy', self::privateKey(), 'sudo'))->createCredential(
+            UserIdentifier::create(),
+            TeamIdentifier::create(),
+            CredentialIdentifier::create(),
+        );
+
+        self::assertSame(CredentialPrivilege::Sudo, $entity->privilege);
     }
 
     #[Test]

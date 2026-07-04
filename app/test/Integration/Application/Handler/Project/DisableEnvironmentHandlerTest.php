@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Tragwerk\Application\Queue\Message\StopEnvironmentDocker;
 use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Server;
+use Tragwerk\Domain\Enum\CredentialPrivilege;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\EnvironmentStateRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
@@ -91,6 +92,7 @@ final class DisableEnvironmentHandlerTest extends EnvironmentScopedTestCase
             $credentialId,
             'Deploy key',
             'deploy',
+            CredentialPrivilege::Root,
             'private-key',
             $this->team->id,
             $now,
