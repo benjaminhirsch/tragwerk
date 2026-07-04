@@ -49,12 +49,15 @@ keeps it warm between requests for higher throughput.
 
 ## Traefik routing
 
-Traefik runs at the host level (provisioned during
-[server setup](/server/server-setup)) and is the single public entrypoint.
+Traefik runs at the host level and is the single public entrypoint. It is
+**not** started during [server setup](/server/server-setup) — instead Tragwerk
+starts it automatically on your **first deploy**: the deploy creates the shared
+external network **`tragwerk-net`** and launches a single host-level
+`tragwerk-traefik` container if one is not already running (idempotent, so later
+deploys reuse it).
 The generated Compose file attaches **Traefik labels** to each application
 container to declare its hostname-based [route](/config/routes), and the
-container joins the shared external network **`tragwerk-net`** so Traefik can
-reach it.
+container joins `tragwerk-net` so Traefik can reach it.
 
 Because routing is by host/subdomain, **multiple applications coexist on one
 server** — each answers on its own hostname while sharing the same Traefik instance

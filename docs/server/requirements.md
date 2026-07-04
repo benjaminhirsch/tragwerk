@@ -44,10 +44,14 @@ repository.
 During [server setup](/server/server-setup) Tragwerk provisions:
 
 - **Docker** and Docker Compose on the host.
-- **Traefik** as a host-level reverse proxy that terminates TLS and routes
-  public traffic to your applications.
+
+On your **first deploy** it then also brings up the shared routing layer:
+
 - A shared external Docker network, `tragwerk-net`, that every application
   container joins so Traefik can reach it.
+- **Traefik** as a host-level reverse proxy that terminates TLS and routes
+  public traffic to your applications — launched once as `tragwerk-traefik` and
+  reused by every later deploy.
 
 Per application it then generates a `Dockerfile.{appSlug}` and a
 `docker-compose.yml` and runs the resulting containers. See
