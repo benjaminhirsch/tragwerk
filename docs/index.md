@@ -18,7 +18,7 @@ hero:
 
 features:
   - title: XML-driven config
-    details: Commit a single .tragwerk/config.xml to your repo. Tragwerk generates the entire Docker and docker-compose setup from it — no YAML to hand-write.
+    details: Commit a single .tragwerk/config.xml to your repo. Tragwerk generates the entire Docker and docker-compose setup from it — no YAML! You're wondering, "Why XML?" Because you get autocompletion and validation for free.
   - title: FrankenPHP runtime
     details: Apps run on FrankenPHP — by default a drop-in PHP-FPM replacement, with optional worker mode for high throughput. PHP 8.x runtimes are selected per application in your config.
   - title: Branch-based environments

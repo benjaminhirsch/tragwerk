@@ -10,10 +10,12 @@ run your applications.
   package repository** (apt for Debian/Ubuntu, dnf/yum for RHEL/Fedora/CentOS and
   the RHEL rebuilds Rocky Linux/AlmaLinux, which use Docker's CentOS repo), the
   daemon is enabled, and it is skipped if Docker is already present.
-- **Traefik** as a host-level reverse proxy — it terminates TLS (Let's Encrypt)
-  and routes public traffic to your application containers.
-- The shared external Docker network **`tragwerk-net`** that every application
-  container joins so Traefik can reach it.
+
+The setup job **only** installs the Docker runtime. The shared routing layer —
+**Traefik** as a host-level reverse proxy (TLS via Let's Encrypt) and the shared
+external Docker network **`tragwerk-net`** — is not created here. Tragwerk brings
+it up automatically on your **first deploy** and reuses it thereafter. See
+[Architecture on the Host](/server/architecture-on-host).
 
 Privileged commands run as `root` or via `sudo -n`, depending on the credential's
 [privilege level](/app/registries-credentials#privilege-level).
