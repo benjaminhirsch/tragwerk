@@ -9,6 +9,7 @@ use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Entity\User;
+use Tragwerk\Domain\Enum\CredentialPrivilege;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
@@ -567,6 +568,7 @@ final class ServerHandlerTest extends AppIntegrationTestCase
             CredentialIdentifier::create(),
             $name,
             $username,
+            CredentialPrivilege::Root,
             null,
             $teamId,
             $now,

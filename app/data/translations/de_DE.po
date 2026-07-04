@@ -2068,3 +2068,18 @@ msgstr "PHP-Einstellungen"
 
 msgid "Directive"
 msgstr "Direktive"
+
+msgid "Privilege level"
+msgstr "Berechtigungsstufe"
+
+msgid "Root user"
+msgstr "Root-Benutzer"
+
+msgid "Sudo (passwordless)"
+msgstr "Sudo (passwortlos)"
+
+msgid "Invalid privilege level"
+msgstr "Ungültige Berechtigungsstufe"
+
+msgid "Sudo requires passwordless sudo (NOPASSWD) for the user."
+msgstr "Sudo erfordert passwortloses sudo (NOPASSWD) für den Benutzer."

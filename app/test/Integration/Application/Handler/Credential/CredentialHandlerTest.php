@@ -11,6 +11,7 @@ use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Entity\User;
+use Tragwerk\Domain\Enum\CredentialPrivilege;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\Repository\TeamRepository;
@@ -100,6 +101,69 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
         self::assertInstanceOf(Credential::class, $credentials[0]);
         self::assertSame('Deploy Key', $credentials[0]->name);
         self::assertSame('deploy', $credentials[0]->username);
+    }
+
+    #[Test]
+    public function createPostPersistsSudoPrivilege(): void
+    {
+        $this->dispatch(
+            'POST',
+            $this->url('credential.create'),
+            [
+                'name'       => 'Deploy Key',
+                'username'   => 'deploy',
+                'privateKey' => self::makeSshPrivateKey(),
+                'privilege'  => 'sudo',
+            ],
+            $this->sessionCookie,
+        );
+
+        $repository = $this->container->get(CredentialRepository::class);
+        assert($repository instanceof CredentialRepository);
+
+        $credentials = [...$repository->getAll(teamId: $this->team->id)];
+        self::assertCount(1, $credentials);
+        self::assertInstanceOf(Credential::class, $credentials[0]);
+        self::assertSame(CredentialPrivilege::Sudo, $credentials[0]->privilege);
+    }
+
+    #[Test]
+    public function createPostWithoutPrivilegeDefaultsToRoot(): void
+    {
+        $this->dispatch(
+            'POST',
+            $this->url('credential.create'),
+            ['name' => 'Deploy Key', 'username' => 'deploy', 'privateKey' => self::makeSshPrivateKey()],
+            $this->sessionCookie,
+        );
+
+        $repository = $this->container->get(CredentialRepository::class);
+        assert($repository instanceof CredentialRepository);
+
+        $credentials = [...$repository->getAll(teamId: $this->team->id)];
+        self::assertCount(1, $credentials);
+        self::assertInstanceOf(Credential::class, $credentials[0]);
+        self::assertSame(CredentialPrivilege::Root, $credentials[0]->privilege);
+    }
+
+    #[Test]
+    public function editPostUpdatesPrivilege(): void
+    {
+        $credential = $this->seedCredential('Deploy Key', 'deploy');
+
+        $this->dispatch(
+            'POST',
+            $this->url('credential.edit', ['id' => $credential->id->toString()]),
+            ['name' => 'Deploy Key', 'username' => 'deploy', 'privilege' => 'sudo'],
+            $this->sessionCookie,
+        );
+
+        $repository = $this->container->get(CredentialRepository::class);
+        assert($repository instanceof CredentialRepository);
+
+        $updated = $repository->getById($credential->id);
+        assert($updated instanceof Credential);
+        self::assertSame(CredentialPrivilege::Sudo, $updated->privilege);
     }
 
     #[Test]
@@ -474,6 +538,7 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
             CredentialIdentifier::create(),
             $name,
             $username,
+            CredentialPrivilege::Root,
             null,
             $teamId,
             $now,
@@ -499,6 +564,7 @@ final class CredentialHandlerTest extends AppIntegrationTestCase
             CredentialIdentifier::create(),
             $name,
             $username,
+            CredentialPrivilege::Root,
             $encryptor->encrypt($plainKey),
             $this->team->id,
             $now,

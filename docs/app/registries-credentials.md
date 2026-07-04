@@ -44,12 +44,36 @@ over SSH when provisioning, deploying, and reading container state.
 ### Managing credentials
 
 From the **Credentials** page you can **create**, **edit**, and **delete**
-credentials. Each credential holds a name, a username, and an **SSH private
-key**.
+credentials. Each credential holds:
+
+| Field           | Description                                                         |
+| --------------- | ------------------------------------------------------------------ |
+| Name            | A label for the credential within Tragwerk.                        |
+| Username        | The SSH login user on the server.                                  |
+| Privilege level | Whether that user is **root** or a **passwordless sudo** user.     |
+| Private key     | A PEM-encoded SSH private key used to authenticate.               |
 
 ::: warning
 The private key must be a valid PEM-encoded SSH private key — Tragwerk validates
 it on save and rejects malformed keys.
+:::
+
+#### Privilege level
+
+Server setup and deploys run privileged commands on the host (installing Docker,
+starting the daemon). The privilege level tells Tragwerk how to run them:
+
+- **Root user** — the credential logs in as `root`; commands run directly.
+- **Sudo (passwordless)** — the credential is a non-root user; privileged commands
+  are prefixed with `sudo -n`. This requires **passwordless sudo (`NOPASSWD`)** for
+  the user, because authentication is SSH-key only and no sudo password is stored.
+  During setup the user is also added to the `docker` group so later deploy,
+  metrics, and cron commands can run `docker` without sudo.
+
+::: tip
+Docker-group membership grants effectively root-level control of the host. This is
+inherent to letting a non-root user drive Docker — choose the sudo mode only for
+users you trust accordingly.
 :::
 
 ::: tip Encrypted at rest
@@ -66,9 +90,11 @@ To register an SSH key for a server:
 1. Open **Credentials → Create**.
 2. **Name**: `prod-server`
 3. **Username**: `deploy`
-4. **Private key**: paste the contents of your PEM-encoded private key
+4. **Privilege level**: `Sudo (passwordless)` for a non-root `deploy` user, or
+   `Root user` if the credential logs in as `root`.
+5. **Private key**: paste the contents of your PEM-encoded private key
    (e.g. `~/.ssh/id_ed25519`).
-5. Save, then attach the credential when adding a [server](/server/servers).
+6. Save, then attach the credential when adding a [server](/server/servers).
 
 ## Related
 

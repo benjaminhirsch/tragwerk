@@ -6,11 +6,17 @@ run your applications.
 
 ## What the setup job provisions
 
-- **Docker** and Docker Compose on the host.
+- **Docker** and Docker Compose on the host — installed from the **official Docker
+  package repository** (apt for Debian/Ubuntu, dnf/yum for RHEL/Fedora/CentOS and
+  the RHEL rebuilds Rocky Linux/AlmaLinux, which use Docker's CentOS repo), the
+  daemon is enabled, and it is skipped if Docker is already present.
 - **Traefik** as a host-level reverse proxy — it terminates TLS (Let's Encrypt)
   and routes public traffic to your application containers.
 - The shared external Docker network **`tragwerk-net`** that every application
   container joins so Traefik can reach it.
+
+Privileged commands run as `root` or via `sudo -n`, depending on the credential's
+[privilege level](/app/registries-credentials#privilege-level).
 
 After setup completes, the server is ready to receive deploys. See
 [Architecture on the Host](/server/architecture-on-host) for what the
@@ -37,8 +43,10 @@ while streaming progress to the page — there is nothing to run yourself.
 ::: warning
 If the SSH connection details or the selected credential are wrong, setup will
 **Fail** early. Verify the host, port, and that the
-[credential](/app/registries-credentials) (SSH key or password) is correct and
-authorized on the server, then retry.
+[credential](/app/registries-credentials) (SSH key, username, and privilege
+level) is correct and authorized on the server. In sudo mode, also confirm the
+user has **passwordless sudo (`NOPASSWD`)** — `sudo -n` fails fast otherwise.
+Then retry.
 :::
 
 ## Related

@@ -56,6 +56,37 @@ final class EditCredentialTest extends TestCase
     }
 
     #[Test]
+    public function privilegeDefaultsToRoot(): void
+    {
+        $dto = new EditCredential('Deploy', 'deploy', null);
+
+        self::assertSame('root', $dto->privilege);
+    }
+
+    #[Test]
+    public function sudoPrivilegeConstructs(): void
+    {
+        $dto = new EditCredential('Deploy', 'deploy', null, 'sudo');
+
+        self::assertSame('sudo', $dto->privilege);
+    }
+
+    #[Test]
+    public function invalidPrivilegeIsRejected(): void
+    {
+        try {
+            new EditCredential('Deploy', 'deploy', null, 'superuser');
+        } catch (ValidationCollection $e) {
+            $fields = array_map(static fn (ValidationError $v): string => $v->name, $e->validations);
+            self::assertContains('privilege', $fields);
+
+            return;
+        }
+
+        self::fail('Expected ValidationCollection');
+    }
+
+    #[Test]
     public function publicKeyFormatIsRejected(): void
     {
         self::assertContains(

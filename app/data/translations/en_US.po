@@ -298,3 +298,18 @@ msgstr ""
 
 msgid "Yes"
 msgstr ""
+
+msgid "Privilege level"
+msgstr ""
+
+msgid "Root user"
+msgstr ""
+
+msgid "Sudo (passwordless)"
+msgstr ""
+
+msgid "Invalid privilege level"
+msgstr ""
+
+msgid "Sudo requires passwordless sudo (NOPASSWD) for the user."
+msgstr ""

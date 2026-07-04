@@ -17,6 +17,7 @@ use Symfony\Component\Lock\LockFactory;
 use Throwable;
 use Tragwerk\Application\Exception\Credential\CredentialKeyEncryptionFailed;
 use Tragwerk\Application\Service\Credential\CredentialEncryptor;
+use Tragwerk\Domain\Docker\DockerInstallScript;
 use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\SetupJob;
@@ -28,6 +29,7 @@ use Tragwerk\Domain\ValueObject\SetupJobIdentifier;
 use Tragwerk\Infrastructure\Mercure\MercurePublisher;
 
 use function assert;
+use function base64_encode;
 use function filter_var;
 use function in_array;
 use function is_string;
@@ -53,6 +55,7 @@ final class SetupServerCommand extends Command
         private readonly CredentialEncryptor $credentialEncryptor,
         private readonly LockFactory $lockFactory,
         private readonly MercurePublisher $mercurePublisher,
+        private readonly DockerInstallScript $dockerInstallScript,
     ) {
         parent::__construct();
     }
@@ -143,11 +146,14 @@ final class SetupServerCommand extends Command
 
             $this->append($job, "Connected.\n\n");
 
-            if (! $this->checkSupportedDistro($ssh, $job)) {
+            $distroId = $this->checkSupportedDistro($ssh, $job);
+            if ($distroId === null) {
                 return Command::FAILURE;
             }
 
-            $ssh = $this->ensureCurl($ssh, $server->host, $server->port, $credential->username, $key, $job);
+            $sudo = $credential->privilege->sudoPrefix();
+
+            $ssh = $this->ensureCurl($ssh, $server->host, $server->port, $credential->username, $key, $sudo, $job);
             if ($ssh === null) {
                 return Command::FAILURE;
             }
@@ -155,12 +161,19 @@ final class SetupServerCommand extends Command
             $dockerVersion = $this->checkDocker($ssh, $job);
 
             if ($dockerVersion === null) {
-                $this->append($job, "\nInstalling Docker...\n");
-                $this->append($job, "Running: curl -fsSL https://get.docker.com | sh\n\n");
+                $this->append($job, "\nInstalling Docker via the official Docker package repository...\n\n");
+
+                // The install script is base64-encoded so the multi-line payload (with quotes and
+                // command substitutions) survives being wrapped in `bash -c '...'`. Run detached:
+                // the package install is long-running and can outlive the SSH channel.
+                $encoded = base64_encode(
+                    $this->dockerInstallScript->build($distroId, $credential->privilege, $credential->username),
+                );
 
                 $ssh->exec(
                     'nohup bash -c \''
-                    . 'curl -fsSL https://get.docker.com | sh > /tmp/docker-install.log 2>&1;'
+                    . 'echo ' . $encoded . ' | base64 -d > /tmp/docker-install.sh;'
+                    . ' bash /tmp/docker-install.sh > /tmp/docker-install.log 2>&1;'
                     . ' echo $? > /tmp/docker-install.exit'
                     . '\' > /dev/null 2>&1 &',
                 );
@@ -201,10 +214,16 @@ final class SetupServerCommand extends Command
 
                 $dockerVersion = $this->checkDocker($ssh, $job);
                 if ($dockerVersion === null) {
+                    $exitCode = $ssh->exec('cat /tmp/docker-install.exit 2>/dev/null');
+                    $exitCode = is_string($exitCode) ? trim($exitCode) : '';
+
                     $this->fail(
                         $job,
-                        "\nDocker binary not found after installation."
-                        . " Check the install output above for errors.\n",
+                        sprintf(
+                            "\nDocker binary not found after installation (install exit code: %s)."
+                            . " Check the install output above for errors.\n",
+                            $exitCode !== '' ? $exitCode : 'unknown',
+                        ),
                     );
 
                     return Command::FAILURE;
@@ -224,6 +243,7 @@ final class SetupServerCommand extends Command
                 $server->port,
                 $credential->username,
                 $key,
+                $sudo,
                 $job,
             );
 
@@ -238,28 +258,30 @@ final class SetupServerCommand extends Command
         }
     }
 
-    private function checkSupportedDistro(SSH2 $ssh, SetupJob $job): bool
+    /** Returns the detected distro id (e.g. ubuntu, debian, rhel, fedora, centos), or null if unsupported. */
+    private function checkSupportedDistro(SSH2 $ssh, SetupJob $job): string|null
     {
         $result   = $ssh->exec('. /etc/os-release 2>/dev/null && echo "$ID"');
         $distroId = is_string($result) ? strtolower(trim($result)) : '';
 
-        $supported = ['ubuntu', 'debian', 'rhel', 'fedora', 'centos'];
+        $supported = ['ubuntu', 'debian', 'rhel', 'fedora', 'centos', 'rocky', 'almalinux'];
 
         if (! in_array($distroId, $supported, true)) {
             $this->fail(
                 $job,
                 sprintf(
-                    "Unsupported distribution: %s.\nSupported: Ubuntu, Debian, RHEL, Fedora, CentOS.\n",
+                    "Unsupported distribution: %s.\n"
+                    . "Supported: Ubuntu, Debian, RHEL, Fedora, CentOS, Rocky Linux, AlmaLinux.\n",
                     $distroId !== '' ? $distroId : 'unknown',
                 ),
             );
 
-            return false;
+            return null;
         }
 
         $this->append($job, sprintf("Distribution: %s\n", $distroId));
 
-        return true;
+        return $distroId;
     }
 
     private function ensureCurl(
@@ -268,6 +290,7 @@ final class SetupServerCommand extends Command
         int $port,
         string $username,
         PrivateKey $key,
+        string $sudo,
         SetupJob $job,
     ): SSH2|null {
         $this->append($job, "Checking if curl is installed...\n");
@@ -278,11 +301,11 @@ final class SetupServerCommand extends Command
 
         $this->append($job, "curl not found, installing...\n");
 
-        $install = 'if command -v apt-get >/dev/null 2>&1; then apt-get install -y curl'
-            . '; elif command -v dnf >/dev/null 2>&1; then dnf install -y curl'
-            . '; elif command -v yum >/dev/null 2>&1; then yum install -y curl'
-            . '; elif command -v zypper >/dev/null 2>&1; then zypper install -y curl'
-            . '; elif command -v apk >/dev/null 2>&1; then apk add curl'
+        $install = 'if command -v apt-get >/dev/null 2>&1; then ' . $sudo . 'apt-get install -y curl'
+            . '; elif command -v dnf >/dev/null 2>&1; then ' . $sudo . 'dnf install -y curl'
+            . '; elif command -v yum >/dev/null 2>&1; then ' . $sudo . 'yum install -y curl'
+            . '; elif command -v zypper >/dev/null 2>&1; then ' . $sudo . 'zypper install -y curl'
+            . '; elif command -v apk >/dev/null 2>&1; then ' . $sudo . 'apk add curl'
             . '; else echo "No supported package manager found"; exit 1; fi';
 
         $ssh->exec($install . ' 2>&1', function (string $chunk) use ($job): void {
@@ -327,6 +350,7 @@ final class SetupServerCommand extends Command
         int $port,
         string $username,
         PrivateKey $key,
+        string $sudo,
         SetupJob $job,
     ): string|null {
         $this->append($job, "\nChecking Docker Compose...\n");
@@ -343,19 +367,19 @@ final class SetupServerCommand extends Command
 
         $install = 'if command -v apt-get >/dev/null 2>&1; then'
             . ' while pgrep -x apt-get > /dev/null 2>&1; do sleep 2; done'
-            . ' && apt-get install -y docker-compose-plugin'
+            . ' && ' . $sudo . 'apt-get install -y docker-compose-plugin'
             . '; elif command -v dnf >/dev/null 2>&1; then'
             . ' while pgrep -x dnf > /dev/null 2>&1; do sleep 2; done'
-            . ' && dnf install -y docker-compose-plugin'
+            . ' && ' . $sudo . 'dnf install -y docker-compose-plugin'
             . '; elif command -v yum >/dev/null 2>&1; then'
             . ' while pgrep -x yum > /dev/null 2>&1; do sleep 2; done'
-            . ' && yum install -y docker-compose-plugin'
+            . ' && ' . $sudo . 'yum install -y docker-compose-plugin'
             . '; elif command -v zypper >/dev/null 2>&1; then'
             . ' while pgrep -x zypper > /dev/null 2>&1; do sleep 2; done'
-            . ' && zypper install -y docker-compose-plugin'
+            . ' && ' . $sudo . 'zypper install -y docker-compose-plugin'
             . '; elif command -v apk >/dev/null 2>&1; then'
             . ' while pgrep -x apk > /dev/null 2>&1; do sleep 2; done'
-            . ' && apk add docker-cli-compose'
+            . ' && ' . $sudo . 'apk add docker-cli-compose'
             . '; else echo "No supported package manager found"; exit 1; fi';
 
         $ssh->exec($install . ' 2>&1', function (string $chunk) use ($job): void {

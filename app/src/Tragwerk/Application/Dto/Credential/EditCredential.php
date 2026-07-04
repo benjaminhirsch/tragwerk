@@ -10,6 +10,7 @@ use Throwable;
 use Tragwerk\Application\Dto\DtoInterface;
 use Tragwerk\Application\Exception\ValidationCollection;
 use Tragwerk\Application\Exception\ValidationError;
+use Tragwerk\Domain\Enum\CredentialPrivilege;
 
 use function _;
 use function trim;
@@ -29,6 +30,8 @@ final readonly class EditCredential implements DtoInterface
         public string $username,
         #[FromBody]
         public string|null $privateKey = null,
+        #[FromBody]
+        public string $privilege = 'root',
     ) {
         $errors            = [];
         $emptyFieldMessage = _('Field can\'t be empty');
@@ -39,6 +42,10 @@ final readonly class EditCredential implements DtoInterface
 
         if (trim($this->username) === '') {
             $errors[] = ValidationError::make('username', $emptyFieldMessage);
+        }
+
+        if (CredentialPrivilege::tryFrom($this->privilege) === null) {
+            $errors[] = ValidationError::make('privilege', _('Invalid privilege level'));
         }
 
         $key = trim($this->privateKey ?? '');

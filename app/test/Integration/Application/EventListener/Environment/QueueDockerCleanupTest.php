@@ -13,6 +13,7 @@ use Tragwerk\Domain\Entity\Registry;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Entity\Team;
 use Tragwerk\Domain\Entity\User;
+use Tragwerk\Domain\Enum\CredentialPrivilege;
 use Tragwerk\Domain\Event\EnvironmentDeleted;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\ProjectRepository;
@@ -125,6 +126,7 @@ final class QueueDockerCleanupTest extends IntegrationTestCase
             $credentialId,
             'Deploy key',
             'deploy',
+            CredentialPrivilege::Root,
             'private-key',
             $this->teamId,
             $now,

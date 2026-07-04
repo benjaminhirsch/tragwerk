@@ -10,9 +10,10 @@ In the UI, create a new server and provide:
 
 - A **name** to identify the server.
 - **Connection details** — the host (IP or hostname) and SSH port.
-- A **credential** — the SSH key or password used to authenticate.
+- A **credential** — the SSH key, login user, and privilege level used to
+  authenticate and run commands.
 
-Manage reusable SSH keys and passwords under
+Manage reusable SSH credentials under
 [Registries & Credentials](/app/registries-credentials), then select one when
 registering the server.
 
@@ -33,8 +34,9 @@ container images during builds and deploys. See
 [Registries & Credentials](/app/registries-credentials).
 
 ::: tip
-Store SSH keys as credentials rather than passwords where possible, and reuse a
-single credential across servers that share a key.
+Reuse a single credential across servers that share an SSH key. Prefer a
+dedicated non-root user in [sudo mode](/app/registries-credentials#privilege-level)
+over a root login where your setup allows it.
 :::
 
 ## Edit and delete
