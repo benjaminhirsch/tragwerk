@@ -16,7 +16,7 @@ use function sprintf;
 
 /**
  * Serves the config.xml XSD publicly so a project's config.xml can reference it
- * via xsi:noNamespaceSchemaLocation (e.g. https://console.tragwerk.app/schema.xsd).
+ * via xsi:noNamespaceSchemaLocation (e.g. https://www.tragwerk.app/schema.xsd).
  * Reads the canonical schema shipped with the app — single source of truth,
  * also consumed by ConfigValidator.
  */
