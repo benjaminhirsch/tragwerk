@@ -408,6 +408,7 @@ final readonly class DockerfileGenerator
             'intl'                         => ['libicu-dev'],
             'gd'                           => ['libpng-dev', 'libfreetype6-dev', 'libjpeg62-turbo-dev'],
             'zip'                          => ['libzip-dev'],
+            'mbstring'                     => ['libonig-dev'],
             'pdo_pgsql', 'pgsql'           => ['libpq-dev'],
             'xsl'                          => ['libxslt-dev'],
             'imap'                         => ['libc-client-dev', 'libkrb5-dev'],
