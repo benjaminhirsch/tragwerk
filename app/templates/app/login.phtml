@@ -5,13 +5,9 @@
         <?= $this->fetch('partial::logo') ?>
     </div>
 
-    <div class="prop-switch mb-4">
-        <div>
-            <label class="ttl d-block">Warning: Public Beta</label>
-            <div class="dsc">
-                This application is in open beta. Errors may occur. This application is not currently intended for production use.
-            </div>
-        </div>
+    <div class="doc__note mb-5" style="max-width:640px;margin:0 auto;text-align:left;">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>During the beta, performance is limited and not representative of the final product. The service is provided &ldquo;as is&rdquo;, without any warranty, guarantees, or assured availability &mdash; expect changes, downtime and potentially data loss. <strong>Do not use in production though!</strong></span>
     </div>
 
     <div class="auth-head">
