@@ -21,6 +21,26 @@ provisioning and deploys remotely.
 You can register any number of servers and run multiple applications on each.
 See [Servers](/server/servers) to add one.
 
+::: warning Use a fresh server
+We recommend dedicating a **fresh, empty server** to Tragwerk rather than one
+that already runs other applications. Tragwerk manages the host-level Docker
+environment and binds the public web ports for its Traefik reverse proxy, so
+sharing the machine with unrelated services risks port conflicts and
+interference.
+:::
+
+## Ports
+
+Tragwerk's [Traefik reverse proxy](#what-tragwerk-installs-and-manages) terminates
+public traffic on the standard web ports, so these must be **free** on the host —
+no other web server, proxy, or container may already bind them:
+
+- **80 (HTTP)** — inbound routing and Let's Encrypt HTTP-01 challenges.
+- **443 (HTTPS)** — TLS-terminated application traffic.
+
+You also need your **SSH port** (usually 22) reachable for Tragwerk to connect.
+Open 80 and 443 in any firewall or cloud security group in front of the server.
+
 ## Docker support matrix
 
 Tragwerk runs everything on the server through Docker and Docker Compose. The
