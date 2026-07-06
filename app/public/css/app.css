@@ -989,6 +989,30 @@ body:has(> .tw-footer) > main { flex: 1 0 auto; width: 100% }
 .lp-split li { display: flex; gap: .6rem; align-items: flex-start; font-size: .95rem; color: var(--text); }
 .lp-split li .bi { color: var(--ok-text); margin-top: .15rem; }
 
+/* ============================================================
+   PRICING / PLANS
+   ============================================================ */
+.price-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; align-items: stretch; }
+.plan { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: 1rem; padding: 1.6rem; box-shadow: var(--shadow-sm); position: relative; }
+.plan--featured { border-color: var(--accent-border); box-shadow: var(--shadow); }
+.plan--featured::before { content: "Most popular"; position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; font-size: .68rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: .2rem .7rem; border-radius: 99px; box-shadow: var(--shadow-sm); }
+.plan__name { font-size: 1.05rem; font-weight: 700; }
+.plan__desc { color: var(--text-muted); font-size: .85rem; margin: .3rem 0 1.1rem; min-height: 2.4em; }
+.plan__price { display: flex; align-items: baseline; gap: .35rem; margin-bottom: .2rem; }
+.plan__amount { font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+.plan__per { color: var(--text-faint); font-size: .85rem; font-weight: 600; }
+.plan__billed { color: var(--text-faint); font-size: .78rem; min-height: 1.1em; margin-bottom: 1.2rem; }
+.plan__cta { margin-bottom: 1.3rem; }
+.plan__feats { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .6rem; }
+.plan__feats li { display: flex; align-items: flex-start; gap: .55rem; font-size: .875rem; color: var(--text); line-height: 1.4; }
+.plan__feats .bi { color: var(--ok-text); font-size: .95rem; flex: none; margin-top: .12rem; }
+.plan__feats li.muted { color: var(--text-faint); }
+.plan__feats li.muted .bi { color: var(--text-faint); }
+.plan__lim { display: flex; gap: .4rem; align-items: center; font-weight: 650; }
+
+/* billing period toggle */
+.bill-toggle { display: inline-flex; align-items: center; gap: .7rem; font-size: .88rem; color: var(--text-muted); font-weight: 600; }
+
 /* responsive */
 @media (max-width: 1120px) {
   .tw-hide-md { display: none !important; }
@@ -1007,6 +1031,7 @@ body:has(> .tw-footer) > main { flex: 1 0 auto; width: 100% }
   .lp-steps { grid-template-columns: 1fr; }
   .lp-split { grid-template-columns: 1fr; gap: 1.75rem; }
   .lp-nav__links { display: none; }
+  .price-grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
 }
 @media (max-width: 720px) {
   .tw-hide-sm { display: none !important; }
