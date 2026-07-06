@@ -1,0 +1,153 @@
+<?php $this->layout('layout::blank', ['title' => 'Pricing']) ?>
+
+<header class="doc-bar">
+    <div class="doc-bar__row lp-nav">
+        <?= $this->fetch('partial::logo') ?>
+        <nav class="lp-nav__links ms-4">
+            <a href="<?= $this->url('home') ?>#features">Features</a>
+            <a href="<?= $this->url('home') ?>#how">How it works</a>
+            <a href="<?= $this->url('pricing') ?>">Pricing</a>
+            <a href="https://docs.tragwerk.app/">Docs</a>
+        </nav>
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <a href="<?= $this->url('login') ?>" class="btn btn-ghost btn-sm">Sign in</a>
+            <a href="<?= $this->url('register') ?>" class="btn btn-primary btn-sm">Get started</a>
+            <button class="tw-iconbtn" id="auth-theme-btn" title="Switch theme"><i id="auth-theme-ico" class="bi bi-moon-stars"></i></button>
+        </div>
+    </div>
+</header>
+
+<main class="tw-page tw-page--wide">
+
+    <?php /*
+    <div class="text-center" style="max-width:640px;margin:0 auto 2.5rem;">
+        <p class="tw-eyebrow mb-2">Pricing</p>
+        <h1 style="font-size:2.4rem;margin:0 0 .6rem;">Plans that scale with your team</h1>
+        <p class="tw-sub" style="font-size:1.05rem;">Start free, upgrade as you grow. Every plan includes automatic deploys, TLS, and log streaming. No credit card required to begin.</p>
+
+        <div class="d-inline-flex mt-4">
+            <div class="bill-toggle">
+                <span id="lbl-monthly" style="color:var(--text)">Monthly</span>
+                <div class="form-check form-switch m-0" style="padding-left:2.6em">
+                    <input class="form-check-input" type="checkbox" role="switch" id="bill-switch" style="width:2.2em;height:1.2em;cursor:pointer">
+                </div>
+                <span id="lbl-yearly">Yearly <span class="tw-badge tw-badge--ok" style="font-size:.68rem;vertical-align:middle;">Save 20%</span></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="price-grid">
+
+        <!-- Hobby -->
+        <div class="plan">
+            <div class="plan__name">Hobby</div>
+            <div class="plan__desc">For side projects and trying things out.</div>
+            <div class="plan__price">
+                <span class="plan__amount">$0</span>
+                <span class="plan__per">/ month</span>
+            </div>
+            <div class="plan__billed">Free forever</div>
+            <a href="<?= $this->url('register') ?>" class="btn btn-outline-secondary w-100 plan__cta">Get started</a>
+            <ul class="plan__feats">
+                <li><i class="bi bi-check-lg"></i> <span class="plan__lim">1 team</span></li>
+                <li><i class="bi bi-check-lg"></i> <span class="plan__lim">1 project</span></li>
+                <li><i class="bi bi-check-lg"></i> <span class="plan__lim">1 server</span></li>
+                <li><i class="bi bi-check-lg"></i> Automatic deploys from Git</li>
+                <li><i class="bi bi-check-lg"></i> TLS &amp; custom domains</li>
+                <li><i class="bi bi-check-lg"></i> Community support</li>
+                <li class="muted"><i class="bi bi-dash-lg"></i> Preview environments</li>
+                <li class="muted"><i class="bi bi-dash-lg"></i> Team roles &amp; SSO</li>
+            </ul>
+        </div>
+
+        <!-- Team (featured) -->
+        <div class="plan plan--featured">
+            <div class="plan__name">Team</div>
+            <div class="plan__desc">For growing teams shipping to production.</div>
+            <div class="plan__price">
+                <span class="plan__amount" data-monthly="$29" data-yearly="$23">$29</span>
+                <span class="plan__per">/ month</span>
+            </div>
+            <div class="plan__billed" data-monthly="Billed monthly" data-yearly="$276 billed yearly">Billed monthly</div>
+            <a href="<?= $this->url('register') ?>" class="btn btn-primary w-100 plan__cta">Choose Team</a>
+            <ul class="plan__feats">
+                <li><i class="bi bi-check-lg"></i> <span class="plan__lim">Up to 5 teams</span></li>
+                <li><i class="bi bi-check-lg"></i> <span class="plan__lim">Up to 5 projects</span></li>
+                <li><i class="bi bi-check-lg"></i> <span class="plan__lim">Up to 5 servers</span></li>
+                <li><i class="bi bi-check-lg"></i> Everything in Hobby, plus:</li>
+                <li><i class="bi bi-check-lg"></i> Preview environments per PR</li>
+                <li><i class="bi bi-check-lg"></i> Team roles &amp; audit log</li>
+                <li><i class="bi bi-check-lg"></i> Metrics &amp; 30-day log retention</li>
+                <li><i class="bi bi-check-lg"></i> Email &amp; chat support</li>
+            </ul>
+        </div>
+
+        <!-- Enterprise -->
+        <div class="plan">
+            <div class="plan__name">Enterprise</div>
+            <div class="plan__desc">For organizations with no limits.</div>
+            <div class="plan__price">
+                <span class="plan__amount" data-monthly="$99" data-yearly="$79">$99</span>
+                <span class="plan__per">/ month</span>
+            </div>
+            <div class="plan__billed" data-monthly="Starting price, billed monthly" data-yearly="$948 billed yearly">Starting price, billed monthly</div>
+            <a href="<?= $this->url('register') ?>" class="btn btn-outline-secondary w-100 plan__cta">Choose Enterprise</a>
+            <ul class="plan__feats">
+                <li><i class="bi bi-check-lg"></i> <span class="plan__lim">Unlimited teams</span></li>
+                <li><i class="bi bi-check-lg"></i> <span class="plan__lim">Unlimited projects</span></li>
+                <li><i class="bi bi-check-lg"></i> <span class="plan__lim">Unlimited servers</span></li>
+                <li><i class="bi bi-check-lg"></i> Everything in Team, plus:</li>
+                <li><i class="bi bi-check-lg"></i> SSO / SAML &amp; SCIM</li>
+                <li><i class="bi bi-check-lg"></i> 99.9% uptime SLA</li>
+                <li><i class="bi bi-check-lg"></i> Dedicated support &amp; onboarding</li>
+                <li><i class="bi bi-check-lg"></i> Unlimited log retention</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <!-- comparison note -->
+    <p class="text-center text-faint mt-4" style="font-size:.85rem;">
+        All prices in USD, excl. VAT. Need something custom? <a href="#" style="color:var(--accent-text);font-weight:600;">Talk to sales</a>.
+    </p>
+
+    <!-- FAQ -->
+    <div style="max-width:760px;margin:3.5rem auto 0;">
+        <h2 style="font-size:1.3rem;text-align:center;margin-bottom:1.5rem;">Frequently asked questions</h2>
+        <div class="tw-card mb-2"><div class="tw-card__body">
+            <div class="fw-semibold mb-1" style="font-size:.95rem;">Can I change plans later?</div>
+            <div class="text-muted-2" style="font-size:.9rem;line-height:1.6;">Yes — upgrade or downgrade any time from your account billing page. Changes are prorated automatically.</div>
+        </div></div>
+        <div class="tw-card mb-2"><div class="tw-card__body">
+            <div class="fw-semibold mb-1" style="font-size:.95rem;">What happens when I hit a plan limit?</div>
+            <div class="text-muted-2" style="font-size:.9rem;line-height:1.6;">We'll notify you before you reach a limit. You can stay within your plan or upgrade to unlock more teams, projects and servers.</div>
+        </div></div>
+        <div class="tw-card"><div class="tw-card__body">
+            <div class="fw-semibold mb-1" style="font-size:.95rem;">Do you offer refunds?</div>
+            <div class="text-muted-2" style="font-size:.9rem;line-height:1.6;">Placeholder copy — monthly plans can be cancelled any time and remain active until the end of the billing period.</div>
+        </div></div>
+    </div>
+*/ ?>
+
+    <div class="text-center" style="max-width:640px;margin:4rem auto;">
+        <p class="tw-eyebrow mb-2">Pricing</p>
+        <span class="tw-badge tw-badge--ok mb-3" style="font-size:.72rem;"><span class="tw-dot"></span>Public beta</span>
+        <h1 style="font-size:2.4rem;margin:0 0 .8rem;">Free during the public beta</h1>
+        <p class="tw-sub" style="font-size:1.05rem;">Tragwerk is free to use while we're in public beta — every feature, no credit card. Pricing plans will be announced before general availability, with plenty of notice before anything changes.</p>
+        <div class="d-inline-flex gap-2 mt-4">
+            <a href="<?= $this->url('register') ?>" class="btn btn-primary"><i class="bi bi-rocket-takeoff"></i> Get started free</a>
+            <a href="<?= $this->url('home') ?>#features" class="btn btn-outline-secondary">Explore features</a>
+        </div>
+    </div>
+
+</main>
+
+<footer class="tw-footer">
+    <a href="<?= $this->url('imprint') ?>">Imprint</a>
+    <a href="<?= $this->url('privacy-policy') ?>">Privacy Policy</a>
+    <a href="<?= $this->url('terms-and-conditions') ?>">Terms &amp; Conditions</a>
+</footer>
+
+<?php $this->push('javascript') ?>
+<script src="/js/pricing.js"></script>
+<?php $this->stop() ?>
