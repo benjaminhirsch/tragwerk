@@ -5,6 +5,16 @@
     <div class="auth-card__logo">
         <?= $this->fetch('partial::logo') ?>
     </div>
+
+    <div class="prop-switch mb-4">
+        <div>
+            <label class="ttl d-block">Warning: Public Beta</label>
+            <div class="dsc">
+                This application is in open beta. Errors may occur. This application is not currently intended for production use.
+            </div>
+        </div>
+    </div>
+
     <div class="auth-head">
         <h1><?= $this->e($this->t('Create account')) ?></h1>
         <p><?= $this->e($this->t('Already registered?')) ?>
@@ -57,11 +67,35 @@
             'validation' => $validationBag ?? null,
         ]) ?>
 
+        <?php
+        $termsError = ($validationBag ?? null)?->getErrorByName('terms');
+        $termsLink  = sprintf(
+            '<a href="%s" target="_blank" rel="noopener">%s</a>',
+            $this->e($this->url('terms-and-conditions')),
+            $this->e($this->t('terms of use')),
+        );
+        $privacyLink = sprintf(
+            '<a href="%s" target="_blank" rel="noopener">%s</a>',
+            $this->e($this->url('privacy-policy')),
+            $this->e($this->t('privacy policy')),
+        );
+        ?>
+        <div class="form-check">
+            <input class="form-check-input<?= $termsError !== null ? ' is-invalid' : '' ?>"
+                   type="checkbox" name="terms" id="terms" value="1" required
+                   <?= (($validationBag ?? null)?->getValueByName('terms') ?? '') === '1' ? 'checked' : '' ?>>
+            <label class="form-check-label" for="terms">
+                <?= sprintf($this->e($this->t('I accept the %s and the %s.')), $termsLink, $privacyLink) ?>
+            </label>
+            <?php if ($termsError !== null): ?>
+                <div class="invalid-feedback d-block"><?= $this->e($this->t($termsError)) ?></div>
+            <?php endif; ?>
+        </div>
+
         <?= $this->fetch('partial::input/button', [
                 'label' => $this->t('Create account'),
                 'classes' => 'btn btn-primary btn-block',
         ]) ?>
 
     </form>
-    <p class="auth-foot"><?= $this->t('By signing up you agree to our terms.') ?></p>
 </div>

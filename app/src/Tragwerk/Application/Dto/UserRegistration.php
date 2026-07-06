@@ -31,6 +31,8 @@ final readonly class UserRegistration implements DtoInterface
         public string $password1,
         #[FromBody]
         public string $password2,
+        #[FromBody]
+        public string|null $terms = null,
     ) {
         $errors = [];
         if (! $this->passwordsAreIdentical()) {
@@ -43,9 +45,18 @@ final readonly class UserRegistration implements DtoInterface
                     |> (static fn ($x) => ValidationError::make('password1', $x));
         }
 
+        if (! $this->termsAccepted()) {
+            $errors[] = ValidationError::make('terms', _('You must accept the terms of use and the privacy policy'));
+        }
+
         if ($errors !== []) {
             throw ValidationCollection::fromValidations(...$errors);
         }
+    }
+
+    private function termsAccepted(): bool
+    {
+        return $this->terms !== null && $this->terms !== '';
     }
 
     private function passwordsAreIdentical(): bool
