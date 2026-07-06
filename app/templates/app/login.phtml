@@ -4,6 +4,16 @@
     <div class="auth-card__logo">
         <?= $this->fetch('partial::logo') ?>
     </div>
+
+    <div class="prop-switch mb-4">
+        <div>
+            <label class="ttl d-block">Warning: Public Beta</label>
+            <div class="dsc">
+                This application is in open beta. Errors may occur. This application is not currently intended for production use.
+            </div>
+        </div>
+    </div>
+
     <div class="auth-head">
         <h1><?= $this->e($this->t('Welcome back')) ?></h1>
         <p><?= $this->e($this->t('No account yet?')) ?>
