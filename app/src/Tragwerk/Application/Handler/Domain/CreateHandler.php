@@ -24,6 +24,7 @@ use Tragwerk\Domain\ValueObject\DomainIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
+use Tragwerk\Infrastructure\Dns\DnsResolution;
 use Tragwerk\Infrastructure\Dns\DnsResolver;
 
 use function assert;
@@ -142,11 +143,20 @@ final readonly class CreateHandler implements RequestHandlerInterface
             }
         }
 
-        $resolvedIp = $this->dnsResolver->toIpv4($host);
+        $result = $this->dnsResolver->resolve($host);
 
-        if ($resolvedIp === null) {
+        // No resolver reachable (e.g. outbound DNS blocked on the host) — skip the check
+        // rather than reject a domain whose DNS we simply could not verify.
+        if ($result->status === DnsResolution::UNREACHABLE) {
+            return null;
+        }
+
+        if ($result->status === DnsResolution::NOT_FOUND) {
             return 'Domain could not be resolved. Please set an A record or CNAME.';
         }
+
+        $resolvedIp = $result->ip;
+        assert($resolvedIp !== null); // RESOLVED always carries an IP
 
         if ($resolvedIp !== $serverIp) {
             return sprintf(
