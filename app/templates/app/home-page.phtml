@@ -22,11 +22,7 @@
     <!-- HERO -->
     <section class="lp-hero">
         <div class="lp-hero__inner">
-            <span class="lp-pill">
-                <span class="tw-badge tw-badge--ok"><span class="tw-dot"></span>New</span>
-                Bring Your Own Cloud · PaaS meets SaaS
-            </span>
-            <h1>Deploy without friction.<br><span class="grad">From commit to production in minutes.</span></h1>
+            <h1>Deploy without friction.<br><span class="grad">From commit to production in a blink of an eye.</span></h1>
             <p class="sub">The PaaS experience with a SaaS platform — on your own infrastructure. <strong>Bring Your Own Cloud:</strong> isolated environments per branch with instant data cloning for child branches, running on any Linux server from the hoster of your choice. No vendor lock-in.</p>
             <div class="lp-cta-row">
                 <a href="<?= $this->url('register') ?>" class="btn btn-primary"><i class="bi bi-rocket-takeoff"></i> Start free</a>
@@ -34,36 +30,10 @@
                 <a href="#docs" class="btn btn-ghost">Read the docs <i class="bi bi-arrow-right"></i></a>
             </div>
 
-            <!-- terminal mock -->
-            <div class="lp-termbar">
-                <div class="lp-code">
-                    <div class="lp-code__bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="mono" style="font-size:.76rem;color:var(--text-faint);margin-left:.4rem">bash</span></div>
-<pre><span class="c-dim">$</span> git push tragwerk main
-<span class="c-dim">→</span> Detected <span class="c-ac">php:8.5</span> (FrankenPHP) · building image…
-<span class="c-ok">✓</span> Build succeeded in 1m 48s
-<span class="c-dim">→</span> Deploying 3 replicas to <span class="c-ac">eu-3</span>
-<span class="c-ok">✓</span> Live at https://storefront.tragwerk.app <span class="c-dim">(42s)</span></pre>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- STATS -->
-    <section class="lp-section" style="padding-top:1rem">
-        <div class="lp-stats">
-            <div class="lp-stat"><div class="lp-stat__num">&lt;60s</div><div class="lp-stat__label">Average deploy time</div></div>
-            <div class="lp-stat"><div class="lp-stat__num">99.98%</div><div class="lp-stat__label">Platform uptime</div></div>
-            <div class="lp-stat"><div class="lp-stat__num">6</div><div class="lp-stat__label">Global regions</div></div>
-            <div class="lp-stat"><div class="lp-stat__num">0</div><div class="lp-stat__label">Servers to manage</div></div>
-        </div>
     </section>
 
     <!-- FEATURES -->
     <section class="lp-section" id="features" style="padding-top:1rem">
-        <div class="lp-section__head">
-            <h2>Everything you need to run in production</h2>
-            <p>From the first push to scaling under load — the platform handles the plumbing so your team ships features.</p>
-        </div>
         <div class="lp-features">
             <div class="lp-feat">
                 <div class="lp-feat__ico"><i class="bi bi-git"></i></div>
@@ -104,7 +74,7 @@
             <div>
                 <p class="tw-eyebrow mb-2">Configuration as code</p>
                 <h2 style="font-size:clamp(1.6rem,3.5vw,2rem);letter-spacing:-0.02em;margin:0 0 .6rem">One file describes your whole environment</h2>
-                <p style="color:var(--text-muted);font-size:1rem;line-height:1.6;margin:0">Applications, services, mounts, hooks, cron jobs and routes live in <span class="mono">tragwerk.xml</span> — a schema-validated file, versioned with your code and applied on every deploy.</p>
+                <p style="color:var(--text-muted);font-size:1rem;line-height:1.6;margin:0">Applications, services, mounts, hooks, cron jobs and routes live in <span class="mono">.tragwerk/config.xml</span> — a schema-validated file, versioned with your code and applied on every deploy.</p>
                 <ul>
                     <li><i class="bi bi-check-circle-fill"></i> PostgreSQL, MariaDB, Redis, Valkey and more as managed services</li>
                     <li><i class="bi bi-check-circle-fill"></i> Build, deploy and post-deploy hooks</li>
@@ -112,7 +82,7 @@
                 </ul>
             </div>
             <div class="lp-code">
-                <div class="lp-code__bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="mono" style="font-size:.76rem;color:var(--text-faint);margin-left:.4rem">tragwerk.xml</span></div>
+                <div class="lp-code__bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="mono" style="font-size:.76rem;color:var(--text-faint);margin-left:.4rem">tragwerk/config.xml</span></div>
 <pre><span class="c-dim">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
 <span class="c-ac">&lt;project&gt;</span>
   <span class="c-ac">&lt;applications&gt;</span>
