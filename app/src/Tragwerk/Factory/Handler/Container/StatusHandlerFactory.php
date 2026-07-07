@@ -8,6 +8,7 @@ use Psr\Cache\CacheItemPoolInterface;
 use Psr\Container\ContainerInterface;
 use Tragwerk\Application\Handler\Container\StatusHandler;
 use Tragwerk\Application\Response\ResponseRenderer;
+use Tragwerk\Application\Service\Credential\CredentialEncryptor;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 
@@ -21,12 +22,14 @@ final readonly class StatusHandlerFactory
         $credentials = $container->get(CredentialRepository::class);
         $servers     = $container->get(ServerRepository::class);
         $cache       = $container->get('session-cache');
+        $encryptor   = $container->get(CredentialEncryptor::class);
 
         assert($renderer instanceof ResponseRenderer);
         assert($credentials instanceof CredentialRepository);
         assert($servers instanceof ServerRepository);
         assert($cache instanceof CacheItemPoolInterface);
+        assert($encryptor instanceof CredentialEncryptor);
 
-        return new StatusHandler($renderer, $credentials, $servers, $cache);
+        return new StatusHandler($renderer, $credentials, $servers, $cache, $encryptor);
     }
 }

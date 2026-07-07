@@ -8,6 +8,7 @@ use Psr\Cache\CacheItemPoolInterface;
 use Psr\Container\ContainerInterface;
 use Tragwerk\Application\Handler\Log\TailHandler;
 use Tragwerk\Application\Response\ResponseRenderer;
+use Tragwerk\Application\Service\Credential\CredentialEncryptor;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 
@@ -21,12 +22,14 @@ final readonly class TailHandlerFactory
         $servers     = $container->get(ServerRepository::class);
         $credentials = $container->get(CredentialRepository::class);
         $cache       = $container->get('session-cache');
+        $encryptor   = $container->get(CredentialEncryptor::class);
 
         assert($renderer instanceof ResponseRenderer);
         assert($servers instanceof ServerRepository);
         assert($credentials instanceof CredentialRepository);
         assert($cache instanceof CacheItemPoolInterface);
+        assert($encryptor instanceof CredentialEncryptor);
 
-        return new TailHandler($renderer, $servers, $credentials, $cache);
+        return new TailHandler($renderer, $servers, $credentials, $cache, $encryptor);
     }
 }

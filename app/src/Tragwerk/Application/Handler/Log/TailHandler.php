@@ -13,7 +13,9 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use RuntimeException;
 use Throwable;
+use Tragwerk\Application\Exception\Credential\CredentialKeyEncryptionFailed;
 use Tragwerk\Application\Response\ResponseRenderer;
+use Tragwerk\Application\Service\Credential\CredentialEncryptor;
 use Tragwerk\Domain\Entity\Credential;
 use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Server;
@@ -43,6 +45,7 @@ final readonly class TailHandler implements RequestHandlerInterface
         private ServerRepository $serverRepository,
         private CredentialRepository $credentialRepository,
         private CacheItemPoolInterface $cache,
+        private CredentialEncryptor $credentialEncryptor,
     ) {
     }
 
@@ -108,8 +111,8 @@ final readonly class TailHandler implements RequestHandlerInterface
         }
 
         try {
-            $key = PublicKeyLoader::loadPrivateKey($credential->privateKey);
-        } catch (NoKeyLoadedException $e) {
+            $key = PublicKeyLoader::loadPrivateKey($this->credentialEncryptor->decrypt($credential->privateKey));
+        } catch (NoKeyLoadedException | CredentialKeyEncryptionFailed $e) {
             throw new RuntimeException('Failed to load SSH key: ' . $e->getMessage(), previous: $e);
         }
 
