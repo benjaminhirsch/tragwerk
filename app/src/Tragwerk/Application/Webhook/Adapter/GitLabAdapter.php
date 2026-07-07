@@ -48,9 +48,13 @@ final readonly class GitLabAdapter implements WebhookAdapter
             return new PushPayload(branch: substr($ref, 11), commitSha: '', deleted: true);
         }
 
+        $repository = $body['repository'] ?? null;
+        $cloneUrl   = is_array($repository) ? $repository['git_http_url'] ?? null : null;
+
         return new PushPayload(
             branch:    substr($ref, 11),
             commitSha: $sha,
+            cloneUrl:  is_string($cloneUrl) && $cloneUrl !== '' ? $cloneUrl : null,
         );
     }
 }

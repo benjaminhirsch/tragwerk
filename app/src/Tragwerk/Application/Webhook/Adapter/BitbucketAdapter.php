@@ -75,9 +75,15 @@ final readonly class BitbucketAdapter implements WebhookAdapter
             return null;
         }
 
+        // Bitbucket webhooks carry no clone URL — only the HTML link. The HTTPS
+        // clone URL is that link with a ".git" suffix.
+        $htmlHref = $body['repository']['links']['html']['href'] ?? null;
+        $cloneUrl = is_string($htmlHref) && $htmlHref !== '' ? $htmlHref . '.git' : null;
+
         return new PushPayload(
             branch:    $branch,
             commitSha: $sha,
+            cloneUrl:  $cloneUrl,
         );
     }
 }
