@@ -575,12 +575,29 @@ final class DeployEnvironmentCommand extends Command
             // MySQL 8.0+: auto-upgrades on startup, no action needed here
         }
 
-        $this->log($jobId, '[Deploy] Ensuring DB is running...');
-        $sftp->exec('cd ~/' . $remoteDir . ' && ' . $dc . ' up db --wait --no-deps -d 2>&1');
+        $composeDefaultNetwork = $composeProject . '_default';
+
+        if (isset($compose['services']['db'])) {
+            $this->log($jobId, '[Deploy] Ensuring DB is running...');
+            $sftp->exec('cd ~/' . $remoteDir . ' && ' . $dc . ' up db --wait --no-deps -d 2>&1');
+        }
+
+        // `docker compose up` is what normally materialises the project's default network.
+        // A service-less project (no <services>/<relationships>) never starts a compose
+        // service, so the network would be missing — the blue/green app container below
+        // still joins it and `docker start` then fails with "network <project>_default not
+        // found". Create it idempotently, carrying compose's own labels so a later sidecar
+        // `compose up` (workers/crons) adopts it instead of erroring on foreign ownership.
+        $sftp->exec(
+            'docker network inspect ' . escapeshellarg($composeDefaultNetwork) . ' >/dev/null 2>&1'
+            . ' || docker network create'
+            . ' --label ' . escapeshellarg('com.docker.compose.project=' . $composeProject)
+            . ' --label ' . escapeshellarg('com.docker.compose.network=default')
+            . ' ' . escapeshellarg($composeDefaultNetwork) . ' 2>&1',
+        );
 
         // Blue/green swap: start new container alongside old, wait for healthy, then stop old.
-        $composeDefaultNetwork = $composeProject . '_default';
-        $newContainers         = [];
+        $newContainers = [];
 
         foreach ($config->applications as $app) {
             $appSlug         = $this->slugify($app->name);
@@ -759,7 +776,13 @@ final class DeployEnvironmentCommand extends Command
             $this->log($jobId, '[Deploy] Warning: network connect failed: ' . $netConnectOut);
         }
 
-        $sftp->exec('docker start ' . escapeshellarg($newContainer) . ' 2>&1');
+        $startOut = (string) $sftp->exec('docker start ' . escapeshellarg($newContainer) . ' 2>&1');
+        if ($sftp->getExitStatus() !== 0) {
+            $this->log($jobId, '[Deploy] Failed to start ' . $newContainer . ': ' . trim($startOut));
+            $sftp->exec('docker rm -f ' . escapeshellarg($newContainer) . ' 2>/dev/null; true');
+
+            return null;
+        }
 
         $this->log($jobId, '[Deploy] Waiting for ' . $newContainer . ' to be healthy...');
 
