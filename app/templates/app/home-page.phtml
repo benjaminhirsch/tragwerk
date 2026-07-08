@@ -82,11 +82,11 @@
                 </ul>
             </div>
             <div class="lp-code">
-                <div class="lp-code__bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="mono" style="font-size:.76rem;color:var(--text-faint);margin-left:.4rem">tragwerk/config.xml</span></div>
+                <div class="lp-code__bar"><span class="mono" style="font-size:.76rem;color:var(--text-faint);margin-left:.4rem"><i class="bi bi-code-slash d-inline-block pe-3"></i>tragwerk/config.xml</span></div>
 <pre><span class="c-dim">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
 <span class="c-ac">&lt;project&gt;</span>
   <span class="c-ac">&lt;applications&gt;</span>
-    <span class="c-ac">&lt;application</span> name=<span class="c-ok">"storefront"</span> type=<span class="c-ok">"php:8.5"</span><span class="c-ac">&gt;</span>
+    <span class="c-ac">&lt;application</span> name=<span class="c-ok">"app"</span> type=<span class="c-ok">"php:8.5"</span><span class="c-ac">&gt;</span>
       <span class="c-ac">&lt;web&gt;</span>
         <span class="c-ac">&lt;location</span> path=<span class="c-ok">"/"</span> root=<span class="c-ok">"public"</span> passthru=<span class="c-ok">"/index.php"</span><span class="c-ac">/&gt;</span>
       <span class="c-ac">&lt;/web&gt;</span>
@@ -103,7 +103,7 @@
     <span class="c-ac">&lt;service</span> name=<span class="c-ok">"db"</span> type=<span class="c-ok">"postgresql:16"</span><span class="c-ac">/&gt;</span>
   <span class="c-ac">&lt;/services&gt;</span>
   <span class="c-ac">&lt;routes&gt;</span>
-    <span class="c-ac">&lt;route</span> pattern=<span class="c-ok">"https://{default}/"</span> upstream=<span class="c-ok">"storefront:http"</span><span class="c-ac">/&gt;</span>
+    <span class="c-ac">&lt;route</span> pattern=<span class="c-ok">"https://{default}/"</span> upstream=<span class="c-ok">"app:http"</span><span class="c-ac">/&gt;</span>
   <span class="c-ac">&lt;/routes&gt;</span>
 <span class="c-ac">&lt;/project&gt;</span></pre>
             </div>
@@ -119,13 +119,13 @@
         <div class="lp-steps">
             <div class="lp-step">
                 <div class="lp-step__n">1</div>
-                <h3>Create a project</h3>
-                <p>Spin up a new project inside your team — the home for its environments and settings.</p>
+                <h3>Add a server</h3>
+                <p>Provision a server from a provider of your choice, closest to your users.</p>
             </div>
             <div class="lp-step">
                 <div class="lp-step__n">2</div>
-                <h3>Add a server</h3>
-                <p>Provision an application, database or cache server in the region closest to your users.</p>
+                <h3>Add a container registry</h3>
+                <p>Connect a private or public container registry of your choice to store the generated docker images.</p>
             </div>
             <div class="lp-step">
                 <div class="lp-step__n">3</div>
@@ -135,7 +135,7 @@
             <div class="lp-step">
                 <div class="lp-step__n">4</div>
                 <h3>Create a configuration</h3>
-                <p>Describe applications, services, mounts and hooks in <span class="mono">.tragwerk/config.xml</span>, versioned with your code.</p>
+                <p>Describe applications, services, mounts and hooks in .tragwerk/config.xml, versioned with your code.</p>
             </div>
             <div class="lp-step">
                 <div class="lp-step__n">5</div>
