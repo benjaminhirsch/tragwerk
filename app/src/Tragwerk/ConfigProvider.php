@@ -16,6 +16,7 @@ use Invoker\Invoker;
 use Laminas\ConfigAggregator\ConfigAggregator;
 use Laminas\I18n\Translator\Loader\Gettext;
 use Laminas\I18n\Translator\TranslatorServiceFactory;
+use Laminas\ServiceManager\Factory\InvokableFactory;
 use Laminas\Stratigility\Middleware\ErrorHandler;
 use Mezzio\Authentication\AuthenticationInterface;
 use Mezzio\Authentication\Session\PhpSession;
@@ -104,6 +105,7 @@ final readonly class ConfigProvider
                     Application\Handler\Log\TailHandler::class            => TailHandlerFactory::class,
                     Application\Queue\Handler\BuildEnvironment::class         => BuildEnvironmentFactory::class,
                     Application\Cli\Command\DeployEnvironmentCommand::class   => DeployEnvironmentCommandFactory::class,
+                    Infrastructure\Deploy\VolumeSyncService::class             => InvokableFactory::class,
                     MercurePublisher::class                                    => MercurePublisherFactory::class,
                     EventListener\SshKey\UpdateAuthorizedKeys::class        => UpdateAuthorizedKeysFactory::class,
                     ConfigValidator::class                              => ConfigValidatorFactory::class,

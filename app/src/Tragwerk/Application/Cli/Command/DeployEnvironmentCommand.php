@@ -35,7 +35,6 @@ use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Registry;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Enum\DeployJobStatus;
-use Tragwerk\Domain\Enum\MountSource;
 use Tragwerk\Domain\Model\ProjectConfig;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\DeployJobRepository;
@@ -47,6 +46,7 @@ use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\Service\DomainResolver;
 use Tragwerk\Domain\ValueObject\DeployJobIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Infrastructure\Deploy\VolumeSyncService;
 use Tragwerk\Infrastructure\Git\BareRepository;
 use Tragwerk\Infrastructure\Mercure\MercurePublisher;
 
@@ -113,6 +113,7 @@ final class DeployEnvironmentCommand extends Command
         private readonly string $projectDataPath,
         private readonly MercurePublisher $mercurePublisher,
         private readonly CredentialEncryptor $credentialEncryptor,
+        private readonly VolumeSyncService $volumeSyncService,
     ) {
         parent::__construct();
     }
@@ -895,89 +896,16 @@ final class DeployEnvironmentCommand extends Command
 
         $this->log($jobId, '[Sync] Syncing data volumes from parent branch "' . $parentBranch . '"...');
 
-        $this->syncVolumes($sftp, $projectId, $branch, $parentBranch, $config, $jobId);
+        $this->volumeSyncService->syncVolumes(
+            $sftp,
+            $projectId,
+            $branch,
+            $parentBranch,
+            $config,
+            fn (string $message) => $this->log($jobId, $message),
+        );
 
         $this->log($jobId, '[Sync] Data sync completed.');
-    }
-
-    private function syncVolumes(
-        SFTP $sftp,
-        string $projectId,
-        string $branch,
-        string $parentBranch,
-        ProjectConfig $config,
-        DeployJobIdentifier $jobId,
-    ): void {
-        $parentSlug           = $this->slugify(basename($parentBranch));
-        $branchSlug           = $this->slugify(basename($branch));
-        $parentDir            = 'tragwerk/' . $projectId . '/' . $parentBranch;
-        $childDir             = 'tragwerk/' . $projectId . '/' . $branch;
-        $shortId              = substr($projectId, 0, 8);
-        $parentComposeProject = 'tw-' . $shortId . '-' . $parentSlug;
-        $childComposeProject  = 'tw-' . $shortId . '-' . $branchSlug;
-
-        foreach ($config->services as $service) {
-            $type = $service->type->value;
-
-            if (
-                ! str_starts_with($type, 'postgresql:')
-                && ! str_starts_with($type, 'mysql:')
-                && ! str_starts_with($type, 'mariadb:')
-            ) {
-                continue;
-            }
-
-            $serviceSlug = $this->slugify($service->name);
-            $volName     = $serviceSlug . '-data';
-            $src         = $parentComposeProject . '_' . $volName;
-            $dst         = $childComposeProject . '_' . $volName;
-
-            $this->log($jobId, '[Sync] Syncing DB volume "' . $volName . '" from parent...');
-
-            $parentDc = 'NO_COLOR=1 docker compose --project-name ' . escapeshellarg($parentComposeProject);
-            $childDc  = 'NO_COLOR=1 docker compose --project-name ' . escapeshellarg($childComposeProject);
-
-            $sftp->exec('cd ~/' . $parentDir . ' && ' . $parentDc . ' stop ' . escapeshellarg($serviceSlug) . ' 2>&1');
-            $sftp->exec('cd ~/' . $childDir . ' && ' . $childDc . ' stop ' . escapeshellarg($serviceSlug) . ' 2>&1');
-
-            $sftp->exec(
-                'docker run --rm'
-                . ' -v ' . escapeshellarg($src) . ':/src:ro'
-                . ' -v ' . escapeshellarg($dst) . ':/dst'
-                . ' alpine sh -c "cp -a /src/. /dst/" 2>&1',
-            );
-
-            $sftp->exec('cd ~/' . $parentDir . ' && ' . $parentDc . ' start ' . escapeshellarg($serviceSlug) . ' 2>&1');
-            $sftp->exec('cd ~/' . $childDir . ' && ' . $childDc . ' start ' . escapeshellarg($serviceSlug) . ' 2>&1');
-
-            $this->log($jobId, '[Sync] Volume "' . $volName . '" synced.');
-        }
-
-        foreach ($config->applications as $app) {
-            $appSlug = $this->slugify($app->name);
-
-            foreach ($app->mounts as $mount) {
-                if ($mount->source !== MountSource::LOCAL || ! $mount->cloneFromParent) {
-                    continue;
-                }
-
-                $mountSlug = $this->slugify($mount->name);
-                $volName   = $appSlug . '-' . $mountSlug;
-                $src       = $parentComposeProject . '_' . $volName;
-                $dst       = $childComposeProject . '_' . $volName;
-
-                $this->log($jobId, '[Sync] Syncing app mount volume "' . $volName . '"...');
-
-                $sftp->exec(
-                    'docker run --rm'
-                    . ' -v ' . escapeshellarg($src) . ':/src:ro'
-                    . ' -v ' . escapeshellarg($dst) . ':/dst'
-                    . ' alpine sh -c "cp -a /src/. /dst/" 2>&1',
-                );
-
-                $this->log($jobId, '[Sync] Volume "' . $volName . '" synced.');
-            }
-        }
     }
 
     private function parseProjectConfig(string $xmlContent): ProjectConfig
