@@ -21,6 +21,7 @@ use Tragwerk\Domain\Repository\RegistryPrefixRepository;
 use Tragwerk\Domain\Repository\RegistryRepository;
 use Tragwerk\Domain\Repository\ServerRepository;
 use Tragwerk\Domain\Service\DomainResolver;
+use Tragwerk\Infrastructure\Deploy\VolumeSyncService;
 use Tragwerk\Infrastructure\Git\BareRepository;
 use Tragwerk\Infrastructure\Mercure\MercurePublisher;
 
@@ -55,6 +56,7 @@ final readonly class DeployEnvironmentCommandFactory
         $envVars        = $container->get(EnvVarResolver::class);
         $mercure        = $container->get(MercurePublisher::class);
         $encryptor      = $container->get(CredentialEncryptor::class);
+        $volumeSync     = $container->get(VolumeSyncService::class);
 
         assert($projects instanceof ProjectRepository);
         assert($servers instanceof ServerRepository);
@@ -73,6 +75,7 @@ final readonly class DeployEnvironmentCommandFactory
         assert($envVars instanceof EnvVarResolver);
         assert($mercure instanceof MercurePublisher);
         assert($encryptor instanceof CredentialEncryptor);
+        assert($volumeSync instanceof VolumeSyncService);
 
         return new DeployEnvironmentCommand(
             $projects,
@@ -93,6 +96,7 @@ final readonly class DeployEnvironmentCommandFactory
             $dataPath,
             $mercure,
             $encryptor,
+            $volumeSync,
         );
     }
 }
