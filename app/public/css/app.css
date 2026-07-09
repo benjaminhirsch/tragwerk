@@ -915,6 +915,13 @@ body:has(> .tw-footer) > main { flex: 1 0 auto; width: 100% }
 .doc__note .bi { color: var(--warn-text); }
 .doc__note span { font-size: .82rem; color: var(--warn-text); line-height: 1.5; }
 
+/* Address rendered as image (anti-crawl); theme-swapped copies */
+.doc__addr { margin: .2rem 0 1rem; }
+.doc__addr img { display: block; max-width: 100%; height: auto; }
+.doc__addr .addr-img--dark { display: none; }
+[data-bs-theme="dark"] .doc__addr .addr-img--light { display: none; }
+[data-bs-theme="dark"] .doc__addr .addr-img--dark { display: block; }
+
 /* ============================================================
    LANDING / HOMEPAGE
    ============================================================ */
