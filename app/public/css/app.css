@@ -915,6 +915,13 @@ body:has(> .tw-footer) > main { flex: 1 0 auto; width: 100% }
 .doc__note .bi { color: var(--warn-text); }
 .doc__note span { font-size: .82rem; color: var(--warn-text); line-height: 1.5; }
 
+/* Emphasised legal callout (e.g. right to object, Art. 21(4) GDPR — presented clearly and separately) */
+.doc__callout { background: var(--accent-soft); border: 1px solid var(--accent-border); border-left: 4px solid var(--accent); border-radius: .6rem; padding: 1rem 1.15rem; margin: 0 0 2rem; }
+.doc__callout__title { display: flex; align-items: center; gap: .5rem; font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; font-weight: 700; color: var(--accent-text); margin-bottom: .5rem; }
+.doc__callout__title .bi { font-size: 1rem; }
+.doc__callout p { margin: 0; }
+.doc__callout strong { color: var(--accent-text); }
+
 /* Address rendered as image (anti-crawl); theme-swapped copies */
 .doc__addr { margin: .2rem 0 1rem; }
 .doc__addr img { display: block; max-width: 100%; height: auto; }
