@@ -23,7 +23,7 @@ final readonly class SendPasswordResetMail
     {
         $this->producer->sendMessage(new Message\SendMail(
             to: $event->user->email,
-            subject: $this->translator->translate('mail.passwordReset.subject'),
+            subject: $this->translator->translate('Request to reset your password'),
             text: $this->templateRenderer->render('mail::passwordReset', [
                 'user'          => $event->user,
                 'passwordReset' => $event->passwordReset,
