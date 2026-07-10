@@ -23,7 +23,7 @@ final readonly class SendRegistrationMail
     {
         $this->producer->sendMessage(new Message\SendMail(
             to: $event->user->email,
-            subject: $this->translator->translate('mail.emailConfirmation.subject'),
+            subject: $this->translator->translate('Confirmation of your e-mail address'),
             text: $this->templateRenderer->render('mail::userRegistered', [
                 'user'         => $event->user,
                 'confirmation' => $event->confirmation,
