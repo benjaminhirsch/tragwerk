@@ -44,19 +44,19 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # build_token flags the app image, which needs GITHUB_TOKEN for the
+          # Composer install. The secret itself is injected in the build step —
+          # the `secrets` context is not available here in the matrix.
           - name: tragwerk
             context: app
             file: app/Dockerfile.prod
-            build_args: |
-              GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+            build_token: true
           - name: tragwerk-sshd
             context: docker/sshd
             file: docker/sshd/Dockerfile
-            build_args: ""
           - name: tragwerk-docs
             context: docs
             file: docs/Dockerfile
-            build_args: ""
 
     steps:
       # 1. Check out the source
@@ -96,9 +96,10 @@ jobs:
             type=semver,pattern={{version}}
             type=raw,value=latest,enable={{is_default_branch}}
 
-      # 6. Build and push the image. build_args only matters for the app
-      #    (GITHUB_TOKEN to avoid github.com API rate limits during the Composer
-      #    install), empty for sshd/docs.
+      # 6. Build and push the image. Only the app image gets GITHUB_TOKEN (to
+      #    avoid github.com API rate limits during the Composer install); sshd
+      #    and docs get no build args. The secret is read here, where the
+      #    `secrets` context is valid.
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
@@ -107,4 +108,4 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: ${{ matrix.build_args }}
+          build-args: ${{ matrix.build_token && format('GITHUB_TOKEN={0}', secrets.GITHUB_TOKEN) || '' }}
