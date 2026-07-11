@@ -1,0 +1,34 @@
+# Build context for the dev image (app/Dockerfile). BuildKit uses this file
+# instead of .dockerignore for that Dockerfile. It is identical to
+# .dockerignore EXCEPT it does not exclude Caddyfile.dev, which app/Dockerfile
+# copies into the image. The prod build (Dockerfile.prod) still uses
+# .dockerignore, so the production image stays free of dev-only files.
+
+# VCS / IDE
+.git
+.gitignore
+.idea
+
+# Dev-only container config not copied by app/Dockerfile
+Dockerfile
+Dockerfile.prod
+*.dev.ini
+
+# Dependencies — provided via bind mount at runtime
+vendor/
+
+# Runtime data — provided by named volumes at runtime
+data/
+
+# Tests & QA tooling — not needed in the image
+test/
+phpunit.xml.dist
+phpstan.neon
+phpcs.xml.dist
+phplint.yml
+public/coverage/
+
+# Laminas development mode — MUST NEVER ship.
+config/development.config.php
+config/autoload/*.local.php
+config/autoload/development.local.php
