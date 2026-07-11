@@ -78,7 +78,7 @@ jobs:
 
       # 4. Log in to the GitHub Container Registry (built-in GITHUB_TOKEN).
       - name: Log in to ghcr.io
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -88,7 +88,7 @@ jobs:
       #    default branch.
       - name: Extract Docker metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ steps.img.outputs.image }}
           tags: |
@@ -98,8 +98,9 @@ jobs:
 
       # 6. Build and push the image. Only the app image gets GITHUB_TOKEN (to
       #    avoid github.com API rate limits during the Composer install); sshd
-      #    and docs get no build args. The secret is read here, where the
-      #    `secrets` context is valid.
+      #    and docs get no secret. Passed as a BuildKit secret (not a build arg)
+      #    so it never lands in the image history. The secret is read here,
+      #    where the `secrets` context is valid.
       - name: Build and push image
         uses: docker/build-push-action@v7
         with:
@@ -108,4 +109,4 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: ${{ matrix.build_token && format('GITHUB_TOKEN={0}', secrets.GITHUB_TOKEN) || '' }}
+          secrets: ${{ matrix.build_token && format('github_token={0}', secrets.GITHUB_TOKEN) || '' }}
