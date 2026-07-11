@@ -27,7 +27,15 @@ permissions:
   packages: write
 
 jobs:
+  # Gate: run the full check suite (lint, code style, static analysis, tests)
+  # by reusing pr-checks.yml. Images are only built if every check passes.
+  checks:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/pr-checks.yml
+
   build-and-push:
+    needs: checks
     runs-on: ubuntu-latest
 
     # One job per image, in parallel. name = image name suffix under the owner,

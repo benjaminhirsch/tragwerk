@@ -17,6 +17,9 @@ on:
   pull_request:
     branches:
       - 'main'
+  # Callable as a gate from other workflows (e.g. build-and-push runs these
+  # checks before building the images).
+  workflow_call:
 
 concurrency:
   group: pr-checks-${{ github.ref }}
