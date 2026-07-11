@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tragwerk\Factory\Valinor;
 
-use CuyZ\Valinor\Mapper\Configurator\ConvertKeysToCamelCase;
+use CuyZ\Valinor\Mapper\Configurator\MapKeysToCamelCase;
 use CuyZ\Valinor\Mapper\Http\HttpRequest;
 use CuyZ\Valinor\MapperBuilder;
 use Mezzio\Router\RouteResult;
@@ -21,7 +21,7 @@ final class DefaultMapperBuilderFactory
     {
         return new MapperBuilder()
             ->registerConverter(self::convertServerRequestToNext(...))
-            ->configureWith(new ConvertKeysToCamelCase())
+            ->configureWith(new MapKeysToCamelCase())
             ->registerConstructor(PasswordHash::fromHash(...))
             ->registerConstructor(UserIdentifier::fromString(...))
             ->registerConstructor(TimestampImmutable::fromString(...))
