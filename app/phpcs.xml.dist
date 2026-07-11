@@ -42,4 +42,17 @@
     <rule ref="PSR2.Classes.PropertyDeclaration">
         <exclude-pattern>src/Tragwerk/Domain/Entity/User.php</exclude-pattern>
     </rule>
+
+    <!--
+        config.php lists many ConfigProvider classes that all share the short
+        name "ConfigProvider". The coding standard would import one and force the
+        rest to fully qualified names. Whichever provider ends up short-aliased
+        becomes invisible to laminas-component-installer's FQCN detection, so it
+        gets re-injected on the next composer install, producing a duplicate
+        provider that ConfigAggregator rejects. Keep every provider fully
+        qualified here so the installer detects them all.
+    -->
+    <rule ref="SlevomatCodingStandard.Namespaces.ReferenceUsedNamesOnly.ReferenceViaFullyQualifiedName">
+        <exclude-pattern>config/config.php</exclude-pattern>
+    </rule>
 </ruleset>
