@@ -3,10 +3,11 @@
 .gitignore
 .idea
 
-# Dev-only container + PHP config (prod variants are copied explicitly)
+# Dev-only container + PHP config (prod variants are copied explicitly).
+# Caddyfile.dev is intentionally NOT excluded: the dev image (app/Dockerfile)
+# copies it. The prod image copies Caddyfile explicitly and never references it.
 Dockerfile
 Dockerfile.prod
-Caddyfile.dev
 *.dev.ini
 
 # Dependencies — rebuilt in the vendor stage
