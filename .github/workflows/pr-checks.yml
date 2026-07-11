@@ -1,0 +1,87 @@
+name: PR checks
+
+# Runs on every pull request targeting main: linting, code style, static
+# analysis and the full test suite — the same checks as `make check`, split into
+# parallel jobs for granular PR status and faster feedback.
+#
+# A prime `build` job warms the Docker layer cache and the Composer vendor cache
+# once; the quality jobs and the tests job then reuse those caches (needs:
+# build) instead of each doing a cold build. Shared setup lives in the local
+# composite action .github/actions/setup-app.
+#
+# Integration tests create their own app_test database and run migrations at
+# bootstrap (test/Integration/Support/TestDatabaseSetup.php); they only need a
+# reachable Postgres, provided by the compose `db` service.
+
+on:
+  pull_request:
+    branches:
+      - 'main'
+
+concurrency:
+  group: pr-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Prime the shared caches once (Docker layers + Composer vendor).
+  build:
+    name: Build & cache
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set up app image and dependencies
+        uses: ./.github/actions/setup-app
+        with:
+          write-cache: 'true'
+
+  # Lint, code style and static analysis in parallel — none need a database.
+  quality:
+    name: ${{ matrix.name }}
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Lint
+            script: phplint
+          - name: Code style
+            script: cs-check
+          - name: Static analysis
+            script: phpstan
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set up app image and dependencies
+        uses: ./.github/actions/setup-app
+      - name: Run ${{ matrix.name }}
+        run: docker compose run --rm --no-deps app composer run ${{ matrix.script }}
+
+  # Full test suite (unit + integration) with Postgres.
+  tests:
+    name: Tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set up app image and dependencies
+        uses: ./.github/actions/setup-app
+      - name: Start database
+        run: |
+          docker compose up -d db
+          for i in $(seq 1 30); do
+            if docker compose exec -T db pg_isready -U app -d app; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Postgres did not become ready in time" >&2
+          docker compose logs db
+          exit 1
+      - name: Run tests (unit + integration)
+        run: docker compose run --rm --env XDEBUG_MODE=off app composer run test
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
