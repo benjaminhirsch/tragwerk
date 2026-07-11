@@ -40,6 +40,8 @@ tooling lives on your VPS.
 Full guides, configuration reference and tutorials live at
 **[docs.tragwerk.app](https://docs.tragwerk.app/)**.
 
+A dedicated section on how to self-host Tragwerk itself is coming soon.
+
 ## License
 
 Tragwerk is free and open source software, licensed under the  GNU Affero General Public License v3.0 (AGPL-3.0). 
