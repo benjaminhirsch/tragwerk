@@ -1,0 +1,58 @@
+name: Set up app image and dependencies
+description: >
+  Prepare the compose environment, build the dev app image with GitHub Actions
+  layer caching, and restore/install Composer dependencies onto the bind mount.
+
+inputs:
+  write-cache:
+    description: >
+      Whether to write the Docker layer cache (type=gha). Only the prime build
+      job should set this to 'true'; downstream jobs read the warm cache.
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    # .env.local is required (compose env_file) and seeded from the template.
+    # DOCKER_UID/GID must match the runner user so the bind-mounted ./app stays
+    # writable when Composer writes vendor/. DOCKER_SOCK_GID matches the host
+    # docker socket group the app container is added to.
+    - name: Prepare compose environment
+      shell: bash
+      run: |
+        cp .env.local.dist .env.local
+        {
+          echo "DOCKER_UID=$(id -u)"
+          echo "DOCKER_GID=$(id -g)"
+          echo "DOCKER_SOCK_GID=$(stat -c '%g' /var/run/docker.sock)"
+        } >> "$GITHUB_ENV"
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    # Build the dev app image tagged exactly as docker-compose.yaml expects
+    # (tragwerk/app) so `docker compose run app` reuses it without rebuilding.
+    # Layers come from / go to the shared GitHub Actions cache.
+    - name: Build dev app image (layer-cached)
+      uses: docker/build-push-action@v6
+      with:
+        context: app
+        file: app/Dockerfile
+        load: true
+        tags: tragwerk/app:latest
+        cache-from: type=gha
+        cache-to: ${{ inputs.write-cache == 'true' && 'type=gha,mode=max' || '' }}
+
+    # Restore vendor/ from cache keyed on composer.lock; the prime build job
+    # populates it on a miss, downstream jobs get a hit and skip install.
+    - name: Restore Composer vendor
+      id: vendor
+      uses: actions/cache@v4
+      with:
+        path: app/vendor
+        key: vendor-${{ hashFiles('app/composer.lock') }}
+
+    - name: Install PHP dependencies
+      if: steps.vendor.outputs.cache-hit != 'true'
+      shell: bash
+      run: docker compose run --rm --no-deps app composer install --no-interaction --no-progress --prefer-dist
