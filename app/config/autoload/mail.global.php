@@ -23,9 +23,9 @@ return [
             MailTransport\Smtp\EsmtpTransport::class => [
                 'host' => getenv('SMTP_HOST'),
                 'port' => $smtpPort,
-                'localDomain' => getenv('SMTP_LOCAL_DOMAIN'),
-                'username' => getenv('SMTP_USERNAME'),
-                'password' => getenv('SMTP_PASSWORD'),
+                'localDomain' => getenv('SMTP_LOCAL_DOMAIN') ?: null,
+                'username' => getenv('SMTP_USERNAME') ?: null,
+                'password' => getenv('SMTP_PASSWORD') ?: null,
             ],
         ],
         'defaultEmail' => [

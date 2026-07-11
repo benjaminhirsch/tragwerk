@@ -25,6 +25,8 @@
         <env name="TEST_DB_PASSWORD" value="app" force="true"/>
         <env name="TWO_FACTOR_KEY" value="w0DMz5++tsts3oR2P6t++8WXnTOeM0GGHU8FQrZ15Ok=" force="true"/>
         <env name="CREDENTIAL_ENCRYPTION_KEY" value="NKvFeNFUeEx4Lvifq6TVfYyIqvuiNrUl8kvWqboSMhQ=" force="true"/>
+        <env name="SMTP_HOST" value="mailpit" force="true"/>
+        <env name="SMTP_PORT" value="1025" force="true"/>
     </php>
 
     <source ignoreIndirectDeprecations="true">
