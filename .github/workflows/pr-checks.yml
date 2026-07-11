@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set up app image and dependencies
         uses: ./.github/actions/setup-app
         with:
@@ -55,7 +55,7 @@ jobs:
             script: phpstan
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set up app image and dependencies
         uses: ./.github/actions/setup-app
       - name: Run ${{ matrix.name }}
@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set up app image and dependencies
         uses: ./.github/actions/setup-app
       - name: Start database

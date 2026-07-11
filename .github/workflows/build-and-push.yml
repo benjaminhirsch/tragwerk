@@ -61,11 +61,11 @@ jobs:
     steps:
       # 1. Check out the source
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # 2. Set up Buildx (BuildKit backend).
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       # 3. Compute the full (lowercase) image name. On GitHub the registry is
       #    always ghcr.io; the owner may contain uppercase letters and must be
@@ -101,7 +101,7 @@ jobs:
       #    and docs get no build args. The secret is read here, where the
       #    `secrets` context is valid.
       - name: Build and push image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.file }}
