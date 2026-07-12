@@ -1,10 +1,14 @@
 name: Docs
 
 # Builds the VitePress site in docs/ and publishes it to GitHub Pages, served
-# from the custom domain docs.tragwerk.app (docs/public/CNAME).
+# from the custom domain docs.tragwerk.app.
 #
-# Pages source must be set to "GitHub Actions" in the repository settings —
-# the deploy-pages action cannot enable that itself.
+# Two things must be set once in the repository settings under Pages; neither
+# can be done from here. The source must be "GitHub Actions" — configure-pages
+# can only provision that with a PAT or GitHub App token, not the built-in
+# GITHUB_TOKEN. And the custom domain must be entered there too: an Actions
+# deployment ignores a CNAME file in the artifact (that is a branch-deploy
+# mechanism only), so the domain lives in the settings, not in the repo.
 
 on:
   push:
