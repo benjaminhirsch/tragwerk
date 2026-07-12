@@ -87,15 +87,15 @@ db/migrations/migrate:
 
 PROD_COMPOSE := docker compose -f docker-compose.prod.yaml
 
-## prod/build: Build the production app/docs/sshd images on this host
-.PHONY: prod/build
-prod/build:
-	$(PROD_COMPOSE) build
+## prod/pull: Pull the production app/docs/sshd images from the registry
+.PHONY: prod/pull
+prod/pull:
+	$(PROD_COMPOSE) pull
 
-## prod/up: Build (if needed) and start the full production stack detached
+## prod/up: Pull the latest images and start the full production stack detached
 .PHONY: prod/up
-prod/up:
-	$(PROD_COMPOSE) up -d --build
+prod/up: prod/pull
+	$(PROD_COMPOSE) up -d
 
 # Working copy of the local env (gitignored); seeded from the committed template.
 .env.local:

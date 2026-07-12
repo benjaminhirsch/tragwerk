@@ -26,6 +26,10 @@ final readonly class CreateEmailConfirmation
 
     public function __invoke(Event\UserRegistered $event): void
     {
+        if (! $event->requiresEmailConfirmation) {
+            return;
+        }
+
         $token = bin2hex(random_bytes(32));
 
         $confirmation = new EmailConfirmation(

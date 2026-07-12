@@ -1,9 +1,8 @@
-# Production stack for self-hosting Tragwerk on a VPS.
+# Production stack for self-hosting Tragwerk. See docs/install/ for the full guide.
 #
-# The app image is pulled from the registry (built + pushed by CI, see
-# .forgejo/workflows/build-and-push.yml), no longer built on the VPS:
+# The images are pulled from the GitHub Container Registry (built + pushed by CI,
+# see .github/workflows/build-and-push.yml), not built on the server:
 #   cp .env.prod.dist .env   # then fill in the secrets / hosts
-#   docker login git.familiehirsch.net          # once, if the package is private
 #   docker compose -f docker-compose.prod.yaml pull
 #   docker compose -f docker-compose.prod.yaml up -d
 #
@@ -32,6 +31,10 @@ x-app-env: &app-env
   MERCURE_HUB_URL: ${MERCURE_HUB_URL:-http://localhost/.well-known/mercure}
   MERCURE_TOPIC_BASE: ${MERCURE_TOPIC_BASE:-https://tragwerk.build}
   TWO_FACTOR_KEY: ${TWO_FACTOR_KEY:?set TWO_FACTOR_KEY in .env}
+  CREDENTIAL_ENCRYPTION_KEY: ${CREDENTIAL_ENCRYPTION_KEY:?set CREDENTIAL_ENCRYPTION_KEY in .env}
+  # Host shown in the git clone URL on the project page. Defaults to the app host,
+  # since sshd is reachable on the same machine.
+  TRAGWERK_SSH_HOST: ${TRAGWERK_SSH_HOST:-${APP_HOST}}
   LOG_LEVEL: ${LOG_LEVEL:-error}
   FRANKENPHP_NUM_WORKERS: ${FRANKENPHP_NUM_WORKERS:-4}
   SMTP_HOST: ${SMTP_HOST:-}
@@ -51,7 +54,7 @@ x-app-volumes: &app-volumes
 # Base for the app + every worker: same image, env, volumes, docker.sock access,
 # internal network, and a gate on successful migration.
 x-app-base: &app-base
-  image: ${APP_IMAGE:-git.familiehirsch.net/b3n/tragwerk:latest}
+  image: ${APP_IMAGE:-ghcr.io/benjaminhirsch/tragwerk:latest}
   restart: unless-stopped
   init: true
   environment: *app-env
@@ -128,12 +131,12 @@ services:
   # One-shot: prepare the queue + apply migrations, then exit 0. Long-running
   # services gate on this via service_completed_successfully.
   migrate:
-    image: ${APP_IMAGE:-git.familiehirsch.net/b3n/tragwerk:latest}
+    image: ${APP_IMAGE:-ghcr.io/benjaminhirsch/tragwerk:latest}
     environment: *app-env
     command:
       - sh
       - -c
-      - "bin/cli worker:prepare && bin/cli migrations:migrate --no-interaction --all-or-nothing"
+      - "bin/cli worker:prepare-queue && bin/cli migrations:migrate --no-interaction --all-or-nothing"
     volumes:
       - data-cache:/app/data/cache
       - data-logging:/app/data/logging
@@ -166,7 +169,7 @@ services:
       retries: 12
 
   sshd:
-    image: ${SSHD_IMAGE:-git.familiehirsch.net/b3n/tragwerk-sshd:latest}
+    image: ${SSHD_IMAGE:-ghcr.io/benjaminhirsch/tragwerk-sshd:latest}
     restart: unless-stopped
     environment:
       TZ: ${TZ:-UTC}
@@ -180,7 +183,7 @@ services:
       - internal
 
   docs:
-    image: ${DOCS_IMAGE:-git.familiehirsch.net/b3n/tragwerk-docs:latest}
+    image: ${DOCS_IMAGE:-ghcr.io/benjaminhirsch/tragwerk-docs:latest}
     restart: unless-stopped
     networks:
       - web
