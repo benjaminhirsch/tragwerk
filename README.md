@@ -9,21 +9,37 @@ hand-written Dockerfiles, no compose wrangling, no vendor lock-in.
 
 ## What makes Tragwerk different
 
+Tragwerk is not a general-purpose self-hosted PaaS, and it is not trying to
+replace one. It is a **specialised alternative**: it deploys PHP and nothing
+else, and it spends that restriction on depth.
+
+- **PHP only, and that is the point.** Because the runtime is never in question,
+  Tragwerk resolves your PHP extensions itself, bakes your `php.ini` into the
+  image, and runs [FrankenPHP](https://frankenphp.dev/) - classic mode by
+  default, a drop-in PHP-FPM replacement, with optional worker mode for
+  persistent, high-throughput serving.
+- **XML config, not YAML or JSON sprawl.** One schema-validated project file in
+  your repository describes your app, services, cron jobs and environment. The
+  full Docker / Docker Compose stack is generated from it - you do not write, and
+  do not own, the Dockerfile.
+- **Your servers never see your source code.** Images are built on the Tragwerk
+  instance and pushed to a registry; the target server only pulls the finished
+  image and swaps the container.
 - **Bring your own server.** Any provider that offers a server with SSH works.
   If [Docker runs on it](https://docs.docker.com/engine/install/), Tragwerk runs
   on it. Your infrastructure stays yours.
-- **XML config, not YAML or JSON sprawl.** One clear, intuitive project file describes
-  your app, services, cron jobs and environment. The full Docker / Docker
-  Compose stack is generated from it automatically.
 - **Many apps, one server.** A built-in [Traefik](https://traefik.io/) reverse proxy
   routes multiple applications on the same server, each isolated in its own
   containers.
-- **Modern PHP runtime.** Apps run on [FrankenPHP](https://frankenphp.dev/):
-  classic mode by default - a drop-in PHP-FPM replacement - with optional worker
-  mode for persistent, high-throughput serving.
 - **Batteries included.** Per-team access control, per-app cron jobs, workers, live server
   metrics, deploy history and encrypted-at-rest SSH credentials come out of the
   box.
+
+That specialisation cuts both ways, and the trade-offs are worth reading before
+you commit: **[How Tragwerk
+Compares](https://docs.tragwerk.app/guide/comparison)** puts it side by side with
+a general-purpose platform, including the cases where Tragwerk is the wrong
+choice.
 
 ## How it works
 

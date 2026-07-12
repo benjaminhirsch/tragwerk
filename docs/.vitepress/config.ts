@@ -51,6 +51,7 @@ export default defineConfig({
           text: 'Guide',
           items: [
             { text: 'Introduction', link: '/guide/introduction' },
+            { text: 'How Tragwerk Compares', link: '/guide/comparison' },
             { text: 'Core Concepts', link: '/guide/concepts' },
             { text: 'Getting Started', link: '/guide/getting-started' },
           ],

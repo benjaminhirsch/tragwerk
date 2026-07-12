@@ -51,6 +51,11 @@ Tragwerk is a good fit when you:
 - run one or more PHP applications and want per-branch preview environments;
 - want declarative, version-controlled infrastructure without writing Docker by hand.
 
+Tragwerk is deliberately narrow: it deploys PHP and nothing else, and it trades
+control for automation. [How Tragwerk Compares](/guide/comparison) sets it
+against a general-purpose platform like Coolify — including the cases where
+Tragwerk is the wrong answer.
+
 ## Next steps
 
 - Learn the vocabulary in [Core Concepts](/guide/concepts).
