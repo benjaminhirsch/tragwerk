@@ -33,5 +33,4 @@ return static function (Application $app, MiddlewareFactory $factory, ContainerI
     new Routes\Metrics($middlewareFactory)->registerRoutes($routeCollector);
     new Routes\Log($middlewareFactory)->registerRoutes($routeCollector);
     new Routes\Domain($middlewareFactory)->registerRoutes($routeCollector);
-    new Routes\Payment($middlewareFactory)->registerRoutes($routeCollector);
 };

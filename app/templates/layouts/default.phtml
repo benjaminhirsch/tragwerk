@@ -312,12 +312,6 @@ $this->layout('layout::blank') ?>
     <?php if(($wide ?? true) === false):?></div><?php endif ?>
 </main>
 
-<footer class="tw-footer">
-    <a href="<?= $this->url('imprint') ?>"><?= $this->e($this->t('Imprint')) ?></a>
-    <a href="<?= $this->url('privacy-policy') ?>"><?= $this->e($this->t('Privacy Policy')) ?></a>
-    <a href="<?= $this->url('terms-and-conditions') ?>"><?= $this->e($this->t('Terms & Conditions')) ?></a>
-</footer>
-
 <?php $this->push('javascript') ?>
 <script src="/js/init-elements.js"></script>
 <script nonce="<?= $this->e($this->cspNonce()) ?>">

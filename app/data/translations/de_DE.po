@@ -956,18 +956,6 @@ msgstr ""
 "Möchtest du die {forge}-Integration wirklich löschen? Diese Aktion kann "
 "nicht rückgängig gemacht werden."
 
-msgid "Imprint"
-msgstr "Impressum"
-
-msgid "Legal"
-msgstr "Rechtliches"
-
-msgid "Last updated: June 20, 2026"
-msgstr ""
-
-msgid "Placeholder content."
-msgstr ""
-
 msgid ""
 "{strong} The text below is sample copy and must be replaced with your "
 "company's actual legal details before going live."
@@ -977,9 +965,6 @@ msgid "Information pursuant to applicable law"
 msgstr ""
 
 msgid "Represented by"
-msgstr ""
-
-msgid "Contact"
 msgstr ""
 
 msgid "Phone"
@@ -1006,15 +991,9 @@ msgstr ""
 msgid "Liability for content"
 msgstr ""
 
-msgid "Privacy Policy"
-msgstr ""
-
 msgid ""
 "{strong} This is sample copy to illustrate structure and layout. Replace it "
 "with a policy reviewed by your legal team before publishing."
-msgstr ""
-
-msgid "On this page"
 msgstr ""
 
 msgid "Overview"
@@ -1033,35 +1012,6 @@ msgid "Retention"
 msgstr ""
 
 msgid "Your rights"
-msgstr ""
-
-msgid "Terms & Conditions"
-msgstr ""
-
-msgid ""
-"{strong} The clauses below are sample text for layout purposes only and are "
-"not legally binding. Replace them with terms reviewed by your legal team."
-msgstr ""
-
-msgid "Acceptance of terms"
-msgstr ""
-
-msgid "Use of the service"
-msgstr ""
-
-msgid "Accounts"
-msgstr ""
-
-msgid "Billing"
-msgstr ""
-
-msgid "Availability"
-msgstr ""
-
-msgid "Limitation of liability"
-msgstr ""
-
-msgid "Changes to these terms"
 msgstr ""
 
 msgid ""
@@ -1938,9 +1888,6 @@ msgstr "Abmelden"
 msgid "Registries"
 msgstr "Register"
 
-msgid "Back to app"
-msgstr "Zurück zur Anwendung"
-
 msgid ""
 "We received a request to change the email address of your Tragwerk account "
 "to {email}. Please confirm it by clicking the link below."
@@ -2014,15 +1961,6 @@ msgstr "Mitglieder einladen"
 
 msgid "Tragwerk — Simple hosting for PHP applications."
 msgstr "Tragwerk — Einfaches Hosting für PHP-Anwendungen."
-
-msgid "Imprint:"
-msgstr "Impressum:"
-
-msgid "Privacy Policy:"
-msgstr "Datenschutz:"
-
-msgid "Terms & Conditions:"
-msgstr "AGB:"
 
 msgid "This is an automated message — please do not reply to this email."
 msgstr "Dies ist eine automatische Nachricht — bitte antworten Sie nicht auf diese E-Mail."

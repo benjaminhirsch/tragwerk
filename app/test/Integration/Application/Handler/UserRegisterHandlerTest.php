@@ -30,25 +30,10 @@ final class UserRegisterHandlerTest extends AppIntegrationTestCase
             'email'     => 'max@example.com',
             'password1' => 'secure-password-123',
             'password2' => 'secure-password-123',
-            'terms'     => '1',
         ]);
 
         self::assertSame(302, $response->getStatusCode());
         self::assertStringContainsString('/login', $response->getHeaderLine('Location'));
-    }
-
-    #[Test]
-    public function postWithoutAcceptedTermsReRendersForm(): void
-    {
-        $response = $this->dispatch('POST', '/register', [
-            'firstname' => 'Max',
-            'lastname'  => 'Mustermann',
-            'email'     => 'max@example.com',
-            'password1' => 'secure-password-123',
-            'password2' => 'secure-password-123',
-        ]);
-
-        self::assertSame(200, $response->getStatusCode());
     }
 
     #[Test]
@@ -60,7 +45,6 @@ final class UserRegisterHandlerTest extends AppIntegrationTestCase
             'email'     => 'max@example.com',
             'password1' => 'secure-password-123',
             'password2' => 'secure-password-123',
-            'terms'     => '1',
         ]);
 
         $repository = $this->container->get(UserRepository::class);
@@ -109,7 +93,6 @@ final class UserRegisterHandlerTest extends AppIntegrationTestCase
             'email'     => 'max@example.com',
             'password1' => 'secure-password-123',
             'password2' => 'secure-password-123',
-            'terms'     => '1',
         ];
 
         $this->dispatch('POST', '/register', $payload);
@@ -128,7 +111,6 @@ final class UserRegisterHandlerTest extends AppIntegrationTestCase
             'email'     => 'max@example.com',
             'password1' => 'secure-password-123',
             'password2' => 'secure-password-123',
-            'terms'     => '1',
         ];
 
         $this->dispatch('POST', '/register', $payload);

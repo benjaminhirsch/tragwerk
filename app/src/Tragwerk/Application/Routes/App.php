@@ -79,36 +79,13 @@ final readonly class App
         $routes->get(
             '/',
             $this->middlewareFactory->prepare([
-                new Middleware\Conditional\Authenticated($this->middlewareFactory->prepare([
-                    Middleware\Redirect\ToDefaultTeam::class,
-                ])),
-                Handler\HomeHandler::class,
+                Middleware\Redirect\ToDefaultTeam::class,
             ]),
             'home',
-        )->setOptions([Middleware\AuthenticationMiddleware::OPTION_REQUIRE_AUTHENTICATION => false]);
+        )->setOptions([Middleware\AuthenticationMiddleware::OPTION_REQUIRE_AUTHENTICATION => true]);
 
         $routes
             ->get('/schema.xsd', $this->middlewareFactory->prepare([Handler\SchemaHandler::class]), 'schema')
-            ->setOptions([Middleware\AuthenticationMiddleware::OPTION_REQUIRE_AUTHENTICATION => false]);
-
-        $routes
-            ->get('/imprint', $this->middlewareFactory->prepare([Handler\Legal\ImprintHandler::class]), 'imprint')
-            ->setOptions([Middleware\AuthenticationMiddleware::OPTION_REQUIRE_AUTHENTICATION => false]);
-
-        $routes
-            ->get(
-                '/privacy-policy',
-                $this->middlewareFactory->prepare([Handler\Legal\PrivacyPolicyHandler::class]),
-                'privacy-policy',
-            )
-            ->setOptions([Middleware\AuthenticationMiddleware::OPTION_REQUIRE_AUTHENTICATION => false]);
-
-        $routes
-            ->get(
-                '/terms-and-conditions',
-                $this->middlewareFactory->prepare([Handler\Legal\TermsHandler::class]),
-                'terms-and-conditions',
-            )
             ->setOptions([Middleware\AuthenticationMiddleware::OPTION_REQUIRE_AUTHENTICATION => false]);
     }
 }

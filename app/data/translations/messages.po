@@ -875,18 +875,6 @@ msgid ""
 "be undone."
 msgstr ""
 
-msgid "Imprint"
-msgstr ""
-
-msgid "Legal"
-msgstr ""
-
-msgid "Last updated: June 20, 2026"
-msgstr ""
-
-msgid "Placeholder content."
-msgstr ""
-
 msgid ""
 "{strong} The text below is sample copy and must be replaced with your "
 "company's actual legal details before going live."
@@ -896,9 +884,6 @@ msgid "Information pursuant to applicable law"
 msgstr ""
 
 msgid "Represented by"
-msgstr ""
-
-msgid "Contact"
 msgstr ""
 
 msgid "Phone"
@@ -925,15 +910,9 @@ msgstr ""
 msgid "Liability for content"
 msgstr ""
 
-msgid "Privacy Policy"
-msgstr ""
-
 msgid ""
 "{strong} This is sample copy to illustrate structure and layout. Replace it "
 "with a policy reviewed by your legal team before publishing."
-msgstr ""
-
-msgid "On this page"
 msgstr ""
 
 msgid "Overview"
@@ -952,35 +931,6 @@ msgid "Retention"
 msgstr ""
 
 msgid "Your rights"
-msgstr ""
-
-msgid "Terms & Conditions"
-msgstr ""
-
-msgid ""
-"{strong} The clauses below are sample text for layout purposes only and are "
-"not legally binding. Replace them with terms reviewed by your legal team."
-msgstr ""
-
-msgid "Acceptance of terms"
-msgstr ""
-
-msgid "Use of the service"
-msgstr ""
-
-msgid "Accounts"
-msgstr ""
-
-msgid "Billing"
-msgstr ""
-
-msgid "Availability"
-msgstr ""
-
-msgid "Limitation of liability"
-msgstr ""
-
-msgid "Changes to these terms"
 msgstr ""
 
 msgid ""
@@ -1779,9 +1729,6 @@ msgid "Sign out"
 msgstr ""
 
 msgid "Registries"
-msgstr ""
-
-msgid "Back to app"
 msgstr ""
 
 msgid ""

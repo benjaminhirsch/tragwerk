@@ -17,7 +17,7 @@ final class UserRegistrationTest extends TestCase
     #[Test]
     public function validInputConstructsAndCreatesUser(): void
     {
-        $dto  = new UserRegistration('Ada', 'Lovelace', 'ada@example.com', 'supersecret', 'supersecret', '1');
+        $dto  = new UserRegistration('Ada', 'Lovelace', 'ada@example.com', 'supersecret', 'supersecret');
         $user = $dto->createUser();
 
         self::assertSame('ada@example.com', $user->email);
@@ -36,22 +36,6 @@ final class UserRegistrationTest extends TestCase
         self::assertContains('password1', $this->errorFields('a', 'b', 'e@x.de', 'short', 'short'));
     }
 
-    #[Test]
-    public function missingTermsAcceptanceIsRejected(): void
-    {
-        $fields = $this->errorFields('Ada', 'Lovelace', 'e@x.de', 'supersecret', 'supersecret', null);
-
-        self::assertContains('terms', $fields);
-    }
-
-    #[Test]
-    public function emptyTermsAcceptanceIsRejected(): void
-    {
-        $fields = $this->errorFields('Ada', 'Lovelace', 'e@x.de', 'supersecret', 'supersecret', '');
-
-        self::assertContains('terms', $fields);
-    }
-
     /** @return array<string> */
     private function errorFields(
         string $f,
@@ -59,10 +43,9 @@ final class UserRegistrationTest extends TestCase
         string $email,
         string $p1,
         string $p2,
-        string|null $terms = '1',
     ): array {
         try {
-            new UserRegistration($f, $l, $email, $p1, $p2, $terms);
+            new UserRegistration($f, $l, $email, $p1, $p2);
         } catch (ValidationCollection $e) {
             return array_map(static fn (ValidationError $v): string => $v->name, $e->validations);
         }

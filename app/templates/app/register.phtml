@@ -8,7 +8,7 @@
 
     <div class="doc__note mb-5" style="max-width:640px;margin:0 auto;text-align:left;">
         <i class="bi bi-exclamation-triangle-fill"></i>
-        <span>During the beta, performance is limited and not representative of the final product. The service is provided &ldquo;as is&rdquo;, without any warranty, guarantees, or assured availability &mdash; expect changes, downtime and potentially data loss. <strong>Do not use in production though!</strong></span>
+        <span><strong>Note:</strong> This software is still in the beta phase, so changes and bugs are to be expected.</span>
     </div>
 
     <div class="auth-head">
@@ -62,31 +62,6 @@
             'required'   => true,
             'validation' => $validationBag ?? null,
         ]) ?>
-
-        <?php
-        $termsError = ($validationBag ?? null)?->getErrorByName('terms');
-        $termsLink  = sprintf(
-            '<a href="%s" target="_blank" rel="noopener">%s</a>',
-            $this->e($this->url('terms-and-conditions')),
-            $this->e($this->t('terms of use')),
-        );
-        $privacyLink = sprintf(
-            '<a href="%s" target="_blank" rel="noopener">%s</a>',
-            $this->e($this->url('privacy-policy')),
-            $this->e($this->t('privacy policy')),
-        );
-        ?>
-        <div class="form-check">
-            <input class="form-check-input<?= $termsError !== null ? ' is-invalid' : '' ?>"
-                   type="checkbox" name="terms" id="terms" value="1" required
-                   <?= (($validationBag ?? null)?->getValueByName('terms') ?? '') === '1' ? 'checked' : '' ?>>
-            <label class="form-check-label" for="terms">
-                <?= sprintf($this->e($this->t('I accept the %s and the %s.')), $termsLink, $privacyLink) ?>
-            </label>
-            <?php if ($termsError !== null): ?>
-                <div class="invalid-feedback d-block"><?= $this->e($this->t($termsError)) ?></div>
-            <?php endif; ?>
-        </div>
 
         <?= $this->fetch('partial::input/button', [
                 'label' => $this->t('Create account'),
