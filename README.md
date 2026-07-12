@@ -9,7 +9,7 @@ hand-written Dockerfiles, no compose wrangling, no vendor lock-in.
 
 ## What makes Tragwerk different
 
-- **Bring your own server.** Any provider that offers a VPS with SSH works.
+- **Bring your own server.** Any provider that offers a server with SSH works.
   If [Docker runs on it](https://docs.docker.com/engine/install/), Tragwerk runs
   on it. Your infrastructure stays yours.
 - **XML config, not YAML or JSON sprawl.** One clear, intuitive project file describes
@@ -33,7 +33,7 @@ hand-written Dockerfiles, no compose wrangling, no vendor lock-in.
    containers behind Traefik.
 
 The target server only ever runs finished Docker images; no source code or build
-tooling lives on your VPS.
+tooling lives on your server.
 
 ## Documentation
 
@@ -46,3 +46,11 @@ A dedicated section on how to self-host Tragwerk itself is coming soon.
 
 Tragwerk is free and open source software, licensed under the  GNU Affero General Public License v3.0 (AGPL-3.0). 
 See the `LICENSE` file for the full text.
+
+## Dual licensing / Commercial use
+
+If you wish to use this software in a commercial context or integrate it into
+a proprietary product without being bound by the copyleft obligations of the
+AGPL-3.0 (such as disclosing your source code), commercial licenses are available.
+
+Please contact us at mail@tragwerk.app for pricing and terms.
