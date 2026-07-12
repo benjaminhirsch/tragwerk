@@ -31,6 +31,11 @@ export default defineConfig({
 
     nav: [
       { text: 'Guide', link: '/guide/introduction', activeMatch: '/guide/' },
+      {
+        text: 'Install',
+        link: '/install/requirements',
+        activeMatch: '/install/',
+      },
       { text: 'App', link: '/app/projects', activeMatch: '/app/' },
       { text: 'Config', link: '/config/overview', activeMatch: '/config/' },
       {
@@ -48,6 +53,17 @@ export default defineConfig({
             { text: 'Introduction', link: '/guide/introduction' },
             { text: 'Core Concepts', link: '/guide/concepts' },
             { text: 'Getting Started', link: '/guide/getting-started' },
+          ],
+        },
+      ],
+      '/install/': [
+        {
+          text: 'Self-Hosting Tragwerk',
+          items: [
+            { text: 'Requirements', link: '/install/requirements' },
+            { text: 'Docker Compose', link: '/install/docker-compose' },
+            { text: 'Upgrades', link: '/install/upgrades' },
+            { text: 'Backup & Restore', link: '/install/backup' },
           ],
         },
       ],
@@ -127,7 +143,9 @@ export default defineConfig({
 
     outline: { level: [2, 3] },
 
-    socialLinks: [],
+    socialLinks: [
+      { icon: 'github', link: 'https://github.com/benjaminhirsch/tragwerk' },
+    ],
 
     footer: {
       message: 'Tragwerk — self-hosted PHP application hosting.',

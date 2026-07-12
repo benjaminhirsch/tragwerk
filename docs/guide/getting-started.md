@@ -5,9 +5,11 @@ register a server, connect a project, add your config, point a domain at it, and
 deploy.
 
 ::: tip Prerequisites
-You need a server with SSH access (any provider works) and a git repository
-containing a PHP application. See [requirements](/server/requirements) for
-the supported server baseline.
+You need a running Tragwerk instance — see
+[installation](/install/docker-compose) if you have not set one up yet — plus a
+server with SSH access (any provider works) and a git repository containing a
+PHP application. See [requirements](/server/requirements) for the supported
+server baseline.
 :::
 
 ## 1. Create an account and team

@@ -5,6 +5,12 @@ You bring the machine and SSH access; Tragwerk installs and manages everything
 else — Docker, the Traefik reverse proxy, and the generated per-application
 container stack.
 
+::: info This is the deploy target, not the Tragwerk instance
+This page describes the servers Tragwerk **deploys to**. For the server that
+**runs Tragwerk itself**, see [installation
+requirements](/install/requirements).
+:::
+
 ## Server and SSH access
 
 The only hard requirement is a server you can reach over **SSH**. Tragwerk connects

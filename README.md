@@ -40,7 +40,8 @@ tooling lives on your server.
 Full guides, configuration reference and tutorials live at
 **[docs.tragwerk.app](https://docs.tragwerk.app/)**.
 
-A dedicated section on how to self-host Tragwerk itself is coming soon.
+To run Tragwerk itself on your own server, follow
+**[Self-Hosting Tragwerk](https://docs.tragwerk.app/install/requirements)**.
 
 ## License
 
