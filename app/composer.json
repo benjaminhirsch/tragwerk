@@ -2,6 +2,7 @@
     "name": "benjaminhirsch/tragwerk",
     "description": "Self-host PHP applications on your own Server. Deploy without friction. From commit to production in minutes on a server of your choice!",
     "license": "AGPL-3.0-only",
+    "version": "dev-main",
     "config": {
         "sort-packages": true,
         "allow-plugins": {
