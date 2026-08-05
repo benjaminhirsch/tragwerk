@@ -6,11 +6,22 @@
     </div>
     <div class="auth-head">
         <h1><?= $this->e($this->t('Confirmation failed')) ?></h1>
-        <p><?= $this->e($this->t('This confirmation link is invalid or has expired. Please register again.')) ?></p>
+        <?php if ($this->registrationEnabled()): ?>
+            <p><?= $this->e($this->t('This confirmation link is invalid or has expired. Please register again.')) ?></p>
+        <?php else: ?>
+            <p><?= $this->e($this->t('This confirmation link is invalid or has expired. Please ask an administrator for a new invitation.')) ?></p>
+        <?php endif ?>
     </div>
 
-    <?= $this->fetch('partial::link', [
-        'href'  => $this->url('register'),
-        'label' => $this->e($this->t('Back to registration')),
-    ]) ?>
+    <?php if ($this->registrationEnabled()): ?>
+        <?= $this->fetch('partial::link', [
+            'href'  => $this->url('register'),
+            'label' => $this->e($this->t('Back to registration')),
+        ]) ?>
+    <?php else: ?>
+        <?= $this->fetch('partial::link', [
+            'href'  => $this->url('login'),
+            'label' => $this->e($this->t('Back to login')),
+        ]) ?>
+    <?php endif ?>
 </div>

@@ -15,6 +15,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Tragwerk\Application\Dto\UserRegistration;
 use Tragwerk\Application\Mapper\GenericMapper;
 use Tragwerk\Application\Response\ResponseRenderer;
+use Tragwerk\Application\Service\Registration\RegistrationSettings;
 use Tragwerk\Domain\Event\UserRegistered;
 use Tragwerk\Domain\Exception\Repository\EntityNotFound;
 use Tragwerk\Domain\Repository\UserRepository;
@@ -30,12 +31,17 @@ final readonly class UserRegisterHandler implements RequestHandlerInterface
         private EventDispatcherInterface $eventDispatcher,
         private UrlHelper $urlHelper,
         private UserRepository $userRepository,
+        private RegistrationSettings $registrationSettings,
     ) {
     }
 
     #[Override]
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        if (! $this->registrationSettings->enabled) {
+            return new RedirectResponse($this->urlHelper->generate('login') . '?registration-disabled=1');
+        }
+
         $validationBag = null;
         if ($request->getMethod() === RequestMethodInterface::METHOD_POST) {
             $validationBag = $this->userRegistrationMapper->mapAndValidate($request, UserRegistration::class);

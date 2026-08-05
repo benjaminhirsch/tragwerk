@@ -114,6 +114,8 @@ final readonly class ConfigProvider
                         Factory\Service\TwoFactorServiceFactory::class,
                     Application\Service\Credential\CredentialEncryptor::class =>
                         Factory\Service\CredentialEncryptorFactory::class,
+                    Application\Service\Registration\RegistrationSettings::class =>
+                        Factory\Service\RegistrationSettingsFactory::class,
                 ],
                 'abstract_factories' => [Factory\Invoker\InvokerAbstractFactory::class],
             ],
@@ -155,6 +157,7 @@ final readonly class ConfigProvider
                     Template\Extension\ActiveUriPath::class,
                     Template\Extension\ProjectContext::class,
                     Template\Extension\EnvironmentContext::class,
+                    Template\Extension\Registration::class,
                 ],
             ],
             'dependencies' => [

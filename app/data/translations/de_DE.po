@@ -2021,3 +2021,20 @@ msgstr "Ungültige Berechtigungsstufe"
 
 msgid "Sudo requires passwordless sudo (NOPASSWD) for the user."
 msgstr "Sudo erfordert passwortloses sudo (NOPASSWD) für den Benutzer."
+
+msgid ""
+"Registration is disabled on this instance. Ask an administrator for an "
+"invitation."
+msgstr ""
+"Die Registrierung ist auf dieser Instanz deaktiviert. Bitte einen "
+"Administrator um eine Einladung."
+
+msgid ""
+"This confirmation link is invalid or has expired. Please ask an "
+"administrator for a new invitation."
+msgstr ""
+"Dieser Bestätigungslink ist ungültig oder abgelaufen. Bitte einen "
+"Administrator um eine neue Einladung."
+
+msgid "Back to login"
+msgstr "Zurück zur Anmeldung"

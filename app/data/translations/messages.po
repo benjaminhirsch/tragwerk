@@ -1787,3 +1787,16 @@ msgstr ""
 
 msgid "Invite members"
 msgstr ""
+
+msgid ""
+"Registration is disabled on this instance. Ask an administrator for an "
+"invitation."
+msgstr ""
+
+msgid ""
+"This confirmation link is invalid or has expired. Please ask an "
+"administrator for a new invitation."
+msgstr ""
+
+msgid "Back to login"
+msgstr ""

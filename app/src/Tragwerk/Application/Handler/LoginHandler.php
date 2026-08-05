@@ -56,6 +56,7 @@ final readonly class LoginHandler implements RequestHandlerInterface
             'passwordReset'  => isset($queryParams['password-reset']),
             'emailChanged'   => isset($queryParams['email-changed']),
             'twoFactorError' => isset($queryParams['2fa-failed']) || isset($queryParams['2fa-expired']),
+            'registrationDisabled' => isset($queryParams['registration-disabled']),
         ]);
     }
 

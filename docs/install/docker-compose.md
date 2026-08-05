@@ -109,6 +109,20 @@ The command accepts `--password` for scripted installs, but the value then lands
 in your shell history and is visible in the process list. Prefer the prompt.
 :::
 
+### Closing public sign-up
+
+By default anyone who reaches your instance can register at `/register`. On a
+private instance, set this in `.env` and restart the stack:
+
+```dotenv
+TRAGWERK_REGISTRATION_ENABLED=false
+```
+
+`/register` then redirects to `/login` and the register link disappears from the
+UI. Accounts are created two ways instead: `bin/cli user:create` as above, or by
+[inviting someone to a team](/app/teams) — invitation links keep working, and an
+invited address that has no account yet gets one through the invite link.
+
 ## 5. Log in
 
 Open `https://APP_HOST` and sign in. From here, follow
@@ -140,6 +154,7 @@ Every variable read from `.env`.
 | `SSH_PORT` | no | `2222` | Host port for the git push target. |
 | `TRAGWERK_SSH_HOST` | no | `APP_HOST` | Hostname shown in the git clone URL on the project page. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` | no | empty | Outgoing mail. See below. |
+| `TRAGWERK_REGISTRATION_ENABLED` | no | `true` | Public sign-up at `/register`. Set to `false` for a private instance. See step 4. |
 | `LOG_LEVEL` | no | `error` | PSR log level. |
 | `FRANKENPHP_NUM_WORKERS` | no | `4` | Worker threads for the web server. |
 | `TZ` | no | `UTC` | Timezone for every container. |

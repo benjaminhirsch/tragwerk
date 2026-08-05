@@ -12,13 +12,15 @@
 
     <div class="auth-head">
         <h1><?= $this->e($this->t('Welcome back')) ?></h1>
-        <p><?= $this->e($this->t('No account yet?')) ?>
+        <?php if ($this->registrationEnabled()): ?>
+            <p><?= $this->e($this->t('No account yet?')) ?>
 
-            <?= $this->fetch('partial::link', [
-                    'href' => $this->url('register'),
-                    'label' => $this->t('Register now'),
-            ]) ?>
-        </p>
+                <?= $this->fetch('partial::link', [
+                        'href' => $this->url('register'),
+                        'label' => $this->t('Register now'),
+                ]) ?>
+            </p>
+        <?php endif ?>
     </div>
 
     <?php /*
@@ -34,6 +36,12 @@
         <?php if ($registered ?? false): ?>
             <div class="alert alert-info small mb-3">
                 <?= $this->t('Registration successful. Please check your email to confirm your account.') ?>
+            </div>
+        <?php endif ?>
+
+        <?php if ($registrationDisabled ?? false): ?>
+            <div class="alert alert-info small mb-3">
+                <?= $this->t('Registration is disabled on this instance. Ask an administrator for an invitation.') ?>
             </div>
         <?php endif ?>
 

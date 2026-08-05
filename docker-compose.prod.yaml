@@ -35,6 +35,9 @@ x-app-env: &app-env
   # Host shown in the git clone URL on the project page. Defaults to the app host,
   # since sshd is reachable on the same machine.
   TRAGWERK_SSH_HOST: ${TRAGWERK_SSH_HOST:-${APP_HOST}}
+  # Public sign-up at /register. Set to false for a private instance; accounts
+  # are then created with `bin/cli user:create` or through a team invitation.
+  TRAGWERK_REGISTRATION_ENABLED: ${TRAGWERK_REGISTRATION_ENABLED:-true}
   LOG_LEVEL: ${LOG_LEVEL:-error}
   FRANKENPHP_NUM_WORKERS: ${FRANKENPHP_NUM_WORKERS:-4}
   SMTP_HOST: ${SMTP_HOST:-}
