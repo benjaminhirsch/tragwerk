@@ -339,19 +339,21 @@ detect_distro() {
     ok "Detected $pretty (${PKG_FAMILY} family, Docker repository: ${REPO_DISTRO})."
 }
 
-# Prints whoever currently holds the dpkg/apt lock, or returns 1 when it is free.
-# `fuser` on the lock file is the accurate answer; pgrep is the fallback for
-# images without psmisc.
+# Prints whoever currently has a dpkg/apt lock file open, or returns 1.
+#
+# Only `fuser` is used, and only to describe the situation — never to decide
+# whether to wait. Matching process names cannot tell a real lock holder from
+# unattended-upgrade-shutdown, which every Debian and Ubuntu boots into and which
+# runs forever waiting for a shutdown signal while holding no lock at all; its
+# comm truncates to exactly "unattended-upgr". flock(1) is no help either, since
+# dpkg takes fcntl locks, which live in a different namespace. apt-get is the only
+# reliable arbiter, so apt-get does the waiting (see APT_LOCK_WAIT).
 apt_lock_holder() {
     local pids='' pid args out=''
 
-    if have fuser; then
-        pids=$(run_priv fuser /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock /var/lib/apt/lists/lock 2> /dev/null \
-            | tr -s ' ' '\n' | grep -E '^[0-9]+$' | sort -u || true)
-    fi
-    if [[ -z $pids ]] && have pgrep; then
-        pids=$(pgrep -x 'apt|apt-get|aptitude|dpkg|unattended-upgr' 2> /dev/null || true)
-    fi
+    have fuser || return 1
+    pids=$(run_priv fuser /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock /var/lib/apt/lists/lock 2> /dev/null \
+        | tr -s ' ' '\n' | grep -E '^[0-9]+$' | sort -u || true)
     [[ -n $pids ]] || return 1
 
     for pid in $pids; do
@@ -371,20 +373,15 @@ apt_lock_holder() {
 # apt silently ignores the unknown option).
 APT_LOCK_WAIT=(-o 'DPkg::Lock::Timeout=900')
 
-wait_for_apt_lock() {
-    local waited=0 holder
-    while holder=$(apt_lock_holder); do
-        [[ $((waited % 30)) -eq 0 ]] && info "Waiting for another package manager: ${holder}"
-        sleep 5
-        waited=$((waited + 5))
-        if [[ $waited -ge 900 ]]; then
-            warn "The dpkg lock is still held after 15 minutes by: ${holder}"
-            warn 'Handing over to apt-get, which will keep waiting for the lock on its own.'
-            return 0
-        fi
-    done
-    [[ $waited -gt 0 ]] && ok 'The dpkg lock is free again.'
-    return 0
+# Never blocks. apt-get waits for the lock itself, reporting the holding process
+# as it goes; this only says up front that a wait is coming, so the pause is not
+# mistaken for a hang.
+note_apt_lock_holder() {
+    local holder
+    holder=$(apt_lock_holder) || return 0
+
+    info "Another package manager is active: ${holder}"
+    info 'apt-get will wait for the dpkg lock on its own, for up to 15 minutes.'
 }
 
 # Installs a package with whichever package manager exists, mirroring the
@@ -392,7 +389,7 @@ wait_for_apt_lock() {
 install_package() {
     local pkg=$1
     if have apt-get; then
-        wait_for_apt_lock
+        note_apt_lock_holder
         DEBIAN_FRONTEND=noninteractive run_priv apt-get "${APT_LOCK_WAIT[@]}" update -qq || true
         DEBIAN_FRONTEND=noninteractive run_priv apt-get "${APT_LOCK_WAIT[@]}" install -y "$pkg"
     elif have dnf; then
@@ -558,7 +555,7 @@ install_docker_apt() {
         "$(dpkg --print-architecture)" "$repo" "$codename" \
         | run_priv tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-    wait_for_apt_lock
+    note_apt_lock_holder
     info 'Updating the package index…'
     run_priv apt-get "${APT_LOCK_WAIT[@]}" update
     info 'Installing Docker Engine, the CLI, containerd, buildx and compose…'
