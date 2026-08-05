@@ -25,6 +25,11 @@ readonly ENV_FILE='.env'
 readonly DOCKER_PACKAGES='docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin'
 readonly DOCKER_DOCS='https://docs.docker.com/engine/install/'
 
+# -fsSL alone hangs indefinitely on a blackholed route (a broken IPv6 default is
+# the usual culprit on a fresh VPS), and -s means it does so without printing a
+# thing. Time it out and retry instead.
+CURL_OPTS=(-fsSL --connect-timeout 15 --max-time 180 --retry 3 --retry-delay 2)
+
 # Distributions with a dedicated Docker dnf repository. Rocky and AlmaLinux are
 # binary compatible with RHEL and use the CentOS repository (same mapping as
 # app/src/Tragwerk/Domain/Docker/DockerInstallScript.php).
@@ -541,15 +546,22 @@ install_docker_apt() {
     [[ -n $codename ]] || die "Cannot determine the ${REPO_DISTRO} release codename for the Docker repository. Install Docker manually: $DOCKER_DOCS"
 
     export DEBIAN_FRONTEND=noninteractive
+
+    info "Fetching Docker's signing key…"
     run_priv install -m 0755 -d /etc/apt/keyrings
-    run_priv curl -fsSL "${repo}/gpg" -o /etc/apt/keyrings/docker.asc
+    run_priv curl "${CURL_OPTS[@]}" "${repo}/gpg" -o /etc/apt/keyrings/docker.asc \
+        || die "Could not download ${repo}/gpg. Check this machine's outbound network and DNS."
     run_priv chmod a+r /etc/apt/keyrings/docker.asc
+
+    info "Adding the Docker repository for ${REPO_DISTRO} ${codename}…"
     printf 'deb [arch=%s signed-by=/etc/apt/keyrings/docker.asc] %s %s stable\n' \
         "$(dpkg --print-architecture)" "$repo" "$codename" \
         | run_priv tee /etc/apt/sources.list.d/docker.list > /dev/null
 
     wait_for_apt_lock
+    info 'Updating the package index…'
     run_priv apt-get "${APT_LOCK_WAIT[@]}" update
+    info 'Installing Docker Engine, the CLI, containerd, buildx and compose…'
     # shellcheck disable=SC2086
     run_priv apt-get "${APT_LOCK_WAIT[@]}" install -y $DOCKER_PACKAGES
 }
@@ -560,7 +572,11 @@ install_docker_dnf() {
     # Written directly instead of `dnf config-manager --add-repo`, which dnf5
     # (Fedora 41+) removed. A plain file drop works on dnf4, dnf5 and yum alike;
     # `install -y` imports the repository's GPG key with gpgcheck left on.
-    run_priv curl -fsSL "$repo_url" -o /etc/yum.repos.d/docker-ce.repo
+    info "Adding the Docker repository for ${REPO_DISTRO}…"
+    run_priv curl "${CURL_OPTS[@]}" "$repo_url" -o /etc/yum.repos.d/docker-ce.repo \
+        || die "Could not download ${repo_url}. Check this machine's outbound network and DNS."
+
+    info 'Installing Docker Engine, the CLI, containerd, buildx and compose…'
     if have dnf; then
         # shellcheck disable=SC2086
         run_priv dnf install -y $DOCKER_PACKAGES
