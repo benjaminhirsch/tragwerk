@@ -51,6 +51,19 @@ choice.
 The target server only ever runs finished Docker images; no source code or build
 tooling lives on your server.
 
+## Install it on your own server
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/benjaminhirsch/tragwerk/main/install.sh | sudo bash
+```
+
+Works on any Linux distribution [Docker supports](https://docs.docker.com/engine/install/).
+The script installs Docker Engine, generates the configuration, starts the stack
+and creates your first user. Point a DNS record at the server first — it checks.
+
+Details, options and the manual route:
+**[Install Script](https://docs.tragwerk.app/install/script)**.
+
 ## Documentation
 
 Full guides, configuration reference and tutorials live at

@@ -4,6 +4,17 @@ This is the recommended — and only supported — way to run Tragwerk. The imag
 are built by CI and published to the GitHub Container Registry, so nothing is
 compiled on your server: you pull images and start them.
 
+::: tip There is a script for this
+Every step below can be done for you, including installing Docker itself:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/benjaminhirsch/tragwerk/main/install.sh | sudo bash
+```
+
+See [Install Script](/install/script). This page stays the reference for what
+that script does, and the route to take when you want to do it yourself.
+:::
+
 ::: tip Prerequisites
 A server with Docker Engine, the Compose plugin, and DNS already pointing at it.
 See [requirements](/install/requirements) — in particular, the DNS records must

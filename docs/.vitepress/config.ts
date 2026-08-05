@@ -62,6 +62,7 @@ export default defineConfig({
           text: 'Self-Hosting Tragwerk',
           items: [
             { text: 'Requirements', link: '/install/requirements' },
+            { text: 'Install Script', link: '/install/script' },
             { text: 'Docker Compose', link: '/install/docker-compose' },
             { text: 'Upgrades', link: '/install/upgrades' },
             { text: 'Backup & Restore', link: '/install/backup' },

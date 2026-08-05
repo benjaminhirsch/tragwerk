@@ -84,3 +84,7 @@ http-client.private.env.json
 
 .claude/settings.local.json
 /.env.local
+
+# Written by install.sh on a server; contains the production secrets.
+/.env
+/tragwerk-install.log

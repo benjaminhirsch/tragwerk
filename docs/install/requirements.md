@@ -78,6 +78,7 @@ projects, plus the database. Both grow slowly.
 
 ## Next steps
 
-- Install the stack with [Docker Compose](/install/docker-compose).
+- Let the [install script](/install/script) do all of it, Docker included.
+- Or install the stack by hand with [Docker Compose](/install/docker-compose).
 - Read what the [target servers](/server/requirements) for your applications
   need.
