@@ -185,7 +185,11 @@ services:
     networks:
       - internal
 
+  # Optional. The profile resolves to "docs" only when DOCS_HOST is set; left
+  # empty it resolves to "" and the service is skipped, so no docs container
+  # runs and Traefik requests no certificate for it.
   docs:
+    profiles: ["${DOCS_HOST:+docs}"]
     image: ${DOCS_IMAGE:-ghcr.io/benjaminhirsch/tragwerk-docs:latest}
     restart: unless-stopped
     networks:
@@ -193,7 +197,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=tragwerk-web
-      - traefik.http.routers.docs.rule=Host(`${DOCS_HOST:?set DOCS_HOST in .env}`)
+      - traefik.http.routers.docs.rule=Host(`${DOCS_HOST:-}`)
       - traefik.http.routers.docs.entrypoints=websecure
       - traefik.http.services.docs.loadbalancer.server.port=80
 

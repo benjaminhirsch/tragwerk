@@ -87,7 +87,7 @@ db/migrations/migrate:
 
 PROD_COMPOSE := docker compose -f docker-compose.prod.yaml
 
-## prod/pull: Pull the production app/docs/sshd images from the registry
+## prod/pull: Pull the production app/sshd images (plus docs, if DOCS_HOST is set)
 .PHONY: prod/pull
 prod/pull:
 	$(PROD_COMPOSE) pull

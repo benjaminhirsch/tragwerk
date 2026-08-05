@@ -23,6 +23,19 @@ introduced a new variable.
 Expect a short interruption while the containers are recreated. Deploy jobs that
 were mid-flight are re-queued and picked up again by the restarted worker.
 
+::: warning Serving the documentation now needs `COMPOSE_PROFILES`
+The bundled documentation used to be mandatory and is now optional. If your
+`.env` sets `DOCS_HOST` and you want to keep serving the docs, add this line —
+otherwise the `docs` container silently stops being created on the next `up -d`:
+
+```ini
+COMPOSE_PROFILES=docs
+```
+
+If you do not want to serve the documentation at all, clear `DOCS_HOST` instead.
+You can then also drop its DNS record.
+:::
+
 ## Pin a version
 
 ::: warning During the beta there is nothing to pin

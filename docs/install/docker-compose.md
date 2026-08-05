@@ -27,14 +27,23 @@ images, so you never build or run anything from this source tree.
 cp .env.prod.dist .env
 ```
 
-Open `.env` and fill in the hostnames:
+Open `.env` and fill in the hostname:
 
 ```ini
 APP_HOST=tragwerk.example.com
-DOCS_HOST=docs.example.com
 ACME_EMAIL=admin@example.com
 MERCURE_TOPIC_BASE=https://tragwerk.example.com
 ```
+
+Optionally, you can serve this documentation from your own installation. Set
+`DOCS_HOST` to a second hostname and point a DNS record at the server:
+
+```ini
+DOCS_HOST=docs.example.com
+```
+
+Leave it empty and no documentation container is started at all — the rest of the
+stack is unaffected.
 
 Then generate the secrets. Each command prints one value:
 
@@ -67,7 +76,7 @@ docker compose -f docker-compose.prod.yaml up -d
 Startup is ordered: PostgreSQL comes up and reports healthy, the one-shot
 `migrate` service prepares the queue table and applies the schema migrations,
 and only once it exits successfully do the app and the workers start. Traefik
-then requests certificates for `APP_HOST` and `DOCS_HOST`.
+then requests a certificate for `APP_HOST`, and for `DOCS_HOST` if you set one.
 
 The stack is these services:
 
@@ -81,7 +90,7 @@ The stack is these services:
 | `migrate` | One-shot. Prepares the queue and applies migrations, then exits. |
 | `db` | PostgreSQL 18. |
 | `sshd` | The git push target your projects clone from. |
-| `docs` | This documentation, served statically. |
+| `docs` | This documentation, served statically. Only started when `DOCS_HOST` is set. |
 
 The app and all three workers run from the same image; only the command differs.
 
@@ -141,7 +150,8 @@ Every variable read from `.env`.
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
 | `APP_HOST` | yes | — | Public hostname of the web UI. Traefik routes on it and requests a certificate for it. |
-| `DOCS_HOST` | yes | — | Public hostname of the bundled documentation. |
+| `DOCS_HOST` | no | empty | Public hostname of the bundled documentation. Empty means no documentation container is started and no certificate is requested for it. |
+| `COMPOSE_PROFILES` | no | `docs` | Leave as-is. Enables nothing by itself; it only lets the optional `docs` service start once `DOCS_HOST` is set. |
 | `ACME_EMAIL` | yes | — | Contact address Let's Encrypt registers, used for expiry notices. |
 | `TRAGWERK_DATABASE_PASSWORD` | yes | — | Password for the bundled PostgreSQL. |
 | `MERCURE_PUBLISHER_JWT_SECRET` | yes | — | Signs the tokens the app uses to publish live updates. |

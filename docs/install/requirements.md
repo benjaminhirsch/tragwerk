@@ -53,7 +53,8 @@ Traefik requests Let's Encrypt certificates over the TLS-ALPN challenge, which
 resolves your hostnames against public DNS.
 
 - Point an **A/AAAA record** for your app host (`APP_HOST`) at the server.
-- Point a second one for the bundled documentation (`DOCS_HOST`).
+- Optionally, point a second one for the bundled documentation (`DOCS_HOST`). Skip
+  this if you leave `DOCS_HOST` empty — the documentation is then not served.
 
 ::: warning DNS must exist before the first start
 If the records do not resolve to this server when the stack first comes up, the
