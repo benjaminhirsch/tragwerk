@@ -34,6 +34,9 @@ final readonly class DockerInstallScript
     private const string PACKAGES = 'docker-ce docker-ce-cli containerd.io '
         . 'docker-buildx-plugin docker-compose-plugin';
 
+    /** Netfilter modules dockerd needs before it can install its bridge/NAT rules. */
+    private const string NETFILTER_MODULES = 'nft_compat xt_addrtype xt_conntrack br_netfilter overlay';
+
     /**
      * @param string $distroId the `$ID` from /etc/os-release (ubuntu|debian|rhel|fedora|centos|
      *                         rocky|almalinux); anything outside the dnf family takes the apt branch
@@ -42,13 +45,20 @@ final readonly class DockerInstallScript
      */
     public function build(string $distroId, CredentialPrivilege $privilege, string $username): string
     {
-        $sudo = $privilege->sudoPrefix();
+        $sudo  = $privilege->sudoPrefix();
+        $isDnf = in_array($distroId, self::DNF_DISTROS, true);
 
-        $body = in_array($distroId, self::DNF_DISTROS, true)
+        $body = $isDnf
             ? $this->dnfBranch($distroId, $sudo)
             : $this->aptBranch($distroId, $sudo);
 
-        $lines = ['set -e', $body, $sudo . 'systemctl enable --now docker'];
+        $lines = [
+            'set -e',
+            $body,
+            $this->netfilterModules($sudo, $isDnf),
+            $this->ipForwarding($sudo),
+            $this->startDaemon($sudo),
+        ];
 
         // A non-root sudoer needs docker-group membership so deploy/metrics/cron can run
         // `docker compose ...` without sudo. Root already has socket access.
@@ -57,6 +67,96 @@ final readonly class DockerInstallScript
         }
 
         return implode("\n", $lines) . "\n";
+    }
+
+    /**
+     * dockerd installs its bridge and NAT rules through iptables/nftables and needs the matching
+     * netfilter modules. Minimal RHEL-family images (Hetzner's CentOS Stream 10, for one) run a
+     * kernel whose xt_* modules live in a separate kernel-modules package that is not installed,
+     * and the daemon then refuses to start with
+     *   Extension addrtype revision 0 not supported, missing kernel module?
+     * — an error whose cause is invisible from the install output. Loading them here, and pulling
+     * the package on the dnf side, turns a failed setup into a working one.
+     *
+     * Nothing here is fatal: a kernel without these modules is the operator's problem, but the
+     * Docker installation itself has still succeeded and should not be rolled back over it.
+     */
+    private function netfilterModules(string $sudo, bool $isDnf): string
+    {
+        $lines = [
+            'MISSING=',
+            'for m in ' . self::NETFILTER_MODULES . '; do',
+            '  ' . $sudo . 'modprobe $m > /dev/null 2>&1 || MISSING="$MISSING $m"',
+            'done',
+        ];
+
+        // Debian and Ubuntu ship these modules inside linux-image-*, so there is no separate
+        // package to pull; a miss there means a custom kernel, which no install script can fix.
+        if (! $isDnf) {
+            return implode("\n", $lines);
+        }
+
+        // Same dnf-then-yum fallback as the package install above.
+        $install = static fn (string $manager): string => sprintf(
+            '    %1$s%2$s install -y kernel-modules-$(uname -r) || %1$s%2$s install -y kernel-modules || true',
+            $sudo,
+            $manager,
+        );
+
+        return implode("\n", [
+            ...$lines,
+            'if [ -n "$MISSING" ]; then',
+            '  if command -v dnf > /dev/null 2>&1; then',
+            $install('dnf'),
+            '  else',
+            $install('yum'),
+            '  fi',
+            '  for m in $MISSING; do ' . $sudo . 'modprobe $m > /dev/null 2>&1 || true; done',
+            'fi',
+        ]);
+    }
+
+    /**
+     * Docker's bridge network needs IPv4 forwarding and, since Docker 28, the daemon refuses to
+     * start instead of enabling it itself. Minimal cloud images ship it disabled.
+     *
+     * IPv6 forwarding is deliberately left alone: turning it on makes the kernel stop accepting
+     * router advertisements, which breaks IPv6 on providers that hand out addresses that way.
+     */
+    private function ipForwarding(string $sudo): string
+    {
+        return implode("\n", [
+            'if [ "$(cat /proc/sys/net/ipv4/ip_forward 2> /dev/null)" != "1" ]; then',
+            '  echo "net.ipv4.ip_forward = 1" | ' . $sudo . 'tee /etc/sysctl.d/99-tragwerk-docker.conf > /dev/null',
+            '  ' . $sudo . 'sysctl -w net.ipv4.ip_forward=1 > /dev/null 2>&1 || true',
+            'fi',
+        ]);
+    }
+
+    /**
+     * Starts the daemon, with one fallback.
+     *
+     * RHEL 10 and CentOS Stream 10 dropped the working iptables-nft compatibility layer:
+     * /usr/sbin/iptables is there, but the kernel cannot back it, so dockerd fails with
+     *   Extension addrtype revision 0 not supported, missing kernel module?
+     * Docker 28+ speaks nftables natively and skips iptables entirely, which is the documented
+     * way out. An existing daemon.json is never overwritten — that is the operator's file.
+     *
+     * The retry is not guarded: if the daemon still refuses to start, `set -e` aborts the script
+     * and SetupServerCommand reports a failed setup, which is the honest outcome.
+     */
+    private function startDaemon(string $sudo): string
+    {
+        return implode("\n", [
+            'DOCKER_START_FAILED=',
+            $sudo . 'systemctl enable --now docker || DOCKER_START_FAILED=1',
+            'if [ -n "$DOCKER_START_FAILED" ] && [ ! -f /etc/docker/daemon.json ]; then',
+            '  ' . $sudo . 'mkdir -p /etc/docker',
+            '  echo "{\"firewall-backend\": \"nftables\"}" | ' . $sudo . 'tee /etc/docker/daemon.json > /dev/null',
+            '  ' . $sudo . 'systemctl reset-failed docker.service > /dev/null 2>&1 || true',
+            '  ' . $sudo . 'systemctl start docker',
+            'fi',
+        ]);
     }
 
     private function aptBranch(string $distroId, string $sudo): string

@@ -11,6 +11,7 @@ use Tragwerk\Domain\Docker\DockerInstallScript;
 use Tragwerk\Domain\Enum\CredentialPrivilege;
 
 use function str_contains;
+use function strpos;
 
 final class DockerInstallScriptTest extends TestCase
 {
@@ -103,6 +104,104 @@ final class DockerInstallScriptTest extends TestCase
         $script = (new DockerInstallScript())->build($distro, CredentialPrivilege::Root, 'deploy');
 
         self::assertStringContainsString('systemctl enable --now docker', $script);
+    }
+
+    #[Test]
+    #[DataProvider('allDistros')]
+    public function loadsTheNetfilterModulesDockerNeeds(string $distro): void
+    {
+        // Regression: without xt_addrtype dockerd dies with "Extension addrtype revision 0 not
+        // supported, missing kernel module?" — see the class docblock.
+        $script = (new DockerInstallScript())->build($distro, CredentialPrivilege::Root, 'deploy');
+
+        self::assertStringContainsString('modprobe', $script);
+        self::assertStringContainsString('xt_addrtype', $script);
+        self::assertStringContainsString('br_netfilter', $script);
+    }
+
+    #[Test]
+    #[DataProvider('allDistros')]
+    public function loadsTheModulesBeforeStartingTheDaemon(string $distro): void
+    {
+        $script = (new DockerInstallScript())->build($distro, CredentialPrivilege::Root, 'deploy');
+
+        self::assertLessThan(
+            strpos($script, 'systemctl enable --now docker'),
+            strpos($script, 'xt_addrtype'),
+            'the modules must be loaded before dockerd starts, not after it has already failed',
+        );
+    }
+
+    #[Test]
+    #[DataProvider('dnfDistros')]
+    public function dnfBranchInstallsTheKernelModulesPackageWhenAModuleIsMissing(string $distro): void
+    {
+        // RHEL-family minimal images keep the xt_* modules in a separate package.
+        $script = (new DockerInstallScript())->build($distro, CredentialPrivilege::Root, 'deploy');
+
+        self::assertStringContainsString('kernel-modules-$(uname -r)', $script);
+        self::assertStringContainsString('yum install -y kernel-modules', $script);
+    }
+
+    #[Test]
+    #[DataProvider('aptDistros')]
+    public function aptBranchDoesNotInstallAKernelModulesPackage(string $distro): void
+    {
+        // Debian and Ubuntu ship them inside linux-image-*.
+        $script = (new DockerInstallScript())->build($distro, CredentialPrivilege::Root, 'deploy');
+
+        self::assertStringNotContainsString('kernel-modules', $script);
+    }
+
+    #[Test]
+    #[DataProvider('allDistros')]
+    public function fallsBackToTheNftablesFirewallBackend(string $distro): void
+    {
+        // RHEL 10 / CentOS Stream 10 have no working iptables-nft compat layer, so dockerd's
+        // default path cannot append its NAT rules. Docker 28+ drives nftables directly.
+        $script = (new DockerInstallScript())->build($distro, CredentialPrivilege::Root, 'deploy');
+
+        self::assertStringContainsString('firewall-backend', $script);
+        self::assertStringContainsString('nftables', $script);
+        self::assertStringContainsString('/etc/docker/daemon.json', $script);
+    }
+
+    #[Test]
+    #[DataProvider('allDistros')]
+    public function enablesIpv4ForwardingBeforeStartingTheDaemon(string $distro): void
+    {
+        // Docker 28+ refuses to start when forwarding is off instead of enabling it itself,
+        // and minimal cloud images ship it disabled.
+        $script = (new DockerInstallScript())->build($distro, CredentialPrivilege::Root, 'deploy');
+
+        self::assertStringContainsString('net.ipv4.ip_forward = 1', $script);
+        self::assertStringContainsString('/etc/sysctl.d/99-tragwerk-docker.conf', $script);
+        self::assertLessThan(
+            strpos($script, 'systemctl enable --now docker'),
+            strpos($script, 'net.ipv4.ip_forward'),
+            'forwarding must be on before dockerd starts, not after it has already refused',
+        );
+    }
+
+    #[Test]
+    #[DataProvider('allDistros')]
+    public function leavesIpv6ForwardingAlone(string $distro): void
+    {
+        // Enabling it stops the kernel from accepting router advertisements, which breaks IPv6
+        // on providers that hand out addresses that way.
+        $script = (new DockerInstallScript())->build($distro, CredentialPrivilege::Root, 'deploy');
+
+        self::assertStringNotContainsString('ipv6.conf', $script);
+    }
+
+    #[Test]
+    #[DataProvider('allDistros')]
+    public function neverOverwritesAnExistingDaemonConfig(string $distro): void
+    {
+        // daemon.json belongs to the operator; clobbering it would silently drop their settings.
+        $script = (new DockerInstallScript())->build($distro, CredentialPrivilege::Root, 'deploy');
+
+        self::assertStringContainsString('[ ! -f /etc/docker/daemon.json ]', $script);
     }
 
     #[Test]

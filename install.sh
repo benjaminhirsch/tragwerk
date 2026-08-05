@@ -594,8 +594,9 @@ ensure_docker() {
         install_docker_apt
     fi
 
-    run_priv systemctl enable --now docker \
-        || die 'The Docker packages installed but the service would not start. Check: systemctl status docker'
+    ensure_netfilter_modules
+    ensure_ip_forwarding
+    start_docker_service
 
     # A non-root sudoer needs docker-group membership to run `docker` without
     # sudo afterwards. Root already has socket access.
@@ -605,8 +606,152 @@ ensure_docker() {
         warn "Added ${target_user} to the docker group — log out and back in for that to take effect."
     fi
 
-    docker_ready || die 'Docker was installed but is not usable. Check: systemctl status docker'
+    docker_ready || { docker_failure_report; die 'Docker was installed but is not usable.'; }
     ok "$(run_priv docker --version) installed."
+}
+
+# `systemctl start docker` says nothing useful on its own; the reason is in the
+# unit status and the journal. Print both rather than sending the user off to
+# find them — on a headless first install this is the whole diagnosis.
+docker_failure_report() {
+    say ''
+    warn 'The Docker service did not come up. Its status:'
+    say ''
+    run_priv systemctl status docker.service --no-pager --full 2> /dev/null | tail -n 25 || true
+    say ''
+    warn 'The last lines of its journal:'
+    say ''
+    # Not -xe: after a restart loop the tail only shows "Start request repeated
+    # too quickly", while dockerd's actual error sits a few dozen lines earlier.
+    run_priv journalctl -u docker.service --no-pager -n 60 2> /dev/null || true
+    say ''
+    # dockerd exits when containerd is not running, and then reports nothing useful.
+    warn 'The state of containerd, which dockerd depends on:'
+    say ''
+    run_priv systemctl status containerd.service --no-pager --full 2> /dev/null | head -n 15 || true
+    say ''
+
+    if [[ -f /etc/docker/daemon.json ]]; then
+        warn 'The current /etc/docker/daemon.json (dockerd refuses to start on a malformed one):'
+        say ''
+        run_priv cat /etc/docker/daemon.json || true
+        say ''
+    fi
+
+    # Last resort: dockerd under systemd logs nothing when it dies before opening
+    # the journal. In the foreground it prints the reason on the first line.
+    if have timeout; then
+        warn 'Starting dockerd in the foreground for ten seconds to capture the reason:'
+        say ''
+        run_priv timeout 10 dockerd --debug 2>&1 | tail -n 20 || true
+        say ''
+    fi
+    warn 'Common causes:'
+    warn '  · The VPS is itself a container (OpenVZ/LXC), where dockerd cannot run.'
+    warn "    Check with: systemd-detect-virt  (currently: $(run_priv systemd-detect-virt 2> /dev/null || printf 'unknown'))"
+    warn '  · A pre-installed podman/runc stack conflicting with containerd.io.'
+    warn '    Check with: rpm -q podman runc containerd.io'
+    warn '  · A leftover /etc/docker/daemon.json from an earlier attempt.'
+    warn '  · IPv4 forwarding disabled — the log says "IPv4 forwarding is disabled".'
+    warn "    Check with: sysctl net.ipv4.ip_forward  (currently: $(cat /proc/sys/net/ipv4/ip_forward 2> /dev/null || printf 'unknown'))"
+    warn '  · No usable iptables layer — the log says "Extension addrtype revision 0'
+    warn '    not supported". The installer then retries with the nftables backend.'
+}
+
+# dockerd needs a handful of netfilter modules to install its NAT rules. Minimal
+# RHEL-family images (Hetzner's CentOS Stream 10 among them) ship a kernel whose
+# xt_* modules live in a separate kernel-modules package that is not installed,
+# and dockerd then dies with:
+#   Extension addrtype revision 0 not supported, missing kernel module?
+# Loading them up front turns that into a fixable, named problem.
+ensure_netfilter_modules() {
+    local modules=(nft_compat xt_addrtype xt_conntrack br_netfilter overlay) m missing=()
+
+    for m in "${modules[@]}"; do
+        run_priv modprobe "$m" > /dev/null 2>&1 || missing+=("$m")
+    done
+    [[ ${#missing[@]} -eq 0 ]] && return 0
+
+    warn "The kernel cannot load: ${missing[*]}"
+
+    if [[ $PKG_FAMILY == 'dnf' ]]; then
+        local release
+        release=$(uname -r)
+        info "Installing kernel-modules for ${release}…"
+        run_priv dnf install -y "kernel-modules-${release}" > /dev/null 2>&1 \
+            || run_priv dnf install -y kernel-modules > /dev/null 2>&1 \
+            || true
+    fi
+
+    local still=()
+    for m in "${missing[@]}"; do
+        run_priv modprobe "$m" > /dev/null 2>&1 || still+=("$m")
+    done
+    [[ ${#still[@]} -eq 0 ]] && { ok 'Netfilter kernel modules loaded.'; return 0; }
+
+    # Not fatal, and on RHEL 10 not even a problem: that kernel has no working
+    # iptables-nft compat layer at all, and Docker uses its nftables backend instead.
+    info "Not available: ${still[*]} — Docker will fall back to its nftables backend."
+    return 0
+}
+
+# The bridge network needs IPv4 forwarding, and since Docker 28 the daemon refuses
+# to start rather than enabling it itself. Minimal cloud images ship it disabled.
+# IPv6 forwarding is deliberately left alone: switching it on stops the kernel from
+# accepting router advertisements, which breaks IPv6 on providers that rely on them.
+ensure_ip_forwarding() {
+    local current
+    current=$(cat /proc/sys/net/ipv4/ip_forward 2> /dev/null || printf '0')
+    [[ $current == '1' ]] && return 0
+
+    info 'Enabling net.ipv4.ip_forward, which Docker needs for container networking.'
+    printf 'net.ipv4.ip_forward = 1\n' | run_priv tee /etc/sysctl.d/99-tragwerk-docker.conf > /dev/null
+    run_priv sysctl -w net.ipv4.ip_forward=1 > /dev/null 2>&1 || true
+
+    current=$(cat /proc/sys/net/ipv4/ip_forward 2> /dev/null || printf '0')
+    [[ $current == '1' ]] && { ok 'IPv4 forwarding enabled, persisted in /etc/sysctl.d/99-tragwerk-docker.conf.'; return 0; }
+
+    warn 'IPv4 forwarding could not be enabled. Docker will not be able to start.'
+    return 0
+}
+
+start_docker_service() {
+    # After a few failed starts systemd refuses further attempts with "Start
+    # request repeated too quickly", which would make every re-run of the
+    # installer fail on a stale rate limit instead of the real cause.
+    run_priv systemctl reset-failed docker.service containerd.service 2> /dev/null || true
+
+    run_priv systemctl enable --now docker && return 0
+
+    if switch_to_nftables_backend; then
+        run_priv systemctl reset-failed docker.service 2> /dev/null || true
+        if run_priv systemctl start docker; then
+            ok 'Docker started with the nftables firewall backend.'
+            return 0
+        fi
+    fi
+
+    docker_failure_report
+    die 'The Docker packages installed but the service would not start.'
+}
+
+# RHEL 10 and CentOS Stream 10 dropped the working iptables-nft compatibility
+# layer: /usr/sbin/iptables exists, but the kernel cannot back it, so dockerd's
+# default path dies with "Extension addrtype revision 0 not supported, missing
+# kernel module?". Docker 28+ speaks nftables natively and skips iptables
+# entirely, which is the documented way out. Returns 1 when that is not an option.
+switch_to_nftables_backend() {
+    run_priv dockerd --help 2> /dev/null | grep -q -- '--firewall-backend' || return 1
+
+    if [[ -f /etc/docker/daemon.json ]]; then
+        warn 'Leaving the existing /etc/docker/daemon.json alone. To use nftables directly,'
+        warn 'add "firewall-backend": "nftables" to it yourself and start docker again.'
+        return 1
+    fi
+
+    warn 'Docker could not set up its iptables rules. Retrying with the native nftables backend.'
+    run_priv mkdir -p /etc/docker
+    printf '{\n  "firewall-backend": "nftables"\n}\n' | run_priv tee /etc/docker/daemon.json > /dev/null
 }
 
 # ---------------------------------------------------------------------------
