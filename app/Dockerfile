@@ -31,6 +31,12 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 ENV XDG_CONFIG_HOME=/tmp/caddy-config \
     XDG_DATA_HOME=/tmp/caddy-data
 
+# The bare repositories live in a volume shared with the sshd container, where
+# git runs as the `git` user. app/workers touch that tree as root, so git needs
+# an explicit ownership exception — otherwise every call bails out with
+# "detected dubious ownership".
+RUN git config --system --add safe.directory '/app/data/repositories/*'
+
 COPY Caddyfile.dev /etc/caddy/Caddyfile
 
 EXPOSE 80

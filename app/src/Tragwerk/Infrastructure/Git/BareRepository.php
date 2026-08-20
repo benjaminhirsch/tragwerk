@@ -42,6 +42,8 @@ final readonly class BareRepository
     public function __construct(
         private string $repositoriesPath,
         private string $appInternalUrl,
+        private int $repositoryUid = 1000,
+        private int $repositoryGid = 1000,
     ) {
     }
 
@@ -54,6 +56,49 @@ final readonly class BareRepository
 
         $this->run(['git', 'init', '--bare', $path]);
         $this->installPostReceiveHook($path);
+        $this->applyOwnership($path);
+    }
+
+    /**
+     * Hands the repository back to the uid that git-receive-pack runs as inside
+     * the sshd container. Relevant whenever this process writes as root (the
+     * production image declares no USER) — git rejects repositories owned by
+     * someone else and could not write into them anyway.
+     *
+     * Only the entries that actually differ are touched, so an already-correct
+     * tree costs one find and a large repository stays cheap. Best effort: an
+     * unprivileged process (development, tests) cannot chown, and that must not
+     * abort project creation.
+     */
+    private function applyOwnership(string $path): void
+    {
+        $uid = (string) $this->repositoryUid;
+        $gid = (string) $this->repositoryGid;
+
+        try {
+            $this->run([
+                'find',
+                $path,
+                '(',
+                '!',
+                '-uid',
+                $uid,
+                '-o',
+                '!',
+                '-gid',
+                $gid,
+                ')',
+                '-exec',
+                'chown',
+                '-h',
+                $uid . ':' . $gid,
+                '{}',
+                '+',
+            ]);
+        } catch (RuntimeException) {
+            // Ownership stays as it is — the push would fail, but the caller
+            // (project creation, webhook fetch) has nothing to roll back.
+        }
     }
 
     private function installPostReceiveHook(string $repoPath): void
@@ -103,6 +148,8 @@ final readonly class BareRepository
         } catch (RuntimeException) {
             // ref already gone — nothing to do
         }
+
+        $this->applyOwnership($path);
     }
 
     /** @return string[] */
@@ -297,6 +344,7 @@ final readonly class BareRepository
         $refspec = '+refs/heads/' . $branch . ':refs/heads/' . $branch;
 
         $this->run(['git', '-C', $this->getPath($projectId), 'fetch', '--no-tags', $url, $refspec]);
+        $this->applyOwnership($this->getPath($projectId));
     }
 
     private function injectToken(string $url, string $token): string

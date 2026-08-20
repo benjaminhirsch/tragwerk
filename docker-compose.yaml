@@ -72,6 +72,10 @@ services:
     environment:
       <<: *default-variables
       APP_INTERNAL_URL: http://app
+      # Keep the git user aligned with the uid the app container writes as, so
+      # the bare repos stay pushable on hosts whose uid is not 1000.
+      GIT_UID: ${DOCKER_UID:-1000}
+      GIT_GID: ${DOCKER_GID:-1000}
     ports:
       - "2222:22"
     volumes:

@@ -83,6 +83,12 @@ COPY . .
 COPY --from=vendor /app/vendor ./vendor
 RUN composer dump-autoload --no-dev --optimize --no-interaction
 
+# The bare repositories live in a volume shared with the sshd container, where
+# git runs as the `git` user. app/workers touch that tree as root, so git needs
+# an explicit ownership exception — otherwise every call bails out with
+# "detected dubious ownership".
+RUN git config --system --add safe.directory '/app/data/repositories/*'
+
 # Production server + PHP config (no file-watch, no xdebug).
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY app.prod.ini /usr/local/etc/php/conf.d/app.ini
