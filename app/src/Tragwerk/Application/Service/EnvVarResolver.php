@@ -14,10 +14,11 @@ use function usort;
 use const PHP_INT_MAX;
 
 /**
- * Resolves the effective env var map for an environment: branch-specific vars plus vars inherited
- * from ancestor branches (is_inherited). Used by both the build (bakes them into the build.zip
- * docker-compose.yml) and the deploy (regenerates docker-compose.yml with image: refs) so the two
- * cannot drift — if they did, the deploy's compose would silently win and drop inherited vars.
+ * Resolves the effective env var map for an environment: project-scoped vars, plus vars inherited
+ * from ancestor branches (is_inherited), plus branch-specific vars. Used by both the build (bakes
+ * them into the build.zip docker-compose.yml) and the deploy (regenerates docker-compose.yml with
+ * image: refs) so the two cannot drift — if they did, the deploy's compose would silently win and
+ * drop inherited vars.
  */
 final readonly class EnvVarResolver
 {
@@ -28,7 +29,8 @@ final readonly class EnvVarResolver
     }
 
     /**
-     * Branch-specific vars override inherited; among inherited, the closer ancestor wins.
+     * Precedence, lowest to highest: project-scoped, inherited (closer ancestor wins),
+     * branch-specific.
      *
      * @return array<string, string>
      */
@@ -39,11 +41,20 @@ final readonly class EnvVarResolver
 
         $resolved = [];
 
+        // Project-scoped vars are the base layer everything else may override.
+        foreach ($this->envVarRepository->findProjectScoped($projectId) as $var) {
+            $resolved[$var->key] = $var->value;
+        }
+
         // Inherited vars: iterate from farthest ancestor to closest so the closer ancestor wins.
         $ancestorOrder   = array_flip($ancestors);
         $sortedInherited = iterator_to_array($inheritedVars, false);
         usort($sortedInherited, static function ($a, $b) use ($ancestorOrder): int {
-            return ($ancestorOrder[$b->branch] ?? PHP_INT_MAX) <=> ($ancestorOrder[$a->branch] ?? PHP_INT_MAX);
+            // Inherited vars always carry an ancestor branch; '' just keeps the lookup total.
+            $left  = $ancestorOrder[$a->branch ?? ''] ?? PHP_INT_MAX;
+            $right = $ancestorOrder[$b->branch ?? ''] ?? PHP_INT_MAX;
+
+            return $right <=> $left;
         });
 
         foreach ($sortedInherited as $var) {

@@ -52,6 +52,26 @@ final class EnvVarRepository extends GenericRepository implements EnvVarReposito
     }
 
     #[Override]
+    public function findProjectScoped(ProjectIdentifier $projectId): Generator
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb->select('*')
+            ->from(EntityHelper::getDbTableName(EntityType::ENV_VAR))
+            ->where($qb->expr()->eq('project_id', ':project_id'))
+            ->andWhere($qb->expr()->isNull('branch'))
+            ->setParameter('project_id', $projectId->toString())
+            ->orderBy('key', 'ASC');
+
+        try {
+            foreach ($qb->executeQuery()->iterateAssociative() as $row) {
+                yield $this->map($row, EnvVar::class);
+            }
+        } catch (MappingError | Exception $e) {
+            throw EntityHydrationFailed::create(EnvVar::class, $e);
+        }
+    }
+
+    #[Override]
     public function findInheritedFromAncestors(ProjectIdentifier $projectId, array $ancestorBranches): Generator
     {
         if ($ancestorBranches === []) {

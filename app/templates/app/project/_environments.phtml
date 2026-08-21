@@ -5,6 +5,7 @@ declare(strict_types=1);
 /**
  * @var \Tragwerk\Domain\Entity\Project $project
  * @var list<array{name: string, isRoot: bool, hasParent: bool, status: string|null, disabled: bool, commit: string|null, deployedAt: \Tragwerk\Domain\ValueObject\TimestampImmutable|null}> $environments
+ * @var string $cloneUrl
  */
 
 $statusBadge = function (?string $status, bool $disabled): array {
@@ -21,6 +22,27 @@ $statusBadge = function (?string $status, bool $disabled): array {
     };
 };
 ?>
+<?php if ($environments === []): ?>
+    <div class="tw-card">
+        <div class="tw-card__body text-center py-5">
+            <div class="text-faint mb-2"><i class="bi bi-git" style="font-size:1.5rem"></i></div>
+            <div class="tw-cell-strong mb-1"><?= $this->e($this->t('No environment yet')) ?></div>
+            <div class="text-muted-2 mb-3" style="font-size:.85rem"><?= $this->e($this->t('Push a branch to this repository and it becomes an environment.')) ?></div>
+            <div class="d-inline-block text-start mb-3">
+                <code class="mono" style="font-size:.78rem;word-break:break-all">git remote add tragwerk <?= $this->e($cloneUrl) ?></code>
+            </div>
+            <div>
+                <?= $this->fetch('partial::link', [
+                    'label'   => $this->t('Set up variables first'),
+                    'href'    => $this->url('variable'),
+                    'icon'    => 'bi bi-sliders',
+                    'classes' => 'btn btn-ghost',
+                ]) ?>
+            </div>
+            <div class="text-faint mt-2" style="font-size:.8rem"><?= $this->e($this->t('Project-wide variables are available to the very first build.')) ?></div>
+        </div>
+    </div>
+<?php else: ?>
 <div class="tw-table-wrap">
     <table class="tw-table">
         <thead>
@@ -92,3 +114,4 @@ $statusBadge = function (?string $status, bool $disabled): array {
         </tbody>
     </table>
 </div>
+<?php endif ?>

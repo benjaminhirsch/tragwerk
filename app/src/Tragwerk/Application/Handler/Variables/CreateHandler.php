@@ -40,9 +40,13 @@ final readonly class CreateHandler implements RequestHandlerInterface
         $activeProject = $request->getAttribute('active_project');
         $activeBranch  = $request->getAttribute('active_environment');
 
-        if (! $activeProject instanceof Project || ! is_string($activeBranch) || $activeBranch === '') {
+        if (! $activeProject instanceof Project) {
             return new RedirectResponse($this->urlHelper->generate('variable'));
         }
+
+        // Before the first push the repository has no branches, so project scope is the only
+        // option the form may offer.
+        $activeBranch = is_string($activeBranch) && $activeBranch !== '' ? $activeBranch : null;
 
         $validationBag = null;
 
@@ -53,7 +57,14 @@ final readonly class CreateHandler implements RequestHandlerInterface
                 $dto = $validationBag->getDto();
                 assert($dto instanceof VariableCreation);
 
-                $var = $dto->createEnvVar(EnvVarIdentifier::create(), $activeProject->id, $activeBranch);
+                $branch = $dto->isProjectScoped ? null : $activeBranch;
+
+                if ($branch === null && ! $dto->isProjectScoped) {
+                    // Environment scope was requested without an environment to attach to.
+                    return new RedirectResponse($this->urlHelper->generate('variable'));
+                }
+
+                $var = $dto->createEnvVar(EnvVarIdentifier::create(), $activeProject->id, $branch);
 
                 try {
                     $this->eventDispatcher->dispatch(new EnvVarCreated($var));
@@ -68,6 +79,9 @@ final readonly class CreateHandler implements RequestHandlerInterface
             }
         }
 
-        return $this->renderer->render($request, 'page::variable/create', ['validationBag' => $validationBag]);
+        return $this->renderer->render($request, 'page::variable/create', [
+            'validationBag'  => $validationBag,
+            'canScopeToEnvironment' => $activeBranch !== null,
+        ]);
     }
 }

@@ -2,9 +2,11 @@
 
 /** @var \Tragwerk\Application\Validation\ValidationBag|null $validationBag */
 
+$activeEnvironment = $this->activeEnvironment();
+
 $this->layout('layout::default', [
     'wide' => false,
-    'pageType' => $this->activeTeam()->name . ' / ' . $this->activeEnvironment(),
+    'pageType' => $this->activeTeam()->name . ($activeEnvironment !== null ? ' / ' . $activeEnvironment : ''),
     'pageTitle' => $this->t('New variable'),
     'pageSubTitle' => $this->t('Injected into the environment at build and runtime.'),
 ]) ?>
@@ -14,6 +16,11 @@ $this->layout('layout::default', [
     $valueError     = $validationBag?->getErrorByName('value');
     $secretChecked  = ($validationBag?->getValueByName('isSecret') ?? '') === '1';
     $inheritedCheck = ($validationBag?->getValueByName('isInherited') ?? '') === '1';
+
+    // Without an environment there is nothing to scope to, so project scope is the only choice.
+    $scope = $canScopeToEnvironment
+        ? ($validationBag?->getValueByName('scope') ?? 'environment')
+        : 'project';
 ?>
 
 <form action="<?= $this->url('variable.create') ?>" method="post" class="tw-card">
@@ -21,12 +28,35 @@ $this->layout('layout::default', [
         <?= $this->fetch('partial::input/csrf') ?>
 
         <div>
+            <span class="form-label d-block"><?= $this->t('Scope') ?></span>
+            <?php if ($canScopeToEnvironment): ?>
+                <div class="prop-switch">
+                    <input id="scopeEnvironment" name="scope" value="environment" class="form-check-input" type="radio"<?= $scope !== 'project' ? ' checked' : '' ?>>
+                    <div>
+                        <label class="ttl d-block" for="scopeEnvironment"><?= $this->t('This environment') ?></label>
+                        <div class="dsc"><?= $this->t('Only applies to {branch}. Overrides a project-wide value with the same key.', ['branch' => '<b class="mono">' . $this->e($activeEnvironment) . '</b>']) ?></div>
+                    </div>
+                </div>
+                <div class="prop-switch">
+                    <input id="scopeProject" name="scope" value="project" class="form-check-input" type="radio"<?= $scope === 'project' ? ' checked' : '' ?>>
+                    <div>
+                        <label class="ttl d-block" for="scopeProject"><?= $this->t('Whole project') ?></label>
+                        <div class="dsc"><?= $this->t('Applies to every environment, including ones created by future pushes.') ?></div>
+                    </div>
+                </div>
+            <?php else: ?>
+                <input type="hidden" name="scope" value="project">
+                <div class="field-help"><?= $this->e($this->t('Nothing has been pushed yet, so this variable applies to the whole project and to every environment created later.')) ?></div>
+            <?php endif ?>
+        </div>
+
+        <div>
             <label class="form-label" for="key"><?= $this->t('Key') ?></label>
             <input id="key" name="key" type="text" autocomplete="off" autofocus
                    class="form-control key-input<?= $keyError !== null ? ' is-invalid' : '' ?>"
                    placeholder="<?= $this->e($this->t('e.g. DATABASE_URL')) ?>"
                    value="<?= $this->e($validationBag?->getValueByName('key') ?? '') ?>">
-            <div class="field-help"><?= $this->t('Uppercase letters, digits and underscores.') ?></div>
+            <div class="field-help"><?= $this->t('Letters, digits and underscores. Converted to uppercase.') ?></div>
             <?php if ($keyError !== null): ?>
                 <div class="invalid-feedback d-block"><?= $this->e($this->t($keyError)) ?></div>
             <?php endif ?>
@@ -51,13 +81,15 @@ $this->layout('layout::default', [
                     <div class="dsc"><?= $this->t('Value is stored encrypted and masked in the UI and in logs.') ?></div>
                 </div>
             </div>
+            <?php if ($canScopeToEnvironment): ?>
             <div class="prop-switch">
                 <input id="isInherited" name="isInherited" value="1" class="form-check-input" type="checkbox"<?= $inheritedCheck ? ' checked' : '' ?>>
                 <div>
                     <label class="ttl d-block" for="isInherited"><?= $this->t('Inherited') ?></label>
-                    <div class="dsc"><?= $this->t('Automatically passed down to all child environments of this environment.') ?></div>
+                    <div class="dsc"><?= $this->t('Automatically passed down to all child environments of this environment. Ignored for project-wide variables, which already apply everywhere.') ?></div>
                 </div>
             </div>
+            <?php endif ?>
         </div>
     </div>
 

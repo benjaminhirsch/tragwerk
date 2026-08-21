@@ -91,7 +91,7 @@ $this->layout('layout::default', [
      hx-trigger="sse:message, every 30s"
      hx-target="#tw-env-table"
      hx-swap="innerHTML">
-    <?= $this->fetch('page::project/_environments', ['environments' => $environments, 'project' => $project]) ?>
+    <?= $this->fetch('page::project/_environments', ['environments' => $environments, 'project' => $project, 'cloneUrl' => $cloneUrl]) ?>
 </div>
 
 <div class="row g-4 mt-1">

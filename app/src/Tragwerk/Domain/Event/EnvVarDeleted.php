@@ -12,7 +12,8 @@ final readonly class EnvVarDeleted
     public function __construct(
         public EnvVarIdentifier $id,
         public ProjectIdentifier $projectId,
-        public string $branch,
+        /** NULL for a project-scoped variable — see Entity\EnvVar. */
+        public string|null $branch,
         public bool $wasInherited,
     ) {
     }

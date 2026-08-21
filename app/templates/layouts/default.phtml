@@ -218,6 +218,14 @@ $this->layout('layout::blank') ?>
                         'label' => $this->t('Domains'),
                         'icon' => 'bi bi-signpost-2',
                 ],
+                [
+                        'route' => [
+                                'routeName' => 'variable',
+                                'routeParams' => [],
+                        ],
+                        'label' => $this->t('Variables'),
+                        'icon' => 'bi bi-sliders',
+                ],
         ]);
     }
 
@@ -246,14 +254,6 @@ $this->layout('layout::blank') ?>
                         ],
                         'label' => $this->t('Logs'),
                         'icon' => 'bi bi-card-text',
-                ],
-                [
-                        'route' => [
-                                'routeName' => 'variable',
-                                'routeParams' => [],
-                        ],
-                        'label' => $this->t('Variables'),
-                        'icon' => 'bi bi-sliders',
                 ],
                 [
                         'route' => [

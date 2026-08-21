@@ -85,17 +85,20 @@ final readonly class ShowHandler implements RequestHandlerInterface
             ];
         }
 
+        // The partial shows the clone URL in its empty state, so both render paths need it.
+        $cloneUrl = 'git@' . $this->gitSshHost . ':' . $this->gitSshRepoBase . '/' . $project->id->toString();
+
         if (($request->getQueryParams()['fragment'] ?? null) === 'environments') {
             return $this->renderer->render($request, 'page::project/_environments', [
                 'project'      => $project,
                 'environments' => $environments,
+                'cloneUrl'     => $cloneUrl,
             ]);
         }
 
         $productionBranch = $this->productionBranch($branches);
         $productionUrl    = $productionBranch !== null ? $this->primaryDomain($project, $productionBranch) : null;
         $productionStatus = $productionBranch !== null ? ($statuses[$productionBranch] ?? null)?->value : null;
-        $cloneUrl         = 'git@' . $this->gitSshHost . ':' . $this->gitSshRepoBase . '/' . $project->id->toString();
 
         return $this->renderer->render($request, 'page::project/show', [
             'project'          => $project,

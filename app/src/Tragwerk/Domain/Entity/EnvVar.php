@@ -13,7 +13,8 @@ final class EnvVar implements Entity
     public function __construct(
         public EnvVarIdentifier $id,
         public ProjectIdentifier $projectId,
-        public string $branch,
+        /** NULL = project scope: applies to every environment, lowest precedence. */
+        public string|null $branch,
         public string $key,
         public string $value,
         public bool $isSecret,

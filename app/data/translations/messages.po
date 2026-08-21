@@ -1800,3 +1800,61 @@ msgstr ""
 
 msgid "Back to login"
 msgstr ""
+
+#, php-format
+msgid "%d variables · %d secret · %d project-wide — injected at build and runtime."
+msgstr ""
+
+msgid "All environments"
+msgstr ""
+
+msgid "No environment yet"
+msgstr ""
+
+msgid "Variables you create now apply to the whole project, so the first build already has them. Once you push a branch you can add values for that environment only."
+msgstr ""
+
+msgid "No variables yet"
+msgstr ""
+
+msgid "Add the configuration and secrets your application needs at build and runtime."
+msgstr ""
+
+msgid "Scope"
+msgstr ""
+
+msgid "This environment"
+msgstr ""
+
+msgid "Only applies to {branch}. Overrides a project-wide value with the same key."
+msgstr ""
+
+msgid "Whole project"
+msgstr ""
+
+msgid "Applies to every environment, including ones created by future pushes."
+msgstr ""
+
+msgid "Nothing has been pushed yet, so this variable applies to the whole project and to every environment created later."
+msgstr ""
+
+msgid "Automatically passed down to all child environments of this environment. Ignored for project-wide variables, which already apply everywhere."
+msgstr ""
+
+msgid "The scope of an existing variable cannot be changed. Create a variable with the same key in another scope to override it."
+msgstr ""
+
+msgid "Push a branch to this repository and it becomes an environment."
+msgstr ""
+
+msgid "Set up variables first"
+msgstr ""
+
+msgid "Project-wide variables are available to the very first build."
+msgstr ""
+
+msgid "Key must start with a letter and contain only letters, digits and underscores"
+msgstr ""
+
+msgid "Letters, digits and underscores. Converted to uppercase."
+msgstr ""

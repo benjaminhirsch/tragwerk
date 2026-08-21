@@ -312,6 +312,12 @@ final class BuildEnvironmentTest extends TestCase
                 yield from [];
             }
 
+            /** @return Generator<EnvVar> */
+            public function findProjectScoped(ProjectIdentifier $projectId): Generator
+            {
+                yield from [];
+            }
+
             /**
              * @param list<string> $ancestorBranches
              *

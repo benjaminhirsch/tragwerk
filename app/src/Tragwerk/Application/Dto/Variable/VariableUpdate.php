@@ -13,17 +13,21 @@ use Tragwerk\Domain\ValueObject\TimestampImmutable;
 
 use function _;
 use function preg_match;
+use function strtoupper;
 use function trim;
 
 final readonly class VariableUpdate implements DtoInterface
 {
+    /** Normalized to uppercase: the input renders uppercase, so the value must match. */
+    public string $key;
+
     public bool $isSecret;
 
     public bool $isInherited;
 
     public function __construct(
         #[FromBody]
-        public string $key,
+        string $key,
         #[FromBody]
         public string $value = '',
         #[FromBody]
@@ -34,14 +38,16 @@ final readonly class VariableUpdate implements DtoInterface
         $this->isSecret    = $isSecret !== null;
         $this->isInherited = $isInherited !== null;
 
+        $this->key = strtoupper(trim($key));
+
         $errors = [];
 
-        if (trim($this->key) === '') {
+        if ($this->key === '') {
             $errors[] = ValidationError::make('key', _('Field can\'t be empty'));
         } elseif (preg_match('/^[A-Z][A-Z0-9_]*$/', $this->key) !== 1) {
             $errors[] = ValidationError::make(
                 'key',
-                _('Key must start with an uppercase letter and contain only uppercase letters, digits and underscores'),
+                _('Key must start with a letter and contain only letters, digits and underscores'),
             );
         }
 

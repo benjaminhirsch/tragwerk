@@ -2038,3 +2038,61 @@ msgstr ""
 
 msgid "Back to login"
 msgstr "Zurück zur Anmeldung"
+
+#, php-format
+msgid "%d variables · %d secret · %d project-wide — injected at build and runtime."
+msgstr "%d Variablen · %d Geheimnisse · %d projektweit – werden bei der Erstellung und zur Laufzeit eingefügt."
+
+msgid "All environments"
+msgstr "Alle Umgebungen"
+
+msgid "No environment yet"
+msgstr "Noch keine Umgebung"
+
+msgid "Variables you create now apply to the whole project, so the first build already has them. Once you push a branch you can add values for that environment only."
+msgstr "Variablen, die du jetzt anlegst, gelten für das gesamte Projekt und stehen damit schon dem ersten Build zur Verfügung. Sobald du einen Branch gepusht hast, kannst du Werte nur für diese Umgebung ergänzen."
+
+msgid "No variables yet"
+msgstr "Noch keine Variablen"
+
+msgid "Add the configuration and secrets your application needs at build and runtime."
+msgstr "Lege die Konfiguration und Geheimnisse an, die deine Anwendung bei der Erstellung und zur Laufzeit braucht."
+
+msgid "Scope"
+msgstr "Geltungsbereich"
+
+msgid "This environment"
+msgstr "Diese Umgebung"
+
+msgid "Only applies to {branch}. Overrides a project-wide value with the same key."
+msgstr "Gilt nur für {branch}. Überschreibt einen projektweiten Wert mit demselben Schlüssel."
+
+msgid "Whole project"
+msgstr "Gesamtes Projekt"
+
+msgid "Applies to every environment, including ones created by future pushes."
+msgstr "Gilt für jede Umgebung, auch für solche, die durch spätere Pushes entstehen."
+
+msgid "Nothing has been pushed yet, so this variable applies to the whole project and to every environment created later."
+msgstr "Es wurde noch nichts gepusht, deshalb gilt diese Variable für das gesamte Projekt und für jede später entstehende Umgebung."
+
+msgid "Automatically passed down to all child environments of this environment. Ignored for project-wide variables, which already apply everywhere."
+msgstr "Wird automatisch an alle untergeordneten Umgebungen dieser Umgebung weitergegeben. Bei projektweiten Variablen ohne Wirkung, da sie ohnehin überall gelten."
+
+msgid "The scope of an existing variable cannot be changed. Create a variable with the same key in another scope to override it."
+msgstr "Der Geltungsbereich einer bestehenden Variable lässt sich nicht ändern. Lege eine Variable mit demselben Schlüssel in einem anderen Geltungsbereich an, um sie zu überschreiben."
+
+msgid "Push a branch to this repository and it becomes an environment."
+msgstr "Pushe einen Branch in dieses Repository, und er wird zu einer Umgebung."
+
+msgid "Set up variables first"
+msgstr "Zuerst Variablen anlegen"
+
+msgid "Project-wide variables are available to the very first build."
+msgstr "Projektweite Variablen stehen bereits dem allerersten Build zur Verfügung."
+
+msgid "Key must start with a letter and contain only letters, digits and underscores"
+msgstr "Der Schlüssel muss mit einem Buchstaben beginnen und darf nur Buchstaben, Ziffern und Unterstriche enthalten."
+
+msgid "Letters, digits and underscores. Converted to uppercase."
+msgstr "Buchstaben, Ziffern und Unterstriche. Wird in Großbuchstaben umgewandelt."

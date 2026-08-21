@@ -31,6 +31,14 @@ interface EnvVarRepository
     public function findByBranch(ProjectIdentifier $projectId, string $branch): Generator;
 
     /**
+     * Returns the project-scoped vars (branch IS NULL). They apply to every environment and can be
+     * configured before the first push has created any branch.
+     *
+     * @return Generator<EnvVar>
+     */
+    public function findProjectScoped(ProjectIdentifier $projectId): Generator;
+
+    /**
      * Returns inherited vars from the given ancestor branches, ordered by branch (for caller to apply precedence).
      *
      * @param list<string> $ancestorBranches

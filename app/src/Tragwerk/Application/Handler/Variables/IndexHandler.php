@@ -33,18 +33,25 @@ final readonly class IndexHandler implements RequestHandlerInterface
         $activeProject = $request->getAttribute('active_project');
         assert($activeProject instanceof Project);
 
+        // No environment yet (nothing pushed): only the project-scoped vars exist, and they are
+        // exactly what the user needs to configure before the first build runs.
         $activeBranch = $request->getAttribute('active_environment');
-        assert(is_string($activeBranch));
-
-        $ancestors     = $this->branchAncestorResolver->getAncestors($activeProject->id->toString(), $activeBranch);
-        $branchVars    = $this->envVarRepository->findByBranch($activeProject->id, $activeBranch);
-        $inheritedVars = $this->envVarRepository->findInheritedFromAncestors($activeProject->id, $ancestors);
+        $activeBranch = is_string($activeBranch) && $activeBranch !== '' ? $activeBranch : null;
 
         /** @var list<EnvVar> $vars */
-        $vars = [
-            ...iterator_to_array($branchVars, false),
-            ...iterator_to_array($inheritedVars, false),
-        ];
+        $vars = iterator_to_array($this->envVarRepository->findProjectScoped($activeProject->id), false);
+
+        if ($activeBranch !== null) {
+            $ancestors     = $this->branchAncestorResolver->getAncestors($activeProject->id->toString(), $activeBranch);
+            $branchVars    = $this->envVarRepository->findByBranch($activeProject->id, $activeBranch);
+            $inheritedVars = $this->envVarRepository->findInheritedFromAncestors($activeProject->id, $ancestors);
+
+            $vars = [
+                ...$vars,
+                ...iterator_to_array($branchVars, false),
+                ...iterator_to_array($inheritedVars, false),
+            ];
+        }
 
         return $this->renderer->render($request, 'page::variable/index', [
             'vars' => iterator_to_array(ListHelper::sort(new ArrayIterator($vars), 'key'), false),

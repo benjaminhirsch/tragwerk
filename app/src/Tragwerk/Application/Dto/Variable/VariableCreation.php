@@ -15,35 +15,53 @@ use Tragwerk\Domain\ValueObject\TimestampImmutable;
 
 use function _;
 use function preg_match;
+use function strtoupper;
 use function trim;
 
 final readonly class VariableCreation implements DtoInterface
 {
+    public const string SCOPE_PROJECT     = 'project';
+    public const string SCOPE_ENVIRONMENT = 'environment';
+
+    /** Normalized to uppercase: the input renders uppercase, so the value must match. */
+    public string $key;
+
     public bool $isSecret;
 
     public bool $isInherited;
 
+    /** Project scope means the var applies to every environment — see Entity\EnvVar::$branch. */
+    public bool $isProjectScoped;
+
     public function __construct(
         #[FromBody]
-        public string $key,
+        string $key,
         #[FromBody]
         public string $value,
         #[FromBody]
         string|null $isSecret = null,
         #[FromBody]
         string|null $isInherited = null,
+        #[FromBody]
+        string|null $scope = null,
     ) {
-        $this->isSecret    = $isSecret !== null;
-        $this->isInherited = $isInherited !== null;
+        $this->isSecret        = $isSecret !== null;
+        $this->isProjectScoped = $scope === self::SCOPE_PROJECT;
+
+        // "Inherited" means "pass down to child branches" and is meaningless for a var that already
+        // applies everywhere — the database enforces the same rule with a CHECK constraint.
+        $this->isInherited = $isInherited !== null && ! $this->isProjectScoped;
+
+        $this->key = strtoupper(trim($key));
 
         $errors = [];
 
-        if (trim($this->key) === '') {
+        if ($this->key === '') {
             $errors[] = ValidationError::make('key', _('Field can\'t be empty'));
         } elseif (preg_match('/^[A-Z][A-Z0-9_]*$/', $this->key) !== 1) {
             $errors[] = ValidationError::make(
                 'key',
-                _('Key must start with an uppercase letter and contain only uppercase letters, digits and underscores'),
+                _('Key must start with a letter and contain only letters, digits and underscores'),
             );
         }
 
@@ -56,7 +74,7 @@ final readonly class VariableCreation implements DtoInterface
         }
     }
 
-    public function createEnvVar(EnvVarIdentifier $id, ProjectIdentifier $projectId, string $branch): EnvVar
+    public function createEnvVar(EnvVarIdentifier $id, ProjectIdentifier $projectId, string|null $branch): EnvVar
     {
         $now = TimestampImmutable::now();
 
