@@ -33,8 +33,17 @@ use function trim;
 
 final readonly class DockerfileGenerator
 {
+    private const string BUILD_HOOK_PREFIX = 'build-hook.';
+    private const string BUILD_HOOK_PATH   = '/usr/local/bin/tragwerk-build-hook';
+
     public function __construct(private ServiceImageResolver $imageResolver)
     {
+    }
+
+    /** Build-artifact filename of the build-hook script; shared with the deploy step's fingerprint. */
+    public static function buildHookScriptName(string $appSlug): string
+    {
+        return self::BUILD_HOOK_PREFIX . $appSlug . '.sh';
     }
 
     public function generate(ApplicationConfig $app): DockerfileOutput
@@ -57,13 +66,14 @@ final readonly class DockerfileGenerator
         $hasCrons        = $app->crons !== [];
         $hasPhpIni       = $isPhp && $app->php !== null && $app->php->settings !== [];
         $workerScripts   = $this->buildWorkerScripts($app, $slug);
+        $buildHookScript = $this->buildBuildHookScript($buildHooks);
 
         return new DockerfileOutput(
             dockerfileName:    'Dockerfile.' . $slug,
             dockerfileContent: $this->buildDockerfile(
                 $app,
                 $slug,
-                $buildHooks,
+                $buildHookScript !== null,
                 $hasEntrypoint,
                 $hasCaddyfile,
                 $hasCrons,
@@ -78,7 +88,34 @@ final readonly class DockerfileGenerator
             phpIniName:        $hasPhpIni ? 'php.' . $slug . '.ini' : null,
             phpIniContent:     $hasPhpIni && $app->php !== null ? $this->buildPhpIni($app->php) : null,
             workerScripts:     $workerScripts,
+            buildHookName:     $buildHookScript !== null ? self::buildHookScriptName($slug) : null,
+            buildHookContent:  $buildHookScript,
         );
+    }
+
+    /**
+     * Build hooks become a script that the Dockerfile copies in and runs, rather than
+     * one `RUN a && b && c` line. Joining with `&&` silently breaks everything a shell
+     * script may legitimately contain — a `#` comment swallows the rest of the joined
+     * line, and `if`/`for`/`case` or a quote spanning lines never survive.
+     *
+     * @param list<HookConfig> $buildHooks
+     */
+    private function buildBuildHookScript(array $buildHooks): string|null
+    {
+        $body = [];
+
+        foreach ($buildHooks as $hook) {
+            foreach ($this->parseScriptLines($hook->value) as $line) {
+                $body[] = $line;
+            }
+        }
+
+        if ($body === []) {
+            return null;
+        }
+
+        return implode("\n", ['#!/bin/sh', 'set -e', '', ...$body]) . "\n";
     }
 
     /**
@@ -157,11 +194,10 @@ final readonly class DockerfileGenerator
         return array_values(array_filter($hooks, static fn (HookConfig $h) => $h->type === $type));
     }
 
-    /** @param list<HookConfig> $buildHooks */
     private function buildDockerfile(
         ApplicationConfig $app,
         string $slug,
-        array $buildHooks,
+        bool $hasBuildHook,
         bool $hasEntrypoint,
         bool $hasCaddyfile,
         bool $hasCrons,
@@ -206,14 +242,10 @@ final readonly class DockerfileGenerator
             $lines[] = 'COPY crontab.' . $slug . ' /etc/supercronic/crontab';
         }
 
-        foreach ($buildHooks as $hook) {
-            $scriptLines = $this->parseScriptLines($hook->value);
-            if ($scriptLines === []) {
-                continue;
-            }
-
+        if ($hasBuildHook) {
             $lines[] = '';
-            $lines[] = 'RUN ' . implode(" \\\n    && ", $scriptLines);
+            $lines[] = 'COPY ' . self::buildHookScriptName($slug) . ' ' . self::BUILD_HOOK_PATH;
+            $lines[] = 'RUN chmod +x ' . self::BUILD_HOOK_PATH . ' && ' . self::BUILD_HOOK_PATH;
         }
 
         if ($hasCaddyfile) {

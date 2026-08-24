@@ -174,6 +174,13 @@ final readonly class BuildEnvironment
                     $messages[] = 'Generated ' . $dockerfile->entrypointName;
                 }
 
+                if ($dockerfile->buildHookName !== null && $dockerfile->buildHookContent !== null) {
+                    $path = $outDir . '/' . $dockerfile->buildHookName;
+                    file_put_contents($path, $dockerfile->buildHookContent);
+                    chmod($path, 0755);
+                    $messages[] = 'Generated ' . $dockerfile->buildHookName;
+                }
+
                 foreach ($dockerfile->workerScripts as $scriptName => $scriptContent) {
                     $path = $outDir . '/' . $scriptName;
                     file_put_contents($path, $scriptContent);

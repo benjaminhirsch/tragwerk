@@ -19,6 +19,8 @@ final readonly class DockerfileOutput
         public string|null $phpIniName = null,
         public string|null $phpIniContent = null,
         public array $workerScripts = [],
+        public string|null $buildHookName = null,
+        public string|null $buildHookContent = null,
     ) {
     }
 }

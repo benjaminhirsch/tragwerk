@@ -333,12 +333,14 @@ final class DeployEnvironmentCommand extends Command
             $appSlug    = $this->slugify($app->name);
             $dockerfile = $buildDir . '/Dockerfile.' . $appSlug;
 
-            // Worker scripts are baked into the image too, so a changed worker command must
-            // change the fingerprint — otherwise the stale-image shortcut below reuses a tag
-            // whose script is out of date.
-            $workerScripts = [];
+            // The build-hook and worker scripts are baked into the image too, so a change to
+            // either must change the fingerprint — otherwise the stale-image shortcut below
+            // reuses a tag whose scripts are out of date.
+            $scriptArtifacts = [
+                $this->readArtifact($buildDir . '/' . DockerfileGenerator::buildHookScriptName($appSlug)),
+            ];
             foreach ($app->workers as $worker) {
-                $workerScripts[] = $this->readArtifact(
+                $scriptArtifacts[] = $this->readArtifact(
                     $buildDir . '/' . DockerfileGenerator::workerScriptName(
                         $appSlug,
                         $this->slugify($worker->name),
@@ -353,7 +355,7 @@ final class DeployEnvironmentCommand extends Command
                 $this->readArtifact($dockerfile),
                 $this->readArtifact($buildDir . '/Caddyfile.' . $appSlug),
                 $this->readArtifact($buildDir . '/docker-entrypoint.' . $appSlug . '.sh'),
-                ...$workerScripts,
+                ...$scriptArtifacts,
             );
             $imageTag    = ImageReference::tag(
                 $registry->url,

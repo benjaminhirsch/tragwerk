@@ -205,26 +205,54 @@ final class DockerfileGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function buildHookBecomesRunInstruction(): void
+    public function buildHookBecomesAScriptCopiedIntoTheImage(): void
     {
-        $output = $this->generator->generate(self::app(hooks: [
+        $output = $this->generator->generate(self::app('My App', hooks: [
             self::hook(HookType::BUILD, 'composer install --no-dev'),
         ]));
 
-        self::assertStringContainsString('RUN composer install --no-dev', $output->dockerfileContent);
+        self::assertSame('build-hook.my-app.sh', $output->buildHookName);
+        self::assertSame(
+            "#!/bin/sh\nset -e\n\ncomposer install --no-dev\n",
+            $output->buildHookContent,
+        );
+        self::assertStringContainsString(
+            'COPY build-hook.my-app.sh /usr/local/bin/tragwerk-build-hook',
+            $output->dockerfileContent,
+        );
+        self::assertStringContainsString(
+            'RUN chmod +x /usr/local/bin/tragwerk-build-hook && /usr/local/bin/tragwerk-build-hook',
+            $output->dockerfileContent,
+        );
     }
 
     #[Test]
-    public function multiLineBuildHookJoinedWithAnd(): void
+    public function multiLineBuildHookKeepsOneLinePerCommand(): void
     {
         $output = $this->generator->generate(self::app(hooks: [
             self::hook(HookType::BUILD, "composer install --no-dev\nphp artisan config:cache"),
         ]));
 
-        self::assertStringContainsString(
-            'RUN composer install --no-dev' . " \\\n    && " . 'php artisan config:cache',
-            $output->dockerfileContent,
+        self::assertSame(
+            "#!/bin/sh\nset -e\n\ncomposer install --no-dev\nphp artisan config:cache\n",
+            $output->buildHookContent,
         );
+    }
+
+    #[Test]
+    public function buildHookKeepsCommentLines(): void
+    {
+        // Joining with `&&` used to make a `#` comment swallow the rest of the line,
+        // leaving a dangling `set -e &&` that fails with a shell syntax error.
+        $output = $this->generator->generate(self::app(hooks: [
+            self::hook(HookType::BUILD, "# Install dependencies\ncomposer install --no-dev"),
+        ]));
+
+        self::assertSame(
+            "#!/bin/sh\nset -e\n\n# Install dependencies\ncomposer install --no-dev\n",
+            $output->buildHookContent,
+        );
+        self::assertStringNotContainsString('&& #', $output->dockerfileContent);
     }
 
     #[Test]
@@ -234,8 +262,17 @@ final class DockerfileGeneratorTest extends TestCase
             self::hook(HookType::BUILD, "  \n  composer install  \n  "),
         ]));
 
-        self::assertStringContainsString('RUN composer install', $output->dockerfileContent);
-        self::assertStringNotContainsString('RUN  ', $output->dockerfileContent);
+        self::assertSame("#!/bin/sh\nset -e\n\ncomposer install\n", $output->buildHookContent);
+    }
+
+    #[Test]
+    public function noBuildHookScriptWhenNoBuildHook(): void
+    {
+        $output = $this->generator->generate(self::app());
+
+        self::assertNull($output->buildHookName);
+        self::assertNull($output->buildHookContent);
+        self::assertStringNotContainsString('tragwerk-build-hook', $output->dockerfileContent);
     }
 
     #[Test]
@@ -358,7 +395,8 @@ final class DockerfileGeneratorTest extends TestCase
             self::hook(HookType::DEPLOY, 'php artisan migrate'),
         ]));
 
-        self::assertStringContainsString('RUN composer install --no-dev', $output->dockerfileContent);
+        self::assertStringContainsString('composer install --no-dev', (string) $output->buildHookContent);
+        self::assertStringContainsString('tragwerk-build-hook', $output->dockerfileContent);
         self::assertStringContainsString('ENTRYPOINT', $output->dockerfileContent);
         self::assertNotNull($output->entrypointContent);
         self::assertStringContainsString('php artisan migrate', $output->entrypointContent);
@@ -608,7 +646,7 @@ final class DockerfileGeneratorTest extends TestCase
             self::hook(HookType::BUILD, 'composer install'),
         ]));
 
-        $runPos   = strpos($output->dockerfileContent, 'RUN composer install');
+        $runPos   = strpos($output->dockerfileContent, 'RUN chmod +x /usr/local/bin/tragwerk-build-hook');
         $caddyPos = strpos($output->dockerfileContent, 'COPY Caddyfile');
 
         self::assertNotFalse($runPos);

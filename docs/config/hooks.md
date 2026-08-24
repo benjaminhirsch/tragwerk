@@ -64,6 +64,30 @@ Wrap multi-line scripts (and anything containing `&`, `<`, `>`, or quotes) in a
 [Worker commands](/config/workers#multi-line-commands) use the same convention
 for their multi-line form.
 
+## How a hook is executed
+
+Every hook body becomes a real `/bin/sh` script with `set -e`, not a chain of
+`&&`-joined commands. Comments, `if`/`for`/`case` and multi-line quoting all work
+as written. A `build` hook is copied into the image as
+`/usr/local/bin/tragwerk-build-hook` and run in a single `RUN` layer; `deploy`
+and `post_deploy` hooks become part of the container entrypoint.
+
+```xml
+<hook type="build"><![CDATA[
+  # Install dependencies
+  composer install --no-dev --optimize-autoloader
+
+  if [ -f package.json ]; then
+      npm ci && npm run build
+  fi
+]]></hook>
+```
+
+Each line is trimmed and blank lines are dropped, so indentation is not
+preserved. Here-documents and other indentation-sensitive constructs therefore do
+not survive — keep those in a script file in your repository and call it from the
+hook.
+
 ## Examples
 
 Install dependencies at build time:
