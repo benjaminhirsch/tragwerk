@@ -105,6 +105,35 @@ example a static asset directory alongside a PHP app:
 </web>
 ```
 
+Order in the file does not matter — the most specific path always wins, and `/`
+is evaluated last.
+
+#### The location prefix is stripped
+
+A location's `root` is the document root **for that location**, and the path
+prefix is replaced by it. With `<location path="/api" root="api"/>`, a request
+for `/api/docs/index.html` is served from `api/docs/index.html` in your
+repository, not `api/api/docs/index.html`. The PHP front controller declared by
+`passthru` therefore also sees the path without the prefix.
+
+#### Serving a static directory under a PHP location
+
+A PHP front controller resolves a directory request to `index.php` only. Set
+`index` to a non-PHP file and that file is tried first, so a directory of
+pre-rendered assets is served instead of being handed to the front controller:
+
+```xml
+<web>
+    <location path="/" root="/" passthru="/index.php"/>
+    <location path="/api" root="api" index="index.html" passthru="/api/index.php"/>
+</web>
+```
+
+Here `/api/docs/` serves `api/docs/index.html`, while `/api/v1/orders` falls
+through to `api/index.php`. An `index` ending in `.php` is ignored for this
+purpose — serving it as a static file would hand out the source instead of
+executing it.
+
 ## Worker mode and passthru
 
 `passthru` works the same way in **both** FrankenPHP modes: in the default

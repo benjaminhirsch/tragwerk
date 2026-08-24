@@ -26,10 +26,13 @@ use function preg_match;
 use function preg_replace;
 use function rtrim;
 use function sprintf;
+use function str_ends_with;
 use function str_replace;
 use function str_starts_with;
+use function strlen;
 use function strtolower;
 use function trim;
+use function usort;
 
 final readonly class DockerfileGenerator
 {
@@ -367,33 +370,104 @@ final readonly class DockerfileGenerator
         $lines[] = '    }';
         $lines[] = '}';
 
-        foreach ($app->web->locations as $location) {
-            $root = '/app/' . ltrim($location->root, '/');
+        $lines[] = '';
+        $lines[] = ':80';
+        $lines[] = '{';
+        $lines[] = '    encode zstd br gzip';
 
+        // Longest path first: the handlers are evaluated in the order written, and the
+        // catch-all for "/" would otherwise swallow every more specific location.
+        $locations = $app->web->locations;
+        usort(
+            $locations,
+            static fn (LocationConfig $a, LocationConfig $b) => strlen($b->path) <=> strlen($a->path),
+        );
+
+        foreach ($locations as $location) {
             $lines[] = '';
-            $lines[] = count($app->web->locations) > 1
-                ? ':80' . rtrim($location->path, '/')
-                : ':80';
 
-            $lines[] = '{';
-            $lines[] = '    root * ' . $root;
-            $lines[] = '    encode zstd br gzip';
-
-            if ($location->passthru !== null && $location->passthru !== 'none') {
-                $lines[] = '    php_server';
-            } else {
-                // Serve the extensionless path, then "{path}.html", then a directory
-                // index. This lets pre-rendered static sites with clean URLs (e.g.
-                // VitePress, Astro, Hugo) resolve "/foo" to "foo.html" on direct
-                // load; without it Caddy only finds the file when an extension is given.
-                $lines[] = '    try_files {path} {path}.html {path}/index.html';
-                $lines[] = '    file_server';
+            foreach ($this->buildLocationHandler($location) as $line) {
+                $lines[] = '    ' . $line;
             }
-
-            $lines[] = '}';
         }
 
+        $lines[] = '}';
+
         return implode("\n", $lines) . "\n";
+    }
+
+    /**
+     * One `handle` block per location inside a single `:80` site.
+     *
+     * Giving each location its own site block (":80/api") looked equivalent but is
+     * deprecated in Caddy and does not route: every request fell through to the ":80"
+     * block, so a second location's document root and front controller were never
+     * reached. `handle_path` also strips the location prefix before the root is
+     * applied, which is what the "root" attribute means — "/api/docs/x" resolves to
+     * "<root>/docs/x", not "<root>/api/docs/x".
+     *
+     * @return list<string>
+     */
+    private function buildLocationHandler(LocationConfig $location): array
+    {
+        $isCatchAll = rtrim($location->path, '/') === '';
+
+        $lines   = [];
+        $lines[] = $isCatchAll
+            ? 'handle {'
+            : 'handle_path ' . rtrim($location->path, '/') . '/* {';
+        $lines[] = '    root * /app/' . ltrim($location->root, '/');
+
+        if ($location->passthru !== null && $location->passthru !== 'none') {
+            $staticIndex = $this->staticIndex($location);
+
+            if ($staticIndex === null) {
+                $lines[] = '    php_server';
+            } else {
+                // php_server resolves a directory to index.php only. Try the configured
+                // index file first so a directory of pre-rendered assets (API docs, a
+                // built SPA) is served instead of being handed to the front controller.
+                $lines[] = '    @index file {';
+                $lines[] = '        try_files {path} {path}/' . $staticIndex;
+                $lines[] = '    }';
+                $lines[] = '    handle @index {';
+                $lines[] = '        file_server';
+                $lines[] = '    }';
+                $lines[] = '    handle {';
+                $lines[] = '        php_server';
+                $lines[] = '    }';
+            }
+        } else {
+            // Serve the extensionless path, then "{path}.html", then a directory
+            // index. This lets pre-rendered static sites with clean URLs (e.g.
+            // VitePress, Astro, Hugo) resolve "/foo" to "foo.html" on direct
+            // load; without it Caddy only finds the file when an extension is given.
+            $lines[] = '    try_files {path} {path}.html {path}/'
+                . ($this->staticIndex($location) ?? 'index.html');
+            $lines[] = '    file_server';
+        }
+
+        $lines[] = '}';
+
+        return $lines;
+    }
+
+    /**
+     * The index file to try before falling through, or null when it is a PHP file.
+     *
+     * A ".php" index must never reach file_server — that would hand out the source
+     * instead of executing it — and php_server already tries index.php by itself, so
+     * the default needs no special handling here.
+     */
+    private function staticIndex(LocationConfig $location): string|null
+    {
+        $index = trim($location->index);
+
+        if ($index === '' || str_ends_with(strtolower($index), '.php')) {
+            return null;
+        }
+
+        return $index;
     }
 
     /**

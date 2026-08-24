@@ -620,6 +620,7 @@ final class DockerfileGeneratorTest extends TestCase
         self::assertNotNull($output->caddyfileContent);
         // The PHP front controller already handles routing; no static fallback.
         self::assertStringNotContainsString('try_files', $output->caddyfileContent);
+        self::assertStringContainsString('handle {', $output->caddyfileContent);
     }
 
     #[Test]
@@ -639,8 +640,62 @@ final class DockerfileGeneratorTest extends TestCase
         $output = $this->generator->generate($app);
 
         self::assertNotNull($output->caddyfileContent);
-        self::assertStringContainsString(':80/', $output->caddyfileContent);
-        self::assertStringContainsString(':80/static', $output->caddyfileContent);
+        // A site block per location (":80/static") is deprecated in Caddy and does not
+        // route — every request fell through to ":80". One site, one handler each.
+        self::assertStringNotContainsString(':80/static', $output->caddyfileContent);
+        self::assertStringContainsString('handle_path /static/* {', $output->caddyfileContent);
+        self::assertStringContainsString('root * /app/static', $output->caddyfileContent);
+        self::assertSame(1, substr_count($output->caddyfileContent, ':80'));
+
+        // The catch-all for "/" must come last or it swallows the specific locations.
+        $staticPos   = strpos($output->caddyfileContent, 'handle_path /static/* {');
+        $catchAllPos = strpos($output->caddyfileContent, 'handle {');
+
+        self::assertIsInt($staticPos);
+        self::assertIsInt($catchAllPos);
+        self::assertLessThan($catchAllPos, $staticPos);
+    }
+
+    #[Test]
+    public function caddyfileNonPhpIndexIsTriedBeforeTheFrontController(): void
+    {
+        // Without this a directory of pre-rendered assets under a PHP location (API
+        // docs, a built SPA) is handed to the front controller instead of served.
+        $app    = new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([
+                new LocationConfig(path: '/', root: '/', passthru: '/index.php'),
+                new LocationConfig(path: '/api', root: 'api', index: 'index.html', passthru: '/api/index.php'),
+            ]),
+        );
+        $output = $this->generator->generate($app);
+
+        self::assertNotNull($output->caddyfileContent);
+        self::assertStringContainsString('try_files {path} {path}/index.html', $output->caddyfileContent);
+        self::assertStringContainsString('handle @index {', $output->caddyfileContent);
+    }
+
+    #[Test]
+    public function caddyfileNeverSendsAPhpIndexToTheFileServer(): void
+    {
+        // Serving index.php through file_server would hand out the source instead of
+        // executing it, so the default index must not reach the static branch.
+        $app    = new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([
+                new LocationConfig(path: '/', root: 'public', passthru: '/index.php'),
+                new LocationConfig(path: '/admin', root: 'admin', index: 'index.php', passthru: '/admin/index.php'),
+            ]),
+        );
+        $output = $this->generator->generate($app);
+
+        self::assertNotNull($output->caddyfileContent);
+        self::assertStringNotContainsString('{path}/index.php', $output->caddyfileContent);
+        self::assertStringNotContainsString('@index', $output->caddyfileContent);
     }
 
     #[Test]
