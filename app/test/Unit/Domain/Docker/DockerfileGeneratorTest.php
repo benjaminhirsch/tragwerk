@@ -163,6 +163,23 @@ final class DockerfileGeneratorTest extends TestCase
     }
 
     #[Test]
+    public function singleLineWorkerCommandThatSequencesCommandsIsNotExecd(): void
+    {
+        $output = $this->generator->generate(self::app(workers: [
+            new WorkerDefinitionConfig(
+                name:  'queue',
+                value: 'bin/cli worker:prepare-queue && bin/cli worker:start default -w 4',
+            ),
+        ]));
+
+        // `exec a && b` would replace the shell with `a` and never reach `b`.
+        self::assertSame(
+            "#!/bin/sh\nset -e\n\nbin/cli worker:prepare-queue && bin/cli worker:start default -w 4\n",
+            $output->workerScripts['worker.app.queue.sh'],
+        );
+    }
+
+    #[Test]
     public function multiLineWorkerCommandKeepsItsLinesAndGetsNoImplicitExec(): void
     {
         $output = $this->generator->generate(self::app(workers: [

@@ -48,11 +48,26 @@ lines goes into the element body instead — the same convention as
 ```
 
 ::: tip End on `exec`
-A single-line command is `exec`'d for you, so it becomes the container's main
-process and receives `docker stop`'s `SIGTERM` directly. In a multi-line script
-you decide which line that is — put `exec` in front of the long-running command,
-otherwise the shell stays in the way and shutdown falls back to `SIGKILL` after
+A plain single-line command is `exec`'d for you, so it becomes the container's
+main process and receives `docker stop`'s `SIGTERM` directly. As soon as the
+command sequences several commands — anything containing `;`, `&` or `|`, so
+`&&` and `||` included — that is skipped, because `exec a && b` would replace the
+shell with `a` and never reach `b`. The same goes for a multi-line script. In
+both cases put `exec` in front of the long-running command yourself:
+
+```xml
+<worker name="queue"><![CDATA[
+    bin/cli worker:prepare-queue && exec bin/cli worker:start default -w 4
+]]></worker>
+```
+
+Without it the shell stays in the way and shutdown falls back to `SIGKILL` after
 the stop timeout.
+:::
+
+::: warning CDATA does not decode entities
+Inside `<![CDATA[ ... ]]>` the content is taken literally, so write `&&`, not
+`&amp;&amp;` — the latter reaches the shell verbatim and fails.
 :::
 
 Each line is trimmed and blank lines are dropped, exactly like a hook body. That

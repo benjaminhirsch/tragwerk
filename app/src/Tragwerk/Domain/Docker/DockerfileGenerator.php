@@ -22,6 +22,7 @@ use function count;
 use function explode;
 use function implode;
 use function ltrim;
+use function preg_match;
 use function preg_replace;
 use function rtrim;
 use function sprintf;
@@ -120,9 +121,10 @@ final readonly class DockerfileGenerator
         // A single-line worker command *is* the long-running process: exec it so it
         // becomes the container's main process and receives docker's SIGTERM directly
         // (the behaviour before multi-line support, where compose ran the binary with
-        // no shell in between). Multi-line scripts run as written — the author decides
-        // which line to exec.
-        if (count($script) === 1) {
+        // no shell in between). Skipped as soon as the line sequences commands — `exec a
+        // && b` replaces the shell with `a`, so `b` would never run. Multi-line scripts
+        // run as written; there the author decides which line to exec.
+        if (count($script) === 1 && preg_match('/[;&|]/', $script[0]) !== 1) {
             $script = ['exec ' . $script[0]];
         }
 
