@@ -129,6 +129,32 @@ Worker mode derives its worker script from the `<web>` location that declares a
 (for example `passthru="/index.php"`). See [Web](/config/web).
 :::
 
+## `<health>`
+
+`<health>` is **optional**. It controls how long a freshly started container may
+take before the deployment declares it dead.
+
+| Attribute      | Required | Default | Description                                                                                     |
+| -------------- | -------- | ------- | ------------------------------------------------------------------------------------------------ |
+| `start-period` | No       | `30s`   | Grace period after start during which failing probes do not count. A number plus `ms`, `s`, `m` or `h`. |
+| `retries`      | No       | `12`    | Consecutive failed probes after the grace period before the container counts as unhealthy (1–1000). |
+
+Probes run every 5 seconds, so the total budget is `start-period` plus
+`retries × 5s` — 90 seconds by default.
+
+```xml
+<health start-period="300s" retries="60"/>
+```
+
+::: tip When you need this
+[`deploy` hooks](/config/hooks) run in the entrypoint before the web server
+starts listening, so the container stays unhealthy for the whole duration of the
+hook. A hook that imports a large dataset or runs a long migration will blow the
+default 90-second budget, and the deployment tears the container down mid-hook
+and rolls back. Either widen the budget here, or move the work into a
+`post_deploy` hook so it runs in the background once traffic is flowing.
+:::
+
 ## Related
 
 - [Web](/config/web) — the required `<web>` block and the passthru rule

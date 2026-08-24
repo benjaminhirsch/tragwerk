@@ -6,6 +6,7 @@ namespace Tragwerk\Domain\Docker;
 
 use Tragwerk\Domain\Enum\ServiceRuntime;
 use Tragwerk\Domain\Model\ApplicationConfig;
+use Tragwerk\Domain\Model\HealthConfig;
 use Tragwerk\Domain\Model\ProjectConfig;
 use Tragwerk\Domain\Model\RouteConfig;
 use Tragwerk\Domain\Model\ServiceConfig;
@@ -108,13 +109,15 @@ final readonly class DockerComposeGenerator
 
             if (str_starts_with($app->type->value, 'php:')) {
                 // PHP and Caddy need writable scratch space even in a read-only container
-                $svcConfig['tmpfs']       = ['/tmp', '/data', '/config'];
+                $svcConfig['tmpfs'] = ['/tmp', '/data', '/config'];
+                // Deploy hooks run before the web server listens, so a slow hook keeps the
+                // container unhealthy for its whole duration — <health> buys it more time.
                 $svcConfig['healthcheck'] = [
                     'test'         => $this->phpHealthcheck(),
                     'interval'     => '5s',
                     'timeout'      => '6s',
-                    'retries'      => 12,
-                    'start_period' => '30s',
+                    'retries'      => $app->health->retries ?? HealthConfig::DEFAULT_RETRIES,
+                    'start_period' => $app->health->startPeriod ?? HealthConfig::DEFAULT_START_PERIOD,
                 ];
             }
 

@@ -88,6 +88,16 @@ preserved. Here-documents and other indentation-sensitive constructs therefore d
 not survive — keep those in a script file in your repository and call it from the
 hook.
 
+::: warning A slow deploy hook fails the deployment
+`deploy` hooks run in the entrypoint *before* the web server starts listening, so
+the container counts as unhealthy for as long as the hook runs. The default
+budget is 90 seconds (a 30s grace period plus 12 probes at 5s); exceed it and the
+deployment tears the container down mid-hook and rolls back. Raise it with
+[`<health>`](/config/applications#health) when the hook does heavy work such as a
+large data import, or move the work to a `post_deploy` hook, which runs in the
+background after traffic is already being served.
+:::
+
 ## Examples
 
 Install dependencies at build time:

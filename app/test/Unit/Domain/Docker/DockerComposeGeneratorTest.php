@@ -15,6 +15,7 @@ use Tragwerk\Domain\Enum\MountSource;
 use Tragwerk\Domain\Enum\ServiceRuntime;
 use Tragwerk\Domain\Model\ApplicationConfig;
 use Tragwerk\Domain\Model\CronDefinitionConfig;
+use Tragwerk\Domain\Model\HealthConfig;
 use Tragwerk\Domain\Model\HookConfig;
 use Tragwerk\Domain\Model\LocationConfig;
 use Tragwerk\Domain\Model\MountConfig;
@@ -630,8 +631,30 @@ final class DockerComposeGeneratorTest extends TestCase
         self::assertSame('CMD-SHELL', $healthcheck['test'][0]);
         self::assertIsString($healthcheck['test'][1]);
         self::assertStringContainsString('stream_socket_client', $healthcheck['test'][1]);
-        self::assertArrayHasKey('start_period', $healthcheck);
-        self::assertArrayHasKey('retries', $healthcheck);
+        self::assertSame('30s', $healthcheck['start_period']);
+        self::assertSame(12, $healthcheck['retries']);
+    }
+
+    #[Test]
+    public function healthElementWidensTheStartupWindow(): void
+    {
+        // A deploy hook runs before the web server listens, so a slow one needs a
+        // longer window or the container is torn down mid-hook.
+        $app = new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([new LocationConfig(path: '/', root: 'public', passthru: '/index.php')]),
+            health: new HealthConfig(startPeriod: '300s', retries: 60),
+        );
+
+        $config      = self::project([$app], [self::upstream('https://{default}', 'app:http')]);
+        $svc         = $this->service($this->generator->generate($config), 'app');
+        $healthcheck = $svc['healthcheck'];
+
+        self::assertIsArray($healthcheck);
+        self::assertSame('300s', $healthcheck['start_period']);
+        self::assertSame(60, $healthcheck['retries']);
     }
 
     #[Test]

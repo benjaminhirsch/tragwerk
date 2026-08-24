@@ -75,6 +75,7 @@
             <xs:element name="extensions"    type="ExtensionsType"     minOccurs="0"/>
             <xs:element name="php"           type="PhpType"            minOccurs="0"/>
             <xs:element name="workerMode"    type="WorkerModeType"     minOccurs="0"/>
+            <xs:element name="health"        type="HealthType"         minOccurs="0"/>
             <xs:element name="workers"       type="WorkersType"        minOccurs="0"/>
             <xs:element name="crons"         type="CronsType"          minOccurs="0"/>
             <xs:element name="hooks"         type="HooksType"          minOccurs="0"/>
@@ -167,6 +168,51 @@
             </xs:element>
         </xs:sequence>
     </xs:complexType>
+
+    <!-- ============================================================ -->
+    <!-- Health Check                                                 -->
+    <!-- ============================================================ -->
+    <xs:complexType name="HealthType">
+        <xs:annotation>
+            <xs:documentation>
+                Tunes how long a freshly started container may take before the
+                deployment gives up on it. Raise these when a deploy hook does
+                heavy work (a large data import, a long migration) — the hook runs
+                before the web server starts listening, so the container stays
+                unhealthy for its whole duration and the deploy would roll back.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="start-period" type="DurationType" default="30s">
+            <xs:annotation>
+                <xs:documentation>
+                    Grace period after the container starts during which failing
+                    probes do not count against "retries", e.g. "300s" or "5m".
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="retries" type="HealthRetriesType" default="12">
+            <xs:annotation>
+                <xs:documentation>
+                    Consecutive failed probes after the grace period before the
+                    container counts as unhealthy. Probes run every 5 seconds, so
+                    the total budget is start-period plus retries × 5s.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:simpleType name="DurationType">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[1-9][0-9]*(ms|s|m|h)"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="HealthRetriesType">
+        <xs:restriction base="xs:integer">
+            <xs:minInclusive value="1"/>
+            <xs:maxInclusive value="1000"/>
+        </xs:restriction>
+    </xs:simpleType>
 
     <!-- ============================================================ -->
     <!-- Background Workers                                           -->

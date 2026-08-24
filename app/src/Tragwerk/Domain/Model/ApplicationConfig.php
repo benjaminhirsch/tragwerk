@@ -29,6 +29,7 @@ final readonly class ApplicationConfig
         public array $workers = [],
         public array $crons = [],
         public PhpConfig|null $php = null,
+        public HealthConfig|null $health = null,
     ) {
     }
 }

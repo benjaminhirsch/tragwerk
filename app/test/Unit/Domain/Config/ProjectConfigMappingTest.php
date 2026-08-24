@@ -417,6 +417,24 @@ final class ProjectConfigMappingTest extends TestCase
     }
 
     #[Test]
+    public function healthAttributesAreMapped(): void
+    {
+        $config = $this->map(self::projectXml(appExtras: '<health start-period="300s" retries="60"/>'));
+
+        self::assertNotNull($config->applications[0]->health);
+        self::assertSame('300s', $config->applications[0]->health->startPeriod);
+        self::assertSame(60, $config->applications[0]->health->retries);
+    }
+
+    #[Test]
+    public function healthIsNullWhenAbsent(): void
+    {
+        $config = $this->map(self::projectXml());
+
+        self::assertNull($config->applications[0]->health);
+    }
+
+    #[Test]
     public function workersDefaultToEmptyWhenAbsent(): void
     {
         $config = $this->map(self::projectXml());
