@@ -158,6 +158,19 @@ final class GenerateDockerConfig extends Command
                 $output->writeln('Generated ' . $outDir . '/' . $dockerfile->phpIniName);
             }
 
+            foreach ($dockerfile->workerScripts as $scriptName => $scriptContent) {
+                $scriptPath = $outDir . '/' . $scriptName;
+
+                if (file_put_contents($scriptPath, $scriptContent) === false) {
+                    $output->writeln('Failed to write ' . $scriptName);
+
+                    return self::FAILURE;
+                }
+
+                chmod($scriptPath, 0755);
+                $output->writeln('Generated ' . $outDir . '/' . $scriptName);
+            }
+
             if ($dockerfile->entrypointName === null || $dockerfile->entrypointContent === null) {
                 continue;
             }

@@ -141,7 +141,8 @@ No services or relationships needed.
 
 ## Worker-heavy app
 
-An app focused on background processing: a queue consumer and a scheduler worker,
+An app focused on background processing: a queue consumer, a scheduler worker and
+a third worker whose command needs [several lines](/config/workers#multi-line-commands),
 plus a per-minute cron, backed by PostgreSQL and Redis.
 
 ```xml
@@ -161,6 +162,10 @@ plus a per-minute cron, backed by PostgreSQL and Redis.
             <workers>
                 <worker name="queue" command="php artisan queue:work --tries=3"/>
                 <worker name="scheduler" command="php bin/console messenger:consume async"/>
+                <worker name="mailer"><![CDATA[
+                    php artisan queue:prune-failed --hours=48
+                    exec php artisan queue:work --queue=mail --tries=5
+                ]]></worker>
             </workers>
             <crons>
                 <cron name="health" command="php artisan app:health" schedule="* * * * *"/>

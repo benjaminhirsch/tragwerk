@@ -173,6 +173,13 @@ final readonly class BuildEnvironment
                     chmod($path, 0755);
                     $messages[] = 'Generated ' . $dockerfile->entrypointName;
                 }
+
+                foreach ($dockerfile->workerScripts as $scriptName => $scriptContent) {
+                    $path = $outDir . '/' . $scriptName;
+                    file_put_contents($path, $scriptContent);
+                    chmod($path, 0755);
+                    $messages[] = 'Generated ' . $scriptName;
+                }
             } catch (RuntimeException $e) {
                 $messages[] = 'Failed to generate Dockerfile for ' . $app->name . ': ' . $e->getMessage();
             }

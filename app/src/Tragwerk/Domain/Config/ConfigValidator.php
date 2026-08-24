@@ -55,7 +55,52 @@ final readonly class ConfigValidator
         return [
             ...$this->validateCronSchedules($doc),
             ...$this->validateLocalPorts($doc),
+            ...$this->validateWorkerCommands($doc),
         ];
+    }
+
+    /**
+     * A worker command is either the `command` attribute (one-liner) or the element
+     * body (multi-line script). The XSD cannot express "exactly one of the two", so
+     * both the empty and the ambiguous case are caught here instead of silently
+     * producing a worker container with no command.
+     *
+     * @return string[]
+     */
+    private function validateWorkerCommands(DOMDocument $doc): array
+    {
+        $errors = [];
+
+        foreach ($doc->getElementsByTagName('worker') as $worker) {
+            if (! $worker instanceof DOMElement) {
+                continue;
+            }
+
+            $hasAttribute = trim($worker->getAttribute('command')) !== '';
+            $hasBody      = trim($worker->textContent) !== '';
+            $name         = $worker->getAttribute('name');
+
+            if (! $hasAttribute && ! $hasBody) {
+                $errors[] = sprintf(
+                    'Worker "%s" has no command: set the command attribute'
+                    . ' or put the script in the element body',
+                    $name,
+                );
+
+                continue;
+            }
+
+            if (! $hasAttribute || ! $hasBody) {
+                continue;
+            }
+
+            $errors[] = sprintf(
+                'Worker "%s" defines both a command attribute and a script body — use one',
+                $name,
+            );
+        }
+
+        return $errors;
     }
 
     /**

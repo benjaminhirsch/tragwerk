@@ -6,6 +6,7 @@ namespace Tragwerk\Domain\Docker;
 
 final readonly class DockerfileOutput
 {
+    /** @param array<string, string> $workerScripts filename => script content */
     public function __construct(
         public string $dockerfileName,
         public string $dockerfileContent,
@@ -17,6 +18,7 @@ final readonly class DockerfileOutput
         public string|null $crontabContent = null,
         public string|null $phpIniName = null,
         public string|null $phpIniContent = null,
+        public array $workerScripts = [],
     ) {
     }
 }

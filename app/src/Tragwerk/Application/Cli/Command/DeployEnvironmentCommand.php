@@ -28,6 +28,7 @@ use Tragwerk\Application\Service\Credential\CredentialEncryptor;
 use Tragwerk\Application\Service\EnvVarResolver;
 use Tragwerk\Domain\Config\XmlToArrayConverter;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
+use Tragwerk\Domain\Docker\DockerfileGenerator;
 use Tragwerk\Domain\Docker\ImageReference;
 use Tragwerk\Domain\Docker\ServiceImageResolver;
 use Tragwerk\Domain\Entity\Credential;
@@ -332,6 +333,19 @@ final class DeployEnvironmentCommand extends Command
             $appSlug    = $this->slugify($app->name);
             $dockerfile = $buildDir . '/Dockerfile.' . $appSlug;
 
+            // Worker scripts are baked into the image too, so a changed worker command must
+            // change the fingerprint — otherwise the stale-image shortcut below reuses a tag
+            // whose script is out of date.
+            $workerScripts = [];
+            foreach ($app->workers as $worker) {
+                $workerScripts[] = $this->readArtifact(
+                    $buildDir . '/' . DockerfileGenerator::workerScriptName(
+                        $appSlug,
+                        $this->slugify($worker->name),
+                    ),
+                );
+            }
+
             // The image content is fully determined by the commit plus the generated build recipe.
             // Same fingerprint → identical image, so an already-pushed tag can be reused.
             $fingerprint = ImageReference::fingerprint(
@@ -339,6 +353,7 @@ final class DeployEnvironmentCommand extends Command
                 $this->readArtifact($dockerfile),
                 $this->readArtifact($buildDir . '/Caddyfile.' . $appSlug),
                 $this->readArtifact($buildDir . '/docker-entrypoint.' . $appSlug . '.sh'),
+                ...$workerScripts,
             );
             $imageTag    = ImageReference::tag(
                 $registry->url,

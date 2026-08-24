@@ -18,15 +18,47 @@ The optional `<workers>` element contains one or more `<worker>` definitions.
 
 ## `<worker>`
 
-| Attribute | Required | Default | Description                                                                       |
-| --------- | -------- | ------- | --------------------------------------------------------------------------------- |
-| `name`    | Yes      | —       | Unique worker name within the application. Used to derive the container name.      |
-| `command` | Yes      | —       | The long-running command the container executes, run from `/app`.                 |
+| Attribute | Required  | Default | Description                                                                   |
+| --------- | --------- | ------- | ----------------------------------------------------------------------------- |
+| `name`    | Yes       | —       | Unique worker name within the application. Used to derive the container name.  |
+| `command` | See below | —       | The long-running command the container executes, run from `/app`.              |
+
+Every worker needs exactly one command, given **either** as the `command`
+attribute (one-liner) **or** as the element body (multi-line script). Supplying
+both — or neither — is a configuration error and fails validation.
 
 ::: warning Name pattern
 `name` must match `[a-zA-Z][a-zA-Z0-9 _-]*` and be unique among the
 application's workers.
 :::
+
+## Multi-line commands
+
+XML collapses newlines inside an attribute value, so a script spanning several
+lines goes into the element body instead — the same convention as
+[hooks](/config/hooks). Wrap it in `CDATA` so `&`, `<` and `>` need no escaping.
+
+```xml
+<workers>
+    <worker name="mailer"><![CDATA[
+        export APP_ROLE=mailer
+        exec bin/cli worker:start mail
+    ]]></worker>
+</workers>
+```
+
+::: tip End on `exec`
+A single-line command is `exec`'d for you, so it becomes the container's main
+process and receives `docker stop`'s `SIGTERM` directly. In a multi-line script
+you decide which line that is — put `exec` in front of the long-running command,
+otherwise the shell stays in the way and shutdown falls back to `SIGKILL` after
+the stop timeout.
+:::
+
+Each line is trimmed and blank lines are dropped, exactly like a hook body. That
+means indentation is not preserved, so here-documents and other
+indentation-sensitive constructs do not survive; put those in a script file in
+your repository and call it from the worker command.
 
 ## Resulting Docker Compose effect
 
@@ -35,7 +67,10 @@ For an application slug `app`, a worker named `queue` becomes a container named
 
 - reuses the application image (`build`/`image`), environment variables, mounts,
   and `depends_on` from the app service;
-- runs your `command` instead of the web server;
+- runs your command instead of the web server — Tragwerk bakes it into the image
+  as `/usr/local/bin/tragwerk-worker-{slug}` and points the compose `command:` at
+  that script, so the command runs under `/bin/sh` and shell syntax (`&&`, pipes,
+  `$VAR`) works as written;
 - uses `restart: unless-stopped` so it comes back after crashes;
 - has its healthcheck disabled (it is not an HTTP service).
 

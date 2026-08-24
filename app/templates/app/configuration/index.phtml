@@ -285,7 +285,7 @@ $resolveDomain = static function (string $pattern) use ($hostsByPlaceholder): st
                                             <tr>
                                                 <td class="tw-cell-strong"><?= $this->e($worker->name) ?></td>
                                                 <td class="mono tw-cell-muted"
-                                                    style="font-size:.78rem"><?= $this->e($worker->command) ?></td>
+                                                    style="font-size:.78rem"><?= nl2br($this->e($worker->command)) ?></td>
                                             </tr>
                                         <?php endforeach ?>
                                     <?php else: ?>

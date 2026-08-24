@@ -11,6 +11,7 @@ use Tragwerk\Domain\Model\ExtensionConfig;
 use Tragwerk\Domain\Model\HookConfig;
 use Tragwerk\Domain\Model\LocationConfig;
 use Tragwerk\Domain\Model\PhpConfig;
+use Tragwerk\Domain\Model\WorkerDefinitionConfig;
 
 use function array_filter;
 use function array_map;
@@ -54,6 +55,7 @@ final readonly class DockerfileGenerator
         $hasCaddyfile    = $isPhp && $app->web->locations !== [];
         $hasCrons        = $app->crons !== [];
         $hasPhpIni       = $isPhp && $app->php !== null && $app->php->settings !== [];
+        $workerScripts   = $this->buildWorkerScripts($app, $slug);
 
         return new DockerfileOutput(
             dockerfileName:    'Dockerfile.' . $slug,
@@ -74,7 +76,66 @@ final readonly class DockerfileGenerator
             crontabContent:    $hasCrons ? $this->buildCrontab($app) : null,
             phpIniName:        $hasPhpIni ? 'php.' . $slug . '.ini' : null,
             phpIniContent:     $hasPhpIni && $app->php !== null ? $this->buildPhpIni($app->php) : null,
+            workerScripts:     $workerScripts,
         );
+    }
+
+    /**
+     * One shell script per background worker, baked into the image and referenced by
+     * the compose `command:`. Going through a script (instead of putting the command
+     * into the compose file) keeps multi-line commands intact: a compose `command:`
+     * string is shlex-split without a shell, and Compose would interpolate `$VAR`
+     * before the container ever sees it.
+     *
+     * @return array<string, string> filename => script content
+     */
+    private function buildWorkerScripts(ApplicationConfig $app, string $appSlug): array
+    {
+        $scripts = [];
+
+        foreach ($app->workers as $worker) {
+            $name           = self::workerScriptName($appSlug, $this->slugify($worker->name));
+            $scripts[$name] = $this->buildWorkerScript($worker);
+        }
+
+        return $scripts;
+    }
+
+    /** Build-artifact filename of a worker script; shared with the deploy step's image fingerprint. */
+    public static function workerScriptName(string $appSlug, string $workerSlug): string
+    {
+        return 'worker.' . $appSlug . '.' . $workerSlug . '.sh';
+    }
+
+    /** Where the worker script ends up inside the image — the compose `command:` points here. */
+    public static function workerScriptPath(string $workerSlug): string
+    {
+        return '/usr/local/bin/tragwerk-worker-' . $workerSlug;
+    }
+
+    private function buildWorkerScript(WorkerDefinitionConfig $worker): string
+    {
+        $script = $this->parseScriptLines($worker->command);
+
+        // A single-line worker command *is* the long-running process: exec it so it
+        // becomes the container's main process and receives docker's SIGTERM directly
+        // (the behaviour before multi-line support, where compose ran the binary with
+        // no shell in between). Multi-line scripts run as written — the author decides
+        // which line to exec.
+        if (count($script) === 1) {
+            $script = ['exec ' . $script[0]];
+        }
+
+        $lines   = [];
+        $lines[] = '#!/bin/sh';
+        $lines[] = 'set -e';
+        $lines[] = '';
+
+        foreach ($script as $line) {
+            $lines[] = $line;
+        }
+
+        return implode("\n", $lines) . "\n";
     }
 
     public function slugify(string $name): string
@@ -156,6 +217,15 @@ final readonly class DockerfileGenerator
         if ($hasCaddyfile) {
             $lines[] = '';
             $lines[] = 'COPY Caddyfile.' . $slug . ' /etc/frankenphp/Caddyfile';
+        }
+
+        foreach ($app->workers as $worker) {
+            $workerSlug = $this->slugify($worker->name);
+            $target     = self::workerScriptPath($workerSlug);
+
+            $lines[] = '';
+            $lines[] = 'COPY ' . self::workerScriptName($slug, $workerSlug) . ' ' . $target;
+            $lines[] = 'RUN chmod +x ' . $target;
         }
 
         if ($hasEntrypoint) {

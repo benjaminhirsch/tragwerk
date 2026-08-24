@@ -734,8 +734,10 @@ final class DockerComposeGeneratorTest extends TestCase
         $queue   = $this->service($compose, 'app-worker-queue');
         $metrics = $this->service($compose, 'app-worker-metrics');
 
-        self::assertSame('bin/cli worker:start default', $queue['command']);
-        self::assertSame('bin/cli metrics:sample', $metrics['command']);
+        // The command itself lives in a script baked into the image (see DockerfileGenerator),
+        // so compose only points at it.
+        self::assertSame('/usr/local/bin/tragwerk-worker-queue', $queue['command']);
+        self::assertSame('/usr/local/bin/tragwerk-worker-metrics', $metrics['command']);
         self::assertSame('unless-stopped', $queue['restart']);
         self::assertSame('unless-stopped', $metrics['restart']);
     }

@@ -380,6 +380,51 @@ final class ProjectConfigMappingTest extends TestCase
     }
 
     #[Test]
+    public function workerCommandAttributeIsMapped(): void
+    {
+        $workers = <<<'XML'
+            <workers>
+                <worker name="queue" command="bin/cli worker:start default"/>
+            </workers>
+        XML;
+
+        $config = $this->map(self::projectXml(appExtras: $workers));
+
+        self::assertCount(1, $config->applications[0]->workers);
+        self::assertSame('queue', $config->applications[0]->workers[0]->name);
+        self::assertSame('bin/cli worker:start default', $config->applications[0]->workers[0]->command);
+    }
+
+    #[Test]
+    public function multiLineWorkerBodyIsMappedToCommand(): void
+    {
+        $workers = <<<'XML'
+            <workers>
+                <worker name="mailer"><![CDATA[
+                    export APP_ROLE=mailer
+                    exec bin/cli worker:start mail
+                ]]></worker>
+            </workers>
+        XML;
+
+        $config = $this->map(self::projectXml(appExtras: $workers));
+
+        $command = $config->applications[0]->workers[0]->command;
+
+        self::assertStringContainsString("\n", $command);
+        self::assertStringStartsWith('export APP_ROLE=mailer', $command);
+        self::assertStringEndsWith('exec bin/cli worker:start mail', $command);
+    }
+
+    #[Test]
+    public function workersDefaultToEmptyWhenAbsent(): void
+    {
+        $config = $this->map(self::projectXml());
+
+        self::assertSame([], $config->applications[0]->workers);
+    }
+
+    #[Test]
     public function cronsDefaultToEmptyWhenAbsent(): void
     {
         $config = $this->map(self::projectXml());

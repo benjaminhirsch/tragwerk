@@ -142,6 +142,34 @@ final class XmlToArrayConverterTest extends TestCase
     }
 
     #[Test]
+    public function workerBodyBecomesValueKeyAlongsideAttributes(): void
+    {
+        $result = $this->convert(<<<'XML'
+            <project>
+                <applications>
+                    <application name="app" type="php:8.5" root="/">
+                        <workers>
+                            <worker name="mailer"><![CDATA[
+                                export APP_ROLE=mailer
+                                exec bin/cli worker:start mail
+                            ]]></worker>
+                        </workers>
+                    </application>
+                </applications>
+                <routes/>
+            </project>
+        XML);
+
+        $worker  = $result['applications'][0]['workers'][0];
+        $command = $worker['value'];
+
+        self::assertSame('mailer', $worker['name']);
+        self::assertIsString($command);
+        self::assertStringContainsString("export APP_ROLE=mailer\n", $command);
+        self::assertStringEndsWith('exec bin/cli worker:start mail', $command);
+    }
+
+    #[Test]
     public function listContainerChildrenGetPluralKey(): void
     {
         $result = $this->convert(<<<'XML'

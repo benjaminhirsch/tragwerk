@@ -20,7 +20,9 @@ use Tragwerk\Domain\Model\PhpConfig;
 use Tragwerk\Domain\Model\PhpSettingConfig;
 use Tragwerk\Domain\Model\WebConfig;
 use Tragwerk\Domain\Model\WorkerConfig;
+use Tragwerk\Domain\Model\WorkerDefinitionConfig;
 
+use function array_keys;
 use function strpos;
 use function substr_count;
 
@@ -34,9 +36,10 @@ final class DockerfileGeneratorTest extends TestCase
     }
 
     /**
-     * @param list<HookConfig>           $hooks
-     * @param list<ExtensionConfig>      $extensions
-     * @param list<CronDefinitionConfig> $crons
+     * @param list<HookConfig>             $hooks
+     * @param list<ExtensionConfig>        $extensions
+     * @param list<CronDefinitionConfig>   $crons
+     * @param list<WorkerDefinitionConfig> $workers
      */
     private static function app(
         string $name = 'app',
@@ -46,6 +49,7 @@ final class DockerfileGeneratorTest extends TestCase
         array $extensions = [],
         array $crons = [],
         PhpConfig|null $php = null,
+        array $workers = [],
     ): ApplicationConfig {
         return new ApplicationConfig(
             name: $name,
@@ -56,6 +60,7 @@ final class DockerfileGeneratorTest extends TestCase
             extensions: $extensions,
             crons: $crons,
             php: $php,
+            workers: $workers,
         );
     }
 
@@ -124,6 +129,62 @@ final class DockerfileGeneratorTest extends TestCase
         self::assertStringNotContainsString('supercronic', $output->dockerfileContent);
         self::assertNull($output->crontabName);
         self::assertNull($output->crontabContent);
+    }
+
+    #[Test]
+    public function workerScriptIsGeneratedAndCopiedIntoTheImage(): void
+    {
+        $output = $this->generator->generate(self::app('My App', workers: [
+            new WorkerDefinitionConfig(name: 'Queue Runner', command: 'bin/cli worker:start default'),
+        ]));
+
+        self::assertSame(['worker.my-app.queue-runner.sh'], array_keys($output->workerScripts));
+        self::assertStringContainsString(
+            'COPY worker.my-app.queue-runner.sh /usr/local/bin/tragwerk-worker-queue-runner',
+            $output->dockerfileContent,
+        );
+        self::assertStringContainsString(
+            'RUN chmod +x /usr/local/bin/tragwerk-worker-queue-runner',
+            $output->dockerfileContent,
+        );
+    }
+
+    #[Test]
+    public function singleLineWorkerCommandIsExecd(): void
+    {
+        $output = $this->generator->generate(self::app(workers: [
+            new WorkerDefinitionConfig(name: 'queue', command: '  bin/cli worker:start default  '),
+        ]));
+
+        self::assertSame(
+            "#!/bin/sh\nset -e\n\nexec bin/cli worker:start default\n",
+            $output->workerScripts['worker.app.queue.sh'],
+        );
+    }
+
+    #[Test]
+    public function multiLineWorkerCommandKeepsItsLinesAndGetsNoImplicitExec(): void
+    {
+        $output = $this->generator->generate(self::app(workers: [
+            new WorkerDefinitionConfig(
+                name:  'mailer',
+                value: "    export APP_ROLE=mailer\n\n    exec bin/cli worker:start mail",
+            ),
+        ]));
+
+        self::assertSame(
+            "#!/bin/sh\nset -e\n\nexport APP_ROLE=mailer\nexec bin/cli worker:start mail\n",
+            $output->workerScripts['worker.app.mailer.sh'],
+        );
+    }
+
+    #[Test]
+    public function noWorkerScriptsWhenNoWorkers(): void
+    {
+        $output = $this->generator->generate(self::app());
+
+        self::assertSame([], $output->workerScripts);
+        self::assertStringNotContainsString('tragwerk-worker-', $output->dockerfileContent);
     }
 
     #[Test]

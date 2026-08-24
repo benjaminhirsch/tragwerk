@@ -185,23 +185,35 @@
     </xs:complexType>
 
     <xs:complexType name="WorkerDefinitionType">
-        <xs:attribute name="name" type="IdentifierType" use="required">
-            <xs:annotation>
-                <xs:documentation>
-                    Unique name for this worker within the application. Used to
-                    derive the Docker service name, e.g. "queue" →
-                    "{app}-worker-queue".
-                </xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="command" type="xs:string" use="required">
-            <xs:annotation>
-                <xs:documentation>
-                    The command the container runs, e.g.
-                    "bin/cli worker:start default".
-                </xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
+        <xs:annotation>
+            <xs:documentation>
+                A long-lived background process. Give it either a one-line
+                "command" attribute or a multi-line script as the element body
+                (use CDATA) — exactly one of the two.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="name" type="IdentifierType" use="required">
+                    <xs:annotation>
+                        <xs:documentation>
+                            Unique name for this worker within the application. Used to
+                            derive the Docker service name, e.g. "queue" →
+                            "{app}-worker-queue".
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="command" type="xs:string" use="optional">
+                    <xs:annotation>
+                        <xs:documentation>
+                            The single-line command the container runs, e.g.
+                            "bin/cli worker:start default". Omit it and put the script
+                            in the element body when the worker needs several lines.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:simpleContent>
     </xs:complexType>
 
     <!-- ============================================================ -->

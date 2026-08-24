@@ -206,7 +206,10 @@ final readonly class DockerComposeGenerator
             $worker['build'] = $appService['build'];
         }
 
-        $worker['command'] = $def->command;
+        // The command itself lives in a script baked into the image by DockerfileGenerator:
+        // a compose `command:` string is shlex-split without a shell and would be subject
+        // to Compose's own `$VAR` interpolation, neither of which a multi-line script survives.
+        $worker['command'] = DockerfileGenerator::workerScriptPath($this->slugify($def->name));
         $worker['restart'] = 'unless-stopped';
 
         if (isset($appService['environment'])) {

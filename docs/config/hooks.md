@@ -61,6 +61,9 @@ Wrap multi-line scripts (and anything containing `&`, `<`, `>`, or quotes) in a
 ]]></hook>
 ```
 
+[Worker commands](/config/workers#multi-line-commands) use the same convention
+for their multi-line form.
+
 ## Examples
 
 Install dependencies at build time:
