@@ -413,6 +413,18 @@ final class DockerfileGeneratorTest extends TestCase
     }
 
     #[Test]
+    public function phpAppShipsJqAndAClientForEveryServiceType(): void
+    {
+        // Hooks and maintenance scripts reach for these; installing them per project
+        // from a build hook would repeat an apt round trip on an already-cached layer.
+        $output = $this->generator->generate(self::app());
+
+        foreach (['jq', 'mariadb-client', 'postgresql-client', 'redis-tools'] as $package) {
+            self::assertStringContainsString($package, $output->dockerfileContent);
+        }
+    }
+
+    #[Test]
     public function phpExtensionsWithNoAptDepsEmitDockerPhpExtInstall(): void
     {
         $output = $this->generator->generate(self::app(extensions: [

@@ -36,6 +36,31 @@ final readonly class DockerfileGenerator
     private const string BUILD_HOOK_PREFIX = 'build-hook.';
     private const string BUILD_HOOK_PATH   = '/usr/local/bin/tragwerk-build-hook';
 
+    /**
+     * Installed into every application image, independent of the declared extensions.
+     *
+     * unzip lets composer extract packages. The FrankenPHP base image ships neither
+     * curl nor wget, yet build hooks routinely fetch tools with them — guarantee both
+     * plus CA roots so a hook does not die with "not found" (exit 127).
+     *
+     * jq and a CLI client for every service type Tragwerk offers follow the same
+     * reasoning: hooks, crons and maintenance scripts reach for them constantly, and
+     * a project installing them from its own build hook pays an apt round trip on top
+     * of a layer that is already there. mariadb-client also provides the mysql and
+     * mysqldump compatibility binaries (so it covers the mysql service type), and
+     * redis-tools' redis-cli speaks the valkey protocol.
+     */
+    private const array BASE_APT_PACKAGES = [
+        'unzip',
+        'curl',
+        'wget',
+        'ca-certificates',
+        'jq',
+        'mariadb-client',
+        'postgresql-client',
+        'redis-tools',
+    ];
+
     public function __construct(private ServiceImageResolver $imageResolver)
     {
     }
@@ -472,11 +497,7 @@ final readonly class DockerfileGenerator
         $peclExts   = array_values(array_filter($extNames, fn (string $n) => $this->isPeclExtension($n)));
 
         $aptPackages = array_unique(array_merge(
-            // unzip: so composer can extract packages. curl/wget/ca-certificates:
-            // the FrankenPHP base image ships neither curl nor wget, yet build
-            // hooks routinely fetch tools/binaries with them — guarantee both
-            // (plus CA roots for TLS) so hooks don't fail with "not found" (exit 127).
-            ['unzip', 'curl', 'wget', 'ca-certificates'],
+            self::BASE_APT_PACKAGES,
             ...array_map(fn (string $name) => $this->aptDepsForExtension($name), $extNames),
         ));
 

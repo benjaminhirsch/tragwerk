@@ -98,6 +98,30 @@ TRAGWERK_CACHE_HOST=redis
 TRAGWERK_CACHE_PORT=6379
 ```
 
+::: warning Values are always strings
+These arrive through the container environment, so every one of them is a
+string — `TRAGWERK_DATABASE_PORT` included. Cast it before handing it to a
+driver that expects an integer.
+:::
+
+## Command-line clients
+
+Every application image ships a CLI client for each service type Tragwerk
+supports, plus `jq`, so hooks, crons and maintenance scripts can talk to a
+service without installing anything first:
+
+| Command | Package | Covers |
+| ------- | ------- | ------ |
+| `mariadb`, `mariadb-dump`, `mysql`, `mysqldump` | `mariadb-client` | `mariadb:*`, `mysql:*` |
+| `psql`, `pg_dump` | `postgresql-client` | `postgresql:*` |
+| `redis-cli` | `redis-tools` | `redis:*`, `valkey:*` |
+| `jq` | `jq` | — |
+
+`postgresql-client` is Debian's default, currently 17. `psql` talks to a
+PostgreSQL 18 server fine, but `pg_dump` refuses a server newer than itself —
+install the matching client from the PGDG repository in a build hook if you need
+to dump an 18 server from inside the application container.
+
 ## Health-gated startup
 
 Each relationship also adds a `depends_on` entry on the target service with
