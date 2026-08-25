@@ -9,10 +9,15 @@ use PHPUnit\Framework\TestCase;
 use Tragwerk\Application\Dto\Project\ProjectCreation;
 use Tragwerk\Application\Exception\ValidationCollection;
 use Tragwerk\Application\Exception\ValidationError;
+use Tragwerk\Domain\ValueObject\ProjectIdentifier;
 use Tragwerk\Domain\ValueObject\RegistryIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
+use Tragwerk\Domain\ValueObject\TeamIdentifier;
+use Tragwerk\Domain\ValueObject\UserIdentifier;
 
 use function array_map;
+use function preg_match;
+use function strlen;
 
 final class ProjectCreationTest extends TestCase
 {
@@ -50,6 +55,19 @@ final class ProjectCreationTest extends TestCase
         $fields = $this->errorFields('Name', $this->serverId(), '');
 
         self::assertContains('registryId', $fields);
+    }
+
+    #[Test]
+    public function everyProjectGetsItsOwnEntropy(): void
+    {
+        $dto = new ProjectCreation('Name', $this->serverId(), $this->registryId());
+
+        $first  = $dto->createProject(ProjectIdentifier::create(), TeamIdentifier::create(), UserIdentifier::create());
+        $second = $dto->createProject(ProjectIdentifier::create(), TeamIdentifier::create(), UserIdentifier::create());
+
+        self::assertSame(64, strlen($first->entropy));
+        self::assertSame(1, preg_match('/^[0-9a-f]{64}$/', $first->entropy));
+        self::assertNotSame($first->entropy, $second->entropy);
     }
 
     private function serverId(): string

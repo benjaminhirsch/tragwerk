@@ -9,10 +9,12 @@ use Tragwerk\Application\Dto\DtoInterface;
 use Tragwerk\Application\Exception\ValidationCollection;
 use Tragwerk\Application\Exception\ValidationError;
 use Tragwerk\Domain\Entity\EnvVar;
+use Tragwerk\Domain\Model\ReservedEnvVars;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
 
 use function _;
 use function preg_match;
+use function sprintf;
 use function strtoupper;
 use function trim;
 
@@ -48,6 +50,11 @@ final readonly class VariableUpdate implements DtoInterface
             $errors[] = ValidationError::make(
                 'key',
                 _('Key must start with a letter and contain only letters, digits and underscores'),
+            );
+        } elseif (ReservedEnvVars::isReserved($this->key)) {
+            $errors[] = ValidationError::make(
+                'key',
+                sprintf(_('%s is reserved by Tragwerk and cannot be used as a variable'), $this->key),
             );
         }
 

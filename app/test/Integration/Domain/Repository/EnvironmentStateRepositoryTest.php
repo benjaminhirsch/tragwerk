@@ -126,6 +126,7 @@ final class EnvironmentStateRepositoryTest extends IntegrationTestCase
             $now,
             $userId,
             $registryId,
+            'test-entropy',
         ));
 
         return $projectId;

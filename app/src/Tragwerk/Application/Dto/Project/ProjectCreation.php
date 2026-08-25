@@ -14,6 +14,7 @@ use Tragwerk\Domain\ValueObject\RegistryIdentifier;
 use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\TimestampImmutable;
+use Tragwerk\Domain\ValueObject\Token;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 
 use function _;
@@ -64,6 +65,9 @@ final readonly class ProjectCreation implements DtoInterface
             $now,
             $createdBy,
             RegistryIdentifier::fromString($this->registryId),
+            // 32 random bytes as 64 hex characters. Generated once here and never again — see
+            // Project::$entropy.
+            Token::generate(32)->toString(),
         );
     }
 }

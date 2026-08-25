@@ -1856,5 +1856,9 @@ msgstr ""
 msgid "Key must start with a letter and contain only letters, digits and underscores"
 msgstr ""
 
+#, php-format
+msgid "%s is reserved by Tragwerk and cannot be used as a variable"
+msgstr ""
+
 msgid "Letters, digits and underscores. Converted to uppercase."
 msgstr ""

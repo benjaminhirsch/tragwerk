@@ -83,6 +83,10 @@ and `post_deploy` hooks become part of the container entrypoint.
 ]]></hook>
 ```
 
+Every hook also knows which stage it is running in: `$TRAGWERK_PHASE` is `build`,
+`deploy` or `post_deploy` respectively, and `runtime` in the server, worker and
+cron processes. See [platform variables](/app/platform-variables#build-or-runtime).
+
 Each line is trimmed and blank lines are dropped, so indentation is not
 preserved. Here-documents and other indentation-sensitive constructs therefore do
 not survive — keep those in a script file in your repository and call it from the
@@ -136,4 +140,5 @@ Warm caches after going live:
 - [Applications](/config/applications)
 - [Deployments](/app/deployments) — how a deploy progresses
 - [Mounts](/config/mounts) — the writable storage available to `deploy` hooks
+- [Platform variables](/app/platform-variables) — what Tragwerk puts in a hook's environment
 - [Examples](/config/examples)

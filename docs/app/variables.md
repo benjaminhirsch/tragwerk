@@ -1,8 +1,8 @@
 # Environment Variables
 
-Environment variables are key/value pairs injected into your containers at
-**build and runtime**. Use them for configuration and secrets such as
-`DATABASE_URL` or API tokens. Variables are scoped: a variable can apply to the
+Environment variables are key/value pairs injected into your containers **at
+runtime**. Use them for configuration and secrets such as `DATABASE_URL` or API
+tokens. Variables are scoped: a variable can apply to the
 whole project or to a single [environment](/app/environments), and environment
 values override project values.
 
@@ -64,16 +64,21 @@ Adding, changing or deleting a variable does not touch running containers.
 [Redeploy](/app/environments) the environment for the change to be applied.
 :::
 
-## Not the same as relationship variables
+## Not the same as platform variables
 
 These user-defined variables are distinct from the `TRAGWERK_*` variables that
-Tragwerk injects from your `<relationships>` configuration. Relationship
-variables describe connections to backing [services](/app/services) (database,
-cache, etc.) and are generated automatically — you do not create them here. See
-[relationships](/config/relationships).
+Tragwerk injects itself: the project, environment and commit metadata described
+under [platform variables](/app/platform-variables), and the connection details
+generated from your `<relationships>` configuration (see
+[relationships](/config/relationships)).
+
+Those names are reserved. A key starting with `TRAGWERK_`, or `SERVER_NAME` /
+`MAX_REQUESTS`, is rejected when you save it — Tragwerk writes its own values
+last, so such a variable would never reach your application anyway.
 
 ## Related
 
+- [Platform variables](/app/platform-variables)
 - [Relationships configuration](/config/relationships)
 - [Services](/app/services)
 - [Environments](/app/environments)

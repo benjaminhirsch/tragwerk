@@ -18,16 +18,21 @@ use Tragwerk\Domain\Model\HookConfig;
 use Tragwerk\Domain\Model\LocationConfig;
 use Tragwerk\Domain\Model\PhpConfig;
 use Tragwerk\Domain\Model\PhpSettingConfig;
+use Tragwerk\Domain\Model\PlatformContext;
 use Tragwerk\Domain\Model\WebConfig;
 use Tragwerk\Domain\Model\WorkerConfig;
 use Tragwerk\Domain\Model\WorkerDefinitionConfig;
 
 use function array_keys;
+use function str_contains;
 use function strpos;
 use function substr_count;
 
 final class DockerfileGeneratorTest extends TestCase
 {
+    /** Every generated build-hook script starts with this — see DockerfileGenerator. */
+    private const string BUILD_HOOK_HEADER = "#!/bin/sh\nset -e\n\nTRAGWERK_PHASE=build\nexport TRAGWERK_PHASE\n\n";
+
     private DockerfileGenerator $generator;
 
     protected function setUp(): void
@@ -258,7 +263,7 @@ final class DockerfileGeneratorTest extends TestCase
 
         self::assertSame('build-hook.my-app.sh', $output->buildHookName);
         self::assertSame(
-            "#!/bin/sh\nset -e\n\ncomposer install --no-dev\n",
+            self::BUILD_HOOK_HEADER . "composer install --no-dev\n",
             $output->buildHookContent,
         );
         self::assertStringContainsString(
@@ -279,7 +284,7 @@ final class DockerfileGeneratorTest extends TestCase
         ]));
 
         self::assertSame(
-            "#!/bin/sh\nset -e\n\ncomposer install --no-dev\nphp artisan config:cache\n",
+            self::BUILD_HOOK_HEADER . "composer install --no-dev\nphp artisan config:cache\n",
             $output->buildHookContent,
         );
     }
@@ -294,7 +299,7 @@ final class DockerfileGeneratorTest extends TestCase
         ]));
 
         self::assertSame(
-            "#!/bin/sh\nset -e\n\n# Install dependencies\ncomposer install --no-dev\n",
+            self::BUILD_HOOK_HEADER . "# Install dependencies\ncomposer install --no-dev\n",
             $output->buildHookContent,
         );
         self::assertStringNotContainsString('&& #', $output->dockerfileContent);
@@ -307,7 +312,7 @@ final class DockerfileGeneratorTest extends TestCase
             self::hook(HookType::BUILD, "  \n  composer install  \n  "),
         ]));
 
-        self::assertSame("#!/bin/sh\nset -e\n\ncomposer install\n", $output->buildHookContent);
+        self::assertSame(self::BUILD_HOOK_HEADER . "composer install\n", $output->buildHookContent);
     }
 
     #[Test]
@@ -884,6 +889,116 @@ final class DockerfileGeneratorTest extends TestCase
         $this->expectExceptionMessage('exactly one');
 
         $this->generator->generate($app);
+    }
+
+    #[Test]
+    public function platformEnvIsEmittedBeforeTheBuildHook(): void
+    {
+        $app = self::app(hooks: [new HookConfig(type: HookType::BUILD, value: 'composer install')]);
+
+        $dockerfile = $this->generator->generate($app, self::platform())->dockerfileContent;
+
+        // One ENV instruction continued over real newlines — a literal "\n" would make the
+        // Dockerfile unparseable.
+        self::assertStringContainsString(
+            'ENV TRAGWERK="1" \\' . "\n"
+            . '    TRAGWERK_PROJECT_ID="c0ffee" \\' . "\n"
+            . '    TRAGWERK_BRANCH="feature/New Checkout" \\' . "\n"
+            . '    TRAGWERK_ENVIRONMENT="new-checkout" \\' . "\n"
+            . '    TRAGWERK_APPLICATION="app"',
+            $dockerfile,
+        );
+
+        $env  = strpos($dockerfile, 'ENV TRAGWERK=');
+        $hook = strpos($dockerfile, '/usr/local/bin/tragwerk-build-hook');
+        self::assertIsInt($env);
+        self::assertIsInt($hook);
+        self::assertLessThan($hook, $env, 'Build hooks must be able to read the platform variables');
+    }
+
+    #[Test]
+    public function platformEnvNeverCarriesPerDeployValuesOrSecrets(): void
+    {
+        $dockerfile = $this->generator->generate(self::app(), self::platform())->dockerfileContent;
+
+        // These change per deploy and would break the image-reuse fingerprint; the entropy is a
+        // secret and an ENV line is a readable image layer.
+        self::assertFalse(str_contains($dockerfile, 'TRAGWERK_COMMIT_SHA'));
+        self::assertFalse(str_contains($dockerfile, 'TRAGWERK_DEPLOY_ID'));
+        self::assertFalse(str_contains($dockerfile, 'TRAGWERK_PROJECT_ENTROPY'));
+        self::assertFalse(str_contains($dockerfile, 'TRAGWERK_PROJECT_NAME'));
+    }
+
+    #[Test]
+    public function twoDeploysOfTheSameBranchProduceTheSameDockerfile(): void
+    {
+        $first  = $this->generator->generate(self::app(), self::platform('deadbeef', 'job-1'));
+        $second = $this->generator->generate(self::app(), self::platform('cafebabe', 'job-2'));
+
+        self::assertSame($first->dockerfileContent, $second->dockerfileContent);
+    }
+
+    #[Test]
+    public function withoutAPlatformContextNoEnvLineIsEmitted(): void
+    {
+        self::assertFalse(str_contains($this->generator->generate(self::app())->dockerfileContent, 'ENV TRAGWERK'));
+    }
+
+    #[Test]
+    public function eachHookTypeRunsInItsOwnPhase(): void
+    {
+        $output = $this->generator->generate(self::app(hooks: [
+            self::hook(HookType::BUILD, 'composer install'),
+            self::hook(HookType::DEPLOY, 'php artisan migrate'),
+            self::hook(HookType::POST_DEPLOY, 'php artisan cache:warm'),
+        ]));
+
+        self::assertNotNull($output->buildHookContent);
+        self::assertStringContainsString("TRAGWERK_PHASE=build\nexport TRAGWERK_PHASE", $output->buildHookContent);
+
+        self::assertNotNull($output->entrypointContent);
+        self::assertStringContainsString('TRAGWERK_PHASE=deploy', $output->entrypointContent);
+        self::assertStringContainsString('    TRAGWERK_PHASE=post_deploy', $output->entrypointContent);
+
+        // The deploy phase must not leak into the server process the entrypoint hands over to.
+        $deploy  = strpos($output->entrypointContent, 'TRAGWERK_PHASE=deploy');
+        $runtime = strpos($output->entrypointContent, 'TRAGWERK_PHASE=runtime');
+        $exec    = strpos($output->entrypointContent, 'exec "$@"');
+        self::assertIsInt($deploy);
+        self::assertIsInt($runtime);
+        self::assertIsInt($exec);
+        self::assertLessThan($runtime, $deploy);
+        self::assertLessThan($exec, $runtime);
+    }
+
+    #[Test]
+    public function postDeployPhaseIsSetInsideTheBackgroundSubshell(): void
+    {
+        $output = $this->generator->generate(self::app(hooks: [
+            self::hook(HookType::POST_DEPLOY, 'php artisan cache:warm'),
+        ]));
+
+        self::assertNotNull($output->entrypointContent);
+        self::assertStringContainsString(
+            "(\n    TRAGWERK_PHASE=post_deploy\n    php artisan cache:warm\n) &",
+            $output->entrypointContent,
+        );
+        // Without deploy hooks nothing changed the phase before the subshell.
+        self::assertStringNotContainsString('TRAGWERK_PHASE=deploy', $output->entrypointContent);
+    }
+
+    private static function platform(
+        string $commitSha = 'abc1234',
+        string|null $deployId = null,
+    ): PlatformContext {
+        return new PlatformContext(
+            projectId:      'c0ffee',
+            projectName:    'My Shop',
+            projectEntropy: 'super-secret-entropy',
+            branch:         'feature/New Checkout',
+            commitSha:      $commitSha,
+            deployId:       $deployId,
+        );
     }
 
     private static function workerApp(WorkerConfig $worker): ApplicationConfig

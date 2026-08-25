@@ -2094,5 +2094,9 @@ msgstr "Projektweite Variablen stehen bereits dem allerersten Build zur Verfügu
 msgid "Key must start with a letter and contain only letters, digits and underscores"
 msgstr "Der Schlüssel muss mit einem Buchstaben beginnen und darf nur Buchstaben, Ziffern und Unterstriche enthalten."
 
+#, php-format
+msgid "%s is reserved by Tragwerk and cannot be used as a variable"
+msgstr "%s ist von Tragwerk reserviert und kann nicht als Variable verwendet werden."
+
 msgid "Letters, digits and underscores. Converted to uppercase."
 msgstr "Buchstaben, Ziffern und Unterstriche. Wird in Großbuchstaben umgewandelt."

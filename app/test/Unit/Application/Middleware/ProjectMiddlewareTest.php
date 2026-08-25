@@ -202,6 +202,7 @@ final class ProjectMiddlewareTest extends TestCase
             $now,
             $uid,
             RegistryIdentifier::create(),
+            'test-entropy',
         );
     }
 

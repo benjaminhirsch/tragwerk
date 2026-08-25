@@ -7,6 +7,7 @@ namespace Tragwerk\Domain\Docker;
 use Tragwerk\Domain\Enum\ServiceRuntime;
 use Tragwerk\Domain\Model\ApplicationConfig;
 use Tragwerk\Domain\Model\HealthConfig;
+use Tragwerk\Domain\Model\PlatformContext;
 use Tragwerk\Domain\Model\ProjectConfig;
 use Tragwerk\Domain\Model\RouteConfig;
 use Tragwerk\Domain\Model\ServiceConfig;
@@ -15,15 +16,23 @@ use Tragwerk\Domain\Model\WorkerDefinitionConfig;
 use function array_any;
 use function array_key_exists;
 use function array_map;
+use function array_merge;
+use function base64_encode;
+use function basename;
 use function explode;
+use function json_encode;
 use function ltrim;
 use function preg_match;
 use function preg_replace;
 use function preg_replace_callback;
+use function str_contains;
 use function str_replace;
 use function str_starts_with;
 use function strtolower;
 use function strtoupper;
+
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
 
 final readonly class DockerComposeGenerator
 {
@@ -37,7 +46,8 @@ final readonly class DockerComposeGenerator
      *                                                          When provided the service uses `image:` instead
      *                                                          of `build:`.
      * @param array<string, string>       $userEnvVars          User-defined env vars injected into app containers.
-     *                                                          System keys (SERVER_NAME, TRAGWERK_*) take precedence.
+     *                                                          System keys (SERVER_NAME, MAX_REQUESTS, TRAGWERK_*)
+     *                                                          are written last and therefore take precedence.
      *
      * @return array<string, mixed>
      */
@@ -48,6 +58,7 @@ final readonly class DockerComposeGenerator
         array $imageTags = [],
         string $projectSlug = '',
         array $userEnvVars = [],
+        PlatformContext|null $platform = null,
     ): array {
         /** @var array<string, mixed> $services */
         $services = [];
@@ -95,6 +106,17 @@ final readonly class DockerComposeGenerator
                 foreach ($this->connectionVars($serviceIndex[$rel->target], $targetSlug) as $key => $value) {
                     $environment[$prefix . $key] = $value;
                 }
+            }
+
+            // Last, so neither a user-defined variable nor a relationship prefix can shadow them.
+            if ($platform !== null) {
+                $environment = array_merge($environment, $this->platformVars(
+                    $platform,
+                    $app,
+                    $config,
+                    $domainsByPlaceholder,
+                    $serviceIndex,
+                ));
             }
 
             $labels = $this->buildTraefikLabels($app, $config, $domainsByPlaceholder, $branchSlug, $projectSlug);
@@ -305,6 +327,18 @@ final readonly class DockerComposeGenerator
         return $cron;
     }
 
+    /**
+     * The environment's name as it appears in container names — `tw-{id8}-{environmentSlug}`.
+     * Shared with DockerfileGenerator so TRAGWERK_ENVIRONMENT is the same value at build and run
+     * time.
+     */
+    public static function environmentSlug(string $branch): string
+    {
+        $slug = preg_replace('/[\s_]+/', '-', strtolower(basename($branch))) ?? '';
+
+        return preg_replace('/[^a-z0-9-]/', '', $slug) ?? '';
+    }
+
     public function slugify(string $name): string
     {
         $slug = preg_replace('/[\s_]+/', '-', strtolower($name)) ?? '';
@@ -340,21 +374,9 @@ final readonly class DockerComposeGenerator
         $upIdx    = 0;
 
         foreach ($routes as $route) {
-            $isHttps     = $this->patternIsHttps($route->pattern);
-            $placeholder = $this->extractPlaceholder($route->pattern);
-            $resolved    = $placeholder !== null ? ($domainsByPlaceholder[$placeholder] ?? []) : [];
-            $hosts       = $resolved !== [] ? $resolved : [$this->extractHost($route->pattern)];
+            $isHttps = $this->patternIsHttps($route->pattern);
 
-            // Substitute the placeholder inside the full host part (e.g. "www.{default}" → "www.example.com")
-            if ($resolved !== [] && $placeholder !== null) {
-                $rawHost = $this->extractRawHostPart($route->pattern);
-                $hosts   = array_map(
-                    static fn (string $d): string => (string) str_replace('{' . $placeholder . '}', $d, $rawHost),
-                    $resolved,
-                );
-            }
-
-            foreach ($hosts as $host) {
+            foreach ($this->resolvedHostsForRoute($route, $domainsByPlaceholder) as $host) {
                 $routerName = $fullSlug . '-https-' . $upIdx;
                 $entrypoint = $isHttps ? 'websecure' : 'web';
 
@@ -371,6 +393,152 @@ final readonly class DockerComposeGenerator
         }
 
         return $labels;
+    }
+
+    /**
+     * Hosts a route resolves to. Shared by the Traefik labels and TRAGWERK_ROUTES so the two
+     * cannot describe different hostnames for the same route.
+     *
+     * @param array<string, list<string>> $domainsByPlaceholder
+     *
+     * @return list<string>
+     */
+    private function resolvedHostsForRoute(RouteConfig $route, array $domainsByPlaceholder): array
+    {
+        $placeholder = $this->extractPlaceholder($route->pattern);
+        $resolved    = $placeholder !== null ? ($domainsByPlaceholder[$placeholder] ?? []) : [];
+
+        if ($resolved === [] || $placeholder === null) {
+            return [$this->extractHost($route->pattern)];
+        }
+
+        // Substitute the placeholder inside the full host part (e.g. "www.{default}" → "www.example.com")
+        $rawHost = $this->extractRawHostPart($route->pattern);
+
+        return array_map(
+            static fn (string $d): string => (string) str_replace('{' . $placeholder . '}', $d, $rawHost),
+            $resolved,
+        );
+    }
+
+    /**
+     * Platform metadata handed to the deployed application. Written into the app container and
+     * inherited by its workers and cron sidecar, so an application can tell it runs on Tragwerk
+     * and which project, environment and commit it belongs to.
+     *
+     * @param array<string, list<string>>  $domainsByPlaceholder
+     * @param array<string, ServiceConfig> $serviceIndex
+     *
+     * @return array<string, string>
+     */
+    private function platformVars(
+        PlatformContext $platform,
+        ApplicationConfig $app,
+        ProjectConfig $config,
+        array $domainsByPlaceholder,
+        array $serviceIndex,
+    ): array {
+        $routes = $this->platformRoutes($app, $config, $domainsByPlaceholder);
+
+        $vars = [
+            'TRAGWERK'                 => '1',
+            'TRAGWERK_PHASE'           => 'runtime',
+            'TRAGWERK_PROJECT_ID'      => $platform->projectId,
+            'TRAGWERK_PROJECT_NAME'    => $platform->projectName,
+            'TRAGWERK_PROJECT_ENTROPY' => $platform->projectEntropy,
+            'TRAGWERK_ENVIRONMENT'     => self::environmentSlug($platform->branch),
+            'TRAGWERK_BRANCH'          => $platform->branch,
+            'TRAGWERK_APPLICATION'     => $app->name,
+            'TRAGWERK_COMMIT_SHA'      => $platform->commitSha,
+            'TRAGWERK_URL'             => $routes[0]['url'] ?? '',
+            'TRAGWERK_ROUTES'          => $this->encodeBlob($routes),
+            'TRAGWERK_RELATIONSHIPS'   => $this->encodeBlob(
+                (object) $this->platformRelationships($app, $serviceIndex),
+            ),
+        ];
+
+        if ($platform->deployId !== null) {
+            $vars['TRAGWERK_DEPLOY_ID'] = $platform->deployId;
+        }
+
+        return $vars;
+    }
+
+    /**
+     * @param array<string, list<string>> $domainsByPlaceholder
+     *
+     * @return list<array{url: string, host: string, application: string, tls: bool, primary: bool}>
+     */
+    private function platformRoutes(
+        ApplicationConfig $app,
+        ProjectConfig $config,
+        array $domainsByPlaceholder,
+    ): array {
+        $entries = [];
+
+        foreach ($this->routesForApp($app, $config) as $route) {
+            $isHttps = $this->patternIsHttps($route->pattern);
+
+            foreach ($this->resolvedHostsForRoute($route, $domainsByPlaceholder) as $host) {
+                // An unresolved placeholder falls back to a Compose interpolation expression, which
+                // is meaningful in a Traefik label but not as a hostname an application could call.
+                if (str_contains($host, '$')) {
+                    continue;
+                }
+
+                $entries[] = [
+                    'url'         => ($isHttps ? 'https://' : 'http://') . $host,
+                    'host'        => $host,
+                    'application' => $app->name,
+                    'tls'         => $isHttps,
+                    'primary'     => $entries === [],
+                ];
+            }
+        }
+
+        return $entries;
+    }
+
+    /**
+     * @param array<string, ServiceConfig> $serviceIndex
+     *
+     * @return array<string, array{type: string, host: string, port: int, database: string|null,
+     *                             username: string|null, password: string|null}>
+     */
+    private function platformRelationships(ApplicationConfig $app, array $serviceIndex): array
+    {
+        $relationships = [];
+
+        foreach ($app->relationships as $rel) {
+            if (! array_key_exists($rel->target, $serviceIndex)) {
+                continue;
+            }
+
+            $service = $serviceIndex[$rel->target];
+            $vars    = $this->connectionVars($service, $this->slugify($rel->target));
+
+            // Cache services have no database/user/password; the keys stay present as null so the
+            // shape does not depend on the service type.
+            $relationships[$rel->name] = [
+                'type'     => $service->type->value,
+                'host'     => $vars['HOST'],
+                'port'     => (int) $vars['PORT'],
+                'database' => $vars['DATABASE'] ?? null,
+                'username' => $vars['USER'] ?? null,
+                'password' => $vars['PASSWORD'] ?? null,
+            ];
+        }
+
+        return $relationships;
+    }
+
+    /**
+     * Compose interpolates `$VAR` in environment values, and the blue/green deploy pushes the same
+     * values through a shell command line — base64 is inert for both.
+     */
+    private function encodeBlob(mixed $value): string
+    {
+        return base64_encode(json_encode($value, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES));
     }
 
     /** @return list<RouteConfig> */

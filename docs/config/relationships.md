@@ -133,4 +133,5 @@ never boots against a service that is not ready yet.
 
 - [Services](/config/services) — defining the services you connect to
 - [Variables (app guide)](/app/variables) — user-defined env vars (system `TRAGWERK_*` keys take precedence)
+- [Platform variables](/app/platform-variables) — the same connection details as one JSON blob, plus project/environment metadata
 - [Examples](/config/examples)

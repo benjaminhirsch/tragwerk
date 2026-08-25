@@ -16,6 +16,14 @@ use Tragwerk\Domain\ValueObject\TimestampImmutable;
 final class VariableUpdateTest extends TestCase
 {
     #[Test]
+    public function reservedKeysAreRejected(): void
+    {
+        $this->expectException(ValidationCollection::class);
+
+        new VariableUpdate('TRAGWERK_PROJECT_ENTROPY', 'v');
+    }
+
+    #[Test]
     public function valueIsOptionalOnUpdate(): void
     {
         $dto = new VariableUpdate('KEY');

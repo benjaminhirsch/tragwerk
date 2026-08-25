@@ -535,6 +535,7 @@ final class ProjectHandlerTest extends AppIntegrationTestCase
             $now,
             $this->user->id,
             $this->registry->id,
+            'test-entropy',
         );
 
         $repository = $this->container->get(ProjectRepository::class);

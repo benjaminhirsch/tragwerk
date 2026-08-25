@@ -24,6 +24,12 @@ final class Project implements Entity, Abbreviation
         public TimestampImmutable $updatedAt,
         public UserIdentifier $updatedBy,
         public RegistryIdentifier $registryId,
+        /**
+         * Random, project-wide and stable for the project's whole lifetime. Handed to deployed
+         * applications as TRAGWERK_PROJECT_ENTROPY for hash salting — rotating it would invalidate
+         * every hash the application derived from it, so it is never regenerated.
+         */
+        public string $entropy,
     ) {
     }
 

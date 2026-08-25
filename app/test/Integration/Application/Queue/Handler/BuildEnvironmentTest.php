@@ -42,14 +42,18 @@ use Tragwerk\Domain\Service\DomainResolver;
 use Tragwerk\Domain\ValueObject\DomainIdentifier;
 use Tragwerk\Domain\ValueObject\EnvVarIdentifier;
 use Tragwerk\Domain\ValueObject\ProjectIdentifier;
+use Tragwerk\Domain\ValueObject\RegistryIdentifier;
+use Tragwerk\Domain\ValueObject\ServerIdentifier;
 use Tragwerk\Domain\ValueObject\TeamIdentifier;
 use Tragwerk\Domain\ValueObject\TeamMembership;
+use Tragwerk\Domain\ValueObject\TimestampImmutable;
 use Tragwerk\Domain\ValueObject\UserIdentifier;
 use Tragwerk\Infrastructure\Git\BareRepository;
 use ZipArchive;
 
 use function dirname;
 use function exec;
+use function file_get_contents;
 use function file_put_contents;
 use function is_dir;
 use function mkdir;
@@ -140,7 +144,20 @@ final class BuildEnvironmentTest extends TestCase
         $nullProjectRepo = new class implements ProjectRepository {
             public function getById(ProjectIdentifier $id): Entity
             {
-                throw new RuntimeException('not used');
+                $now = TimestampImmutable::now();
+
+                return new Project(
+                    $id,
+                    'Test Project',
+                    ServerIdentifier::create(),
+                    TeamIdentifier::create(),
+                    $now,
+                    UserIdentifier::create(),
+                    $now,
+                    UserIdentifier::create(),
+                    RegistryIdentifier::create(),
+                    'test-entropy',
+                );
             }
 
             public function create(Project $entity): void
@@ -413,6 +430,31 @@ final class BuildEnvironmentTest extends TestCase
         $this->handler->handle(new Message\BuildEnvironment($projectId, 'main', $sha));
 
         self::assertFileExists($this->tempDataDir . '/' . $projectId . '/main/Dockerfile.app');
+    }
+
+    #[Test]
+    public function generatedArtifactsCarryThePlatformVariables(): void
+    {
+        $projectId = ProjectIdentifier::create()->toString();
+        $this->bareRepository->init($projectId);
+        $sha = $this->commitFile($projectId, '.tragwerk/config.xml', self::MINIMAL_XML);
+
+        $this->handler->handle(new Message\BuildEnvironment($projectId, 'main', $sha));
+
+        $dir     = $this->tempDataDir . '/' . $projectId . '/main';
+        $compose = file_get_contents($dir . '/docker-compose.yml');
+        self::assertIsString($compose);
+        self::assertStringContainsString('TRAGWERK_PROJECT_ID: ' . $projectId, $compose);
+        self::assertStringContainsString('TRAGWERK_COMMIT_SHA: ' . $sha, $compose);
+        self::assertStringContainsString('TRAGWERK_PROJECT_ENTROPY: test-entropy', $compose);
+
+        // No deploy job exists during the build.
+        self::assertStringNotContainsString('TRAGWERK_DEPLOY_ID', $compose);
+
+        $dockerfile = file_get_contents($dir . '/Dockerfile.app');
+        self::assertIsString($dockerfile);
+        self::assertStringContainsString('ENV TRAGWERK="1"', $dockerfile);
+        self::assertStringNotContainsString('TRAGWERK_PROJECT_ENTROPY', $dockerfile);
     }
 
     #[Test]

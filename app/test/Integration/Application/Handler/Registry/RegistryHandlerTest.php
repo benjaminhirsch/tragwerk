@@ -487,6 +487,7 @@ final class RegistryHandlerTest extends AppIntegrationTestCase
             $now,
             $this->user->id,
             $registryId,
+            'test-entropy',
         );
 
         $repository = $this->container->get(ProjectRepository::class);

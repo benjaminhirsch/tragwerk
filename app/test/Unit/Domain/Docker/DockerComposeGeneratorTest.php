@@ -20,6 +20,7 @@ use Tragwerk\Domain\Model\HealthConfig;
 use Tragwerk\Domain\Model\HookConfig;
 use Tragwerk\Domain\Model\LocationConfig;
 use Tragwerk\Domain\Model\MountConfig;
+use Tragwerk\Domain\Model\PlatformContext;
 use Tragwerk\Domain\Model\ProjectConfig;
 use Tragwerk\Domain\Model\RelationshipConfig;
 use Tragwerk\Domain\Model\RouteConfig;
@@ -27,6 +28,11 @@ use Tragwerk\Domain\Model\ServiceConfig;
 use Tragwerk\Domain\Model\WebConfig;
 use Tragwerk\Domain\Model\WorkerConfig;
 use Tragwerk\Domain\Model\WorkerDefinitionConfig;
+
+use function base64_decode;
+use function json_decode;
+
+use const JSON_THROW_ON_ERROR;
 
 final class DockerComposeGeneratorTest extends TestCase
 {
@@ -935,6 +941,244 @@ final class DockerComposeGeneratorTest extends TestCase
         $worker = $this->service($compose, 'app-worker-queue');
         self::assertSame('ghcr.io/myorg/myapp:main', $worker['image']);
         self::assertArrayNotHasKey('build', $worker);
+    }
+
+    private static function platform(string $branch = 'main', string|null $deployId = 'job-1'): PlatformContext
+    {
+        return new PlatformContext(
+            projectId:      'c0ffee00-1111-2222-3333-444455556666',
+            projectName:    'My Shop',
+            projectEntropy: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+            branch:         $branch,
+            commitSha:      'abc1234',
+            deployId:       $deployId,
+        );
+    }
+
+    /** @param array<string, string> $env */
+    private static function blob(array $env, string $key): mixed
+    {
+        $raw = base64_decode($env[$key], true);
+        self::assertIsString($raw, $key . ' is not valid base64');
+
+        return json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+    }
+
+    #[Test]
+    public function platformVarsDescribeTheDeployment(): void
+    {
+        $config  = self::project(
+            [self::app('app')],
+            [self::upstream('https://{default}', 'app:http')],
+        );
+        $compose = $this->generator->generate(
+            $config,
+            'main',
+            ['default' => ['shop.example.com']],
+            platform: self::platform(),
+        );
+
+        $env = $this->environment($compose, 'app');
+
+        self::assertSame('1', $env['TRAGWERK']);
+        self::assertSame('runtime', $env['TRAGWERK_PHASE']);
+        self::assertSame('c0ffee00-1111-2222-3333-444455556666', $env['TRAGWERK_PROJECT_ID']);
+        self::assertSame('My Shop', $env['TRAGWERK_PROJECT_NAME']);
+        self::assertSame(
+            'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+            $env['TRAGWERK_PROJECT_ENTROPY'],
+        );
+        self::assertSame('main', $env['TRAGWERK_ENVIRONMENT']);
+        self::assertSame('main', $env['TRAGWERK_BRANCH']);
+        self::assertSame('app', $env['TRAGWERK_APPLICATION']);
+        self::assertSame('abc1234', $env['TRAGWERK_COMMIT_SHA']);
+        self::assertSame('job-1', $env['TRAGWERK_DEPLOY_ID']);
+        self::assertSame('https://shop.example.com', $env['TRAGWERK_URL']);
+    }
+
+    #[Test]
+    public function environmentIsTheSlugOfTheBranchBasename(): void
+    {
+        $config  = self::project(
+            [self::app('app')],
+            [self::upstream('https://{default}', 'app:http')],
+        );
+        $compose = $this->generator->generate(
+            $config,
+            'feature/New Checkout',
+            [],
+            platform: self::platform('feature/New Checkout'),
+        );
+
+        $env = $this->environment($compose, 'app');
+
+        self::assertSame('new-checkout', $env['TRAGWERK_ENVIRONMENT']);
+        self::assertSame('feature/New Checkout', $env['TRAGWERK_BRANCH']);
+    }
+
+    #[Test]
+    public function workerAndCronInheritPlatformVars(): void
+    {
+        $app = new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([new LocationConfig(path: '/', root: 'public', passthru: '/index.php')]),
+            workers: [new WorkerDefinitionConfig(name: 'queue', command: 'bin/cli worker:start default')],
+            crons: [new CronDefinitionConfig(name: 'nightly', command: 'bin/cli cron', schedule: '0 3 * * *')],
+        );
+
+        $compose = $this->generator->generate(
+            self::project([$app], [self::upstream('https://{default}', 'app:http')]),
+            'main',
+            ['default' => ['shop.example.com']],
+            platform: self::platform(),
+        );
+
+        foreach (['app-worker-queue', 'app-cron'] as $service) {
+            $env = $this->environment($compose, $service);
+            self::assertSame('1', $env['TRAGWERK'], $service . ' is missing the platform marker');
+            self::assertSame('runtime', $env['TRAGWERK_PHASE']);
+            self::assertSame('abc1234', $env['TRAGWERK_COMMIT_SHA']);
+        }
+    }
+
+    #[Test]
+    public function routesBlobListsEveryResolvedHost(): void
+    {
+        $config  = self::project(
+            [self::app('app')],
+            [self::upstream('https://{default}', 'app:http'), self::upstream('https://www.{default}', 'app:http')],
+        );
+        $compose = $this->generator->generate(
+            $config,
+            'main',
+            ['default' => ['shop.example.com']],
+            platform: self::platform(),
+        );
+
+        $routes = self::blob($this->environment($compose, 'app'), 'TRAGWERK_ROUTES');
+
+        self::assertSame([
+            [
+                'url'         => 'https://shop.example.com',
+                'host'        => 'shop.example.com',
+                'application' => 'app',
+                'tls'         => true,
+                'primary'     => true,
+            ],
+            [
+                'url'         => 'https://www.shop.example.com',
+                'host'        => 'www.shop.example.com',
+                'application' => 'app',
+                'tls'         => true,
+                'primary'     => false,
+            ],
+        ], $routes);
+    }
+
+    #[Test]
+    public function relationshipsBlobKeepsAStableShapePerServiceType(): void
+    {
+        $config = self::project(
+            [
+                self::app('app', relationships: [
+                    new RelationshipConfig(name: 'database', target: 'db'),
+                    new RelationshipConfig(name: 'cache', target: 'redis'),
+                ]),
+            ],
+            [self::upstream('https://{default}', 'app:http')],
+            [
+                new ServiceConfig(name: 'db', type: ServiceRuntime::POSTGRES18, disk: null),
+                new ServiceConfig(name: 'redis', type: ServiceRuntime::REDIS8, disk: null),
+            ],
+        );
+
+        $compose = $this->generator->generate(
+            $config,
+            'main',
+            ['default' => ['shop.example.com']],
+            platform: self::platform(),
+        );
+
+        self::assertSame([
+            'database' => [
+                'type'     => 'postgresql:18',
+                'host'     => 'db',
+                'port'     => 5432,
+                'database' => 'app',
+                'username' => 'app',
+                'password' => 'secret',
+            ],
+            'cache' => [
+                'type'     => 'redis:8',
+                'host'     => 'redis',
+                'port'     => 6379,
+                'database' => null,
+                'username' => null,
+                'password' => null,
+            ],
+        ], self::blob($this->environment($compose, 'app'), 'TRAGWERK_RELATIONSHIPS'));
+    }
+
+    #[Test]
+    public function appWithoutAResolvableRouteHasAnEmptyUrl(): void
+    {
+        $config  = self::project([self::app('app')], []);
+        $compose = $this->generator->generate($config, 'main', [], platform: self::platform());
+
+        $env = $this->environment($compose, 'app');
+
+        self::assertSame('', $env['TRAGWERK_URL']);
+        self::assertSame([], self::blob($env, 'TRAGWERK_ROUTES'));
+    }
+
+    #[Test]
+    public function userVariablesCannotShadowPlatformVars(): void
+    {
+        $config  = self::project(
+            [self::app('app')],
+            [self::upstream('https://{default}', 'app:http')],
+        );
+        $compose = $this->generator->generate(
+            $config,
+            'main',
+            ['default' => ['shop.example.com']],
+            userEnvVars: ['TRAGWERK_PROJECT_ID' => 'spoofed', 'APP_ENV' => 'prod'],
+            platform: self::platform(),
+        );
+
+        $env = $this->environment($compose, 'app');
+
+        self::assertSame('c0ffee00-1111-2222-3333-444455556666', $env['TRAGWERK_PROJECT_ID']);
+        self::assertSame('prod', $env['APP_ENV']);
+    }
+
+    #[Test]
+    public function withoutAPlatformContextNoPlatformVarsAreEmitted(): void
+    {
+        $config = self::project(
+            [self::app('app')],
+            [self::upstream('https://{default}', 'app:http')],
+        );
+
+        $env = $this->environment($this->generator->generate($config), 'app');
+
+        foreach (['TRAGWERK', 'TRAGWERK_PROJECT_ID', 'TRAGWERK_ROUTES', 'TRAGWERK_RELATIONSHIPS'] as $key) {
+            self::assertArrayNotHasKey($key, $env);
+        }
+    }
+
+    #[Test]
+    public function deployIdIsOmittedDuringTheBuild(): void
+    {
+        $config  = self::project(
+            [self::app('app')],
+            [self::upstream('https://{default}', 'app:http')],
+        );
+        $compose = $this->generator->generate($config, 'main', [], platform: self::platform(deployId: null));
+
+        self::assertArrayNotHasKey('TRAGWERK_DEPLOY_ID', $this->environment($compose, 'app'));
     }
 
     public static function slugifyProvider(): Generator

@@ -36,6 +36,7 @@ use Tragwerk\Domain\Entity\Project;
 use Tragwerk\Domain\Entity\Registry;
 use Tragwerk\Domain\Entity\Server;
 use Tragwerk\Domain\Enum\DeployJobStatus;
+use Tragwerk\Domain\Model\PlatformContext;
 use Tragwerk\Domain\Model\ProjectConfig;
 use Tragwerk\Domain\Repository\CredentialRepository;
 use Tragwerk\Domain\Repository\DeployJobRepository;
@@ -502,6 +503,14 @@ final class DeployEnvironmentCommand extends Command
             $imageTags,
             $projectSlug,
             $userEnvVars,
+            new PlatformContext(
+                projectId:      $projectId,
+                projectName:    $project->name,
+                projectEntropy: $project->entropy,
+                branch:         $branch,
+                commitSha:      $commitSha,
+                deployId:       $jobId->toString(),
+            ),
         );
         $sftp->put(
             $remoteDir . '/docker-compose.yml',

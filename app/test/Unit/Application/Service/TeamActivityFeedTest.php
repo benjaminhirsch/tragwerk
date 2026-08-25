@@ -129,6 +129,7 @@ final class TeamActivityFeedTest extends TestCase
             $now,
             $uid,
             RegistryIdentifier::create(),
+            'test-entropy',
         );
     }
 

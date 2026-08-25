@@ -86,6 +86,7 @@ export default defineConfig({
             { text: 'Deployments', link: '/app/deployments' },
             { text: 'Domains & SSL', link: '/app/domains' },
             { text: 'Environment Variables', link: '/app/variables' },
+            { text: 'Platform Variables', link: '/app/platform-variables' },
             { text: 'Integrations & Webhooks', link: '/app/integrations' },
           ],
         },

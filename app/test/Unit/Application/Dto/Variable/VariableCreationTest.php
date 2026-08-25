@@ -25,6 +25,25 @@ final class VariableCreationTest extends TestCase
     }
 
     #[Test]
+    public function reservedKeysAreRejected(): void
+    {
+        foreach (['TRAGWERK', 'TRAGWERK_PROJECT_ID', 'TRAGWERK_DATABASE_HOST', 'SERVER_NAME', 'MAX_REQUESTS'] as $key) {
+            try {
+                new VariableCreation($key, 'v');
+                self::fail('Expected ' . $key . ' to be rejected');
+            } catch (ValidationCollection $e) {
+                self::assertSame('key', $e->validations[0]->name);
+            }
+        }
+    }
+
+    #[Test]
+    public function aKeyMerelyContainingTragwerkIsAllowed(): void
+    {
+        self::assertSame('MY_TRAGWERK_TOKEN', (new VariableCreation('MY_TRAGWERK_TOKEN', 'v'))->key);
+    }
+
+    #[Test]
     public function presentFlagsBecomeTrue(): void
     {
         $dto = new VariableCreation('KEY', 'v', '1', '1');

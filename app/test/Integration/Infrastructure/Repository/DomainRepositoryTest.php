@@ -159,6 +159,7 @@ final class DomainRepositoryTest extends IntegrationTestCase
             $now,
             $userId,
             $registry->id,
+            'test-entropy',
         );
         $projectRepository = $this->container->get(ProjectRepository::class);
         assert($projectRepository instanceof ProjectRepository);

@@ -11,6 +11,7 @@ use Tragwerk\Domain\Model\ExtensionConfig;
 use Tragwerk\Domain\Model\HookConfig;
 use Tragwerk\Domain\Model\LocationConfig;
 use Tragwerk\Domain\Model\PhpConfig;
+use Tragwerk\Domain\Model\PlatformContext;
 use Tragwerk\Domain\Model\WorkerDefinitionConfig;
 
 use function array_filter;
@@ -74,7 +75,7 @@ final readonly class DockerfileGenerator
         return self::BUILD_HOOK_PREFIX . $appSlug . '.sh';
     }
 
-    public function generate(ApplicationConfig $app): DockerfileOutput
+    public function generate(ApplicationConfig $app, PlatformContext|null $platform = null): DockerfileOutput
     {
         foreach ($app->extensions as $ext) {
             if ($ext->name === 'swoole') {
@@ -106,6 +107,7 @@ final readonly class DockerfileGenerator
                 $hasCaddyfile,
                 $hasCrons,
                 $hasPhpIni,
+                $platform,
             ),
             entrypointName:    $hasEntrypoint ? 'docker-entrypoint.' . $slug . '.sh' : null,
             entrypointContent: $hasEntrypoint ? $this->buildEntrypoint($deployHooks, $postDeployHooks) : null,
@@ -143,7 +145,11 @@ final readonly class DockerfileGenerator
             return null;
         }
 
-        return implode("\n", ['#!/bin/sh', 'set -e', '', ...$body]) . "\n";
+        // Not an ENV in the Dockerfile: that would bake "build" into the image and every running
+        // container would inherit it until something overrode it.
+        $header = ['#!/bin/sh', 'set -e', '', 'TRAGWERK_PHASE=build', 'export TRAGWERK_PHASE', ''];
+
+        return implode("\n", [...$header, ...$body]) . "\n";
     }
 
     /**
@@ -252,6 +258,7 @@ final readonly class DockerfileGenerator
         bool $hasCaddyfile,
         bool $hasCrons,
         bool $hasPhpIni,
+        PlatformContext|null $platform = null,
     ): string {
         $image      = $this->imageResolver->forApplication($app->type);
         $copySource = $app->root === '/' ? '.' : ltrim($app->root, '/');
@@ -260,6 +267,11 @@ final readonly class DockerfileGenerator
         $lines[] = 'FROM ' . $image;
         $lines[] = '';
         $lines[] = 'WORKDIR /app';
+
+        if ($platform !== null) {
+            $lines[] = '';
+            $lines[] = $this->buildPlatformEnv($app, $platform);
+        }
 
         $isPhp = str_starts_with($app->type->value, 'php:');
 
@@ -339,6 +351,36 @@ final readonly class DockerfileGenerator
     }
 
     /**
+     * Platform identity available to build hooks. Only values that stay constant for a branch
+     * belong here: the Dockerfile text feeds the image fingerprint, so a per-deploy value would
+     * force a rebuild on every deploy. Secrets are excluded too — an ENV line is a plaintext layer
+     * any puller can read with `docker inspect`.
+     */
+    private function buildPlatformEnv(ApplicationConfig $app, PlatformContext $platform): string
+    {
+        $vars = [
+            'TRAGWERK'             => '1',
+            'TRAGWERK_PROJECT_ID'  => $platform->projectId,
+            'TRAGWERK_BRANCH'      => $platform->branch,
+            'TRAGWERK_ENVIRONMENT' => DockerComposeGenerator::environmentSlug($platform->branch),
+            'TRAGWERK_APPLICATION' => $app->name,
+        ];
+
+        $parts = [];
+        foreach ($vars as $key => $value) {
+            $parts[] = $key . '=' . $this->quoteEnvValue($value);
+        }
+
+        return 'ENV ' . implode(" \\\n    ", $parts);
+    }
+
+    /** Branch names and application names may contain characters the Dockerfile parser splits on. */
+    private function quoteEnvValue(string $value): string
+    {
+        return '"' . str_replace(['\\', '"', '$'], ['\\\\', '\\"', '\\$'], $value) . '"';
+    }
+
+    /**
      * @param list<HookConfig> $deployHooks
      * @param list<HookConfig> $postDeployHooks
      */
@@ -348,6 +390,13 @@ final readonly class DockerfileGenerator
         $lines[] = '#!/bin/sh';
         $lines[] = 'set -e';
         $lines[] = '';
+        $lines[] = 'export TRAGWERK_PHASE';
+        $lines[] = '';
+
+        if ($deployHooks !== []) {
+            $lines[] = 'TRAGWERK_PHASE=deploy';
+            $lines[] = '';
+        }
 
         foreach ($deployHooks as $hook) {
             foreach ($this->parseScriptLines($hook->value) as $line) {
@@ -358,7 +407,10 @@ final readonly class DockerfileGenerator
         }
 
         if ($postDeployHooks !== []) {
+            // The subshell forks with a copy of the environment, so setting the phase inside it
+            // cannot leak back into the server process started below.
             $lines[] = '(';
+            $lines[] = '    TRAGWERK_PHASE=post_deploy';
             foreach ($postDeployHooks as $hook) {
                 foreach ($this->parseScriptLines($hook->value) as $line) {
                     $lines[] = '    ' . $line;
@@ -369,6 +421,9 @@ final readonly class DockerfileGenerator
             $lines[] = '';
         }
 
+        // Compose already sets this, but a deploy hook above changed it for this process.
+        $lines[] = 'TRAGWERK_PHASE=runtime';
+        $lines[] = '';
         $lines[] = 'exec "$@"';
 
         return implode("\n", $lines) . "\n";

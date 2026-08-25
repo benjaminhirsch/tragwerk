@@ -134,6 +134,7 @@ final class DeleteEnvironmentJobsTest extends IntegrationTestCase
             $now,
             $userId,
             $registryId,
+            'test-entropy',
         ));
 
         return $projectId;

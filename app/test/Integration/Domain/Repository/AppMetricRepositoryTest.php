@@ -204,6 +204,7 @@ final class AppMetricRepositoryTest extends IntegrationTestCase
             $now,
             $userId,
             $this->seedRegistry($teamId, $userId),
+            'test-entropy',
         );
 
         $repository = $this->container->get(ProjectRepository::class);

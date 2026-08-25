@@ -115,6 +115,7 @@ final class ProjectRepositoryTest extends IntegrationTestCase
         self::assertSame($project->name, $found->name);
         self::assertSame($project->serverId->toString(), $found->serverId->toString());
         self::assertSame($project->teamId->toString(), $found->teamId->toString());
+        self::assertSame($project->entropy, $found->entropy);
     }
 
     #[Test]
@@ -164,6 +165,8 @@ final class ProjectRepositoryTest extends IntegrationTestCase
         $found = $this->repository->getById($project->id);
         assert($found instanceof Project);
         self::assertSame('Updated', $found->name);
+        // Renaming must not reroll the entropy — applications hash against it.
+        self::assertSame($project->entropy, $found->entropy);
     }
 
     #[Test]
@@ -233,6 +236,7 @@ final class ProjectRepositoryTest extends IntegrationTestCase
             $now,
             UserIdentifier::create(),
             $this->registryId,
+            'test-entropy',
         );
     }
 }

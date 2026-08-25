@@ -286,6 +286,7 @@ final class GitPushHandlerTest extends AppIntegrationTestCase
             $now,
             $user->id,
             $this->seedRegistry($user, $team),
+            'test-entropy',
         );
 
         $repository = $this->container->get(ProjectRepository::class);

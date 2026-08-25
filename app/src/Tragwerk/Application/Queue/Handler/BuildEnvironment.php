@@ -28,6 +28,7 @@ use Tragwerk\Domain\Enum\BuildLogType;
 use Tragwerk\Domain\Enum\DeployJobStatus;
 use Tragwerk\Domain\Event\BuildLogCreated;
 use Tragwerk\Domain\Event\DeployJobCreated;
+use Tragwerk\Domain\Model\PlatformContext;
 use Tragwerk\Domain\Model\ProjectConfig;
 use Tragwerk\Domain\Repository\DomainRepository;
 use Tragwerk\Domain\Repository\EnvironmentStateRepository;
@@ -130,11 +131,30 @@ final readonly class BuildEnvironment
         $messages    = ['Build started for commit ' . $commitSha];
         $userEnvVars = $this->envVarResolver->resolve($projectIdentifier, $branch);
 
+        $project = $this->projectRepository->getById($projectIdentifier);
+        assert($project instanceof Project);
+
+        // No deploy job exists yet at build time — the deploy regenerates the compose file and
+        // fills TRAGWERK_DEPLOY_ID in.
+        $platform = new PlatformContext(
+            projectId:      $projectId,
+            projectName:    $project->name,
+            projectEntropy: $project->entropy,
+            branch:         $branch,
+            commitSha:      $commitSha,
+        );
+
         try {
             // DUMP_EMPTY_ARRAY_AS_SEQUENCE: the sidecars clear their entrypoint with an
             // empty list, and compose rejects the `{}` mapping the dumper emits otherwise.
             $compose = Yaml::dump(
-                $this->composeGenerator->generate($config, $branch, $domainsByPlaceholder, userEnvVars: $userEnvVars),
+                $this->composeGenerator->generate(
+                    $config,
+                    $branch,
+                    $domainsByPlaceholder,
+                    userEnvVars: $userEnvVars,
+                    platform: $platform,
+                ),
                 10,
                 2,
                 Yaml::DUMP_EMPTY_ARRAY_AS_SEQUENCE,
@@ -150,7 +170,7 @@ final readonly class BuildEnvironment
 
         foreach ($config->applications as $app) {
             try {
-                $dockerfile = $this->dockerfileGenerator->generate($app);
+                $dockerfile = $this->dockerfileGenerator->generate($app, $platform);
 
                 file_put_contents($outDir . '/' . $dockerfile->dockerfileName, $dockerfile->dockerfileContent);
                 $messages[] = 'Generated ' . $dockerfile->dockerfileName;

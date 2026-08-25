@@ -194,6 +194,7 @@ final class QueueDockerCleanupTest extends IntegrationTestCase
             $now,
             $this->userId,
             $registryId,
+            'test-entropy',
         );
         $projects = $this->container->get(ProjectRepository::class);
         assert($projects instanceof ProjectRepository);

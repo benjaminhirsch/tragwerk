@@ -177,6 +177,7 @@ final class DeployJobRepositoryTest extends IntegrationTestCase
             $now,
             $userId,
             $registryId,
+            'test-entropy',
         ));
 
         return $projectId;
