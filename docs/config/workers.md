@@ -18,10 +18,11 @@ The optional `<workers>` element contains one or more `<worker>` definitions.
 
 ## `<worker>`
 
-| Attribute | Required  | Default | Description                                                                   |
-| --------- | --------- | ------- | ----------------------------------------------------------------------------- |
-| `name`    | Yes       | —       | Unique worker name within the application. Used to derive the container name.  |
-| `command` | See below | —       | The long-running command the container executes, run from `/app`.              |
+| Attribute      | Required  | Default          | Description                                                                   |
+| -------------- | --------- | ---------------- | ------------------------------------------------------------------------------ |
+| `name`         | Yes       | —                | Unique worker name within the application. Used to derive the container name.   |
+| `command`      | See below | —                | The long-running command the container executes, run from `/app`.               |
+| `memory-limit` | No        | the app's `<php>` | PHP `memory_limit` for this worker only, e.g. `2G`.                            |
 
 Every worker needs exactly one command, given **either** as the `command`
 attribute (one-liner) **or** as the element body (multi-line script). Supplying
@@ -102,6 +103,36 @@ For an application slug `app`, a worker named `queue` becomes a container named
     </relationships>
 </application>
 ```
+
+## Memory
+
+A worker inherits the application's [`<php>` settings](/config/php), including
+`memory_limit`. Set `memory-limit` on the worker when one job legitimately needs
+more than the web application:
+
+```xml
+<workers>
+    <worker name="queue" command="bin/cli worker:start default"/>
+    <worker name="import" command="bin/cli import:run" memory-limit="2G"/>
+</workers>
+```
+
+Only `memory_limit` is replaced — every other `<php>` setting and all loaded
+extensions stay as they are.
+
+::: warning `-1` removes a safety net, it does not add headroom
+A limit is worth most in a process that runs for days: it turns a leak into a
+clean crash the restart policy recovers from. Without one, a leaking worker grows
+until the kernel's out-of-memory killer intervenes, and that kill can land on a
+different container on the same host. Raise the number rather than removing it.
+:::
+
+::: tip `max_execution_time` needs no setting
+The PHP CLI ignores `max_execution_time` from any `php.ini` — for a worker it is
+always unlimited. Only the application's own code can impose one, via
+`ini_set()` or `set_time_limit()`. If a worker dies after a fixed number of
+seconds, that is where to look.
+:::
 
 ## Workers vs. cron jobs
 

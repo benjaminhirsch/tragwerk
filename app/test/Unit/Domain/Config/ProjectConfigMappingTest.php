@@ -435,6 +435,22 @@ final class ProjectConfigMappingTest extends TestCase
     }
 
     #[Test]
+    public function workerMemoryLimitIsMapped(): void
+    {
+        $workers = <<<'XML'
+            <workers>
+                <worker name="import" command="bin/cli import:run" memory-limit="2G"/>
+                <worker name="queue" command="bin/cli worker:start default"/>
+            </workers>
+        XML;
+
+        $config = $this->map(self::projectXml(appExtras: $workers));
+
+        self::assertSame('2G', $config->applications[0]->workers[0]->memoryLimit);
+        self::assertNull($config->applications[0]->workers[1]->memoryLimit);
+    }
+
+    #[Test]
     public function workersDefaultToEmptyWhenAbsent(): void
     {
         $config = $this->map(self::projectXml());

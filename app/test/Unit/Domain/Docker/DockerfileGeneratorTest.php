@@ -196,6 +196,51 @@ final class DockerfileGeneratorTest extends TestCase
     }
 
     #[Test]
+    public function workerMemoryLimitBecomesAnExtraIniScanDir(): void
+    {
+        // PHP takes no per-invocation directive from the environment, so the override
+        // travels as an ini file plus PHP_INI_SCAN_DIR. conf.d stays first so the
+        // application's <php> settings survive and only memory_limit is replaced.
+        $output = $this->generator->generate(self::app('My App', workers: [
+            new WorkerDefinitionConfig(name: 'import', command: 'bin/cli import:run', memoryLimit: '2G'),
+        ]));
+
+        self::assertStringContainsString(
+            "RUN mkdir -p /usr/local/etc/php/worker-import.d \\\n"
+            . "    && echo 'memory_limit=2G' > /usr/local/etc/php/worker-import.d/zz-worker.ini",
+            $output->dockerfileContent,
+        );
+        self::assertStringContainsString(
+            'PHP_INI_SCAN_DIR="/usr/local/etc/php/conf.d:/usr/local/etc/php/worker-import.d"',
+            $output->workerScripts['worker.my-app.import.sh'],
+        );
+    }
+
+    #[Test]
+    public function workerWithoutMemoryLimitGetsNoIniOverride(): void
+    {
+        $output = $this->generator->generate(self::app(workers: [
+            new WorkerDefinitionConfig(name: 'queue', command: 'bin/cli worker:start default'),
+        ]));
+
+        self::assertStringNotContainsString('memory_limit', $output->dockerfileContent);
+        self::assertStringNotContainsString('PHP_INI_SCAN_DIR', $output->workerScripts['worker.app.queue.sh']);
+    }
+
+    #[Test]
+    public function workerCommandThatAlreadyExecsIsNotExeccedTwice(): void
+    {
+        $output = $this->generator->generate(self::app(workers: [
+            new WorkerDefinitionConfig(name: 'queue', value: 'exec bin/cli worker:start default'),
+        ]));
+
+        self::assertSame(
+            "#!/bin/sh\nset -e\n\nexec bin/cli worker:start default\n",
+            $output->workerScripts['worker.app.queue.sh'],
+        );
+    }
+
+    #[Test]
     public function noWorkerScriptsWhenNoWorkers(): void
     {
         $output = $this->generator->generate(self::app());

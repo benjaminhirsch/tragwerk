@@ -179,6 +179,12 @@ final readonly class DockerfileGenerator
         return '/usr/local/bin/tragwerk-worker-' . $workerSlug;
     }
 
+    /** Extra php.ini scan directory holding this worker's overrides, if it has any. */
+    private static function workerIniDir(string $workerSlug): string
+    {
+        return '/usr/local/etc/php/worker-' . $workerSlug . '.d';
+    }
+
     private function buildWorkerScript(WorkerDefinitionConfig $worker): string
     {
         $script = $this->parseScriptLines($worker->command);
@@ -187,9 +193,14 @@ final readonly class DockerfileGenerator
         // becomes the container's main process and receives docker's SIGTERM directly
         // (the behaviour before multi-line support, where compose ran the binary with
         // no shell in between). Skipped as soon as the line sequences commands — `exec a
-        // && b` replaces the shell with `a`, so `b` would never run. Multi-line scripts
-        // run as written; there the author decides which line to exec.
-        if (count($script) === 1 && preg_match('/[;&|]/', $script[0]) !== 1) {
+        // && b` replaces the shell with `a`, so `b` would never run — and when the author
+        // already wrote it. Multi-line scripts run as written; there the author decides
+        // which line to exec.
+        if (
+            count($script) === 1
+            && preg_match('/[;&|]/', $script[0]) !== 1
+            && ! str_starts_with($script[0], 'exec ')
+        ) {
             $script = ['exec ' . $script[0]];
         }
 
@@ -197,6 +208,17 @@ final readonly class DockerfileGenerator
         $lines[] = '#!/bin/sh';
         $lines[] = 'set -e';
         $lines[] = '';
+
+        if ($worker->memoryLimit !== null) {
+            // PHP reads no per-invocation directive from the environment, but it does
+            // honour PHP_INI_SCAN_DIR — the Dockerfile drops this worker's override
+            // there. conf.d stays first so the application's <php> settings still apply
+            // and only memory_limit is replaced.
+            $lines[] = 'PHP_INI_SCAN_DIR="/usr/local/etc/php/conf.d:'
+                . self::workerIniDir($this->slugify($worker->name)) . '"';
+            $lines[] = 'export PHP_INI_SCAN_DIR';
+            $lines[] = '';
+        }
 
         foreach ($script as $line) {
             $lines[] = $line;
@@ -288,6 +310,16 @@ final readonly class DockerfileGenerator
             $lines[] = '';
             $lines[] = 'COPY ' . self::workerScriptName($slug, $workerSlug) . ' ' . $target;
             $lines[] = 'RUN chmod +x ' . $target;
+
+            if ($worker->memoryLimit === null) {
+                continue;
+            }
+
+            // The value is constrained to digits plus an optional K/M/G suffix (or -1)
+            // by the schema, so it cannot carry shell syntax into this echo.
+            $iniDir  = self::workerIniDir($workerSlug);
+            $lines[] = 'RUN mkdir -p ' . $iniDir
+                . " \\\n    && echo 'memory_limit=" . $worker->memoryLimit . "' > " . $iniDir . '/zz-worker.ini';
         }
 
         if ($hasEntrypoint) {

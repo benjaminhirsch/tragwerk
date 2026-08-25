@@ -12,6 +12,7 @@ final readonly class WorkerDefinitionConfig
         public string $name,
         string|null $command = null,
         string|null $value = null,
+        public string|null $memoryLimit = null,
     ) {
         // `value` is the element body (multi-line, CDATA), `command` the attribute
         // form for one-liners. ConfigValidator guarantees exactly one is present.

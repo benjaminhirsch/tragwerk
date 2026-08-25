@@ -201,6 +201,12 @@
         </xs:attribute>
     </xs:complexType>
 
+    <xs:simpleType name="MemoryLimitType">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="-1|[1-9][0-9]*[KMGkmg]?"/>
+        </xs:restriction>
+    </xs:simpleType>
+
     <xs:simpleType name="DurationType">
         <xs:restriction base="xs:string">
             <xs:pattern value="[1-9][0-9]*(ms|s|m|h)"/>
@@ -255,6 +261,18 @@
                             The single-line command the container runs, e.g.
                             "bin/cli worker:start default". Omit it and put the script
                             in the element body when the worker needs several lines.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="memory-limit" type="MemoryLimitType">
+                    <xs:annotation>
+                        <xs:documentation>
+                            PHP memory_limit for this worker only, e.g. "2G". Defaults to
+                            whatever the application's &lt;php&gt; settings define. Use it
+                            when one worker legitimately needs more than the web
+                            application; "-1" removes the limit, which also removes the
+                            guard that turns a leak into a restart instead of an
+                            out-of-memory kill.
                         </xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
