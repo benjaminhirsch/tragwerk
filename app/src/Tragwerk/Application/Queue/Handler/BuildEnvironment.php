@@ -131,10 +131,13 @@ final readonly class BuildEnvironment
         $userEnvVars = $this->envVarResolver->resolve($projectIdentifier, $branch);
 
         try {
+            // DUMP_EMPTY_ARRAY_AS_SEQUENCE: the sidecars clear their entrypoint with an
+            // empty list, and compose rejects the `{}` mapping the dumper emits otherwise.
             $compose = Yaml::dump(
                 $this->composeGenerator->generate($config, $branch, $domainsByPlaceholder, userEnvVars: $userEnvVars),
                 10,
                 2,
+                Yaml::DUMP_EMPTY_ARRAY_AS_SEQUENCE,
             );
             file_put_contents($outDir . '/docker-compose.yml', $compose);
             $messages[] = 'Generated docker-compose.yml';

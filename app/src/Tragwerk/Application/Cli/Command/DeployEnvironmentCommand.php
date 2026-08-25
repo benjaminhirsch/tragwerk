@@ -505,7 +505,9 @@ final class DeployEnvironmentCommand extends Command
         );
         $sftp->put(
             $remoteDir . '/docker-compose.yml',
-            Yaml::dump($compose, 8, 2, Yaml::DUMP_NULL_AS_TILDE),
+            // DUMP_EMPTY_ARRAY_AS_SEQUENCE: the sidecars clear their entrypoint with an
+            // empty list, and compose rejects the `{}` mapping the dumper emits otherwise.
+            Yaml::dump($compose, 8, 2, Yaml::DUMP_NULL_AS_TILDE | Yaml::DUMP_EMPTY_ARRAY_AS_SEQUENCE),
         );
 
         foreach ($config->applications as $app) {

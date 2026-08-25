@@ -209,6 +209,10 @@ final readonly class DockerComposeGenerator
             $worker['build'] = $appService['build'];
         }
 
+        // Drop the image ENTRYPOINT: it runs the deploy hooks, which belong to the
+        // deployment and not to every container sharing the image. A worker restarting
+        // on its own would otherwise re-run migrations behind the app's back.
+        $worker['entrypoint'] = [];
         // The command itself lives in a script baked into the image by DockerfileGenerator:
         // a compose `command:` string is shlex-split without a shell and would be subject
         // to Compose's own `$VAR` interpolation, neither of which a multi-line script survives.
@@ -263,8 +267,11 @@ final readonly class DockerComposeGenerator
         // this read-only image, crash-looping the container before any job runs. Our jobs are simple
         // one-shot `bin/cli` commands (sh → php → exit) that leave no orphaned children to reap, so
         // disabling the reaper is safe.
-        $cron['command'] = 'supercronic -no-reap -json /etc/supercronic/crontab';
-        $cron['restart'] = 'unless-stopped';
+        // Same as the workers: the deploy hooks are the deployment's job, not this
+        // sidecar's — see buildWorkerService().
+        $cron['entrypoint'] = [];
+        $cron['command']    = 'supercronic -no-reap -json /etc/supercronic/crontab';
+        $cron['restart']    = 'unless-stopped';
 
         if (isset($appService['environment'])) {
             $cron['environment'] = $appService['environment'];

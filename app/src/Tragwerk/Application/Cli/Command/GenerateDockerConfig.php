@@ -99,8 +99,16 @@ final class GenerateDockerConfig extends Command
             return self::FAILURE;
         }
 
-        $outDir  = rtrim($outputDir, '/');
-        $compose = Yaml::dump($this->composeGenerator->generate($config), 10, 2);
+        $outDir = rtrim($outputDir, '/');
+
+        // DUMP_EMPTY_ARRAY_AS_SEQUENCE: the sidecars clear their entrypoint with an empty
+        // list, and compose rejects the `{}` mapping the dumper would emit otherwise.
+        $compose = Yaml::dump(
+            $this->composeGenerator->generate($config),
+            10,
+            2,
+            Yaml::DUMP_EMPTY_ARRAY_AS_SEQUENCE,
+        );
 
         if (file_put_contents($outDir . '/docker-compose.yml', $compose) === false) {
             $output->writeln('Failed to write docker-compose.yml');

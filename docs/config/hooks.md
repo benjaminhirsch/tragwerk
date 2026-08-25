@@ -88,6 +88,12 @@ preserved. Here-documents and other indentation-sensitive constructs therefore d
 not survive — keep those in a script file in your repository and call it from the
 hook.
 
+::: tip Hooks run once, in the application container
+Workers and the cron sidecar share the application image but start with an empty
+entrypoint, so they do not re-run `deploy` hooks. A worker restarting on its own
+therefore cannot run migrations behind the application's back.
+:::
+
 ::: warning A slow deploy hook fails the deployment
 `deploy` hooks run in the entrypoint *before* the web server starts listening, so
 the container counts as unhealthy for as long as the hook runs. The default

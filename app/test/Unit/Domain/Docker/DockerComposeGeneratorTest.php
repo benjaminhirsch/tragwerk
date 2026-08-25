@@ -8,6 +8,7 @@ use Generator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Yaml\Yaml;
 use Tragwerk\Domain\Docker\DockerComposeGenerator;
 use Tragwerk\Domain\Docker\ServiceImageResolver;
 use Tragwerk\Domain\Enum\ApplicationRuntime;
@@ -801,6 +802,52 @@ final class DockerComposeGeneratorTest extends TestCase
         $services = $compose['services'];
         self::assertIsArray($services);
         self::assertArrayNotHasKey('app-cron', $services);
+    }
+
+    #[Test]
+    public function sidecarsDropTheImageEntrypoint(): void
+    {
+        // The image ENTRYPOINT runs the deploy hooks. Those belong to the deployment,
+        // not to every container sharing the image — a worker restarting on its own
+        // would otherwise re-run migrations behind the application's back.
+        $app     = new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([new LocationConfig(path: '/', root: 'public', passthru: '/index.php')]),
+            workers: [new WorkerDefinitionConfig(name: 'queue', command: 'bin/cli worker:start default')],
+            crons: [
+                new CronDefinitionConfig(name: 'cleanup', command: 'bin/cli app:cleanup', schedule: '0 2 * * *'),
+            ],
+        );
+        $config  = self::project([$app], [self::upstream('https://{default}', 'app:http')]);
+        $compose = $this->generator->generate($config, 'main');
+
+        self::assertSame([], $this->service($compose, 'app-worker-queue')['entrypoint']);
+        self::assertSame([], $this->service($compose, 'app-cron')['entrypoint']);
+        // The application itself keeps it — that is where the hooks must run.
+        self::assertArrayNotHasKey('entrypoint', $this->service($compose, 'app'));
+    }
+
+    #[Test]
+    public function sidecarEntrypointSurvivesTheYamlDump(): void
+    {
+        // Without DUMP_EMPTY_ARRAY_AS_SEQUENCE the dumper writes "entrypoint: {}",
+        // which compose rejects — the flag at every dump call site is load-bearing.
+        $app     = new ApplicationConfig(
+            name: 'app',
+            type: ApplicationRuntime::PHP85,
+            root: '/',
+            web: new WebConfig([new LocationConfig(path: '/', root: 'public', passthru: '/index.php')]),
+            workers: [new WorkerDefinitionConfig(name: 'queue', command: 'bin/cli worker:start default')],
+        );
+        $config  = self::project([$app], [self::upstream('https://{default}', 'app:http')]);
+        $compose = $this->generator->generate($config, 'main');
+
+        $yaml = Yaml::dump($compose, 10, 2, Yaml::DUMP_EMPTY_ARRAY_AS_SEQUENCE);
+
+        self::assertStringContainsString('entrypoint: []', $yaml);
+        self::assertStringNotContainsString('entrypoint: {}', $yaml);
     }
 
     #[Test]
